@@ -1,52 +1,33 @@
 @extends('layout.base')
-@section('content')
-<body>
-  
-<div class="container d-flex align-items-center justify-content-center vh-100">
-    <div class="card border rounded shadow-sm border-primary" style="width:400px">
-        <div class="card-body">
 
+@section('content')
+<div class="page-bg">
+    <div class="page-card">
+        <h3>Login</h3>
         <form action="/login-success" method="POST">
             @csrf
-            <h3 class="mb-3 text-center"> Login </h3>
 
             <div class="mb-3">
-                  <label for="username"> Username: </label>
+                <label class="form-label">Username:</label>
+                <input type="text" class="form-control @error('username') is-invalid @enderror" name="username">
+                @error('username')
+                <span class="text-danger">{{ $message }}</span>
+                @enderror
+            </div>
 
-                 
-                  <input type="text" class="form-control form-control-md @error('username') is-invalid @enderror" name="username">
-                   @error('username')
-                   <span class="text-danger"> {{ $message }}</span> 
-                  @enderror
-            </div>
-          
             <div class="mb-3">
-                  <label for="password"> Password: </label>
-                  <input type="password" class="form-control form-control-md @error('password') is-invalid @enderror" name="password">
-                   @error('password')
-                   <span class="text-danger"> {{ $message }}</span> 
-                  @enderror 
+                <label class="form-label">Password:</label>
+                <input type="password" class="form-control @error('password') is-invalid @enderror" name="password">
+                @error('password')
+                <span class="text-danger">{{ $message }}</span>
+                @enderror
             </div>
-          
-            <div class="d-grid gap-2">
-                <button class="btn btn-primary"> Login </button>
-                <a href="/register" class="btn btn-secondary"> Register </a>
+
+            <div class="d-grid">
+                <button class="btn btn-primary">Login</button>
+                <a href="/register" class="btn btn-secondary">Register</a>
             </div>
         </form>
-        </div>
     </div>
 </div>
-
-
-
-
-
-
-
-
-
-
-
-
-</body>
 @endsection

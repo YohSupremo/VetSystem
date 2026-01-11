@@ -23,20 +23,21 @@ class UserController extends Controller
        return redirect('/login');
     }
 
-    public function login(Request $request){
+    public function login(Request $request)
+{
+    $credentials = $request->validate([
+        'username' => 'required|string',
+        'password' => 'required|string'
+    ]);
 
-        $credentials = $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string'
-        ]);
+    $username = (string) $credentials['username'];
+    $user = User::where('username', $username)->first();
 
-        $user = User::where('username', $credentials['username'])->first();
-
-        if($user && Hash::check($credentials['password'], $user->password)){
-
+    if ($user && Hash::check($credentials['password'], $user->password)) {
         return redirect('/dashboard');
-        } else {
-              return back()->withErrors(['username' => 'Invalid username or password']);
-        }
     }
+
+    return back()->withErrors([
+        'username' => 'Invalid username or password'
+    ])->withInput(['username' => $username]);
 }

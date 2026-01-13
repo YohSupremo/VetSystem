@@ -41,3 +41,4 @@ class UserController extends Controller
         'username' => 'Invalid username or password'
     ])->withInput(['username' => $username]);
 }
+}

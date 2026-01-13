@@ -37,13 +37,19 @@
                 </div>
             </div>
 
-            <label class="form-label">Username*</label>
-            <input type="text" class="form-control @error('username') is-invalid @enderror" name="username" value="{{ old('username') }}">
-            @error('username') <span class="text-danger">{{ $message }}</span> @enderror
+            <div class="mb-3">
+                <label class="form-label">Username*</label>
+                <input type="text" class="form-control @error('username') is-invalid @enderror" name="username" value="{{ old('username') }}">
+                @error('username') <span class="text-danger">{{ $message }}</span> @enderror
 
-            <label class="form-label">Password*</label>
+            </div>
+            
+            <div class="mb-3">
+                 <label class="form-label">Password*</label>
             <input type="password" class="form-control @error('password') is-invalid @enderror" name="password">
             @error('password') <span class="text-danger">{{ $message }}</span> @enderror
+            </div>
+           
 
             <div class="d-grid mt-3">
                 <button class="btn btn-primary">Register</button>

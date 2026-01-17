@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+class UserController extends Controller
+{
+    public function register(Request $request){
+
+        $getData = $request->validate([
+            'first_name' => 'required|string|max:50',
+            'last_name' => 'required|string|max:50',
+            'address' => 'required|string|max:100',
+            'contact_number' => 'required|string|max:20',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'username' => 'required|string|max:50|unique:users,username',
+            'password' => 'required|string|min:6'
+        ]);
+
+       $getData['password'] = bcrypt($getData['password']);
+       User::create($getData);
+       return redirect('/login');
+    }
+
+    public function login(Request $request)
+{
+    $credentials = $request->validate([
+        'username' => 'required|string',
+        'password' => 'required|string'
+    ]);
+
+    $username = (string) $credentials['username'];
+    $user = User::where('username', $username)->first();
+
+    if ($user && Hash::check($credentials['password'], $user->password)) {
+        return redirect('/dashboard');
+    }
+
+    return back()->withErrors([
+        'username' => 'Invalid username or password'
+    ])->withInput(['username' => $username]);
+}
+}

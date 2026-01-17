@@ -10,30 +10,37 @@
             @csrf
 
             <div class="row g-3 mb-3">
+
+              <div class="col-6">
+                    <label class="form-label">First Name*</label>
+                    <input type="text" class="form-control @error('first_name') is-invalid @enderror" name="first_name" value="{{ old('first_name') }}">
+                    @error('first_name') <span class="text-danger">{{ $message }}</span> @enderror
+                </div>
+
                 <div class="col-6">
                     <label class="form-label">Last Name*</label>
                     <input type="text" class="form-control @error('last_name') is-invalid @enderror" name="last_name" value="{{ old('last_name') }}">
                     @error('last_name') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
 
-                <div class="col-6">
-                    <label class="form-label">First Name*</label>
-                    <input type="text" class="form-control @error('first_name') is-invalid @enderror" name="first_name" value="{{ old('first_name') }}">
-                    @error('first_name') <span class="text-danger">{{ $message }}</span> @enderror
+                <div class="col-12">
+                    <label class="form-label">Address*</label>
+                    <textarea rows="2" class="form-control @error('address') is-invalid @enderror" name="address" value="{{ old('address') }}"> </textarea>
+                    @error('address') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
             </div>
 
             <div class="row g-3 mb-3">
                 <div class="col-6">
-                    <label class="form-label">Age*</label>
-                    <input type="number" class="form-control @error('age') is-invalid @enderror" name="age" value="{{ old('age') }}">
-                    @error('age') <span class="text-danger">{{ $message }}</span> @enderror
-                </div>
-
-                <div class="col-6">
                     <label class="form-label">Contact Number*</label>
                     <input type="tel" class="form-control @error('contact_number') is-invalid @enderror" name="contact_number" value="{{ old('contact_number') }}">
                     @error('contact_number') <span class="text-danger">{{ $message }}</span> @enderror
+                </div>
+
+                 <div class="col-6">
+                    <label class="form-label">Email*</label>
+                    <input type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}">
+                    @error('email') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
             </div>
 

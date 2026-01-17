@@ -13,12 +13,22 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('last_name');
             $table->string('first_name');
-            $table->integer('age');
+            $table->string('last_name');
+            $table->enum('role',
+            ['admin', 
+            'veterinarian',
+            'receptionist', 
+            'pharmacist', 
+            'pet_owner', 
+            'boarding']
+            )->default('pet_owner');
+            $table->string('address');
             $table->string('contact_number');
+            $table->string('email');
             $table->string('username');
             $table->string('password');
+            $table->tinyInteger('is_active')->default('1');   
             $table->timestamps();
         });
     }

@@ -10,10 +10,11 @@ class UserController extends Controller
     public function register(Request $request){
 
         $getData = $request->validate([
-            'last_name' => 'required|string|max:50',
             'first_name' => 'required|string|max:50',
-            'age' => 'required|integer',
+            'last_name' => 'required|string|max:50',
+            'address' => 'required|string|max:100',
             'contact_number' => 'required|string|max:20',
+            'email' => 'required|string|email|max:255|unique:users,email',
             'username' => 'required|string|max:50|unique:users,username',
             'password' => 'required|string|min:6'
         ]);

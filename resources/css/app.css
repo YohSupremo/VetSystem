@@ -546,6 +546,24 @@ body.landing-body {
     border: 4px solid #e9d5ff;
 }
 
+.landing-body .carousel-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 32px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(124, 58, 237, 0.25);
+    border: 4px solid #e9d5ff;
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.2), rgba(244, 114, 182, 0.2));
+}
+
+.landing-body .carousel-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
 .landing-body .pet-icon {
     width: 100%;
     height: 100%;

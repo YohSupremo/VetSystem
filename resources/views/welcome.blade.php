@@ -77,78 +77,80 @@
 </div>
 @endsection
 
+@push('styles')
+<style>
+    .carousel-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .carousel-circle {
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .image-placeholder {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #E9D5FF 0%, #C4B5FD 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 64px;
+        border-radius: 50%;
+    }
+</style>
+@endpush
+
 @push('scripts')
 <script>
-    const petIcons = [
-        `<svg viewBox="0 0 200 200" class="pet-icon">
-            <circle cx="100" cy="100" r="95" fill="#E9D5FF" opacity="0.3"/>
-            <path d="M100 140 Q85 155 70 150 Q60 145 62 135 Q65 120 75 115 Q90 105 100 110 Q110 105 125 115 Q135 120 138 135 Q140 145 130 150 Q115 155 100 140Z" fill="#A78BFA"/>
-            <circle cx="85" cy="120" r="8" fill="#7C3AED"/>
-            <circle cx="115" cy="120" r="8" fill="#7C3AED"/>
-            <path d="M95 130 Q100 135 105 130" stroke="#7C3AED" fill="none" stroke-width="3"/>
-            <ellipse cx="60" cy="80" rx="20" ry="30" fill="#A78BFA"/>
-            <ellipse cx="140" cy="80" rx="20" ry="30" fill="#A78BFA"/>
-            <ellipse cx="45" cy="65" rx="15" ry="20" fill="#C4B5FD"/>
-            <ellipse cx="155" cy="65" rx="15" ry="20" fill="#C4B5FD"/>
-        </svg>`,
-        `<svg viewBox="0 0 200 200" class="pet-icon">
-            <circle cx="100" cy="100" r="95" fill="#DDD6FE" opacity="0.3"/>
-            <path d="M65 60 L55 30 L75 50 Z" fill="#A78BFA"/>
-            <path d="M135 60 L145 30 L125 50 Z" fill="#A78BFA"/>
-            <circle cx="100" cy="100" r="45" fill="#C4B5FD"/>
-            <circle cx="85" cy="95" r="8" fill="#7C3AED"/>
-            <circle cx="115" cy="95" r="8" fill="#7C3AED"/>
-            <path d="M90 105 L95 110 L100 108 L105 110 L110 105" stroke="#7C3AED" fill="none" stroke-width="2"/>
-            <path d="M70 110 L85 108" stroke="#A78BFA" stroke-width="2"/>
-            <path d="M130 110 L115 108" stroke="#A78BFA" stroke-width="2"/>
-        </svg>`,
-        `<svg viewBox="0 0 200 200" class="pet-icon">
-            <circle cx="100" cy="100" r="95" fill="#E9D5FF" opacity="0.3"/>
-            <ellipse cx="100" cy="110" rx="35" ry="40" fill="#C4B5FD"/>
-            <circle cx="90" cy="90" r="25" fill="#DDD6FE"/>
-            <circle cx="85" cy="88" r="6" fill="#7C3AED"/>
-            <path d="M95 95 L110 100 L95 105" fill="#F59E0B"/>
-            <ellipse cx="60" cy="110" rx="30" ry="15" fill="#A78BFA" transform="rotate(-20 60 110)"/>
-            <ellipse cx="140" cy="110" rx="30" ry="15" fill="#A78BFA" transform="rotate(20 140 110)"/>
-            <path d="M100 145 L95 155 M100 145 L105 155" stroke="#A78BFA" stroke-width="3" fill="none"/>
-        </svg>`,
-        `<svg viewBox="0 0 200 200" class="pet-icon">
-            <circle cx="100" cy="100" r="95" fill="#DDD6FE" opacity="0.3"/>
-            <ellipse cx="75" cy="60" rx="12" ry="45" fill="#C4B5FD"/>
-            <ellipse cx="125" cy="60" rx="12" ry="45" fill="#C4B5FD"/>
-            <circle cx="100" cy="110" r="40" fill="#DDD6FE"/>
-            <circle cx="90" cy="105" r="6" fill="#7C3AED"/>
-            <circle cx="110" cy="105" r="6" fill="#7C3AED"/>
-            <path d="M95 115 L100 120 L105 115" stroke="#7C3AED" fill="none" stroke-width="2"/>
-            <circle cx="100" cy="125" r="3" fill="#F59E0B"/>
-        </svg>`,
-        `<svg viewBox="0 0 200 200" class="pet-icon">
-            <circle cx="100" cy="100" r="95" fill="#E9D5FF" opacity="0.3"/>
-            <ellipse cx="110" cy="100" rx="45" ry="30" fill="#A78BFA"/>
-            <path d="M65 100 L45 85 L45 115 Z" fill="#C4B5FD"/>
-            <path d="M150 90 L170 80 L165 100 L170 120 L150 110 Z" fill="#DDD6FE"/>
-            <circle cx="125" cy="95" r="6" fill="#7C3AED"/>
-            <path d="M100 85 Q105 80 110 85" stroke="#DDD6FE" fill="none" stroke-width="2"/>
-            <path d="M100 95 Q105 90 110 95" stroke="#DDD6FE" fill="none" stroke-width="2"/>
-        </svg>`
-    ];
+    // Define your carousel images here
+    const carouselImages = @json($carouselImages ?? []);
+    const fallbackIcons = ['🐕', '🐈', '🐇', '🦜', '🐠'];
+
+    const hasImages = carouselImages.length > 0;
+    const sources = hasImages ? carouselImages : fallbackIcons;
 
     let currentIndex = 0;
     const carousel = document.getElementById('carousel');
     const indicatorsContainer = document.getElementById('indicators');
 
-    petIcons.forEach((icon) => {
+    sources.forEach((source, index) => {
         const item = document.createElement('div');
         item.className = 'carousel-item';
-        item.innerHTML = `<div class="carousel-circle">${icon}</div>`;
+
+        if (hasImages) {
+            const circle = document.createElement('div');
+            circle.className = 'carousel-circle';
+
+            const img = document.createElement('img');
+            img.src = source;
+            img.alt = `Pet ${index + 1}`;
+            img.className = 'carousel-image';
+
+            img.onerror = function() {
+                circle.innerHTML = `<div class="image-placeholder">${fallbackIcons[index % fallbackIcons.length]}</div>`;
+            };
+
+            circle.appendChild(img);
+            item.appendChild(circle);
+        } else {
+            item.innerHTML = `<div class="carousel-circle"><div class="image-placeholder">${source}</div></div>`;
+        }
+
         carousel.appendChild(item);
     });
 
-    petIcons.forEach((_, index) => {
+    sources.forEach((_, index) => {
         const indicator = document.createElement('button');
         indicator.className = 'indicator';
         if (index === 0) indicator.classList.add('active');
         indicator.addEventListener('click', () => goToSlide(index));
+        indicator.setAttribute('aria-label', `Go to slide ${index + 1}`);
         indicatorsContainer.appendChild(indicator);
     });
 
@@ -157,12 +159,13 @@
         const indicators = document.querySelectorAll('.indicator');
 
         items.forEach((item, index) => {
-            const position = (index - currentIndex + petIcons.length) % petIcons.length;
+            const position = (index - currentIndex + sources.length) % sources.length;
             const isActive = position === 0;
 
             item.style.transform = `translateX(${position * 100}%) scale(${isActive ? 1 : 0.8})`;
             item.style.opacity = isActive ? '1' : '0';
             item.style.zIndex = isActive ? '10' : '0';
+            item.style.pointerEvents = isActive ? 'auto' : 'none';
         });
 
         indicators.forEach((indicator, index) => {
@@ -176,11 +179,45 @@
     }
 
     function nextSlide() {
-        currentIndex = (currentIndex + 1) % petIcons.length;
+        if (sources.length <= 1) return;
+        currentIndex = (currentIndex + 1) % sources.length;
         updateCarousel();
     }
 
-    setInterval(nextSlide, 3000);
+    function prevSlide() {
+        if (sources.length <= 1) return;
+        currentIndex = (currentIndex - 1 + sources.length) % sources.length;
+        updateCarousel();
+    }
+
+    // Auto-rotate carousel every 3 seconds
+    let autoRotate = null;
+    if (sources.length > 1) {
+        autoRotate = setInterval(nextSlide, 3000);
+    }
+
+    // Pause auto-rotate on hover
+    carousel.addEventListener('mouseenter', () => {
+        if (autoRotate) {
+            clearInterval(autoRotate);
+            autoRotate = null;
+        }
+    });
+
+    carousel.addEventListener('mouseleave', () => {
+        if (sources.length > 1 && !autoRotate) {
+            autoRotate = setInterval(nextSlide, 3000);
+        }
+    });
+
+    // Initialize carousel
     updateCarousel();
+
+    // Optional: Add keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (sources.length <= 1) return;
+        if (e.key === 'ArrowLeft') prevSlide();
+        if (e.key === 'ArrowRight') nextSlide();
+    });
 </script>
 @endpush

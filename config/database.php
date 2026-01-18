@@ -2,6 +2,23 @@
 
 use Illuminate\Support\Str;
 
+$sqliteDatabase = env('DB_DATABASE');
+
+if (blank($sqliteDatabase)) {
+    $sqliteDatabase = database_path('database.sqlite');
+} else {
+    $isWindowsAbsolute = preg_match('/^[A-Za-z]:[\\\\\/]/', $sqliteDatabase) === 1;
+    $isUnixAbsolute = Str::startsWith($sqliteDatabase, ['/']);
+
+    if (! $isWindowsAbsolute && ! $isUnixAbsolute) {
+        if (! Str::endsWith($sqliteDatabase, '.sqlite')) {
+            $sqliteDatabase .= '.sqlite';
+        }
+
+        $sqliteDatabase = database_path($sqliteDatabase);
+    }
+}
+
 return [
 
     /*
@@ -34,7 +51,7 @@ return [
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'database' => $sqliteDatabase,
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
             'busy_timeout' => null,

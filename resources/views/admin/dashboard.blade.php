@@ -445,6 +445,201 @@
             color: var(--dark-text);
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease-out;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--soft-gray);
+        }
+
+        .modal-header h2 {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--light-text);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .modal-close:hover {
+            background: var(--soft-gray);
+            color: var(--primary-orange);
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .notification-item {
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            background: var(--soft-gray);
+            border-left: 4px solid var(--primary-orange);
+            transition: all 0.3s ease;
+        }
+
+        .notification-item:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .notification-item.unread {
+            background: rgba(255, 140, 66, 0.08);
+            border-left-color: var(--primary-orange);
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 5px;
+        }
+
+        .notification-time {
+            font-size: 12px;
+            color: var(--light-text);
+            display: block;
+        }
+
+        .message-item {
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            background: var(--soft-gray);
+            border-left: 4px solid var(--primary-blue);
+            transition: all 0.3s ease;
+        }
+
+        .message-item:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .message-item.unread {
+            background: rgba(74, 144, 226, 0.08);
+        }
+
+        .message-sender {
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 5px;
+        }
+
+        .message-preview {
+            font-size: 13px;
+            color: var(--light-text);
+            margin-bottom: 5px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--light-text);
+        }
+
+        .search-results {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            background: var(--soft-gray);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-result-item:hover {
+            background: var(--primary-orange);
+            color: var(--white);
+            transform: translateX(5px);
+        }
+
+        .search-result-title {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .search-result-type {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            padding-top: 15px;
+            border-top: 2px solid var(--soft-gray);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--light-text);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            color: var(--soft-gray);
+            margin-bottom: 15px;
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
@@ -502,11 +697,11 @@
                             <span class="badge">{{ $pendingAppointments }}</span>
                         @endif
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.pets.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.pets.index') }}" class="nav-item {{ request()->routeIs('admin.pets.*') ? 'active' : '' }}">
                         <i class="fas fa-paw"></i>
                         <span>Pets Registry</span>
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.owners.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.pet-owners.index') }}" class="nav-item {{ request()->routeIs('admin.pet-owners.*') ? 'active' : '' }}">
                         <i class="fas fa-users"></i>
                         <span>Pet Owners</span>
                     </a>
@@ -645,6 +840,422 @@
             </div>
         </main>
     </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal" id="notificationsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Notifications</h2>
+                <button class="modal-close" onclick="closeModal('notificationsModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="search-results" id="notificationsContainer">
+                    <!-- Notifications will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('notificationsModal')">Close</button>
+                <button class="btn btn-primary">Mark All as Read</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages Modal -->
+    <div class="modal" id="messagesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Messages</h2>
+                <button class="modal-close" onclick="closeModal('messagesModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="search-results" id="messagesContainer">
+                    <!-- Messages will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('messagesModal')">Close</button>
+                <button class="btn btn-primary">Compose Message</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div class="modal" id="searchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Global Search</h2>
+                <button class="modal-close" onclick="closeModal('searchModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="text" placeholder="Search for pets, owners, appointments..." 
+                       id="searchInput" style="width: 100%; padding: 12px; border: 2px solid var(--soft-gray); 
+                       border-radius: 10px; font-family: 'DM Sans', sans-serif; margin-bottom: 20px;">
+                <div class="search-results" id="searchContainer">
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>Start typing to search...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Scripts -->
+    <script>
+        // Modal Functions
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Close modal when clicking outside the modal content
+        window.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            }
+        });
+
+        // Notifications Functions
+        function openNotifications() {
+            openModal('notificationsModal');
+            loadNotifications();
+        }
+
+        function loadNotifications() {
+            const container = document.getElementById('notificationsContainer');
+            container.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            
+            fetch('/admin/notifications/get')
+                .then(response => response.json())
+                .then(notifications => {
+                    container.innerHTML = '';
+
+                    if (notifications.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-bell"></i>
+                                <p>No notifications</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    notifications.forEach(notif => {
+                        const item = document.createElement('div');
+                        item.className = `notification-item ${notif.unread ? 'unread' : ''}`;
+                        item.innerHTML = `
+                            <div style="display: flex; gap: 10px;">
+                                <div style="width: 40px; height: 40px; background: rgba(255, 140, 66, 0.1); 
+                                            border-radius: 8px; display: flex; align-items: center; 
+                                            justify-content: center; color: var(--primary-orange); flex-shrink: 0;">
+                                    <i class="fas ${notif.icon}"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div class="notification-title">${notif.title}</div>
+                                    <div style="font-size: 13px; color: var(--light-text); margin-bottom: 5px;">
+                                        ${notif.message}
+                                    </div>
+                                    <span class="notification-time">${notif.time}</span>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(item);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Error loading notifications</p>
+                        </div>
+                    `;
+                });
+        }
+
+        // Messages Functions
+        function openMessages() {
+            openModal('messagesModal');
+            loadMessages();
+        }
+
+        function loadMessages() {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            
+            fetch('/admin/messages/get')
+                .then(response => response.json())
+                .then(messages => {
+                    container.innerHTML = '';
+
+                    if (messages.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-envelope"></i>
+                                <p>No messages</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    messages.forEach(msg => {
+                        const item = document.createElement('div');
+                        item.className = `message-item ${msg.unread ? 'unread' : ''}`;
+                        item.innerHTML = `
+                            <div style="display: flex; gap: 12px;">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, 
+                                            var(--primary-blue), var(--accent-purple)); border-radius: 50%; 
+                                            display: flex; align-items: center; justify-content: center; 
+                                            color: white; font-weight: bold; font-size: 12px; flex-shrink: 0;">
+                                    ${msg.avatar}
+                                </div>
+                                <div style="flex: 1;">
+                                    <div class="message-sender">${msg.sender}</div>
+                                    <div class="message-preview">${msg.preview}</div>
+                                    <div class="message-time">${msg.time}</div>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(item);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading messages:', error);
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Error loading messages</p>
+                        </div>
+                    `;
+                });
+        }
+
+        // Search Functions
+        function openSearch() {
+            openModal('searchModal');
+            document.getElementById('searchInput').focus();
+        }
+
+        function performSearch(query) {
+            const container = document.getElementById('searchContainer');
+            
+            if (!query.trim()) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>Start typing to search...</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sample search results data
+            const allResults = [
+                // Pets
+                {
+                    type: 'Pet',
+                    icon: 'fa-paw',
+                    title: 'Max',
+                    subtitle: 'Golden Retriever - Owner: John Doe',
+                    category: 'Pets Registry'
+                },
+                {
+                    type: 'Pet',
+                    icon: 'fa-paw',
+                    title: 'Bella',
+                    subtitle: 'Cat - Owner: Jane Smith',
+                    category: 'Pets Registry'
+                },
+                // Owners
+                {
+                    type: 'Owner',
+                    icon: 'fa-user',
+                    title: 'John Doe',
+                    subtitle: 'Owner of: Max, Buddy',
+                    category: 'Pet Owners'
+                },
+                {
+                    type: 'Owner',
+                    icon: 'fa-user',
+                    title: 'Jane Smith',
+                    subtitle: 'Owner of: Bella, Whiskers',
+                    category: 'Pet Owners'
+                },
+                // Appointments
+                {
+                    type: 'Appointment',
+                    icon: 'fa-calendar',
+                    title: 'Vaccination - Max',
+                    subtitle: 'Jan 20, 2026 - 10:00 AM',
+                    category: 'Appointments'
+                },
+                {
+                    type: 'Appointment',
+                    icon: 'fa-calendar',
+                    title: 'Check-up - Bella',
+                    subtitle: 'Jan 21, 2026 - 2:00 PM',
+                    category: 'Appointments'
+                },
+                // Medical Records
+                {
+                    type: 'Medical Record',
+                    icon: 'fa-file-medical',
+                    title: 'Dental Cleaning - Max',
+                    subtitle: 'Completed on Jan 10, 2026',
+                    category: 'Medical Records'
+                }
+            ];
+
+            // Filter results based on query
+            const filteredResults = allResults.filter(result => 
+                result.title.toLowerCase().includes(query.toLowerCase()) ||
+                result.subtitle.toLowerCase().includes(query.toLowerCase())
+            );
+
+            container.innerHTML = '';
+
+            if (filteredResults.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>No results found for "${query}"</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredResults.forEach(result => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                item.innerHTML = `
+                    <div style="display: flex; gap: 12px;">
+                        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, 
+                                    var(--primary-orange), var(--accent-pink)); border-radius: 8px; 
+                                    display: flex; align-items: center; justify-content: center; 
+                                    color: white; flex-shrink: 0;">
+                            <i class="fas ${result.icon}"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div class="search-result-title">${result.title}</div>
+                            <div style="font-size: 12px; opacity: 0.8; margin-bottom: 3px;">
+                                ${result.subtitle}
+                            </div>
+                            <div class="search-result-type">${result.category}</div>
+                        </div>
+                    </div>
+                `;
+                item.addEventListener('click', function() {
+                    alert('Navigating to: ' + result.title);
+                    // Here you can add actual navigation logic
+                    closeModal('searchModal');
+                });
+                container.appendChild(item);
+            });
+        }
+
+        function updateUnreadCounts() {
+            fetch('/admin/unread-counts')
+                .then(response => response.json())
+                .then(data => {
+                    const notificationsBtn = document.getElementById('notificationsBtn');
+                    const messagesBtn = document.getElementById('messagesBtn');
+
+                    if (!notificationsBtn || !messagesBtn) return;
+
+                    // Update notification dot
+                    if (data.notifications > 0) {
+                        if (!notificationsBtn.querySelector('.notification-dot')) {
+                            const dot = document.createElement('span');
+                            dot.className = 'notification-dot';
+                            notificationsBtn.appendChild(dot);
+                        }
+                    } else {
+                        const dot = notificationsBtn.querySelector('.notification-dot');
+                        if (dot) dot.remove();
+                    }
+
+                    // Update message indicator
+                    if (data.messages > 0) {
+                        if (!messagesBtn.querySelector('.notification-dot')) {
+                            const dot = document.createElement('span');
+                            dot.className = 'notification-dot';
+                            messagesBtn.appendChild(dot);
+                        }
+                    } else {
+                        const dot = messagesBtn.querySelector('.notification-dot');
+                        if (dot) dot.remove();
+                    }
+                })
+                .catch(error => console.error('Error updating unread counts:', error));
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update unread counts on page load
+            updateUnreadCounts();
+
+            // Notifications button
+            const notificationsBtn = document.getElementById('notificationsBtn');
+            if (notificationsBtn) {
+                notificationsBtn.addEventListener('click', openNotifications);
+            }
+
+            // Messages button
+            const messagesBtn = document.getElementById('messagesBtn');
+            if (messagesBtn) {
+                messagesBtn.addEventListener('click', openMessages);
+            }
+
+            // Search box
+            const globalSearch = document.getElementById('globalSearch');
+            if (globalSearch) {
+                globalSearch.addEventListener('click', openSearch);
+            }
+
+            // Search input in modal
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    performSearch(e.target.value);
+                });
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+K or Cmd+K to open search
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    openSearch();
+                }
+                // Esc to close modals
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal.show').forEach(modal => {
+                        modal.classList.remove('show');
+                    });
+                    document.body.style.overflow = 'auto';
+                }
+            });
+        });
+
+    </script>
 
    
 </body>

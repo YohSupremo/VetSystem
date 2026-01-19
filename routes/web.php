@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\PetOwnerController;
+use App\Http\Controllers\Admin\PetController;
 
 Route::get('/', function () {
     $carouselImages = [];
@@ -39,7 +42,23 @@ Route::get('/dashboard', function(){
 
 
 Route::get('/admin/dashboard', function(){
-return view('admin/dashboard');
-}
+    return view('admin/dashboard');
+})->name('admin.dashboard');
 
-)->name('admin.dashboard');
+// Notification & Message Routes
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/notifications/get', [NotificationController::class, 'getNotifications']);
+    Route::get('/messages/get', [NotificationController::class, 'getMessages']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);
+    Route::post('/messages/{id}/read', [NotificationController::class, 'markMessageAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllNotificationsAsRead']);
+    Route::get('/unread-counts', [NotificationController::class, 'getUnreadCounts']);
+    
+    // Pet Owners Routes
+    Route::resource('pet-owners', PetOwnerController::class);
+    Route::get('/pet-owners/search', [PetOwnerController::class, 'search'])->name('pet-owners.search');
+    
+    // Pets Routes
+    Route::resource('pets', PetController::class);
+    Route::get('/pets/search', [PetController::class, 'search'])->name('pets.search');
+});

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Model
 {
@@ -15,4 +16,10 @@ class User extends Model
         'username',
         'password'
     ];
+
+    public function petOwner(): HasOne
+    {
+        return $this->hasOne(PetOwner::class);
+    }
 }
+

@@ -1,0 +1,28 @@
+# Laravel default .gitignore
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+
+# Laravel 5 & Lumen specific
+Homestead.yaml
+Homestead.json
+
+# Laravel Mix
+/public/mix-manifest.json
+
+# Env files
+.env
+.env.backup
+.env.production
+
+# IDEs & system files
+/.idea
+/.vscode
+/.history
+.DS_Store
+Thumbs.db
+
+# PHPUnit
+.phpunit.result.cache

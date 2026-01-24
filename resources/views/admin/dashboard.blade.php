@@ -705,7 +705,7 @@
                         <i class="fas fa-users"></i>
                         <span>Pet Owners</span>
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.queue.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.queue.index') }}" class="nav-item {{ request()->routeIs('admin.queue.*') ? 'active' : '' }}">
                         <i class="fas fa-list-ul"></i>
                         <span>Queue Management</span>
                     </a>

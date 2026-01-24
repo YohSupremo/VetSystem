@@ -46,4 +46,14 @@ class Pet extends Model
         }
         return asset('images/default-pet.png');
     }
+
+    public function surgeries(): HasMany
+    {
+        return $this->hasMany(Surgery::class);
+    }
+
+    public function vaccinations(): HasMany
+    {
+        return $this->hasMany(Vaccination::class);
+    }
 }

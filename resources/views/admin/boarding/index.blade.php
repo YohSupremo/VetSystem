@@ -76,7 +76,7 @@
                             </div>
                         </div>
                     </td>
-                    <td>{{ $boarding->pet->owner->user->first_name }} {{ $boarding->pet->owner->user->last_name }}</td>
+                    <td>{{ ($boarding->pet && $boarding->pet->owner && $boarding->pet->owner->user) ? $boarding->pet->owner->user->first_name . ' ' . $boarding->pet->owner->user->last_name : 'Unknown Owner' }}</td>
                     <td>
                         <span class="badge" style="background: #4A90E2;">
                             {{ $boarding->cage->cage_code }}
@@ -155,7 +155,7 @@
                     <label>Assign Cage</label>
                     <select class="form-control" name="cage_id" required>
                         <option value="">Select Cage</option>
-                        @foreach($availableCages as $cage)
+                        @foreach($cages as $cage)
                             <option value="{{ $cage->id }}">
                                 {{ $cage->cage_code }} ({{ $cage->location }})
                             </option>

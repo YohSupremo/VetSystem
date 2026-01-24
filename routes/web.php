@@ -10,7 +10,17 @@ use App\Http\Controllers\Admin\PetOwnerController;
 use App\Http\Controllers\Admin\MedicalRecordController;
 use App\Http\Controllers\Admin\VaccinationController;
 use App\Http\Controllers\Admin\PrescriptionController;
+use App\Http\Controllers\Admin\BoardingController;
+use App\Http\Controllers\Admin\GroomingController;
+use App\Http\Controllers\Admin\PharmacyController;
+use App\Http\Controllers\Admin\SurgeryController;
+use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\BillingController;
+use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SettingController;
 
+// Welcome Page with Dynamic Carousel
 Route::get('/', function () {
     $carouselImages = [];
     $carouselDir = public_path('images/carousel');
@@ -144,6 +154,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
         });
     });
 
+    // Boarding
+    Route::resource('boarding', BoardingController::class);
+
+    // Grooming
+    Route::resource('grooming', GroomingController::class);
+
+    // Pharmacy
+    Route::resource('pharmacy', PharmacyController::class);
+
     // Surgeries
     Route::prefix('surgeries')->name('surgeries.')->group(function () {
         Route::get('/', [SurgeryController::class, 'index'])->name('index');
@@ -153,5 +172,21 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/{surgery}/edit', [SurgeryController::class, 'edit'])->name('edit');
         Route::put('/{surgery}', [SurgeryController::class, 'update'])->name('update');
         Route::delete('/{surgery}', [SurgeryController::class, 'destroy'])->name('destroy');
+        Route::get('/pet/{pet}', [SurgeryController::class, 'byPet'])->name('pet');
     });
+
+    // Inventory
+    Route::resource('inventory', InventoryController::class);
+
+    // Billing
+    Route::resource('billing', BillingController::class);
+
+    // Staff
+    Route::resource('staff', StaffController::class);
+
+    // Reports
+    Route::resource('reports', ReportController::class);
+
+    // Settings
+    Route::resource('settings', SettingController::class);
 });

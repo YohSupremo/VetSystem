@@ -1,6 +1,4 @@
-@extends('layouts.admin')
-
-@section('title', 'Queue Management')
+@extends('admin.dashboard')
 
 @push('styles')
 <style>

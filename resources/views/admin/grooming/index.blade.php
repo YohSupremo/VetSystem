@@ -72,19 +72,29 @@
                     </td>
                     <td>
                         <div class="pet-info">
-                            <img src="{{ $appointment->pet->photo_path ?? asset('images/default-pet.jpg') }}" alt="{{ $appointment->pet->name }}" class="pet-avatar">
-                            <span>{{ $appointment->pet->name }}</span>
+                            <img src="{{ ($appointment->pet && $appointment->pet->photo_path) ? asset('storage/' . $appointment->pet->photo_path) : asset('images/default-pet.jpg') }}" alt="{{ $appointment->pet->name ?? 'Pet' }}" class="pet-avatar">
+                            <span>{{ $appointment->pet->name ?? 'Unknown Pet' }}</span>
                         </div>
                     </td>
-                    <td>{{ $appointment->pet->owner->user->first_name }} {{ $appointment->pet->owner->user->last_name }}</td>
                     <td>
-                        @foreach($appointment->services as $service)
-                            <span class="badge" style="background: #9B7EDE;">
-                                {{ $service->name }}
-                            </span>
-                        @endforeach
+                        @if($appointment->pet && $appointment->pet->owner && $appointment->pet->owner->user)
+                            {{ $appointment->pet->owner->user->first_name ?? 'Unknown' }} {{ $appointment->pet->owner->user->last_name ?? '' }}
+                        @else
+                            Unknown Owner
+                        @endif
                     </td>
-                    <td>{{ $appointment->groomer->user->first_name ?? 'Not Assigned' }}</td>
+                    <td>
+                        @if($appointment->services && count($appointment->services) > 0)
+                            @foreach($appointment->services as $service)
+                                <span class="badge" style="background: #9B7EDE;">
+                                    {{ is_object($service) && property_exists($service, 'name') ? $service->name : 'Service' }}
+                                </span>
+                            @endforeach
+                        @else
+                            <span class="text-muted">No services</span>
+                        @endif
+                    </td>
+                    <td>{{ ($appointment->groomer && $appointment->groomer->user) ? $appointment->groomer->user->first_name : 'Not Assigned' }}</td>
                     <td>
                         @php
                             $statusClass = [
@@ -218,7 +228,7 @@
                         <option value="">Select Groomer</option>
                         @foreach($groomers as $groomer)
                             <option value="{{ $groomer->id }}">
-                                {{ $groomer->user->first_name }} {{ $groomer->user->last_name }}
+                                {{ is_object($groomer->user) ? $groomer->user->first_name : (isset($groomer->user['first_name']) ? $groomer->user['first_name'] : 'Unknown') }} {{ is_object($groomer->user) ? $groomer->user->last_name : (isset($groomer->user['last_name']) ? $groomer->user['last_name'] : '') }}
                             </option>
                         @endforeach
                     </select>

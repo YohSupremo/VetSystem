@@ -1,41 +1,37 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Pet;
-use App\Models\Surgery;
-use App\Models\User;
-use App\Models\MedicalRecord;
 
-class SurgeryController extends BaseController
+class SurgeryController extends Controller
 {
     /**
-     * Display a listing of surgeries.
+     * Display a listing of surgeries
      */
     public function index()
     {
-        $pets = Pet::with('owner', 'surgeries')
-            ->has('surgeries')
-            ->paginate(10);
+        $surgeries = \App\Models\Surgery::with(['pet', 'surgeon', 'medicalRecord'])
+            ->orderBy('scheduled_date', 'desc')
+            ->paginate(15);
 
-        return view('admin.surgeries.index', compact('pets'));
+        return view('admin.surgeries.index', compact('surgeries'));
     }
 
     /**
-     * Show the form for creating a new surgery.
+     * Show the form for creating a new surgery
      */
     public function create()
     {
-        $pets = Pet::with('owner.user')->get();
-        $surgeons = User::where('role', 'veterinarian')->get();
-        $medicalRecords = MedicalRecord::with('pet')->get();
+        $pets = \App\Models\Pet::with('owner.user')->get();
+        $surgeons = \App\Models\User::where('role', 'veterinarian')->get();
+        $medicalRecords = \App\Models\MedicalRecord::with('pet')->get();
 
         return view('admin.surgeries.create', compact('pets', 'surgeons', 'medicalRecords'));
     }
 
     /**
-     * Store a newly created surgery in storage.
+     * Store a newly created surgery
      */
     public function store(Request $request)
     {
@@ -50,7 +46,7 @@ class SurgeryController extends BaseController
             'medical_record_id' => 'nullable|exists:medical_records,id',
         ]);
 
-        Surgery::create([
+        \App\Models\Surgery::create([
             'pet_id' => $validated['pet_id'],
             'surgeon_id' => $validated['surgeon_id'],
             'procedure_name' => $validated['procedure_name'],
@@ -67,34 +63,34 @@ class SurgeryController extends BaseController
     }
 
     /**
-     * Display the specified surgery.
+     * Display the specified surgery
      */
-    public function show($id)
+    public function show(string $id)
     {
-        $surgery = Surgery::with(['pet.owner.user', 'surgeon', 'medicalRecord'])
+        $surgery = \App\Models\Surgery::with(['pet.owner.user', 'surgeon', 'medicalRecord'])
             ->findOrFail($id);
 
         return view('admin.surgeries.show', compact('surgery'));
     }
 
     /**
-     * Show the form for editing the specified surgery.
+     * Show the form for editing the surgery
      */
-    public function edit($id)
+    public function edit(string $id)
     {
-        $surgery = Surgery::findOrFail($id);
-        $pets = Pet::with('owner.user')->get();
-        $surgeons = User::where('role', 'veterinarian')->get();
+        $surgery = \App\Models\Surgery::findOrFail($id);
+        $pets = \App\Models\Pet::with('owner.user')->get();
+        $surgeons = \App\Models\User::where('role', 'veterinarian')->get();
 
         return view('admin.surgeries.edit', compact('surgery', 'pets', 'surgeons'));
     }
 
     /**
-     * Update the specified surgery in storage.
+     * Update the specified surgery
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, string $id)
     {
-        $surgery = Surgery::findOrFail($id);
+        $surgery = \App\Models\Surgery::findOrFail($id);
 
         $validated = $request->validate([
             'surgeon_id' => 'required|exists:users,id',
@@ -115,25 +111,14 @@ class SurgeryController extends BaseController
     }
 
     /**
-     * Remove the specified surgery from storage.
+     * Delete the specified surgery
      */
-    public function destroy($id)
+    public function destroy(string $id)
     {
-        $surgery = Surgery::findOrFail($id);
+        $surgery = \App\Models\Surgery::findOrFail($id);
         $surgery->delete();
 
         return redirect()->route('admin.surgeries.index')
             ->with('success', 'Surgery deleted successfully!');
-    }
-
-    /**
-     * Display surgeries for a specific pet.
-     */
-    public function byPet($petId)
-    {
-        $pet = Pet::with('surgeries.surgeon')->findOrFail($petId);
-        $surgeries = $pet->surgeries()->orderBy('scheduled_date', 'desc')->paginate(10);
-
-        return view('admin.surgeries.pet', compact('pet', 'surgeries'));
     }
 }

@@ -1,4 +1,10 @@
- <!-- Fonts -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - VetSystem</title>
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -713,19 +719,19 @@
 
                 <div class="nav-section">
                     <div class="nav-section-title">Medical</div>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.medical-records.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.medical-records.index') }}" class="nav-item {{ request()->routeIs('admin.medical-records.*') ? 'active' : '' }}">
                         <i class="fas fa-file-medical"></i>
                         <span>Medical Records</span>
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.vaccinations.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.vaccinations.index') }}" class="nav-item {{ request()->routeIs('admin.vaccinations.*') ? 'active' : '' }}">
                         <i class="fas fa-syringe"></i>
                         <span>Vaccinations</span>
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.prescriptions.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.prescriptions.index') }}" class="nav-item {{ request()->routeIs('admin.prescriptions.*') ? 'active' : '' }}">
                         <i class="fas fa-prescription"></i>
                         <span>Prescriptions</span>
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.surgeries.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.surgeries.index') }}" class="nav-item {{ request()->routeIs('admin.surgeries.*') ? 'active' : '' }}">
                         <i class="fas fa-procedures"></i>
                         <span>Surgeries</span>
                     </a>
@@ -733,19 +739,19 @@
 
                 <div class="nav-section">
                     <div class="nav-section-title">Services</div>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.boarding.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.boarding.index') }}" class="nav-item {{ request()->routeIs('admin.boarding.*') ? 'active' : '' }}">
                         <i class="fas fa-hotel"></i>
                         <span>Boarding</span>
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.grooming.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.grooming.index') }}" class="nav-item {{ request()->routeIs('admin.grooming.*') ? 'active' : '' }}">
                         <i class="fas fa-cut"></i>
                         <span>Grooming</span>
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.pharmacy.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.pharmacy.index') }}" class="nav-item {{ request()->routeIs('admin.pharmacy.*') ? 'active' : '' }}">
                         <i class="fas fa-capsules"></i>
                         <span>Pharmacy</span>
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.laboratory.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.laboratory.test-requests.index') }}" class="nav-item {{ request()->routeIs('admin.laboratory.*') ? 'active' : '' }}">
                         <i class="fas fa-flask"></i>
                         <span>Laboratory</span>
                     </a>
@@ -753,23 +759,23 @@
 
                 <div class="nav-section">
                     <div class="nav-section-title">Management</div>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.inventory.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.inventory.index') }}" class="nav-item {{ request()->routeIs('admin.inventory.*') ? 'active' : '' }}">
                         <i class="fas fa-boxes"></i>
                         <span>Inventory</span>
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.billing.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.billing.index') }}" class="nav-item {{ request()->routeIs('admin.billing.*') ? 'active' : '' }}">
                         <i class="fas fa-file-invoice-dollar"></i>
                         <span>Billing</span>
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.staff.index') }}" class="nav-item {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
                         <i class="fas fa-user-md"></i>
                         <span>Staff</span>
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.reports.index') }}" class="nav-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                         <i class="fas fa-chart-bar"></i>
                         <span>Reports</span>
                     </a>
-                    <a href="" class="nav-item {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.settings.index') }}" class="nav-item {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
                         <i class="fas fa-cog"></i>
                         <span>Settings</span>
                     </a>

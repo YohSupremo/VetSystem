@@ -1,6 +1,4 @@
-@extends('admin.layouts.app')
-
-@section('title', 'Medical Records')
+@extends('admin.dashboard')
 
 @section('content')
 <div class="container-fluid">

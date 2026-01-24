@@ -1,6 +1,4 @@
-@extends('admin.layouts.app')
-
-@section('title', 'Laboratory Management')
+@extends('admin.dashboard')
 
 @push('styles')
 <style>
@@ -40,63 +38,84 @@
 @endpush
 
 @section('content')
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h2 class="text-dark"><i class="fas fa-flask me-2"></i>Laboratory Management</h2>
-        </div>
+<div class="content-header">
+    <div class="header-title">
+        <h1><i class="fas fa-flask"></i> Laboratory Management</h1>
+        <p>Manage test requests, types, and results</p>
     </div>
+</div>
 
-    <!-- Dashboard Cards -->
-    <div class="row mb-4">
-        <div class="col-md-4 mb-4">
-            <div class="card border-left-primary h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-uppercase text-primary font-weight-bold small">Pending Tests</h6>
-                            <h2 class="mb-0" id="pendingTestsCount">0</h2>
-                        </div>
-                        <div class="icon-circle bg-primary text-white">
-                            <i class="fas fa-hourglass-half"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="dashboard-cards">
+    <div class="dashboard-card">
+        <div class="card-icon" style="background: var(--primary-blue);">
+            <i class="fas fa-hourglass-half"></i>
         </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="card border-left-success h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-uppercase text-success font-weight-bold small">Completed Tests</h6>
-                            <h2 class="mb-0" id="completedTestsCount">0</h2>
-                        </div>
-                        <div class="icon-circle bg-success text-white">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="card border-left-info h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-uppercase text-info font-weight-bold small">Test Types</h6>
-                            <h2 class="mb-0" id="testTypesCount">0</h2>
-                        </div>
-                        <div class="icon-circle bg-info text-white">
-                            <i class="fas fa-vial"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="card-info">
+            <h3>{{ $pendingTests ?? 0 }}</h3>
+            <p>Pending Tests</p>
         </div>
     </div>
+    <div class="dashboard-card">
+        <div class="card-icon" style="background: var(--accent-green);">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="card-info">
+            <h3>{{ $completedTests ?? 0 }}</h3>
+            <p>Completed Tests</p>
+        </div>
+    </div>
+    <div class="dashboard-card">
+        <div class="card-icon" style="background: var(--accent-pink);">
+            <i class="fas fa-vial"></i>
+        </div>
+        <div class="card-info">
+            <h3>{{ $testTypes ?? 0 }}</h3>
+            <p>Test Types</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Test Requests</h3>
+    </div>
+    <div class="card-body">
+        @if($testRequests ?? null)
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Pet</th>
+                        <th>Owner</th>
+                        <th>Status</th>
+                        <th>Created Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($testRequests as $request)
+                        <tr>
+                            <td>{{ $request->id }}</td>
+                            <td>{{ $request->pet->name ?? 'N/A' }}</td>
+                            <td>{{ $request->pet->owner->user->first_name ?? 'N/A' }} {{ $request->pet->owner->user->last_name ?? '' }}</td>
+                            <td><span class="badge badge-secondary">{{ $request->status }}</span></td>
+                            <td>{{ $request->created_at->format('M d, Y') }}</td>
+                            <td>
+                                <a href="{{ route('admin.laboratory.test-requests.show', $request->id) }}" class="btn btn-sm btn-info">View</a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="text-center">No test requests found</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        @else
+            <p class="text-center">No test requests found</p>
+        @endif
+    </div>
+</div>
 
     <!-- Tabs Navigation -->
     <div class="card shadow mb-4">
@@ -271,3 +290,4 @@
             </div>
         </div>
     </div>
+@endsection

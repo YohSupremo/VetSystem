@@ -18,7 +18,17 @@ class LaboratoryController extends Controller
      */
     public function index()
     {
-        return view('admin.laboratory.index');
+        $pendingTests = TestRequest::where('status', 'pending')->count();
+        $completedTests = TestRequest::where('status', 'completed')->count();
+        $testTypes = TestType::count();
+        $testRequests = TestRequest::with(['pet', 'pet.owner'])->orderBy('created_at', 'desc')->paginate(10);
+        
+        return view('admin.laboratory.index', compact(
+            'pendingTests',
+            'completedTests',
+            'testTypes',
+            'testRequests'
+        ));
     }
 
     /**

@@ -82,6 +82,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Medical Records
     Route::prefix('medical-records')->name('medical-records.')->group(function () {
         Route::get('/', [MedicalRecordController::class, 'index'])->name('index');
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\MedicalRecordDashboardController::class, 'index'])->name('dashboard');
         Route::get('/create', [MedicalRecordController::class, 'create'])->name('create');
         Route::post('/', [MedicalRecordController::class, 'store'])->name('store');
         Route::get('/{medicalRecord}', [MedicalRecordController::class, 'show'])->name('show');
@@ -112,6 +113,35 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/{prescription}/edit', [PrescriptionController::class, 'edit'])->name('edit');
         Route::put('/{prescription}', [PrescriptionController::class, 'update'])->name('update');
         Route::delete('/{prescription}', [PrescriptionController::class, 'destroy'])->name('destroy');
+    });
+
+    // Laboratory
+    Route::prefix('laboratory')->name('laboratory.')->group(function () {
+        // Test Requests
+        Route::get('/test-requests', [\App\Http\Controllers\Admin\LaboratoryController::class, 'index'])->name('test-requests.index');
+        Route::get('/test-requests/create', [\App\Http\Controllers\Admin\LaboratoryController::class, 'createTestRequest'])->name('test-requests.create');
+        Route::post('/test-requests', [\App\Http\Controllers\Admin\LaboratoryController::class, 'storeTestRequest'])->name('test-requests.store');
+        Route::get('/test-requests/{testRequest}', [\App\Http\Controllers\Admin\LaboratoryController::class, 'showTestRequest'])->name('test-requests.show');
+        Route::put('/test-requests/{testRequest}/status', [\App\Http\Controllers\Admin\LaboratoryController::class, 'updateTestStatus'])->name('test-requests.update-status');
+        
+        // Test Types
+        Route::get('/test-types', [\App\Http\Controllers\Admin\LaboratoryController::class, 'testTypes'])->name('test-types.index');
+        Route::post('/test-types', [\App\Http\Controllers\Admin\LaboratoryController::class, 'storeTestType'])->name('test-types.store');
+        Route::delete('/test-types/{testType}', [\App\Http\Controllers\Admin\LaboratoryController::class, 'destroyTestType'])->name('test-types.destroy');
+        
+        // Test Results
+        Route::get('/test-results', [\App\Http\Controllers\Admin\LaboratoryController::class, 'testResults'])->name('test-results.index');
+        Route::post('/test-results', [\App\Http\Controllers\Admin\LaboratoryController::class, 'storeTestResult'])->name('test-results.store');
+        Route::get('/test-results/{testResult}', [\App\Http\Controllers\Admin\LaboratoryController::class, 'showTestResult'])->name('test-results.show');
+        
+        // API Endpoints
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/pets/{pet}', [\App\Http\Controllers\Admin\LaboratoryController::class, 'getPetInfo']);
+            Route::get('/test-requests', [\App\Http\Controllers\Admin\LaboratoryController::class, 'getTestRequests']);
+            Route::get('/test-types', [\App\Http\Controllers\Admin\LaboratoryController::class, 'getTestTypes']);
+            Route::get('/test-results', [\App\Http\Controllers\Admin\LaboratoryController::class, 'getTestResults']);
+            Route::get('/test-requests/{testRequest}/result', [\App\Http\Controllers\Admin\LaboratoryController::class, 'getTestResult']);
+        });
     });
 
     // Surgeries

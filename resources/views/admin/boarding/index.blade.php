@@ -1,10 +1,140 @@
 @extends('admin.dashboard')
 
+@push('styles')
+<style>
+    .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .dashboard-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .card-info h3 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.2;
+    }
+    
+    .card-info p {
+        margin: 0.25rem 0 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .header-title h1 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+        color: #2c3e50;
+    }
+    
+    .header-title p {
+        color: #6c757d;
+        margin: 0;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        border: none;
+        padding: 0.65rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(78, 115, 223, 0.3);
+    }
+    
+    .search-input {
+        padding: 0.65rem 1rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 8px;
+        width: 250px;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        outline: none;
+    }
+    
+    .content-section {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        color: #2c3e50;
+    }
+    
+    .section-header h2 i {
+        margin-right: 0.75rem;
+        color: #4e73df;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="content-header">
     <div class="header-title">
         <h1><i class="fas fa-home"></i> Pet Boarding Management</h1>
-        <p>Manage all boarding activities and cage assignments</p>
+        <p>Manage all boarding activities and cage assignments in one place</p>
     </div>
     <div class="header-actions">
         <button class="btn btn-primary" onclick="openModal('newBoardingModal')">
@@ -15,7 +145,7 @@
 
 <div class="dashboard-cards">
     <div class="dashboard-card">
-        <div class="card-icon" style="background: var(--accent-pink);">
+        <div class="card-icon" style="background: linear-gradient(135deg, #f6c23e 0%, #e0a800 100%);">
             <i class="fas fa-paw"></i>
         </div>
         <div class="card-info">
@@ -24,7 +154,7 @@
         </div>
     </div>
     <div class="dashboard-card">
-        <div class="card-icon" style="background: var(--primary-blue);">
+        <div class="card-icon" style="background: linear-gradient(135deg, #36b9cc 0%, #258391 100%);">
             <i class="fas fa-home"></i>
         </div>
         <div class="card-info">
@@ -33,7 +163,7 @@
         </div>
     </div>
     <div class="dashboard-card">
-        <div class="card-icon" style="background: var(--accent-green);">
+        <div class="card-icon" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);">
             <i class="fas fa-calendar-check"></i>
         </div>
         <div class="card-info">
@@ -47,7 +177,10 @@
     <div class="section-header">
         <h2><i class="fas fa-list"></i> Current Boardings</h2>
         <div class="section-actions">
-            <input type="text" class="search-input" placeholder="Search boardings..." onkeyup="filterTable('boardingsTable', this.value)">
+            <div class="input-group" style="width: 300px;">
+                <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" class="form-control border-start-0" placeholder="Search boardings..." onkeyup="filterTable('boardingsTable', this.value)">
+            </div>
         </div>
     </div>
     

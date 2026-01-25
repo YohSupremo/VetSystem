@@ -68,8 +68,8 @@ class AppointmentController extends Controller
                     'appointments.notes',
                     'pets.name as pet_name',
                     DB::raw("COALESCE(pets.species, '') as pet_species"),
-                    DB::raw("TRIM(CONCAT(owners.first_name, ' ', owners.last_name)) as owner_name"),
-                    DB::raw("TRIM(CONCAT(vets.first_name, ' ', vets.last_name)) as veterinarian_name"),
+                    DB::raw("TRIM(owners.first_name || ' ' || owners.last_name) as owner_name"),
+                    DB::raw("TRIM(vets.first_name || ' ' || vets.last_name) as veterinarian_name"),
                 ])
                 ->map(function ($appointment) {
                     $appointment->formatted_date = $appointment->appointment_date
@@ -243,8 +243,8 @@ class AppointmentController extends Controller
                 'appointments.*',
                 'pets.name as pet_name',
                 DB::raw("COALESCE(pets.species, '') as pet_species"),
-                DB::raw("TRIM(CONCAT(owners.first_name, ' ', owners.last_name)) as owner_name"),
-                DB::raw("TRIM(CONCAT(vets.first_name, ' ', vets.last_name)) as veterinarian_name"),
+                DB::raw("TRIM(owners.first_name || ' ' || owners.last_name) as owner_name"),
+                DB::raw("TRIM(vets.first_name || ' ' || vets.last_name) as veterinarian_name"),
             ]);
 
         abort_if(!$record, 404);

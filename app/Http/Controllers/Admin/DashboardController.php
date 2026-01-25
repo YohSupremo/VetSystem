@@ -99,8 +99,8 @@ class DashboardController extends Controller
                     'appointments.type',
                     'appointments.status',
                     'pets.name as pet_name',
-                    DB::raw("CONCAT(owners.first_name, ' ', owners.last_name) as owner_name"),
-                    DB::raw("CONCAT(vets.first_name, ' ', vets.last_name) as veterinarian_name"),
+                    DB::raw("owners.first_name || ' ' || owners.last_name as owner_name"),
+                    DB::raw("vets.first_name || ' ' || vets.last_name as veterinarian_name"),
                 ])
                 ->map(function ($appointment) {
                     $appointment->formatted_date = $appointment->appointment_date

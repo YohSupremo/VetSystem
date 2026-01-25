@@ -158,7 +158,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 
     // Boarding
-    Route::resource('boarding', BoardingController::class);
+    Route::prefix('boarding')->name('boarding.')->group(function(){
+        Route::get('/', [BoardingController::class, 'index'])->name('index');
+        Route::get('/new-boarding', [BoardingController::class, 'create'])->name('new-boarding');
+        Route::post('/new-boarding', [BoardingController::class, 'createPass'])->name('new-boarding');
+        
+        // RESTful routes
+        Route::get('/create', [BoardingController::class, 'create'])->name('create');
+        Route::post('/', [BoardingController::class, 'store'])->name('store');
+        Route::get('/{boarding}', [BoardingController::class, 'show'])->name('show');
+        Route::get('/{boarding}/edit', [BoardingController::class, 'edit'])->name('edit');
+        Route::put('/{boarding}', [BoardingController::class, 'update'])->name('update');
+        Route::delete('/{boarding}', [BoardingController::class, 'destroy'])->name('destroy');
+    });
 
     // Grooming
     Route::resource('grooming', GroomingController::class);

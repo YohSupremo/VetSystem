@@ -80,11 +80,16 @@
         align-items: center;
         gap: 0.5rem;
         transition: all 0.3s ease;
+        text-decoration: none;
+        color: white;
+        cursor: pointer;
     }
     
     .btn-primary:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(78, 115, 223, 0.3);
+        color: white;
+        text-decoration: none;
     }
     
     .search-input {
@@ -127,6 +132,35 @@
         margin-right: 0.75rem;
         color: #4e73df;
     }
+    
+    .search-form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .search-form input {
+        flex: 1;
+        max-width: 300px;
+    }
+    
+    .search-form button {
+        padding: 0.65rem 1rem;
+        background: #4e73df;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .search-form button:hover {
+        background: #224abe;
+    }
+    
+    .delete-form {
+        display: inline;
+    }
 </style>
 @endpush
 
@@ -137,9 +171,9 @@
         <p>Manage all boarding activities and cage assignments in one place</p>
     </div>
     <div class="header-actions">
-        <button class="btn btn-primary" onclick="openModal('newBoardingModal')">
+        <a href="{{ route('admin.boarding.new-boarding') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> New Boarding
-        </button>
+        </a>
     </div>
 </div>
 
@@ -177,10 +211,17 @@
     <div class="section-header">
         <h2><i class="fas fa-list"></i> Current Boardings</h2>
         <div class="section-actions">
-            <div class="input-group" style="width: 300px;">
-                <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
-                <input type="text" class="form-control border-start-0" placeholder="Search boardings..." onkeyup="filterTable('boardingsTable', this.value)">
-            </div>
+            <form method="GET" action="{{ route('admin.boarding.index') }}" class="search-form">
+                <input type="text" name="search" class="search-input" placeholder="Search boardings..." value="{{ request('search') }}">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                @if(request('search'))
+                    <a href="{{ route('admin.boarding.index') }}" class="btn btn-primary" style="background: #6c757d;">
+                        Clear
+                    </a>
+                @endif
+            </form>
         </div>
     </div>
     
@@ -202,43 +243,45 @@
                 <tr>
                     <td>
                         <div class="pet-info">
-                            <img src="{{ $boarding->pet->photo_path ?? asset('images/default-pet.jpg') }}" alt="{{ $boarding->pet->name }}" class="pet-avatar">
+                            <img src="{{ $boarding->petAssigned?->photo_path ?? asset('images/default-pet.jpg') }}" alt="{{ $boarding->petAssigned?->name ?? 'Pet' }}" class="pet-avatar">
                             <div>
-                                <strong>{{ $boarding->pet->name }}</strong>
-                                <span class="text-muted">{{ $boarding->pet->breed }}</span>
+                                <strong>{{ $boarding->petAssigned?->name ?? 'N/A' }}</strong>
+                                <span class="text-muted">{{ $boarding->petAssigned?->breed ?? 'N/A' }}</span>
                             </div>
                         </div>
                     </td>
-                    <td>{{ ($boarding->pet && $boarding->pet->owner && $boarding->pet->owner->user) ? $boarding->pet->owner->user->first_name . ' ' . $boarding->pet->owner->user->last_name : 'Unknown Owner' }}</td>
+                    <td>{{ ($boarding->petAssigned && $boarding->petAssigned->owner && $boarding->petAssigned->owner->user) ? $boarding->petAssigned->owner->user->first_name . ' ' . $boarding->petAssigned->owner->user->last_name : 'Unknown Owner' }}</td>
                     <td>
                         <span class="badge" style="background: #4A90E2;">
-                            {{ $boarding->cage->cage_code }}
+                            {{ $boarding->cageAssigned?->cage_code ?? 'N/A' }}
                         </span>
                     </td>
                     <td>{{ \Carbon\Carbon::parse($boarding->start_date)->format('M d, Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($boarding->end_date)->format('M d, Y') }}</td>
                     <td>
                         @php
-                            $statusClass = [
-                                'active' => 'success',
-                                'completed' => 'secondary',
-                                'cancelled' => 'danger'
-                            ][$boarding->status] ?? 'secondary';
+                            $isActive = $boarding->isActive();
+                            $statusClass = $isActive ? 'success' : 'secondary';
+                            $statusText = $isActive ? 'Active' : (now()->toDateString() > $boarding->end_date ? 'Completed' : 'Upcoming');
                         @endphp
                         <span class="badge badge-{{ $statusClass }}">
-                            {{ ucfirst($boarding->status) }}
+                            {{ $statusText }}
                         </span>
                     </td>
                     <td class="actions">
-                        <button class="btn-icon" onclick="viewBoarding({{ $boarding->id }})" title="View">
+                        <a href="{{ route('admin.boarding.show', $boarding->id) }}" class="btn-icon" title="View">
                             <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn-icon" onclick="editBoarding({{ $boarding->id }})" title="Edit">
+                        </a>
+                        <a href="{{ route('admin.boarding.edit', $boarding->id) }}" class="btn-icon" title="Edit">
                             <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-icon text-danger" onclick="confirmDelete({{ $boarding->id }})" title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        </a>
+                        <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id) }}" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this boarding record?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn-icon text-danger" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 @empty
@@ -251,133 +294,8 @@
     </div>
 </div>
 
-<!-- New Boarding Modal -->
-<div class="modal" id="newBoardingModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>New Boarding</h3>
-            <button class="close" onclick="closeModal('newBoardingModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="boardingForm">
-                @csrf
-                <div class="form-group">
-                    <label>Pet</label>
-                    <select class="form-control" name="pet_id" required>
-                        <option value="">Select Pet</option>
-                        @foreach($pets as $pet)
-                            <option value="{{ $pet->id }}">
-                                {{ $pet->name }} ({{ $pet->owner->user->first_name }} {{ $pet->owner->user->last_name }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Check-in Date</label>
-                        <input type="date" class="form-control" name="start_date" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Check-out Date</label>
-                        <input type="date" class="form-control" name="end_date" required>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Assign Cage</label>
-                    <select class="form-control" name="cage_id" required>
-                        <option value="">Select Cage</option>
-                        @foreach($cages as $cage)
-                            <option value="{{ $cage->id }}">
-                                {{ $cage->cage_code }} ({{ $cage->location }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Special Instructions</label>
-                    <textarea class="form-control" name="special_instructions" rows="3"></textarea>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('newBoardingModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Boarding</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 @push('scripts')
-<script>
-function filterTable(tableId, query) {
-    const table = document.getElementById(tableId);
-    const rows = table.getElementsByTagName('tr');
-    
-    for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
-    }
-}
-
-function viewBoarding(id) {
-    // Implement view functionality
-    window.location.href = `/admin/boarding/${id}`;
-}
-
-function editBoarding(id) {
-    // Implement edit functionality
-    window.location.href = `/admin/boarding/${id}/edit`;
-}
-
-function confirmDelete(id) {
-    if (confirm('Are you sure you want to delete this boarding record?')) {
-        // Implement delete functionality
-        fetch(`/admin/boarding/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert('Error deleting boarding record');
-            }
-        });
-    }
-}
-
-// Form submission
-document.getElementById('boardingForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    
-    fetch('/admin/boarding', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert('Error creating boarding record');
-        }
-    });
-});
-</script>
+<!-- No JavaScript needed - all functionality uses server-side form submissions -->
 @endpush
 
 <style>

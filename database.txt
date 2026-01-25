@@ -1,0 +1,395 @@
+Umbra_
+magnetism_
+Visual Studio Code
+
+This is the start of the #notes channel. 
+Roduta — 08/01/2026 6:08 pm
+Title: Veterinary Clinic and Pet Care Management System
+
+System Description
+
+A comprehensive veterinary clinic management system that handles all clinic operations including pet registration, appointments, medical records, treatments, inventory, boarding services, and clinic administration.
+Expand
+5 KB
+Roduta — 08/01/2026 9:02 pm
+Github Repo:
+https://github.com/YohSupremo/VetSystem
+GitHub
+GitHub - YohSupremo/VetSystem: Veterinary Clinic and Pet Care Manag...
+Veterinary Clinic and Pet Care Management System. Contribute to YohSupremo/VetSystem development by creating an account on GitHub.
+Veterinary Clinic and Pet Care Management System. Contribute to YohSupremo/VetSystem development by creating an account on GitHub.
+Roduta — 08/01/2026 9:55 pm
+Image
+Attachment file type: acrobat
+Veterinary Clinic and Pet Care Management System (5).pdf
+291.35 KB
+Roduta — 08/01/2026 11:16 pm
+Forwarded
+Can be reference
+Attachment file type: acrobat
+Chapter_1-5_Group7.pdf
+3.67 MB
+#general  •  08/01/2026
+Reference:
+Roduta — 08/01/2026 11:26 pm
+Formatting:
+https://docs.google.com/document/d/18PbPd5k8TkHzMtLCnfI8fYliWlTyKYxFo4q9MrnwlfQ/edit?usp=sharing
+
+i guess i'll make a copy version of this pa, para hindi direct na 'yan ang ma-edit.
+Google Docs
+Copy of Paper Format Group 4
+REPUBLIC OF THE PHILIPPINES TECHNOLOGICAL UNIVERSITY OF THE PHILIPPINES TAGUIG CAMPUSliterature WordUp AI-Powered Speech Coaching Web Application In Partial Fulfillment of the Requirements for IT PROFESSIONAL 1 (ELECTIVE) Submitte...
+Image
+Carutcho
+
+ — 09/01/2026 4:44 pm
+ara3334
+github
+Orlanda — 09/01/2026 5:04 pm
+AkiraJade
+Roduta — 09/01/2026 5:35 pm
+POLL FUNCTIONS
+ADDITIONAL FUNCTIONALITIES
+LANGUAGES TO BE USED
+Roduta — 10/01/2026 11:16 am
+Template
+Source: Ma'am 
+Attachment file type: acrobat
+Progress-Report-1.pdf
+127.81 KB
+Carutcho
+
+ — 12/01/2026 6:48 pm
+Image
+Image
+Image
+Image
+Image
+Image
+Carutcho
+
+ — 12/01/2026 7:08 pm
+Image
+Orlanda — 12/01/2026 7:58 pm
+pa chick
+@Llegado @Roduta
+Orlanda — 12/01/2026 8:18 pm
+-- Veterinary Clinic Management System
+-- Based on user's original schema
+-- Fully normalized to 2NF and 3NF
+-- MariaDB / MySQL compatible
+
+CREATE DATABASE IF NOT EXISTS vet_clinic_db;
+Expand
+9 KB
+ayan
+check @Roduta
+Orlanda — 14/01/2026 9:33 pm
+Image
+Image
+Image
+Image
+Image
+Image
+Image
+Image
+Image
+Image
+Image
+Image
+Image
+Image
+Image
+Roduta — 16/01/2026 10:44 am
+bakit picture @Orlanda otenan
+haha
+Orlanda — 16/01/2026 11:21 am
+yung command ba need?
+Orlanda — 16/01/2026 11:21 am
+eto?
+ay magkaiba pala yan
+wait
+Orlanda — 16/01/2026 11:23 am
+sabi mo kasi send ss discord
+Orlanda — 16/01/2026 11:45 am
+CREATE DATABASE IF NOT EXISTS vet_clinic_db;
+USE vet_clinic_db;
+
+-- =============================
+-- USERS
+-- =============================
+Expand
+8 KB
+﻿
+CREATE DATABASE IF NOT EXISTS vet_clinic_db;
+USE vet_clinic_db;
+
+-- =============================
+-- USERS
+-- =============================
+CREATE TABLE users (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ username VARCHAR(100) UNIQUE NOT NULL,
+ email VARCHAR(150) UNIQUE NOT NULL,
+ password VARCHAR(255) NOT NULL,
+ role ENUM('admin','veterinarian','staff','reception','pharmacy','groomer','boarding','pet_owner') NOT NULL,
+ first_name VARCHAR(100),
+ last_name VARCHAR(100),
+ contact_number VARCHAR(20),
+ address TEXT,
+ is_active TINYINT(1) DEFAULT 1,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- =============================
+-- PET OWNERS
+-- =============================
+CREATE TABLE pet_owners (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ user_id BIGINT UNSIGNED NOT NULL,
+ notes TEXT,
+ FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE owner_emergency_contacts (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ owner_id BIGINT UNSIGNED,
+ contact_name VARCHAR(150),
+ contact_number VARCHAR(20),
+ FOREIGN KEY (owner_id) REFERENCES pet_owners(id)
+);
+
+-- =============================
+-- PETS
+-- =============================
+CREATE TABLE pets (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ owner_id BIGINT UNSIGNED NOT NULL,
+ name VARCHAR(100),
+ species VARCHAR(50),
+ breed VARCHAR(100),
+ birth_date DATE,
+ gender ENUM('male','female','unknown') DEFAULT 'unknown',
+ color VARCHAR(100),
+ weight DECIMAL(5,2),
+ microchip_number VARCHAR(50),
+ photo_path VARCHAR(255),
+ FOREIGN KEY (owner_id) REFERENCES pet_owners(id)
+);
+
+-- =============================
+-- APPOINTMENTS
+-- =============================
+CREATE TABLE appointments (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ pet_id BIGINT UNSIGNED,
+ veterinarian_id BIGINT UNSIGNED,
+ appointment_date DATETIME,
+ type ENUM('consultation','vaccination','surgery','grooming','boarding','follow_up','other'),
+ status ENUM('pending','confirmed','in_progress','completed','cancelled','no_show'),
+ notes TEXT,
+ FOREIGN KEY (pet_id) REFERENCES pets(id),
+ FOREIGN KEY (veterinarian_id) REFERENCES users(id)
+);
+
+-- =============================
+-- QUEUE
+-- =============================
+CREATE TABLE queue_entries (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ appointment_id BIGINT UNSIGNED,
+ pet_id BIGINT UNSIGNED,
+ arrival_time DATETIME,
+ status ENUM('waiting','being_served','completed') DEFAULT 'waiting',
+ estimated_wait_time INT,
+ priority INT DEFAULT 0,
+ FOREIGN KEY (appointment_id) REFERENCES appointments(id),
+ FOREIGN KEY (pet_id) REFERENCES pets(id)
+);
+
+-- =============================
+-- MEDICAL RECORDS
+-- =============================
+CREATE TABLE medical_records (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ pet_id BIGINT UNSIGNED,
+ veterinarian_id BIGINT UNSIGNED,
+ visit_date DATE,
+ complaint TEXT,
+ examination_notes TEXT,
+ vital_signs JSON,
+ diagnosis TEXT,
+ treatment_plan TEXT,
+ follow_up_date DATE,
+ FOREIGN KEY (pet_id) REFERENCES pets(id),
+ FOREIGN KEY (veterinarian_id) REFERENCES users(id)
+);
+
+-- =============================
+-- PRESCRIPTIONS
+-- =============================
+CREATE TABLE prescriptions (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ medical_record_id BIGINT UNSIGNED,
+ medication_name VARCHAR(150),
+ dosage VARCHAR(100),
+ frequency VARCHAR(100),
+ duration_days INT,
+ quantity INT,
+ instructions TEXT,
+ dispensed TINYINT(1) DEFAULT 0,
+ dispensed_at DATETIME,
+ FOREIGN KEY (medical_record_id) REFERENCES medical_records(id)
+);
+
+-- =============================
+-- SURGERIES
+-- =============================
+CREATE TABLE surgeries (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ pet_id BIGINT UNSIGNED,
+ medical_record_id BIGINT UNSIGNED,
+ surgeon_id BIGINT UNSIGNED,
+ scheduled_date DATETIME,
+ procedure_name VARCHAR(255),
+ anesthesia_type VARCHAR(100),
+ status ENUM('scheduled','in_progress','completed','cancelled'),
+ pre_op_notes TEXT,
+ surgery_notes TEXT,
+ post_op_instructions TEXT,
+ outcome TEXT,
+ FOREIGN KEY (pet_id) REFERENCES pets(id),
+ FOREIGN KEY (medical_record_id) REFERENCES medical_records(id),
+ FOREIGN KEY (surgeon_id) REFERENCES users(id)
+);
+
+-- =============================
+-- VACCINES
+-- =============================
+CREATE TABLE vaccines (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ vaccine_name VARCHAR(150),
+ manufacturer VARCHAR(100)
+);
+
+CREATE TABLE pet_vaccinations (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ pet_id BIGINT UNSIGNED,
+ vaccine_id BIGINT UNSIGNED,
+ batch_number VARCHAR(50),
+ dose_number INT,
+ administered_date DATE,
+ next_due_date DATE,
+ administered_by BIGINT UNSIGNED,
+ certificate_path VARCHAR(255),
+ notes TEXT,
+ FOREIGN KEY (pet_id) REFERENCES pets(id),
+ FOREIGN KEY (vaccine_id) REFERENCES vaccines(id),
+ FOREIGN KEY (administered_by) REFERENCES users(id)
+);
+
+-- =============================
+-- BOARDING + QR CAGE SYSTEM
+-- =============================
+
+CREATE TABLE cages (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ cage_code VARCHAR(20) UNIQUE,
+ location VARCHAR(100),
+ status ENUM('available','occupied','maintenance') DEFAULT 'available'
+);
+
+CREATE TABLE cage_assignments (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ cage_id BIGINT UNSIGNED,
+ pet_id BIGINT UNSIGNED,
+ start_date DATE,
+ end_date DATE,
+ FOREIGN KEY (cage_id) REFERENCES cages(id),
+ FOREIGN KEY (pet_id) REFERENCES pets(id)
+);
+
+CREATE TABLE feeding_schedules (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ pet_id BIGINT UNSIGNED,
+ notes TEXT,
+ schedule TEXT,
+
+ FOREIGN KEY (pet_id) REFERENCES pets(id)
+);
+
+CREATE TABLE medication_instructions (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ pet_id BIGINT UNSIGNED,
+ instructions TEXT,
+ FOREIGN KEY (pet_id) REFERENCES pets(id)
+);
+
+-- =============================
+-- INVENTORY
+-- =============================
+CREATE TABLE suppliers (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ supplier_name VARCHAR(150)
+);
+
+CREATE TABLE inventory_items (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(150),
+ category ENUM('medicine','vaccine','supply','food','other'),
+ sku VARCHAR(50) UNIQUE,
+ unit_price DECIMAL(10,2)
+);
+
+CREATE TABLE inventory_stock (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ item_id BIGINT UNSIGNED,
+ supplier_id BIGINT UNSIGNED,
+ quantity INT,
+ min_stock INT,
+ expiry_date DATE,
+ FOREIGN KEY (item_id) REFERENCES inventory_items(id),
+ FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
+);
+
+CREATE TABLE inventory_transactions (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ stock_id BIGINT UNSIGNED,
+ type ENUM('in','out','adjustment'),
+ quantity INT,
+ reference VARCHAR(100),
+ notes TEXT,
+ transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (stock_id) REFERENCES inventory_stock(id)
+);
+
+-- =============================
+-- BILLING
+-- =============================
+CREATE TABLE invoices (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ appointment_id BIGINT UNSIGNED,
+ pet_id BIGINT UNSIGNED,
+ invoice_number VARCHAR(50) UNIQUE,
+ issue_date DATE,
+ due_date DATE,
+ total_amount DECIMAL(12,2),
+ paid_amount DECIMAL(12,2),
+ status ENUM('pending','partial','paid','overdue'),
+ notes TEXT,
+ FOREIGN KEY (appointment_id) REFERENCES appointments(id),
+ FOREIGN KEY (pet_id) REFERENCES pets(id)
+);
+
+CREATE TABLE invoice_items (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ invoice_id BIGINT UNSIGNED,
+ description VARCHAR(255),
+ quantity INT,
+ unit_price DECIMAL(10,2),
+ total DECIMAL(12,2),
+ FOREIGN KEY (invoice_id) REFERENCES invoices(id)
+);
+message.txt
+8 KB

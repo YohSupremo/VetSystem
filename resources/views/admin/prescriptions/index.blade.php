@@ -25,8 +25,8 @@
                 <div class="pet-info">
                     <h3 class="pet-name">{{ $pet->name }}</h3>
                     <div class="pet-details">
-                        <p><i class="fas fa-user-tie me-2"></i> {{ $pet->owner->name ?? 'No Owner' }}</p>
-                        <p><i class="fas fa-phone me-2"></i> {{ $pet->owner->phone ?? 'N/A' }}</p>
+                        <p><i class="fas fa-user-tie me-2"></i> {{ $pet->owner->user->first_name ?? '' }} {{ $pet->owner->user->last_name ?? 'No Owner' }}</p>
+                        <p><i class="fas fa-phone me-2"></i> {{ $pet->owner->user->contact_number ?? 'N/A' }}</p>
                         <p><i class="fas fa-paw me-2"></i> {{ $pet->species }} @if($pet->breed) • {{ $pet->breed }} @endif</p>
                         <p><i class="fas fa-prescription me-2"></i> 
                             @if($pet->prescriptions->count() > 0)
@@ -37,7 +37,7 @@
                         </p>
                     </div>
                     <div class="pet-actions mt-3">
-                        <a href="{{ route('admin.prescriptions.show', $pet->id) }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ route('admin.prescriptions.pet', $pet->id) }}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-eye me-1"></i> View All
                         </a>
                         <a href="{{ route('admin.prescriptions.create', ['pet_id' => $pet->id]) }}" class="btn btn-sm btn-outline-success">

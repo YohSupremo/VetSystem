@@ -14,7 +14,7 @@ class PrescriptionController extends BaseController
      */
     public function index()
     {
-        $pets = Pet::with('prescriptions', 'owner')->paginate(10);
+        $pets = Pet::with('prescriptions', 'owner.user')->paginate(10);
         return view('admin.prescriptions.index', compact('pets'));
     }
 
@@ -54,7 +54,7 @@ class PrescriptionController extends BaseController
      */
     public function show(Prescription $prescription)
     {
-        $prescription->load('pet', 'medicalRecord');
+        $prescription->load('pet.owner.user', 'medicalRecord.veterinarian');
         return view('admin.prescriptions.show', compact('prescription'));
     }
 
@@ -63,9 +63,9 @@ class PrescriptionController extends BaseController
      */
     public function edit(Prescription $prescription)
     {
-        $prescription->load('pet');
-        $pets = Pet::with('owner')->get();
-        $medicalRecords = MedicalRecord::with('pet')->get();
+        $prescription->load('pet.owner.user');
+        $pets = Pet::with('owner.user')->get();
+        $medicalRecords = MedicalRecord::with('pet', 'veterinarian')->get();
         return view('admin.prescriptions.edit', compact('prescription', 'pets', 'medicalRecords'));
     }
 
@@ -98,5 +98,19 @@ class PrescriptionController extends BaseController
         $prescription->delete();
         return redirect()->route('admin.prescriptions.index')
             ->with('success', 'Prescription deleted successfully!');
+    }
+
+    /**
+     * Display prescriptions for a specific pet.
+     */
+    public function byPet($petId)
+    {
+        $pet = Pet::with('owner.user')->findOrFail($petId);
+        $prescriptions = Prescription::where('pet_id', $petId)
+            ->with('medicalRecord')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('admin.prescriptions.pet', compact('pet', 'prescriptions'));
     }
 }

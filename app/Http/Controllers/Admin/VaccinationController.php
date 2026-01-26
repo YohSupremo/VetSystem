@@ -15,7 +15,7 @@ class VaccinationController extends Controller
      */
     public function index()
     {
-        $pets = Pet::with('owner', 'vaccinations')
+        $pets = Pet::with('owner.user', 'vaccinations')
             ->has('vaccinations')
             ->paginate(10);
 

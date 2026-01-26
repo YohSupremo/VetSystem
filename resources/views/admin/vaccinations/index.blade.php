@@ -25,8 +25,8 @@
                 <div class="pet-info">
                     <h3 class="pet-name">{{ $pet->name }}</h3>
                     <div class="pet-details">
-                        <p><i class="fas fa-user-tie me-2"></i> {{ $pet->owner->name ?? 'No Owner' }}</p>
-                        <p><i class="fas fa-phone me-2"></i> {{ $pet->owner->phone ?? 'N/A' }}</p>
+                        <p><i class="fas fa-user-tie me-2"></i> {{ $pet->owner->user->first_name ?? '' }} {{ $pet->owner->user->last_name ?? 'No Owner' }}</p>
+                        <p><i class="fas fa-phone me-2"></i> {{ $pet->owner->user->contact_number ?? 'N/A' }}</p>
                         <p><i class="fas fa-paw me-2"></i> {{ $pet->species }} @if($pet->breed) • {{ $pet->breed }} @endif</p>
                         <p><i class="fas fa-syringe me-2"></i> 
                             @if($pet->vaccinations->count() > 0)

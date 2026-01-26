@@ -122,6 +122,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [PrescriptionController::class, 'index'])->name('index');
         Route::get('/create', [PrescriptionController::class, 'create'])->name('create');
         Route::post('/', [PrescriptionController::class, 'store'])->name('store');
+        Route::get('/pet/{pet}', [PrescriptionController::class, 'byPet'])->name('pet');
         Route::get('/{prescription}', [PrescriptionController::class, 'show'])->name('show');
         Route::get('/{prescription}/edit', [PrescriptionController::class, 'edit'])->name('edit');
         Route::put('/{prescription}', [PrescriptionController::class, 'update'])->name('update');

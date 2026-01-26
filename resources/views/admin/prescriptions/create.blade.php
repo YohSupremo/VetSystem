@@ -8,7 +8,7 @@
     <div class="form-container">
         <div class="form-header">
             <h2><i class="fas fa-prescription-bottle"></i> New Prescription</h2>
-            <a href="{{ route('admin.prescriptions.index') }}" class="btn btn-secondary">
+            <a href="@if(request('pet_id')){{ route('admin.prescriptions.pet', request('pet_id')) }}@else{{ route('admin.prescriptions.index') }}@endif" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>
@@ -19,21 +19,39 @@
             <div class="form-section">
                 <h3>Pet & Medical Record</h3>
                 
-                <div class="form-group">
-                    <label>Select Pet <span class="text-danger">*</span></label>
-                    <select name="pet_id" class="form-control" required>
-                        <option value="">Choose a pet...</option>
-                        @forelse($pets as $pet)
-                            <option value="{{ $pet->id }}" {{ old('pet_id') == $pet->id ? 'selected' : '' }}>
-                                {{ $pet->name }} - {{ $pet->owner->user->first_name ?? 'Unknown' }} {{ $pet->owner->user->last_name ?? '' }}
-                            </option>
-                        @empty
-                            <option value="">No pets available</option>
-                        @endforelse
-                    </select>
-                    @error('pet_id')<span class="text-danger">{{ $message }}</span>@enderror
-                </div>
-
+                @if(request('pet_id'))
+                    <!-- Pet Pre-selected (Read-only) -->
+                    <div class="form-group">
+                        <label>Pet <span class="text-danger">*</span></label>
+                        <div class="form-control-static">
+                            @php
+                                $selectedPet = $pets->firstWhere('id', request('pet_id'));
+                            @endphp
+                            <strong>{{ $selectedPet->name ?? 'Unknown' }}</strong>
+                            <small class="text-muted d-block">
+                                {{ $selectedPet->owner->user->first_name ?? '' }} {{ $selectedPet->owner->user->last_name ?? '' }} • {{ $selectedPet->species }} @if($selectedPet->breed)• {{ $selectedPet->breed }}@endif
+                            </small>
+                        </div>
+                        <input type="hidden" name="pet_id" value="{{ request('pet_id') }}" required>
+                    </div>
+                @else
+                    <!-- Pet Selection (Editable) -->
+                    <div class="form-group">
+                        <label>Select Pet <span class="text-danger">*</span></label>
+                        <select name="pet_id" class="form-control" required>
+                            <option value="">Choose a pet...</option>
+                            @forelse($pets as $pet)
+                                <option value="{{ $pet->id }}" {{ old('pet_id') == $pet->id ? 'selected' : '' }}>
+                                    {{ $pet->name }} - {{ $pet->owner->user->first_name ?? 'Unknown' }} {{ $pet->owner->user->last_name ?? '' }}
+                                </option>
+                            @empty
+                                <option value="">No pets available</option>
+                            @endforelse
+                        </select>
+                        @error('pet_id')<span class="text-danger">{{ $message }}</span>@enderror
+                    </div>
+                @endif
+                
                 <div class="form-group">
                     <label>Medical Record (Optional)</label>
                     <select name="medical_record_id" class="form-control">
@@ -87,7 +105,7 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Create Prescription
                 </button>
-                <a href="{{ route('admin.prescriptions.index') }}" class="btn btn-secondary">Cancel</a>
+                <a href="@if(request('pet_id')){{ route('admin.prescriptions.pet', request('pet_id')) }}@else{{ route('admin.prescriptions.index') }}@endif" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>
@@ -148,6 +166,14 @@
 .form-group textarea {
     width: 100%;
     padding: 10px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.form-control-static {
+    padding: 10px 15px;
+    background-color: #f8f9fa;
     border: 1px solid #e0e0e0;
     border-radius: 6px;
     font-size: 14px;

@@ -37,7 +37,7 @@
                         </p>
                     </div>
                     <div class="pet-actions mt-3">
-                        <a href="{{ route('admin.prescriptions.pet', $pet->id) }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ route('admin.prescriptions.show', $pet->id) }}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-eye me-1"></i> View All
                         </a>
                         <a href="{{ route('admin.prescriptions.create', ['pet_id' => $pet->id]) }}" class="btn btn-sm btn-outline-success">

@@ -75,7 +75,7 @@ class BoardingController extends BaseController
             'afternoon_feed_time' => 'nullable|date_format:H:i',
             'evening_feed_time'   => 'nullable|date_format:H:i',
             'feeding_notes'       => 'nullable|string',
-            'medication_notes'    => 'nullable|string',
+            
         ]);
 
         $cage = Cage::find($info['cage_id']);
@@ -120,18 +120,21 @@ class BoardingController extends BaseController
             ? implode(',', $feeding_times) 
             : 'As_Needed';
 
+        $feeding_notes = ($info['feeding_notes'] ?? ''); 
+                       
+
         FeedingSchedule::updateOrCreate(
             ['pet_id' => $info['pet_id']],
             [
                 'schedule' => $feeding_schedule,
-                'notes'    => $info['feeding_notes'] ?? null,
+                'notes'    => $feeding_notes ?: null,
             ]
         );
 
-        if (!empty($info['medication_notes'])) {
+        if (!empty($info['special_instructions'])) {
             MedicationInstruction::updateOrCreate(
                 ['pet_id' => $info['pet_id']],
-                ['instructions' => $info['medication_notes']]
+                ['instructions' => $info['special_instructions']]
             );
         }
 
@@ -155,7 +158,7 @@ class BoardingController extends BaseController
             'afternoon_feed_time' => 'nullable|date_format:H:i',
             'evening_feed_time'   => 'nullable|date_format:H:i',
             'feeding_notes'       => 'nullable|string',
-            'medication_notes'    => 'nullable|string',
+            'special_instructions' => 'nullable|string',
         ]);
 
         $cage = Cage::find($info['cage_id']);
@@ -201,19 +204,22 @@ class BoardingController extends BaseController
             ? implode(',', $feeding_times) 
             : 'As_Needed';
 
+        $feeding_notes = ($info['feeding_notes'] ?? '');
+                    
+
         FeedingSchedule::updateOrCreate(
             ['pet_id' => $info['pet_id']],
             [
                 'schedule' => $feeding_schedule,
-                'notes'    => $info['feeding_notes'] ?? null,
+                'notes'    => $feeding_notes ?: null,
             ]
         );
 
         // Store medication instructions if provided
-        if (!empty($info['medication_notes'])) {
+        if (!empty($info['special_instructions'])) {
             MedicationInstruction::updateOrCreate(
                 ['pet_id' => $info['pet_id']],
-                ['instructions' => $info['medication_notes']]
+                ['instructions' => $info['special_instructions']]
             );
         }
 
@@ -259,7 +265,7 @@ class BoardingController extends BaseController
             'afternoon_feed_time' => 'nullable|date_format:H:i',
             'evening_feed_time'   => 'nullable|date_format:H:i',
             'feeding_notes'       => 'nullable|string',
-            'medication_notes'   => 'nullable|string',
+            'special_instructions' => 'nullable|string',
         ]);
 
         // If cage changed, update old cage status and new cage status
@@ -295,19 +301,22 @@ class BoardingController extends BaseController
             ? implode(',', $feeding_times) 
             : 'As_Needed';
 
+        $feeding_notes = ($info['feeding_notes'] ?? '') . 
+                        ($info['special_instructions'] ? "\n\nSpecial Instructions: " . $info['special_instructions'] : '');
+
         FeedingSchedule::updateOrCreate(
             ['pet_id' => $boarding->pet_id],
             [
                 'schedule' => $feeding_schedule,
-                'notes'    => $info['feeding_notes'] ?? null,
+                'notes'    => $feeding_notes ?: null,
             ]
         );
 
         // Update medication instructions
-        if (!empty($info['medication_notes'])) {
+        if (!empty($info['special_instructions'])) {
             MedicationInstruction::updateOrCreate(
                 ['pet_id' => $boarding->pet_id],
-                ['instructions' => $info['medication_notes']]
+                ['instructions' => $info['special_instructions']]
             );
         } else {
             MedicationInstruction::where('pet_id', $boarding->pet_id)->delete();

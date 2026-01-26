@@ -83,4 +83,8 @@ class Pet extends Model
         )->whereDate('start_date', '<=', now())
          ->whereDate('end_date', '>=', now());
     }
+
+     public function prescriptions(): HasMany {
+        return $this->hasMany(Prescription::class);
+    }
 }

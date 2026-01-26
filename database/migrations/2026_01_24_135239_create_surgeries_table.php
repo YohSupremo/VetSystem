@@ -14,16 +14,16 @@ return new class extends Migration
         Schema::create('surgeries', function (Blueprint $table) {
             $table->id();
             $table->foreignId('pet_id')->constrained('pets')->onDelete('cascade');
-            $table->foreignId('surgeon_id')->constrained('users')->onDelete('restrict');
             $table->foreignId('medical_record_id')->nullable()->constrained('medical_records')->onDelete('set null');
-            $table->string('procedure_name');
+            $table->foreignId('surgeon_id')->constrained('users')->onDelete('restrict');
             $table->dateTime('scheduled_date');
+            $table->string('procedure_name');
             $table->string('anesthesia_type')->nullable();
+            $table->enum('status', ['scheduled', 'in_progress', 'completed', 'cancelled'])->default('scheduled');
             $table->text('pre_op_notes')->nullable();
             $table->text('surgery_notes')->nullable();
             $table->text('post_op_instructions')->nullable();
             $table->text('outcome')->nullable();
-            $table->enum('status', ['scheduled', 'in_progress', 'completed', 'cancelled'])->default('scheduled');
             $table->timestamps();
         });
     }

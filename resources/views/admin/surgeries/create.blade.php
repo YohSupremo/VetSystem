@@ -90,6 +90,8 @@
                     <textarea name="pre_op_notes" class="form-control" rows="3" placeholder="Pre-op instructions, blood work results, etc.">{{ old('pre_op_notes') }}</textarea>
                 </div>
 
+                
+
                 <div class="form-group">
                     <label>Post-operative Instructions</label>
                     <textarea name="post_op_instructions" class="form-control" rows="3" placeholder="Recovery instructions, medication, activity restrictions, etc.">{{ old('post_op_instructions') }}</textarea>

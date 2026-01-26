@@ -9,7 +9,7 @@ use Carbon\Carbon;
 class Appointment extends Model
 {
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are mass assignable. Trial
      *
      * @var array<int, string>
      */

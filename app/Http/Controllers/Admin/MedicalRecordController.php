@@ -22,11 +22,12 @@ class MedicalRecordController extends Controller
     /**
      * Show the form for creating a new medical record.
      */
-    public function create()
+    public function create(Request $request)
     {
         $pets = Pet::with('owner')->get();
         $veterinarians = User::where('role', 'veterinarian')->where('is_active', 1)->get();
-        return view('admin.medical-records.create', compact('pets', 'veterinarians'));
+        $selectedPetId = $request->get('pet_id');
+        return view('admin.medical-records.create', compact('pets', 'veterinarians', 'selectedPetId'));
     }
 
     /**
@@ -46,12 +47,35 @@ class MedicalRecordController extends Controller
             'temperature' => 'nullable|numeric',
             'heart_rate' => 'nullable|integer',
             'respiratory_rate' => 'nullable|integer',
+            'blood_pressure_systolic' => 'nullable|integer',
+            'blood_pressure_diastolic' => 'nullable|integer',
+            'weight' => 'nullable|numeric',
+            'other_vitals' => 'nullable|string',
         ]);
+
+        // Only check for existing records if NOT coming from pet history page
+        // (when pet_id is pre-selected in the URL, user is intentionally adding another record)
+        $existingRecord = MedicalRecord::where('pet_id', $validated['pet_id'])
+            ->latest()
+            ->first();
+
+        if ($existingRecord) {
+            $pet = Pet::find($validated['pet_id']);
+            return redirect()->route('admin.medical-records.index')
+                ->with('warning', 'This pet already has a medical record. Please view the pet\'s history to see all records.')
+                ->with('pet_id', $validated['pet_id'])
+                ->with('pet_name', $pet->name);
+        }
 
         $vitalSigns = [
             'temperature' => $request->temperature,
             'heart_rate' => $request->heart_rate,
             'respiratory_rate' => $request->respiratory_rate,
+            'blood_pressure' => $request->blood_pressure_systolic && $request->blood_pressure_diastolic 
+                ? $request->blood_pressure_systolic . '/' . $request->blood_pressure_diastolic 
+                : null,
+            'weight' => $request->weight,
+            'other_vitals' => $request->other_vitals,
         ];
 
         MedicalRecord::create([
@@ -63,7 +87,7 @@ class MedicalRecordController extends Controller
             'diagnosis' => $validated['diagnosis'] ?? null,
             'treatment_plan' => $validated['treatment_plan'] ?? null,
             'follow_up_date' => $validated['follow_up_date'] ?? null,
-            'vital_signs' => json_encode($vitalSigns),
+            'vital_signs' => $vitalSigns,
         ]);
 
         return redirect()->route('admin.medical-records.index')
@@ -76,8 +100,7 @@ class MedicalRecordController extends Controller
     public function show(MedicalRecord $medicalRecord)
     {
         $record = $medicalRecord->load('pet', 'veterinarian', 'prescriptions');
-        $vitalSigns = $record->vital_signs ? json_decode($record->vital_signs, true) : [];
-        return view('admin.medical-records.show', compact('record', 'vitalSigns'));
+        return view('admin.medical-records.show', compact('record'));
     }
 
     /**
@@ -87,7 +110,7 @@ class MedicalRecordController extends Controller
     {
         $record = $medicalRecord;
         $veterinarians = User::where('role', 'veterinarian')->where('is_active', 1)->get();
-        $vitalSigns = $record->vital_signs ? json_decode($record->vital_signs, true) : [];
+        $vitalSigns = $record->vital_signs ?? [];
         return view('admin.medical-records.edit', compact('record', 'veterinarians', 'vitalSigns'));
     }
 
@@ -107,12 +130,21 @@ class MedicalRecordController extends Controller
             'temperature' => 'nullable|numeric',
             'heart_rate' => 'nullable|integer',
             'respiratory_rate' => 'nullable|integer',
+            'blood_pressure_systolic' => 'nullable|integer',
+            'blood_pressure_diastolic' => 'nullable|integer',
+            'weight' => 'nullable|numeric',
+            'other_vitals' => 'nullable|string',
         ]);
 
         $vitalSigns = [
             'temperature' => $request->temperature,
             'heart_rate' => $request->heart_rate,
             'respiratory_rate' => $request->respiratory_rate,
+            'blood_pressure' => $request->blood_pressure_systolic && $request->blood_pressure_diastolic 
+                ? $request->blood_pressure_systolic . '/' . $request->blood_pressure_diastolic 
+                : null,
+            'weight' => $request->weight,
+            'other_vitals' => $request->other_vitals,
         ];
 
         $medicalRecord->update([
@@ -123,7 +155,7 @@ class MedicalRecordController extends Controller
             'diagnosis' => $validated['diagnosis'] ?? null,
             'treatment_plan' => $validated['treatment_plan'] ?? null,
             'follow_up_date' => $validated['follow_up_date'] ?? null,
-            'vital_signs' => json_encode($vitalSigns),
+            'vital_signs' => $vitalSigns,
         ]);
 
         return redirect()->route('admin.medical-records.show', $medicalRecord->id)
@@ -138,5 +170,18 @@ class MedicalRecordController extends Controller
         $medicalRecord->delete();
         return redirect()->route('admin.medical-records.index')
             ->with('success', 'Medical record deleted successfully!');
+    }
+
+    /**
+     * Display complete medical history for a specific pet.
+     */
+    public function byPet(Pet $pet)
+    {
+        $medicalRecords = MedicalRecord::where('pet_id', $pet->id)
+            ->with('veterinarian')
+            ->orderBy('visit_date', 'desc')
+            ->get();
+        
+        return view('admin.medical-records.pet-history', compact('pet', 'medicalRecords'));
     }
 }

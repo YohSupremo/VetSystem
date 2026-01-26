@@ -57,24 +57,50 @@
                     @error('complaint')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Temperature (°C)</label>
-                        <input type="number" name="temperature" class="form-control" step="0.1" value="{{ old('temperature', isset($vitalSigns['temperature']) ? $vitalSigns['temperature'] : '') }}">
+                <div class="form-section">
+                    <h4>Vital Signs</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Temperature (°C)</label>
+                            <input type="number" name="temperature" class="form-control" step="0.1" value="{{ old('temperature', isset($vitalSigns['temperature']) ? $vitalSigns['temperature'] : '') }}" placeholder="38.5">
+                        </div>
+                        <div class="form-group">
+                            <label>Heart Rate (bpm)</label>
+                            <input type="number" name="heart_rate" class="form-control" value="{{ old('heart_rate', isset($vitalSigns['heart_rate']) ? $vitalSigns['heart_rate'] : '') }}" placeholder="80">
+                        </div>
+                        <div class="form-group">
+                            <label>Respiratory Rate (rpm)</label>
+                            <input type="number" name="respiratory_rate" class="form-control" value="{{ old('respiratory_rate', isset($vitalSigns['respiratory_rate']) ? $vitalSigns['respiratory_rate'] : '') }}" placeholder="20">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Heart Rate (bpm)</label>
-                        <input type="number" name="heart_rate" class="form-control" value="{{ old('heart_rate', isset($vitalSigns['heart_rate']) ? $vitalSigns['heart_rate'] : '') }}">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Blood Pressure (Systolic)</label>
+                            @php
+                                $bp = isset($vitalSigns['blood_pressure']) ? explode('/', $vitalSigns['blood_pressure']) : ['', ''];
+                            @endphp
+                            <input type="number" name="blood_pressure_systolic" class="form-control" value="{{ old('blood_pressure_systolic', $bp[0] ?? '') }}" placeholder="120">
+                        </div>
+                        <div class="form-group">
+                            <label>Blood Pressure (Diastolic)</label>
+                            <input type="number" name="blood_pressure_diastolic" class="form-control" value="{{ old('blood_pressure_diastolic', $bp[1] ?? '') }}" placeholder="80">
+                        </div>
+                        <div class="form-group">
+                            <label>Weight (kg)</label>
+                            <input type="number" name="weight" class="form-control" step="0.1" value="{{ old('weight', isset($vitalSigns['weight']) ? $vitalSigns['weight'] : '') }}" placeholder="25.5">
+                        </div>
                     </div>
+                    
                     <div class="form-group">
-                        <label>Respiratory Rate</label>
-                        <input type="number" name="respiratory_rate" class="form-control" value="{{ old('respiratory_rate', isset($vitalSigns['respiratory_rate']) ? $vitalSigns['respiratory_rate'] : '') }}">
+                        <label>Other Vitals / Notes</label>
+                        <textarea name="other_vitals" class="form-control" rows="2" placeholder="Additional vital signs or observations...">{{ old('other_vitals', isset($vitalSigns['other_vitals']) ? $vitalSigns['other_vitals'] : '') }}</textarea>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Examination Notes</label>
-                    <textarea name="examination_notes" class="form-control" rows="4">{{ $record->examination_notes }}</textarea>
+                    <textarea name="examination_notes" class="form-control" rows="4" placeholder="Physical examination findings, observations, etc...">{{ $record->examination_notes }}</textarea>
                 </div>
             </div>
 

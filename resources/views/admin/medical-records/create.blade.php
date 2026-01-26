@@ -15,6 +15,9 @@
 
         <form action="{{ route('admin.medical-records.store') }}" method="POST" class="form-main">
             @csrf
+            @if(isset($selectedPetId) && $selectedPetId)
+                <input type="hidden" name="from_history" value="1">
+            @endif
 
             <div class="form-section">
                 <h3>Pet Information</h3>
@@ -24,7 +27,7 @@
                     <select name="pet_id" class="form-control" required>
                         <option value="">Choose a pet...</option>
                         @forelse($pets as $pet)
-                            <option value="{{ $pet->id }}" {{ old('pet_id') == $pet->id ? 'selected' : '' }}>
+                            <option value="{{ $pet->id }}" {{ (old('pet_id', $selectedPetId ?? null) == $pet->id) ? 'selected' : '' }}>
                                 {{ $pet->name }} - {{ $pet->owner->user->first_name ?? 'Unknown' }} {{ $pet->owner->user->last_name ?? '' }}
                             </option>
                         @empty
@@ -65,24 +68,47 @@
                     @error('complaint')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Temperature (°C)</label>
-                        <input type="number" name="temperature" class="form-control" step="0.1" value="{{ old('temperature') }}">
+                <div class="form-section">
+                    <h4>Vital Signs</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Temperature (°C)</label>
+                            <input type="number" name="temperature" class="form-control" step="0.1" value="{{ old('temperature') }}" placeholder="38.5">
+                        </div>
+                        <div class="form-group">
+                            <label>Heart Rate (bpm)</label>
+                            <input type="number" name="heart_rate" class="form-control" value="{{ old('heart_rate') }}" placeholder="80">
+                        </div>
+                        <div class="form-group">
+                            <label>Respiratory Rate (rpm)</label>
+                            <input type="number" name="respiratory_rate" class="form-control" value="{{ old('respiratory_rate') }}" placeholder="20">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Heart Rate (bpm)</label>
-                        <input type="number" name="heart_rate" class="form-control" value="{{ old('heart_rate') }}">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Blood Pressure (Systolic)</label>
+                            <input type="number" name="blood_pressure_systolic" class="form-control" value="{{ old('blood_pressure_systolic') }}" placeholder="120">
+                        </div>
+                        <div class="form-group">
+                            <label>Blood Pressure (Diastolic)</label>
+                            <input type="number" name="blood_pressure_diastolic" class="form-control" value="{{ old('blood_pressure_diastolic') }}" placeholder="80">
+                        </div>
+                        <div class="form-group">
+                            <label>Weight (kg)</label>
+                            <input type="number" name="weight" class="form-control" step="0.1" value="{{ old('weight') }}" placeholder="25.5">
+                        </div>
                     </div>
+                    
                     <div class="form-group">
-                        <label>Respiratory Rate</label>
-                        <input type="number" name="respiratory_rate" class="form-control" value="{{ old('respiratory_rate') }}">
+                        <label>Other Vitals / Notes</label>
+                        <textarea name="other_vitals" class="form-control" rows="2" placeholder="Additional vital signs or observations...">{{ old('other_vitals') }}</textarea>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Examination Notes</label>
-                    <textarea name="examination_notes" class="form-control" rows="4">{{ old('examination_notes') }}</textarea>
+                    <textarea name="examination_notes" class="form-control" rows="4" placeholder="Physical examination findings, observations, etc...">{{ old('examination_notes') }}</textarea>
                 </div>
             </div>
 

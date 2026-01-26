@@ -72,17 +72,47 @@
             <div class="record-section">
                 <h3>Vital Signs</h3>
                 <div class="info-grid">
-                    @if($record->vital_signs)
-                        @foreach(json_decode($record->vital_signs, true) as $key => $value)
+                    @if($record->vital_signs && is_array($record->vital_signs))
+                        @if(isset($record->vital_signs['temperature']) && $record->vital_signs['temperature'])
                             <div class="info-item">
-                                <label>{{ ucfirst(str_replace('_', ' ', $key)) }}</label>
-                                <p>{{ $value }}</p>
+                                <label><i class="fas fa-thermometer-half"></i> Temperature</label>
+                                <p>{{ $record->vital_signs['temperature'] }}°C</p>
                             </div>
-                        @endforeach
+                        @endif
+                        @if(isset($record->vital_signs['heart_rate']) && $record->vital_signs['heart_rate'])
+                            <div class="info-item">
+                                <label><i class="fas fa-heartbeat"></i> Heart Rate</label>
+                                <p>{{ $record->vital_signs['heart_rate'] }} bpm</p>
+                            </div>
+                        @endif
+                        @if(isset($record->vital_signs['respiratory_rate']) && $record->vital_signs['respiratory_rate'])
+                            <div class="info-item">
+                                <label><i class="fas fa-lungs"></i> Respiratory Rate</label>
+                                <p>{{ $record->vital_signs['respiratory_rate'] }} rpm</p>
+                            </div>
+                        @endif
+                        @if(isset($record->vital_signs['blood_pressure']) && $record->vital_signs['blood_pressure'])
+                            <div class="info-item">
+                                <label><i class="fas fa-tint"></i> Blood Pressure</label>
+                                <p>{{ $record->vital_signs['blood_pressure'] }} mmHg</p>
+                            </div>
+                        @endif
+                        @if(isset($record->vital_signs['weight']) && $record->vital_signs['weight'])
+                            <div class="info-item">
+                                <label><i class="fas fa-weight"></i> Weight</label>
+                                <p>{{ $record->vital_signs['weight'] }} kg</p>
+                            </div>
+                        @endif
                     @else
-                        <p>No vital signs recorded</p>
+                        <p class="text-muted">No vital signs recorded</p>
                     @endif
                 </div>
+                @if($record->vital_signs && isset($record->vital_signs['other_vitals']) && $record->vital_signs['other_vitals'])
+                    <div class="text-content mt-3">
+                        <strong>Other Vitals / Notes:</strong><br>
+                        {{ $record->vital_signs['other_vitals'] }}
+                    </div>
+                @endif
             </div>
 
             <div class="record-section">

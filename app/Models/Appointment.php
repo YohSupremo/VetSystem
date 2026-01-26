@@ -10,7 +10,7 @@ class Appointment extends Model
 {
     /**
      * The attributes that are mass assignable. Trial
-     *
+     * testing
      * @var array<int, string>
      */
     protected $fillable = [

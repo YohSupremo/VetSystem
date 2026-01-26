@@ -16,8 +16,13 @@ class UserController extends Controller
             'contact_number' => 'required|string|max:20',
             'email' => 'required|string|email|max:255|unique:users,email',
             'username' => 'required|string|max:50|unique:users,username',
-            'password' => 'required|string|min:6'
+            'password' => 'required|string|min:6|confirmed'
+        ],
+        [
+            'password.confirmed' => 'Password does not match'
         ]);
+
+       
 
        $getData['password'] = bcrypt($getData['password']);
        User::create($getData);

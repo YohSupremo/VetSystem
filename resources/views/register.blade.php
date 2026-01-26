@@ -122,6 +122,17 @@
                     name="password"
                     placeholder="Create a password"
                 >
+            </div>
+
+             <div class="mb-4">
+                <label class="form-label" for="password_confirmation">Confirm Password*</label>
+                <input
+                    id="password_confirmation"
+                    type="password"
+                    class="form-control @error('password') is-invalid @enderror"
+                    name="password_confirmation"
+                    placeholder="Confirm your password"
+                >
                 @error('password')
                     <span class="text-danger">{{ $message }}</span>
                 @enderror

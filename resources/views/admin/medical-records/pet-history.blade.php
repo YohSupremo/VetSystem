@@ -15,6 +15,9 @@
                 </p>
             </div>
             <div class="header-actions">
+                <a href="{{ route('admin.medical-records.create', ['pet_id' => $pet->id]) }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add New Record
+                </a>
                 <a href="{{ route('admin.medical-records.index') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Records
                 </a>
@@ -282,12 +285,12 @@
 }
 
 .btn-primary {
-    background: white;
-    color: var(--primary-orange);
+    background: var(--primary-orange);
+    color: white;
 }
 
 .btn-primary:hover {
-    background: #f0f0f0;
+    background: #E67A2E;
 }
 
 .btn-secondary {

@@ -12,10 +12,20 @@ class MedicalRecordController extends Controller
 {
     /**
      * Display a listing of medical records.
+     * Shows only the most recent record for each unique pet
      */
     public function index()
     {
-        $medicalRecords = MedicalRecord::with('pet', 'veterinarian')->paginate(15);
+        // Get the latest medical record for each pet
+        $medicalRecords = MedicalRecord::with('pet', 'veterinarian')
+            ->whereIn('id', function($query) {
+                $query->selectRaw('MAX(id)')
+                    ->from('medical_records')
+                    ->groupBy('pet_id');
+            })
+            ->orderBy('visit_date', 'desc')
+            ->paginate(15);
+            
         return view('admin.medical-records.index', compact('medicalRecords'));
     }
 
@@ -54,17 +64,19 @@ class MedicalRecordController extends Controller
         ]);
 
         // Only check for existing records if NOT coming from pet history page
-        // (when pet_id is pre-selected in the URL, user is intentionally adding another record)
-        $existingRecord = MedicalRecord::where('pet_id', $validated['pet_id'])
-            ->latest()
-            ->first();
+        // If pet_id is in the request (pre-selected), allow adding another record
+        if (!$request->has('from_pet_history')) {
+            $existingRecord = MedicalRecord::where('pet_id', $validated['pet_id'])
+                ->latest()
+                ->first();
 
-        if ($existingRecord) {
-            $pet = Pet::find($validated['pet_id']);
-            return redirect()->route('admin.medical-records.index')
-                ->with('warning', 'This pet already has a medical record. Please view the pet\'s history to see all records.')
-                ->with('pet_id', $validated['pet_id'])
-                ->with('pet_name', $pet->name);
+            if ($existingRecord) {
+                $pet = Pet::find($validated['pet_id']);
+                return redirect()->route('admin.medical-records.index')
+                    ->with('warning', 'This pet already has a medical record. Please view the pet\'s history to see all records.')
+                    ->with('pet_id', $validated['pet_id'])
+                    ->with('pet_name', $pet->name);
+            }
         }
 
         $vitalSigns = [
@@ -89,6 +101,13 @@ class MedicalRecordController extends Controller
             'follow_up_date' => $validated['follow_up_date'] ?? null,
             'vital_signs' => $vitalSigns,
         ]);
+
+        // Redirect back to pet history if coming from there
+        if ($request->has('from_pet_history')) {
+            $pet = Pet::find($validated['pet_id']);
+            return redirect()->route('admin.medical-records.pet', $pet->id)
+                ->with('success', 'Medical record added to ' . $pet->name . '\'s history successfully!');
+        }
 
         return redirect()->route('admin.medical-records.index')
             ->with('success', 'Medical record created successfully!');

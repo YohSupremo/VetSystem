@@ -16,7 +16,7 @@
         <form action="{{ route('admin.medical-records.store') }}" method="POST" class="form-main">
             @csrf
             @if(isset($selectedPetId) && $selectedPetId)
-                <input type="hidden" name="from_history" value="1">
+                <input type="hidden" name="from_pet_history" value="1">
             @endif
 
             <div class="form-section">

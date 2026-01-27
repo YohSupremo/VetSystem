@@ -17,18 +17,16 @@ class AppointmentController extends Controller
      * Available appointment types and statuses.
      */
     protected array $types = [
-        'consultation',
+        'checkup',
         'vaccination',
         'surgery',
+        'dental',
         'grooming',
-        'boarding',
-        'follow_up',
         'other',
     ];
 
     protected array $statuses = [
-        'pending',
-        'confirmed',
+        'scheduled',
         'in_progress',
         'completed',
         'cancelled',
@@ -126,8 +124,10 @@ class AppointmentController extends Controller
 
         $validated = $request->validate([
             'pet_id' => ['required', 'integer'],
-            'veterinarian_id' => ['nullable', 'integer'],
+            'veterinarian_id' => ['required', 'integer'],
             'appointment_date' => ['required', 'date'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i'],
             'type' => ['required', 'in:' . implode(',', $this->types)],
             'status' => ['required', 'in:' . implode(',', $this->statuses)],
             'notes' => ['nullable', 'string'],
@@ -136,7 +136,9 @@ class AppointmentController extends Controller
         DB::table('appointments')->insert([
             'pet_id' => $validated['pet_id'],
             'veterinarian_id' => $validated['veterinarian_id'],
-            'appointment_date' => Carbon::parse($validated['appointment_date'])->format('Y-m-d H:i:s'),
+            'appointment_date' => $validated['appointment_date'],
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
             'type' => $validated['type'],
             'status' => $validated['status'],
             'notes' => $validated['notes'] ?? null,
@@ -165,10 +167,6 @@ class AppointmentController extends Controller
 
         abort_if(!$record, 404);
 
-        $record->appointment_date_input = $record->appointment_date
-            ? Carbon::parse($record->appointment_date)->format('Y-m-d\TH:i')
-            : null;
-
         [$pets, $veterinarians] = $this->formSelections();
 
         return view('admin.appointments.edit', [
@@ -190,8 +188,10 @@ class AppointmentController extends Controller
 
         $validated = $request->validate([
             'pet_id' => ['required', 'integer'],
-            'veterinarian_id' => ['nullable', 'integer'],
+            'veterinarian_id' => ['required', 'integer'],
             'appointment_date' => ['required', 'date'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i'],
             'type' => ['required', 'in:' . implode(',', $this->types)],
             'status' => ['required', 'in:' . implode(',', $this->statuses)],
             'notes' => ['nullable', 'string'],
@@ -200,7 +200,9 @@ class AppointmentController extends Controller
         DB::table('appointments')->where('id', $appointment)->update([
             'pet_id' => $validated['pet_id'],
             'veterinarian_id' => $validated['veterinarian_id'],
-            'appointment_date' => Carbon::parse($validated['appointment_date'])->format('Y-m-d H:i:s'),
+            'appointment_date' => $validated['appointment_date'],
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
             'type' => $validated['type'],
             'status' => $validated['status'],
             'notes' => $validated['notes'] ?? null,

@@ -126,16 +126,15 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="veterinarian_id">Assigned Veterinarian</label>
-                        <select name="veterinarian_id" id="veterinarian_id">
-                            <option value="">Unassigned</option>
+                        <label for="veterinarian_id">Assigned Veterinarian <span style="color: var(--accent-pink);">*</span></label>
+                        <select name="veterinarian_id" id="veterinarian_id" required>
+                            <option value="">Select veterinarian</option>
                             @foreach($veterinarians as $vet)
                                 <option value="{{ $vet->id }}" {{ old('veterinarian_id') == $vet->id ? 'selected' : '' }}>
                                     Dr. {{ $vet->first_name }} {{ $vet->last_name }}
                                 </option>
                             @endforeach
                         </select>
-                        <p class="inline-hint">Optional — assign later if unsure.</p>
                         @error('veterinarian_id')
                             <div class="inline-hint">{{ $message }}</div>
                         @enderror
@@ -146,10 +145,28 @@
                     <h3><i class="fas fa-calendar-alt"></i> Appointment Details</h3>
 
                     <div class="form-group">
-                        <label for="appointment_date">Date & Time <span style="color: var(--accent-pink);">*</span></label>
-                        <input type="datetime-local" name="appointment_date" id="appointment_date"
+                        <label for="appointment_date">Date <span style="color: var(--accent-pink);">*</span></label>
+                        <input type="date" name="appointment_date" id="appointment_date"
                                value="{{ old('appointment_date') }}" required>
                         @error('appointment_date')
+                            <div class="inline-hint">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="start_time">Start Time <span style="color: var(--accent-pink);">*</span></label>
+                        <input type="time" name="start_time" id="start_time"
+                               value="{{ old('start_time') }}" required>
+                        @error('start_time')
+                            <div class="inline-hint">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="end_time">End Time <span style="color: var(--accent-pink);">*</span></label>
+                        <input type="time" name="end_time" id="end_time"
+                               value="{{ old('end_time') }}" required>
+                        @error('end_time')
                             <div class="inline-hint">{{ $message }}</div>
                         @enderror
                     </div>

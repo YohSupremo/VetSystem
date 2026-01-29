@@ -178,7 +178,7 @@
     }
 
     .status-completed {
-        background: #05c221;
+        background: #e2e3e5;
         color: #383d41;
     }
 
@@ -286,7 +286,7 @@
         <div class="pet-preview">
             <div class="pet-preview-item">
                 @php $pet = $boarding->petAssigned; @endphp
-                <img src="{{ $pet ? $pet->photo_url : 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect fill=\"#f0f0f0\" width=\"200\" height=\"200\"/><text x=\"50%\" y=\"50%\" font-size=\"80\" text-anchor=\"middle\" dominant-baseline=\"middle\" fill=\"#ccc\">🐾</text></svg>') }}" alt="Pet" class="pet-preview-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3QgZmlsbD0iI2YwZjBmMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iI2NjYyI+8J+QrjwvdGV4dD48L3N2Zz4='">
+                <img src="{{ $pet && $pet->photo_path ? $pet->photo_url : asset('images/default-pet.jpg') }}" alt="Pet" class="pet-preview-image">
                 <div class="pet-preview-info">
                     <h3>{{ $boarding->petAssigned->name ?? 'N/A' }}</h3>
                     <p><strong>Breed:</strong> {{ $boarding->petAssigned->breed ?? 'N/A' }}</p>
@@ -403,12 +403,8 @@
 
         <div class="detail-group">
             <span class="detail-label">Medication Instructions</span>
-            @php
-                $medicationNotes = $boarding->medication_notes
-                    ?? optional($boarding->medicationInstruction)->instructions;
-            @endphp
-            @if($medicationNotes)
-                <span class="detail-value text">{{ $medicationNotes }}</span>
+            @if($boarding->medicationInstruction && $boarding->medicationInstruction->instructions)
+                <span class="detail-value text">{{ $boarding->medicationInstruction->instructions }}</span>
             @else
                 <div class="empty-state">
                     <i class="fas fa-info-circle"></i> No medication instructions provided

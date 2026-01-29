@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('feeding_schedules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('pet_id')->references('id')->on('pets')->onDelete('cascade');
-            $table->text('notes');
+            $table->text('notes')->nullable();
             $table->text('schedule');
             $table->timestamps();
         });

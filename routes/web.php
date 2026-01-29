@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\PrescriptionController;
 use App\Http\Controllers\Admin\BoardingController;
 use App\Http\Controllers\Admin\GroomingController;
 use App\Http\Controllers\Admin\PharmacyController;
+use App\Http\Controllers\Admin\LaboratoryController;
 use App\Http\Controllers\Admin\SurgeryController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\BillingController;
@@ -88,8 +89,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/data', [App\Http\Controllers\Admin\QueueManagementController::class, 'getQueueData'])->name('data');
         Route::get('/veterinarian/{veterinarianId}', [App\Http\Controllers\Admin\QueueManagementController::class, 'getVeterinarianQueue'])->name('veterinarian');
         Route::post('/call-next/{veterinarianId?}', [App\Http\Controllers\Admin\QueueManagementController::class, 'callNext'])->name('call-next');
-        Route::put('/{appointment}/status', [App\Http\Controllers\Admin\QueueManagementController::class, 'updateStatus'])->name('status.update');
         Route::get('/stats', [App\Http\Controllers\Admin\QueueManagementController::class, 'getQueueStats'])->name('stats');
+
+        // Queue CRUD-style pages (non-JS)
+        Route::get('/create', [App\Http\Controllers\Admin\QueueManagementController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\QueueManagementController::class, 'store'])->name('store');
+        Route::get('/{appointment}', [App\Http\Controllers\Admin\QueueManagementController::class, 'show'])->name('show');
+        Route::get('/{appointment}/edit', [App\Http\Controllers\Admin\QueueManagementController::class, 'edit'])->name('edit');
+        Route::put('/{appointment}/status', [App\Http\Controllers\Admin\QueueManagementController::class, 'updateStatus'])->name('status.update');
     });
 
     // Medical Records
@@ -129,32 +136,30 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/{prescription}', [PrescriptionController::class, 'destroy'])->name('destroy');
     });
 
-    // Laboratory
+    // Laboratory (schema-based: lab_tests + lab_requisitions)
     Route::prefix('laboratory')->name('laboratory.')->group(function () {
-        // Test Requests
-        Route::get('/test-requests', [\App\Http\Controllers\Admin\LaboratoryController::class, 'index'])->name('test-requests.index');
-        Route::get('/test-requests/create', [\App\Http\Controllers\Admin\LaboratoryController::class, 'createTestRequest'])->name('test-requests.create');
-        Route::post('/test-requests', [\App\Http\Controllers\Admin\LaboratoryController::class, 'storeTestRequest'])->name('test-requests.store');
-        Route::get('/test-requests/{testRequest}', [\App\Http\Controllers\Admin\LaboratoryController::class, 'showTestRequest'])->name('test-requests.show');
-        Route::put('/test-requests/{testRequest}/status', [\App\Http\Controllers\Admin\LaboratoryController::class, 'updateTestStatus'])->name('test-requests.update-status');
-        
-        // Test Types
-        Route::get('/test-types', [\App\Http\Controllers\Admin\LaboratoryController::class, 'testTypes'])->name('test-types.index');
-        Route::post('/test-types', [\App\Http\Controllers\Admin\LaboratoryController::class, 'storeTestType'])->name('test-types.store');
-        Route::delete('/test-types/{testType}', [\App\Http\Controllers\Admin\LaboratoryController::class, 'destroyTestType'])->name('test-types.destroy');
-        
-        // Test Results
-        Route::get('/test-results', [\App\Http\Controllers\Admin\LaboratoryController::class, 'testResults'])->name('test-results.index');
-        Route::post('/test-results', [\App\Http\Controllers\Admin\LaboratoryController::class, 'storeTestResult'])->name('test-results.store');
-        Route::get('/test-results/{testResult}', [\App\Http\Controllers\Admin\LaboratoryController::class, 'showTestResult'])->name('test-results.show');
-        
-        // API Endpoints
-        Route::prefix('api')->name('api.')->group(function () {
-            Route::get('/pets/{pet}', [\App\Http\Controllers\Admin\LaboratoryController::class, 'getPetInfo']);
-            Route::get('/test-requests', [\App\Http\Controllers\Admin\LaboratoryController::class, 'getTestRequests']);
-            Route::get('/test-types', [\App\Http\Controllers\Admin\LaboratoryController::class, 'getTestTypes']);
-            Route::get('/test-results', [\App\Http\Controllers\Admin\LaboratoryController::class, 'getTestResults']);
-            Route::get('/test-requests/{testRequest}/result', [\App\Http\Controllers\Admin\LaboratoryController::class, 'getTestResult']);
+        // Dashboard
+        Route::get('/', [LaboratoryController::class, 'dashboard'])->name('index');
+
+        // Lab Tests (Catalog)
+        Route::prefix('tests')->name('tests.')->group(function () {
+            Route::get('/', [LaboratoryController::class, 'testsIndex'])->name('index');
+            Route::get('/create', [LaboratoryController::class, 'testsCreate'])->name('create');
+            Route::post('/', [LaboratoryController::class, 'testsStore'])->name('store');
+            Route::get('/{labTest}', [LaboratoryController::class, 'testsShow'])->name('show');
+            Route::get('/{labTest}/edit', [LaboratoryController::class, 'testsEdit'])->name('edit');
+            Route::put('/{labTest}', [LaboratoryController::class, 'testsUpdate'])->name('update');
+            Route::delete('/{labTest}', [LaboratoryController::class, 'testsDestroy'])->name('destroy');
+        });
+
+        // Lab Requisitions (Requests / Results)
+        Route::prefix('requisitions')->name('requisitions.')->group(function () {
+            Route::get('/create', [LaboratoryController::class, 'requisitionsCreate'])->name('create');
+            Route::post('/', [LaboratoryController::class, 'requisitionsStore'])->name('store');
+            Route::get('/{labRequisition}', [LaboratoryController::class, 'requisitionsShow'])->name('show');
+            Route::get('/{labRequisition}/edit', [LaboratoryController::class, 'requisitionsEdit'])->name('edit');
+            Route::put('/{labRequisition}', [LaboratoryController::class, 'requisitionsUpdate'])->name('update');
+            Route::delete('/{labRequisition}', [LaboratoryController::class, 'requisitionsDestroy'])->name('destroy');
         });
     });
 
@@ -162,7 +167,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::prefix('boarding')->name('boarding.')->group(function(){
         Route::get('/', [BoardingController::class, 'index'])->name('index');
         Route::get('/new-boarding', [BoardingController::class, 'create'])->name('new-boarding');
-        Route::post('/new-boarding', [BoardingController::class, 'createPass'])->name('new-boarding');
+        Route::post('/new-boarding', [BoardingController::class, 'createPass'])->name('new-boarding.store');
         
         // RESTful routes
         Route::get('/create', [BoardingController::class, 'create'])->name('create');
@@ -175,6 +180,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Grooming
     Route::resource('grooming', GroomingController::class);
+    
+    // Grooming Services Management
+    Route::prefix('grooming-services')->name('grooming-services.')->group(function () {
+        Route::get('/', [GroomingController::class, 'servicesIndex'])->name('index');
+        Route::get('/create', [GroomingController::class, 'servicesCreate'])->name('create');
+        Route::post('/', [GroomingController::class, 'servicesStore'])->name('store');
+        Route::get('/{service}', [GroomingController::class, 'servicesShow'])->name('show');
+        Route::get('/{service}/edit', [GroomingController::class, 'servicesEdit'])->name('edit');
+        Route::put('/{service}', [GroomingController::class, 'servicesUpdate'])->name('update');
+        Route::delete('/{service}', [GroomingController::class, 'servicesDestroy'])->name('destroy');
+    });
 
     // Pharmacy
     Route::resource('pharmacy', PharmacyController::class);

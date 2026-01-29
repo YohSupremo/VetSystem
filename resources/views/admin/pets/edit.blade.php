@@ -218,11 +218,8 @@
     <!-- Pet Header -->
     <div class="pet-header">
         <div class="pet-header-photo">
-            @if($pet->photo_path && file_exists(storage_path('app/public/' . $pet->photo_path)))
-                <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}">
-            @else
-                <i class="fas fa-paw"></i>
-            @endif
+            <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <i class="fas fa-paw" style="display:none; font-size: 4rem; color: #ccc;"></i>
         </div>
         <div class="pet-header-info">
             <h2>{{ $pet->name }}</h2>
@@ -241,6 +238,8 @@
             <input type="text" value="{{ $pet->owner->user->first_name }} {{ $pet->owner->user->last_name }}" 
                    disabled style="background: var(--soft-gray); cursor: not-allowed;">
             <small style="color: var(--light-text);">Owner cannot be changed. Contact administrator if needed.</small>
+            <!-- Hidden field to submit owner_id since disabled fields don't submit -->
+            <input type="hidden" name="owner_id" value="{{ $pet->owner_id }}">
         </div>
 
         <!-- Basic Information -->
@@ -352,14 +351,13 @@
         <div class="form-section">
             <h3><i class="fas fa-camera"></i> Pet Photo</h3>
 
-            @if($pet->photo_path && file_exists(storage_path('app/public/' . $pet->photo_path)))
-                <div>
-                    <p style="font-weight: 600; margin-bottom: 10px;">Current Photo:</p>
-                    <div class="photo-preview">
-                        <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}">
-                    </div>
+            <div>
+                <p style="font-weight: 600; margin-bottom: 10px;">Current Photo:</p>
+                <div class="photo-preview">
+                    <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <i class="fas fa-paw" style="display:none; font-size: 4rem; color: #ccc;"></i>
                 </div>
-            @endif
+            </div>
 
             <label for="photo" class="photo-upload">
                 <i class="fas fa-cloud-upload-alt"></i>

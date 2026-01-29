@@ -155,11 +155,8 @@
         @foreach($pets as $pet)
             <div class="pet-card">
                 <div class="pet-image">
-                    @if($pet->photo_path)
-                        <img src="{{ asset('storage/' . $pet->photo_path) }}" alt="{{ $pet->name }}">
-                    @else
-                        🐾
-                    @endif
+                    <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span style="display:none; font-size: 2rem;">🐾</span>
                 </div>
 
                 <div class="pet-info">

@@ -24,7 +24,7 @@
                     <select name="pet_id" class="form-control" required>
                         <option value="">Choose a pet...</option>
                         @forelse($pets as $pet)
-                            <option value="{{ $pet->id }}" {{ old('pet_id') == $pet->id ? 'selected' : '' }}>
+                            <option value="{{ $pet->id }}" {{ old('pet_id', $selectedPetId ?? '') == $pet->id ? 'selected' : '' }}>
                                 {{ $pet->name }} - {{ $pet->owner->user->first_name ?? 'Unknown' }}
                             </option>
                         @empty

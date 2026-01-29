@@ -388,7 +388,8 @@
                 <!-- Pet Preview -->
                 <div class="pet-preview">
                     <div class="pet-preview-item">
-                        <img src="{{ $boarding->petAssigned->photo_path ?? asset('images/default-pet.jpg') }}" alt="Pet" class="pet-preview-image">
+                        @php $pet = $boarding->petAssigned; @endphp
+                        <img src="{{ $pet ? $pet->photo_url : 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect fill=\"#f0f0f0\" width=\"200\" height=\"200\"/><text x=\"50%\" y=\"50%\" font-size=\"80\" text-anchor=\"middle\" dominant-baseline=\"middle\" fill=\"#ccc\">🐾</text></svg>') }}" alt="Pet" class="pet-preview-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3QgZmlsbD0iI2YwZjBmMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iI2NjYyI+8J+QrjwvdGV4dD48L3N2Zz4='">
                         <div class="pet-preview-info">
                             <h4>{{ $boarding->petAssigned->name ?? 'N/A' }}</h4>
                             <p><strong>Breed:</strong> {{ $boarding->petAssigned->breed ?? 'N/A' }}</p>
@@ -499,15 +500,15 @@
                 <div class="cage-info">
                     <div class="cage-stat">
                         <label>Current Cage Code</label>
-                        <value>{{ $boarding->cageAssigned->cage_code ?? 'N/A' }}</value>
+                        <div class="stat-value">{{ $boarding->cageAssigned->cage_code ?? 'N/A' }}</div>
                     </div>
                     <div class="cage-stat">
                         <label>Location</label>
-                        <value>{{ $boarding->cageAssigned->location ?? 'N/A' }}</value>
+                        <div class="stat-value">{{ $boarding->cageAssigned->location ?? 'N/A' }}</div>
                     </div>
                     <div class="cage-stat">
                         <label>Status</label>
-                        <value>{{ ucfirst($boarding->cageAssigned->status ?? 'N/A') }}</value>
+                        <div class="stat-value">{{ ucfirst($boarding->cageAssigned->status ?? 'N/A') }}</div>
                     </div>
                 </div>
             </div>
@@ -591,15 +592,34 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Update Boarding
                 </button>
-                <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id ?? 0) }}" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this boarding record? This action cannot be undone.');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash"></i> Delete Boarding
-                    </button>
-                </form>
             </div>
         </form>
+
+        <!-- Separate Delete Form (not nested inside update form) -->
+        <div class="form-actions" style="margin-top: 1rem;">
+            <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id ?? 0) }}" class="delete-form">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Delete Boarding
+                </button>
+            </form>
+        </div>
     </div>
 </div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var form = document.querySelector('.delete-form');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            var ok = confirm('Are you sure you want to delete this boarding record? This action cannot be undone.');
+            if (!ok) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
+@endpush
 @endsection

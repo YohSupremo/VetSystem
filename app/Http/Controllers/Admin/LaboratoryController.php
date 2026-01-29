@@ -3,16 +3,215 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\LabRequisition;
+use App\Models\LabTest;
+use App\Models\MedicalRecord;
 use App\Models\Pet;
 use App\Models\TestRequest;
 use App\Models\TestType;
 use App\Models\TestResult;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class LaboratoryController extends Controller
 {
+    /**
+     * Schema-based Laboratory Dashboard (lab_requisitions + lab_tests)
+     */
+    public function dashboard()
+    {
+        $pendingRequisitions = LabRequisition::where('status', 'pending')->count();
+        $completedRequisitions = LabRequisition::where('status', 'completed')->count();
+        $totalLabTests = LabTest::count();
+
+        $requisitions = LabRequisition::with([
+            'medicalRecord.pet.owner.user',
+            'test',
+            'requestedBy',
+        ])
+            ->orderByDesc('requested_date')
+            ->paginate(10);
+
+        return view('admin.laboratory.index', compact(
+            'pendingRequisitions',
+            'completedRequisitions',
+            'totalLabTests',
+            'requisitions'
+        ));
+    }
+
+    /**
+     * Lab Tests (Catalog)
+     */
+    public function testsIndex()
+    {
+        $labTests = LabTest::orderBy('test_name')->paginate(15);
+        return view('admin.laboratory.tests.index', compact('labTests'));
+    }
+
+    public function testsCreate()
+    {
+        $categories = ['blood', 'urine', 'fecal', 'biopsy', 'cytology', 'other'];
+        return view('admin.laboratory.tests.create', compact('categories'));
+    }
+
+    public function testsStore(Request $request)
+    {
+        $data = $request->validate([
+            'test_name' => 'required|string|max:150',
+            'category' => 'required|in:blood,urine,fecal,biopsy,cytology,other',
+            'description' => 'nullable|string',
+            'standard_price' => 'nullable|numeric|min:0',
+        ]);
+
+        $labTest = LabTest::create($data);
+
+        return redirect()->route('admin.laboratory.tests.show', $labTest->id)
+            ->with('success', 'Lab test created successfully.');
+    }
+
+    public function testsShow(LabTest $labTest)
+    {
+        $labTest->loadCount('labRequisitions');
+        return view('admin.laboratory.tests.show', compact('labTest'));
+    }
+
+    public function testsEdit(LabTest $labTest)
+    {
+        $categories = ['blood', 'urine', 'fecal', 'biopsy', 'cytology', 'other'];
+        return view('admin.laboratory.tests.edit', compact('labTest', 'categories'));
+    }
+
+    public function testsUpdate(Request $request, LabTest $labTest)
+    {
+        $data = $request->validate([
+            'test_name' => 'required|string|max:150',
+            'category' => 'required|in:blood,urine,fecal,biopsy,cytology,other',
+            'description' => 'nullable|string',
+            'standard_price' => 'nullable|numeric|min:0',
+        ]);
+
+        $labTest->update($data);
+
+        return redirect()->route('admin.laboratory.tests.show', $labTest->id)
+            ->with('success', 'Lab test updated successfully.');
+    }
+
+    public function testsDestroy(LabTest $labTest)
+    {
+        if ($labTest->labRequisitions()->exists()) {
+            return redirect()->route('admin.laboratory.tests.index')
+                ->with('error', 'Cannot delete a test that has requisitions.');
+        }
+
+        $labTest->delete();
+
+        return redirect()->route('admin.laboratory.tests.index')
+            ->with('success', 'Lab test deleted successfully.');
+    }
+
+    /**
+     * Lab Requisitions (Requests / Results)
+     */
+    public function requisitionsCreate()
+    {
+        $medicalRecords = MedicalRecord::with(['pet.owner.user', 'veterinarian'])
+            ->orderByDesc('visit_date')
+            ->limit(50)
+            ->get();
+
+        $labTests = LabTest::orderBy('test_name')->get();
+
+        $requesters = User::orderBy('first_name')->orderBy('last_name')->get();
+
+        return view('admin.laboratory.requisitions.create', compact('medicalRecords', 'labTests', 'requesters'));
+    }
+
+    public function requisitionsStore(Request $request)
+    {
+        $data = $request->validate([
+            'medical_record_id' => 'required|exists:medical_records,id',
+            'test_id' => 'required|exists:lab_tests,id',
+            'requested_by' => 'required|exists:users,id',
+            'requested_date' => 'nullable|date',
+            'sample_collected' => 'nullable|boolean',
+            'sample_collection_date' => 'nullable|date',
+            'status' => 'required|in:pending,collected,sent_to_lab,completed,cancelled',
+            'results' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        if (!isset($data['requested_date']) || !$data['requested_date']) {
+            $data['requested_date'] = now();
+        }
+
+        $data['sample_collected'] = (bool)($data['sample_collected'] ?? false);
+
+        if ($data['sample_collected'] && empty($data['sample_collection_date'])) {
+            $data['sample_collection_date'] = now();
+        }
+
+        $labRequisition = LabRequisition::create($data);
+
+        return redirect()->route('admin.laboratory.requisitions.show', $labRequisition->id)
+            ->with('success', 'Lab requisition created successfully.');
+    }
+
+    public function requisitionsShow(LabRequisition $labRequisition)
+    {
+        $labRequisition->load(['medicalRecord.pet.owner.user', 'medicalRecord.veterinarian', 'test', 'requestedBy']);
+        return view('admin.laboratory.requisitions.show', compact('labRequisition'));
+    }
+
+    public function requisitionsEdit(LabRequisition $labRequisition)
+    {
+        $labRequisition->load(['medicalRecord.pet.owner.user', 'test', 'requestedBy']);
+
+        $labTests = LabTest::orderBy('test_name')->get();
+        $requesters = User::orderBy('first_name')->orderBy('last_name')->get();
+
+        return view('admin.laboratory.requisitions.edit', compact('labRequisition', 'labTests', 'requesters'));
+    }
+
+    public function requisitionsUpdate(Request $request, LabRequisition $labRequisition)
+    {
+        $data = $request->validate([
+            'test_id' => 'required|exists:lab_tests,id',
+            'requested_by' => 'required|exists:users,id',
+            'requested_date' => 'required|date',
+            'sample_collected' => 'nullable|boolean',
+            'sample_collection_date' => 'nullable|date',
+            'status' => 'required|in:pending,collected,sent_to_lab,completed,cancelled',
+            'results' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $data['sample_collected'] = (bool)($data['sample_collected'] ?? false);
+
+        if ($data['sample_collected'] && empty($data['sample_collection_date'])) {
+            $data['sample_collection_date'] = now();
+        }
+
+        if (!$data['sample_collected']) {
+            $data['sample_collection_date'] = null;
+        }
+
+        $labRequisition->update($data);
+
+        return redirect()->route('admin.laboratory.requisitions.show', $labRequisition->id)
+            ->with('success', 'Lab requisition updated successfully.');
+    }
+
+    public function requisitionsDestroy(LabRequisition $labRequisition)
+    {
+        $labRequisition->delete();
+
+        return redirect()->route('admin.laboratory.index')
+            ->with('success', 'Lab requisition deleted successfully.');
+    }
+
     /**
      * Display the laboratory dashboard
      */

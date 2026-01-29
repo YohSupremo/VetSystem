@@ -63,22 +63,6 @@ class MedicalRecordController extends Controller
             'other_vitals' => 'nullable|string',
         ]);
 
-        // Only check for existing records if NOT coming from pet history page
-        // If pet_id is in the request (pre-selected), allow adding another record
-        if (!$request->has('from_pet_history')) {
-            $existingRecord = MedicalRecord::where('pet_id', $validated['pet_id'])
-                ->latest()
-                ->first();
-
-            if ($existingRecord) {
-                $pet = Pet::find($validated['pet_id']);
-                return redirect()->route('admin.medical-records.index')
-                    ->with('warning', 'This pet already has a medical record. Please view the pet\'s history to see all records.')
-                    ->with('pet_id', $validated['pet_id'])
-                    ->with('pet_name', $pet->name);
-            }
-        }
-
         $vitalSigns = [
             'temperature' => $request->temperature,
             'heart_rate' => $request->heart_rate,
@@ -90,7 +74,7 @@ class MedicalRecordController extends Controller
             'other_vitals' => $request->other_vitals,
         ];
 
-        MedicalRecord::create([
+        $medicalRecord = MedicalRecord::create([
             'pet_id' => $validated['pet_id'],
             'veterinarian_id' => $validated['veterinarian_id'],
             'visit_date' => $validated['visit_date'],
@@ -102,15 +86,10 @@ class MedicalRecordController extends Controller
             'vital_signs' => $vitalSigns,
         ]);
 
-        // Redirect back to pet history if coming from there
-        if ($request->has('from_pet_history')) {
-            $pet = Pet::find($validated['pet_id']);
-            return redirect()->route('admin.medical-records.pet', $pet->id)
-                ->with('success', 'Medical record added to ' . $pet->name . '\'s history successfully!');
-        }
-
-        return redirect()->route('admin.medical-records.index')
-            ->with('success', 'Medical record created successfully!');
+        // Always redirect to pet history so the new record appears there
+        $pet = Pet::find($validated['pet_id']);
+        return redirect()->route('admin.medical-records.pet', $pet->id)
+            ->with('success', 'Medical record added to ' . $pet->name . '\'s history successfully!');
     }
 
     /**

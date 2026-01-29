@@ -28,9 +28,10 @@ class VaccinationController extends Controller
     public function create()
     {
         $pets = Pet::with('owner.user')->get();
-        $veterinarians = User::where('role', 'veterinarian')->get();
+        $veterinarians = User::where('role', 'veterinarian')->orderBy('first_name')->get();
+        $selectedPetId = request()->query('pet_id');
 
-        return view('admin.vaccinations.create', compact('pets', 'veterinarians'));
+        return view('admin.vaccinations.create', compact('pets', 'veterinarians', 'selectedPetId'));
     }
 
     /**
@@ -73,9 +74,9 @@ class VaccinationController extends Controller
      */
     public function edit($id)
     {
-        $vaccination = Vaccination::findOrFail($id);
+        $vaccination = Vaccination::with(['pet.owner.user', 'veterinarian'])->findOrFail($id);
         $pets = Pet::with('owner.user')->get();
-        $veterinarians = User::where('role', 'veterinarian')->get();
+        $veterinarians = User::where('role', 'veterinarian')->orderBy('first_name')->get();
 
         return view('admin.vaccinations.edit', compact('vaccination', 'pets', 'veterinarians'));
     }

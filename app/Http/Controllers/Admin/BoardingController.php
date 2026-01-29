@@ -74,8 +74,9 @@ class BoardingController extends BaseController
             'morning_feed_time'   => 'nullable|date_format:H:i',
             'afternoon_feed_time' => 'nullable|date_format:H:i',
             'evening_feed_time'   => 'nullable|date_format:H:i',
-            'feeding_notes'       => 'nullable|string',
-            
+            // Notes are required because the database column is NOT NULL
+            'feeding_notes'       => 'required|string',
+            'medication_notes'    => 'nullable|string',
         ]);
 
         $cage = Cage::find($info['cage_id']);
@@ -103,7 +104,7 @@ class BoardingController extends BaseController
         $cage->status = 'occupied';
         $cage->save();
 
-        CageAssignment::create([
+        $assignment = CageAssignment::create([
             'cage_id' => $cage->id,
             'pet_id'  => $info['pet_id'],
             'start_date' => $info['start_date'],
@@ -120,21 +121,31 @@ class BoardingController extends BaseController
             ? implode(',', $feeding_times) 
             : 'As_Needed';
 
-        $feeding_notes = ($info['feeding_notes'] ?? ''); 
+        // Always store non-empty notes to satisfy NOT NULL constraint
+        $feeding_notes = trim($info['feeding_notes'] ?? ''); 
+        if ($feeding_notes === '') {
+            $feeding_notes = 'No specific notes provided.';
+        }
                        
 
         FeedingSchedule::updateOrCreate(
             ['pet_id' => $info['pet_id']],
             [
                 'schedule' => $feeding_schedule,
-                'notes'    => $feeding_notes ?: null,
+                'notes'    => $feeding_notes,
             ]
         );
 
-        if (!empty($info['special_instructions'])) {
+        // Store medication notes on assignment and medication instructions if provided
+        $medicationNotes = trim($info['medication_notes'] ?? '');
+        if ($medicationNotes !== '') {
+            $assignment->update([
+                'medication_notes' => $medicationNotes,
+            ]);
+
             MedicationInstruction::updateOrCreate(
                 ['pet_id' => $info['pet_id']],
-                ['instructions' => $info['special_instructions']]
+                ['instructions' => $medicationNotes]
             );
         }
 
@@ -157,8 +168,10 @@ class BoardingController extends BaseController
             'morning_feed_time'   => 'nullable|date_format:H:i',
             'afternoon_feed_time' => 'nullable|date_format:H:i',
             'evening_feed_time'   => 'nullable|date_format:H:i',
-            'feeding_notes'       => 'nullable|string',
-            'special_instructions' => 'nullable|string',
+            // Notes are required because the database column is NOT NULL
+            'feeding_notes'       => 'required|string',
+            'medication_notes'    => 'nullable|string',
+            'special_instructions' => 'nullable|string', // legacy support
         ]);
 
         $cage = Cage::find($info['cage_id']);
@@ -204,22 +217,31 @@ class BoardingController extends BaseController
             ? implode(',', $feeding_times) 
             : 'As_Needed';
 
-        $feeding_notes = ($info['feeding_notes'] ?? '');
+        // Always store non-empty notes to satisfy NOT NULL constraint
+        $feeding_notes = trim($info['feeding_notes'] ?? '');
+        if ($feeding_notes === '') {
+            $feeding_notes = 'No specific notes provided.';
+        }
                     
 
         FeedingSchedule::updateOrCreate(
             ['pet_id' => $info['pet_id']],
             [
                 'schedule' => $feeding_schedule,
-                'notes'    => $feeding_notes ?: null,
+                'notes'    => $feeding_notes,
             ]
         );
 
-        // Store medication instructions if provided
-        if (!empty($info['special_instructions'])) {
+        // Store medication notes on cage assignment and medication instructions if provided
+        $medicationNotes = trim($info['medication_notes'] ?? ($info['special_instructions'] ?? ''));
+        if ($medicationNotes !== '') {
+            $boarding->update([
+                'medication_notes' => $medicationNotes,
+            ]);
+
             MedicationInstruction::updateOrCreate(
                 ['pet_id' => $info['pet_id']],
-                ['instructions' => $info['special_instructions']]
+                ['instructions' => $medicationNotes]
             );
         }
 
@@ -264,8 +286,10 @@ class BoardingController extends BaseController
             'morning_feed_time'   => 'nullable|date_format:H:i',
             'afternoon_feed_time' => 'nullable|date_format:H:i',
             'evening_feed_time'   => 'nullable|date_format:H:i',
-            'feeding_notes'       => 'nullable|string',
-            'special_instructions' => 'nullable|string',
+            // Notes are required because the database column is NOT NULL
+            'feeding_notes'       => 'required|string',
+            'medication_notes'    => 'nullable|string',
+            'special_instructions' => 'nullable|string', // legacy support
         ]);
 
         // If cage changed, update old cage status and new cage status
@@ -283,12 +307,16 @@ class BoardingController extends BaseController
             }
         }
 
-        // Update cage assignment
-        $boarding->update([
+        // Update cage assignment (including medication notes if any)
+        $updateData = [
             'cage_id' => $info['cage_id'],
             'start_date' => $info['start_date'],
             'end_date'   => $info['end_date'],
-        ]);
+        ];
+        if (!empty($info['special_instructions'])) {
+            $updateData['medication_notes'] = $info['special_instructions'];
+        }
+        $boarding->update($updateData);
 
         // Update feeding schedule
         $feeding_times = array_filter([
@@ -301,27 +329,34 @@ class BoardingController extends BaseController
             ? implode(',', $feeding_times) 
             : 'As_Needed';
 
-        $feeding_notes = ($info['feeding_notes'] ?? '') . 
-                        ($info['special_instructions'] ? "\n\nSpecial Instructions: " . $info['special_instructions'] : '');
+        $feeding_notes = trim($info['feeding_notes'] ?? '');
+        if ($feeding_notes === '') {
+            $feeding_notes = 'No specific notes provided.';
+        }
 
         FeedingSchedule::updateOrCreate(
             ['pet_id' => $boarding->pet_id],
             [
                 'schedule' => $feeding_schedule,
-                'notes'    => $feeding_notes ?: null,
+                'notes'    => $feeding_notes,
             ]
         );
 
-        // Update medication instructions
-        if (!empty($info['special_instructions'])) {
+        // Update medication notes on cage assignment and medication instructions
+        $medicationNotes = trim($info['medication_notes'] ?? ($info['special_instructions'] ?? ''));
+        if ($medicationNotes !== '') {
+            $updateData['medication_notes'] = $medicationNotes;
+        }
+        $boarding->update($updateData);
+
+        if ($medicationNotes !== '') {
             MedicationInstruction::updateOrCreate(
                 ['pet_id' => $boarding->pet_id],
-                ['instructions' => $info['special_instructions']]
+                ['instructions' => $medicationNotes]
             );
         } else {
             MedicationInstruction::where('pet_id', $boarding->pet_id)->delete();
         }
-
         return redirect()->route('admin.boarding.index')->with('success', 'Boarding updated successfully.');
     }
 

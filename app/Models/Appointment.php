@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Carbon\Carbon;
 
 class Appointment extends Model
@@ -123,5 +124,13 @@ class Appointment extends Model
     public function getDurationInMinutes(): int
     {
         return Carbon::parse($this->start_time)->diffInMinutes($this->end_time);
+    }
+
+    /**
+     * Get the grooming appointment for this appointment.
+     */
+    public function groomingAppointment(): HasOne
+    {
+        return $this->hasOne(GroomingAppointment::class);
     }
 }

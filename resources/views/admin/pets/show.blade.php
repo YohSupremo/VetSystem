@@ -272,11 +272,8 @@
 <div class="pet-header">
     <div class="pet-header-content">
         <div class="pet-photo-large">
-            @if($pet->photo_path && file_exists(storage_path('app/public/' . $pet->photo_path)))
-                <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}">
-            @else
-                <i class="fas fa-paw"></i>
-            @endif
+            <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <i class="fas fa-paw" style="display:none; font-size: 4rem; color: #ccc;"></i>
         </div>
         <div class="pet-info-header">
             <h1>{{ $pet->name }}</h1>
@@ -370,10 +367,83 @@
         <!-- Medical Records Section -->
         <h3 style="margin-top: 30px;"><i class="fas fa-clipboard-list"></i> Medical History</h3>
         <div class="medical-section">
-            <p>
-                <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
-                Medical records and appointments will be displayed here. This section will show vaccinations, treatments, and appointment history.
-            </p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 12px;">
+                <a href="{{ route('admin.medical-records.pet', $pet->id) }}" class="btn btn-secondary">
+                    <i class="fas fa-history"></i> View Full History
+                </a>
+                <a href="{{ route('admin.medical-records.create', ['pet_id' => $pet->id]) }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Medical Record
+                </a>
+            </div>
+
+            @if(isset($medicalRecords) && $medicalRecords->count() > 0)
+                <div style="display:grid; gap:10px;">
+                    @foreach($medicalRecords as $record)
+                        <div style="background:#fff; border-radius:10px; padding:12px 14px; border:1px solid var(--soft-gray);">
+                            <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                                <div>
+                                    <strong>{{ \Carbon\Carbon::parse($record->visit_date)->format('M d, Y') }}</strong>
+                                    <span style="color:var(--light-text); font-size: 13px;">
+                                        • Dr. {{ $record->veterinarian?->first_name ?? 'N/A' }} {{ $record->veterinarian?->last_name ?? '' }}
+                                    </span>
+                                </div>
+                                <a href="{{ route('admin.medical-records.show', $record->id) }}" class="btn btn-secondary" style="padding:6px 12px; font-size: 13px;">
+                                    View
+                                </a>
+                            </div>
+                            <div style="margin-top:6px; color:var(--dark-text);">
+                                <span style="font-weight:600;">Complaint:</span>
+                                <span>{{ \Illuminate\Support\Str::limit($record->complaint, 120) }}</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p>
+                    <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                    No medical records found for this pet yet.
+                </p>
+            @endif
+        </div>
+
+        <h3 style="margin-top: 25px;"><i class="fas fa-calendar-check"></i> Appointments</h3>
+        <div class="medical-section">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 12px;">
+                <a href="{{ route('admin.appointments.index', ['pet_id' => $pet->id]) }}" class="btn btn-secondary">
+                    <i class="fas fa-list"></i> View All Appointments
+                </a>
+                <a href="{{ route('admin.appointments.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Appointment
+                </a>
+            </div>
+
+            @if(isset($appointments) && $appointments->count() > 0)
+                <div style="display:grid; gap:10px;">
+                    @foreach($appointments as $appt)
+                        <div style="background:#fff; border-radius:10px; padding:12px 14px; border:1px solid var(--soft-gray);">
+                            <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                                <div>
+                                    <strong>
+                                        {{ $appt->appointment_date ? \Carbon\Carbon::parse($appt->appointment_date)->format('M d, Y') : 'TBD' }}
+                                    </strong>
+                                    <span style="color:var(--light-text); font-size: 13px;">
+                                        • {{ $appt->type ? ucfirst(str_replace('_',' ', $appt->type)) : 'Type N/A' }}
+                                        • {{ $appt->status ? ucfirst(str_replace('_',' ', $appt->status)) : 'Status N/A' }}
+                                    </span>
+                                </div>
+                                <a href="{{ route('admin.appointments.show', $appt->id) }}" class="btn btn-secondary" style="padding:6px 12px; font-size: 13px;">
+                                    View
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p>
+                    <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                    No appointments found for this pet yet.
+                </p>
+            @endif
         </div>
 
         <!-- Action Buttons -->

@@ -751,7 +751,7 @@
                         <i class="fas fa-capsules"></i>
                         <span>Pharmacy</span>
                     </a>
-                    <a href="{{ route('admin.laboratory.test-requests.index') }}" class="nav-item {{ request()->routeIs('admin.laboratory.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.laboratory.index') }}" class="nav-item {{ request()->routeIs('admin.laboratory.*') ? 'active' : '' }}">
                         <i class="fas fa-flask"></i>
                         <span>Laboratory</span>
                     </a>

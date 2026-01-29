@@ -2,53 +2,6 @@
 
 @push('styles')
 <style>
-    .dashboard-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .dashboard-card {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        display: flex;
-        align-items: center;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    .card-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 1rem;
-        color: white;
-        font-size: 1.5rem;
-    }
-    
-    .card-info h3 {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin: 0;
-        line-height: 1.2;
-    }
-    
-    .card-info p {
-        margin: 0.25rem 0 0;
-        color: #6c757d;
-        font-size: 0.9rem;
-    }
-    
     .content-header {
         display: flex;
         justify-content: space-between;
@@ -57,156 +10,175 @@
         padding-bottom: 1rem;
         border-bottom: 1px solid #e9ecef;
     }
-    
+
     .header-title h1 {
         font-size: 1.75rem;
         font-weight: 600;
         margin: 0 0 0.5rem;
         color: #2c3e50;
     }
-    
+
     .header-title p {
         color: #6c757d;
         margin: 0;
     }
-    
-    .btn-primary {
-        background: linear-gradient(135deg, #9c27b0 0%, #6a1b9a 100%);
-        border: none;
-        padding: 0.65rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 500;
-        display: inline-flex;
+
+    .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        display: flex;
         align-items: center;
-        gap: 0.5rem;
-        transition: all 0.3s ease;
     }
-    
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+
+    .card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: #fff;
+        font-size: 1.25rem;
     }
-    
-    .search-input {
-        padding: 0.65rem 1rem;
-        border: 1px solid #d1d3e2;
-        border-radius: 8px;
-        width: 250px;
-        transition: all 0.3s ease;
+
+    .card-info h3 {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 700;
     }
-    
-    .search-input:focus {
-        border-color: #9c27b0;
-        box-shadow: 0 0 0 0.2rem rgba(156, 39, 176, 0.25);
-        outline: none;
+
+    .card-info p {
+        margin: 0.25rem 0 0;
+        font-size: 0.85rem;
+        color: #6c757d;
     }
-    
+
     .content-section {
         background: white;
         border-radius: 12px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         padding: 1.5rem;
-        margin-top: 1.5rem;
     }
-    
+
     .section-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.25rem;
     }
-    
+
     .section-header h2 {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
         font-weight: 600;
         margin: 0;
         color: #2c3e50;
     }
-    
+
     .section-header h2 i {
-        margin-right: 0.75rem;
+        margin-right: 0.5rem;
         color: #9c27b0;
     }
-    
-    .badge {
-        padding: 0.4em 0.8em;
-        border-radius: 50px;
-        font-size: 0.8rem;
-        font-weight: 600;
+
+    .btn-primary {
+        background: linear-gradient(135deg, #9c27b0 0%, #6a1b9a 100%);
+        border: none;
+        padding: 0.6rem 1.4rem;
+        border-radius: 8px;
+        font-weight: 500;
+        color: #fff;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
     }
-    
-    .badge-success { background-color: rgba(28, 200, 138, 0.15); color: #1cc88a; }
-    .badge-warning { background-color: rgba(246, 194, 62, 0.15); color: #f6c23e; }
-    .badge-danger { background-color: rgba(231, 74, 59, 0.15); color: #e74a3b; }
-    .badge-info { background-color: rgba(54, 185, 204, 0.15); color: #36b9cc; }
-    
-    .table {
+
+    .btn-primary:hover {
+        color: #fff;
+    }
+
+    .data-table {
         width: 100%;
-        margin-bottom: 1rem;
-        color: #5a5c69;
         border-collapse: separate;
-        border-spacing: 0 0.5rem;
+        border-spacing: 0 6px;
     }
-    
-    .table th {
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.7rem;
-        letter-spacing: 0.05em;
-        color: #6c757d;
+
+    .data-table thead th {
         padding: 0.75rem 1rem;
-        background-color: #f8f9fc;
-        border: none;
-    }
-    
-    .table td {
-        padding: 1rem;
-        vertical-align: middle;
-        background: white;
-        border: none;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-    }
-    
-    .table tr:first-child td:first-child {
-        border-top-left-radius: 10px;
-        border-bottom-left-radius: 10px;
-    }
-    
-    .table tr:first-child td:last-child {
-        border-top-right-radius: 10px;
-        border-bottom-right-radius: 10px;
-    }
-    
-    .btn-sm {
-        padding: 0.25rem 0.75rem;
         font-size: 0.8rem;
-        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #6c757d;
+        border-bottom: 1px solid #e9ecef;
+        text-align: left;
+        white-space: nowrap;
     }
-    
-    .btn-outline-primary {
-        color: #9c27b0;
-        border: 1px solid #9c27b0;
-        background: transparent;
+
+    .data-table tbody tr {
+        background: #f9fafb;
     }
-    
-    .btn-outline-primary:hover {
-        background: #9c27b0;
-        color: white;
+
+    .data-table tbody td {
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
     }
-    
-    .btn-outline-danger {
-        color: #e74a3b;
-        border: 1px solid #e74a3b;
-        background: transparent;
+
+    .pet-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
-    
-    .btn-outline-danger:hover {
-        background: #e74a3b;
-        color: white;
+
+    .pet-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        object-fit: cover;
     }
-    
-    .action-buttons .btn {
-        margin: 0 0.25rem;
+
+    .badge {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .badge-status-scheduled { background: #e3f2fd; color: #1565c0; }
+    .badge-status-in_progress { background: #fff3cd; color: #856404; }
+    .badge-status-completed { background: #d4edda; color: #155724; }
+    .badge-status-cancelled { background: #f8d7da; color: #721c24; }
+
+    .actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-icon {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 4px;
+        color: var(--light-text);
+    }
+
+    .btn-icon:hover {
+        background: var(--paw-medium);
+        color: var(--primary-orange);
+    }
+
+    .btn-icon.text-danger:hover {
+        color: #c82333;
     }
 </style>
 @endpush
@@ -214,558 +186,152 @@
 @section('content')
 <div class="content-header">
     <div class="header-title">
-        <h1><i class="fas fa-cut"></i> Grooming Services</h1>
-        <p>Manage pet grooming appointments and services with ease</p>
+        <h1><i class="fas fa-cut"></i> Grooming Appointments</h1>
+        <p>Manage all grooming visits in one place</p>
     </div>
-    <div class="header-actions">
-        <button class="btn btn-primary" onclick="openModal('newGroomingModal')">
+    <div style="display: flex; gap: 0.75rem;">
+        <a href="{{ route('admin.grooming-services.index') }}" class="btn btn-primary" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">
+            <i class="fas fa-spa"></i> Manage Services
+        </a>
+        <a href="{{ route('admin.grooming.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> New Grooming
-        </button>
+        </a>
     </div>
 </div>
 
 <div class="dashboard-cards">
     <div class="dashboard-card">
-        <div class="card-icon" style="background: linear-gradient(135deg, #9c27b0 0%, #6a1b9a 100%);">
-            <i class="fas fa-calendar-check"></i>
+        <div class="card-icon" style="background: linear-gradient(135deg,#9c27b0,#6a1b9a);">
+            <i class="fas fa-calendar-day"></i>
         </div>
         <div class="card-info">
             <h3>{{ $todayAppointments ?? 0 }}</h3>
-            <p>Today's Appointments</p>
+            <p>Today&apos;s Groomings</p>
         </div>
     </div>
     <div class="dashboard-card">
-        <div class="card-icon" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">
+        <div class="card-icon" style="background: linear-gradient(135deg,#4caf50,#388e3c);">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="card-info">
+            <h3>{{ $completedAppointments ?? 0 }}</h3>
+            <p>Completed Overall</p>
+        </div>
+    </div>
+    <div class="dashboard-card">
+        <div class="card-icon" style="background: linear-gradient(135deg,#ff9800,#f57c00);">
             <i class="fas fa-spa"></i>
         </div>
         <div class="card-info">
-            <h3>{{ $servicesCount ?? 0 }}</h3>
-            <p>Services Available</p>
-        </div>
-    </div>
-    <div class="dashboard-card">
-        <div class="card-icon" style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);">
-            <i class="fas fa-user-tie"></i>
-        </div>
-        <div class="card-info">
-            <h3>{{ $groomersCount ?? 0 }}</h3>
-            <p>Groomers</p>
+            <h3>{{ isset($servicesCount) ? $servicesCount : 0 }}</h3>
+            <p>Available Services</p>
         </div>
     </div>
 </div>
 
 <div class="content-section">
     <div class="section-header">
-        <h2><i class="fas fa-list"></i> Today's Grooming Schedule</h2>
-        <div class="section-actions">
-            <input type="text" class="search-input" placeholder="Search appointments..." onkeyup="filterTable('groomingTable', this.value)">
-        </div>
+        <h2><i class="fas fa-list"></i> All Grooming Appointments</h2>
+        <a href="{{ route('admin.grooming-services.index') }}" style="color: #9c27b0; text-decoration: none; font-weight: 500;">
+            <i class="fas fa-spa"></i> Manage Services
+        </a>
     </div>
-    
+
     <div class="table-responsive">
-        <table id="groomingTable" class="data-table">
+        <table class="data-table">
             <thead>
                 <tr>
-                    <th>Time</th>
+                    <th>Date</th>
                     <th>Pet</th>
                     <th>Owner</th>
-                    <th>Services</th>
+                    <th>Service</th>
                     <th>Groomer</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($appointments as $appointment)
-                <tr>
-                    <td>
-                        <strong>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('h:i A') }}</strong>
-                    </td>
-                    <td>
-                        <div class="pet-info">
-                            <img src="{{ ($appointment->pet && $appointment->pet->photo_path) ? asset('storage/' . $appointment->pet->photo_path) : asset('images/default-pet.jpg') }}" alt="{{ $appointment->pet->name ?? 'Pet' }}" class="pet-avatar">
-                            <span>{{ $appointment->pet->name ?? 'Unknown Pet' }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        @if($appointment->pet && $appointment->pet->owner && $appointment->pet->owner->user)
-                            {{ $appointment->pet->owner->user->first_name ?? 'Unknown' }} {{ $appointment->pet->owner->user->last_name ?? '' }}
-                        @else
-                            Unknown Owner
-                        @endif
-                    </td>
-                    <td>
-                        @if($appointment->services && count($appointment->services) > 0)
-                            @foreach($appointment->services as $service)
-                                <span class="badge" style="background: #9B7EDE;">
-                                    {{ is_object($service) && property_exists($service, 'name') ? $service->name : 'Service' }}
-                                </span>
-                            @endforeach
-                        @else
-                            <span class="text-muted">No services</span>
-                        @endif
-                    </td>
-                    <td>{{ ($appointment->groomer && $appointment->groomer->user) ? $appointment->groomer->user->first_name : 'Not Assigned' }}</td>
-                    <td>
-                        @php
-                            $statusClass = [
-                                'scheduled' => 'info',
-                                'in_progress' => 'warning',
-                                'completed' => 'success',
-                                'cancelled' => 'danger',
-                                'no_show' => 'secondary'
-                            ][$appointment->status] ?? 'secondary';
-                        @endphp
-                        <span class="badge badge-{{ $statusClass }}">
-                            {{ str_replace('_', ' ', ucfirst($appointment->status)) }}
-                        </span>
-                    </td>
-                    <td class="actions">
-                        @if($appointment->status === 'scheduled')
-                            <button class="btn-icon" onclick="startGrooming({{ $appointment->id }})" title="Start Grooming">
-                                <i class="fas fa-play"></i>
-                            </button>
-                        @elseif($appointment->status === 'in_progress')
-                            <button class="btn-icon" onclick="completeGrooming({{ $appointment->id }})" title="Complete">
-                                <i class="fas fa-check"></i>
-                            </button>
-                        @endif
-                        <button class="btn-icon" onclick="viewGrooming({{ $appointment->id }})" title="View">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn-icon text-danger" onclick="cancelGrooming({{ $appointment->id }})" title="Cancel">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </td>
-                </tr>
+                @forelse($groomingAppointments as $groomingAppointment)
+                    @php $appointment = $groomingAppointment->appointment; @endphp
+                    <tr>
+                        <td>
+                            {{ $appointment && $appointment->appointment_date ? \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y') : 'N/A' }}
+                        </td>
+                        <td>
+                            <div class="pet-info">
+                                @php $pet = $appointment->pet ?? null; @endphp
+                                <img src="{{ $pet ? $pet->photo_url : 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect fill=\"#f0f0f0\" width=\"200\" height=\"200\"/><text x=\"50%\" y=\"50%\" font-size=\"80\" text-anchor=\"middle\" dominant-baseline=\"middle\" fill=\"#ccc\">🐾</text></svg>') }}"
+                                     alt="{{ $pet->name ?? 'Pet' }}" class="pet-avatar" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3QgZmlsbD0iI2YwZjBmMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iI2NjYyI+8J+QrjwvdGV4dD48L3N2Zz4='">
+                                <span>{{ $pet->name ?? 'Unknown Pet' }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            @php
+                                $ownerUser = optional(optional($pet)->owner)->user;
+                            @endphp
+                            @if($ownerUser)
+                                {{ $ownerUser->first_name }} {{ $ownerUser->last_name }}
+                            @else
+                                Unknown Owner
+                            @endif
+                        </td>
+                        <td>
+                            {{ $groomingAppointment->service->service_name ?? 'N/A' }}
+                        </td>
+                        <td>
+                            @if($groomingAppointment->groomer)
+                                {{ $groomingAppointment->groomer->first_name }} {{ $groomingAppointment->groomer->last_name }}
+                            @else
+                                Not assigned
+                            @endif
+                        </td>
+                        <td>
+                            @php
+                                $status = $groomingAppointment->status ?? 'scheduled';
+                            @endphp
+                            <span class="badge badge-status-{{ $status }}">
+                                {{ ucfirst(str_replace('_',' ', $status)) }}
+                            </span>
+                        </td>
+                        <td class="actions">
+                            <a href="{{ route('admin.grooming.show', $groomingAppointment->id) }}" class="btn-icon" title="View">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ route('admin.grooming.edit', $groomingAppointment->id) }}" class="btn-icon" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form method="POST" action="{{ route('admin.grooming.destroy', $groomingAppointment->id) }}" class="delete-form">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn-icon text-danger" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
                 @empty
-                <tr>
-                    <td colspan="7" class="text-center">No grooming appointments scheduled for today</td>
-                </tr>
+                    <tr>
+                        <td colspan="7" class="text-center">No grooming appointments found.</td>
+                    </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- Services Section -->
-<div class="content-section">
-    <div class="section-header">
-        <h2><i class="fas fa-spa"></i> Grooming Services</h2>
-        <button class="btn btn-outline" onclick="openModal('newServiceModal')">
-            <i class="fas fa-plus"></i> Add Service
-        </button>
-    </div>
-    
-    <div class="services-grid">
-        @forelse($services as $service)
-        <div class="service-card">
-            <div class="service-icon">
-                <i class="fas {{ $service->icon ?? 'fa-paw' }}"></i>
-            </div>
-            <h3>{{ $service->name }}</h3>
-            <p class="service-description">{{ $service->description }}</p>
-            <div class="service-footer">
-                <span class="service-price">${{ number_format($service->price, 2) }}</span>
-                <div class="service-actions">
-                    <button class="btn-icon" onclick="editService({{ $service->id }})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-icon text-danger" onclick="deleteService({{ $service->id }})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        @empty
-        <div class="empty-state">
-            <i class="fas fa-spa"></i>
-            <p>No grooming services found</p>
-            <button class="btn btn-primary" onclick="openModal('newServiceModal')">
-                Add Your First Service
-            </button>
-        </div>
-        @endforelse
-    </div>
-</div>
-
-<!-- New Grooming Modal -->
-<div class="modal" id="newGroomingModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>New Grooming Appointment</h3>
-            <button class="close" onclick="closeModal('newGroomingModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="groomingForm">
-                @csrf
-                <div class="form-group">
-                    <label>Pet</label>
-                    <select class="form-control" name="pet_id" required>
-                        <option value="">Select Pet</option>
-                        @foreach($pets as $pet)
-                            <option value="{{ $pet->id }}">
-                                {{ $pet->name }} ({{ $pet->owner->user->first_name }} {{ $pet->owner->user->last_name }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Date</label>
-                        <input type="date" class="form-control" name="appointment_date" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Time</label>
-                        <input type="time" class="form-control" name="appointment_time" required>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Services</label>
-                    <select class="form-control select2-multiple" name="services[]" multiple="multiple" required>
-                        @foreach($allServices as $service)
-                            <option value="{{ $service->id }}">
-                                {{ $service->name }} (${{ number_format($service->price, 2) }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Assign Groomer</label>
-                    <select class="form-control" name="groomer_id" required>
-                        <option value="">Select Groomer</option>
-                        @foreach($groomers as $groomer)
-                            <option value="{{ $groomer->id }}">
-                                {{ is_object($groomer->user) ? $groomer->user->first_name : (isset($groomer->user['first_name']) ? $groomer->user['first_name'] : 'Unknown') }} {{ is_object($groomer->user) ? $groomer->user->last_name : (isset($groomer->user['last_name']) ? $groomer->user['last_name'] : '') }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Notes</label>
-                    <textarea class="form-control" name="notes" rows="2"></textarea>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('newGroomingModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Schedule Appointment</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- New Service Modal -->
-<div class="modal" id="newServiceModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Add New Service</h3>
-            <button class="close" onclick="closeModal('newServiceModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="serviceForm">
-                @csrf
-                <div class="form-group">
-                    <label>Service Name</label>
-                    <input type="text" class="form-control" name="name" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea class="form-control" name="description" rows="2"></textarea>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Price ($)</label>
-                        <input type="number" step="0.01" min="0" class="form-control" name="price" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Duration (minutes)</label>
-                        <input type="number" min="5" step="5" class="form-control" name="duration" required>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Icon</label>
-                    <select class="form-control" name="icon">
-                        <option value="fa-paw">Paw</option>
-                        <option value="fa-bath">Bath</option>
-                        <option value="fa-cut">Scissors</option>
-                        <option value="fa-spa">Spa</option>
-                        <option value="fa-bone">Bone</option>
-                        <option value="fa-paw">Paw Prints</option>
-                    </select>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('newServiceModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Service</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 @push('scripts')
 <script>
-// Initialize Select2 for multiple service selection
-$(document).ready(function() {
-    $('.select2-multiple').select2({
-        placeholder: "Select services",
-        allowClear: true
-    });
-});
-
-function filterTable(tableId, query) {
-    const table = document.getElementById(tableId);
-    const rows = table.getElementsByTagName('tr');
-    
-    for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
-    }
-}
-
-function startGrooming(id) {
-    if (confirm('Start grooming session for this pet?')) {
-        updateGroomingStatus(id, 'in_progress');
-    }
-}
-
-function completeGrooming(id) {
-    if (confirm('Mark this grooming as completed?')) {
-        updateGroomingStatus(id, 'completed');
-    }
-}
-
-function cancelGrooming(id) {
-    if (confirm('Cancel this grooming appointment?')) {
-        updateGroomingStatus(id, 'cancelled');
-    }
-}
-
-function updateGroomingStatus(id, status) {
-    fetch(`/admin/grooming/${id}/status`, {
-        method: 'PUT',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ status: status })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert('Error updating grooming status');
-        }
-    });
-}
-
-function viewGrooming(id) {
-    window.location.href = `/admin/grooming/${id}`;
-}
-
-function editService(id) {
-    // Fetch service data and populate form
-    fetch(`/admin/grooming/services/${id}/edit`)
-        .then(response => response.json())
-        .then(service => {
-            // Populate form
-            const form = document.getElementById('serviceForm');
-            form.elements['name'].value = service.name;
-            form.elements['description'].value = service.description;
-            form.elements['price'].value = service.price;
-            form.elements['duration'].value = service.duration;
-            form.elements['icon'].value = service.icon || 'fa-paw';
-            
-            // Change form action to update
-            form.action = `/admin/grooming/services/${id}`;
-            form.method = 'PUT';
-            
-            // Update modal title
-            document.querySelector('#newServiceModal h3').textContent = 'Edit Service';
-            
-            // Open modal
-            openModal('newServiceModal');
-        });
-}
-
-function deleteService(id) {
-    if (confirm('Are you sure you want to delete this service?')) {
-        fetch(`/admin/grooming/services/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert('Error deleting service');
+document.addEventListener('DOMContentLoaded', function () {
+    var forms = document.querySelectorAll('.delete-form');
+    forms.forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            var ok = confirm('Are you sure you want to delete this grooming appointment?');
+            if (!ok) {
+                e.preventDefault();
             }
         });
-    }
-}
-
-// Form submission for new grooming appointment
-document.getElementById('groomingForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    
-    fetch('/admin/grooming', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert('Error creating grooming appointment');
-        }
-    });
-});
-
-// Form submission for service
-document.getElementById('serviceForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const form = e.target;
-    const method = form.method === 'PUT' ? 'PUT' : 'POST';
-    const url = method === 'PUT' ? form.action : '/admin/grooming/services';
-    
-    fetch(url, {
-        method: method,
-        body: new FormData(form),
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert('Error saving service');
-        }
     });
 });
 </script>
-@endpush
-
-@push('styles')
-<style>
-.services-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.service-card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: var(--shadow-soft);
-    transition: transform 0.3s, box-shadow 0.3s;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-.service-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-hover);
-}
-
-.service-icon {
-    width: 60px;
-    height: 60px;
-    background: var(--paw-light);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 15px;
-    color: var(--accent-purple);
-    font-size: 24px;
-}
-
-.service-card h3 {
-    margin: 0 0 10px 0;
-    color: var(--dark-text);
-}
-
-.service-description {
-    color: var(--light-text);
-    flex-grow: 1;
-    margin-bottom: 15px;
-}
-
-.service-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: auto;
-}
-
-.service-price {
-    font-weight: 700;
-    color: var(--accent-purple);
-    font-size: 1.2em;
-}
-
-.service-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.empty-state {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 40px 20px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: var(--shadow-soft);
-}
-
-.empty-state i {
-    font-size: 48px;
-    color: var(--light-text);
-    margin-bottom: 15px;
-    opacity: 0.6;
-}
-
-.empty-state p {
-    color: var(--light-text);
-    margin-bottom: 20px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .services-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .service-card {
-        max-width: 100%;
-    }
-}
-</style>
 @endpush
 @endsection

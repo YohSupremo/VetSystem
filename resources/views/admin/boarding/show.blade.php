@@ -178,7 +178,7 @@
     }
 
     .status-completed {
-        background: #e2e3e5;
+        background: #05c221;
         color: #383d41;
     }
 
@@ -285,12 +285,22 @@
 
         <div class="pet-preview">
             <div class="pet-preview-item">
-                <img src="{{ $boarding->petAssigned->photo_path ?? asset('images/default-pet.jpg') }}" alt="Pet" class="pet-preview-image">
+                @php $pet = $boarding->petAssigned; @endphp
+                <img src="{{ $pet ? $pet->photo_url : 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect fill=\"#f0f0f0\" width=\"200\" height=\"200\"/><text x=\"50%\" y=\"50%\" font-size=\"80\" text-anchor=\"middle\" dominant-baseline=\"middle\" fill=\"#ccc\">🐾</text></svg>') }}" alt="Pet" class="pet-preview-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3QgZmlsbD0iI2YwZjBmMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iI2NjYyI+8J+QrjwvdGV4dD48L3N2Zz4='">
                 <div class="pet-preview-info">
                     <h3>{{ $boarding->petAssigned->name ?? 'N/A' }}</h3>
                     <p><strong>Breed:</strong> {{ $boarding->petAssigned->breed ?? 'N/A' }}</p>
                     <p><strong>Species:</strong> {{ ucfirst($boarding->petAssigned->species ?? 'N/A') }}</p>
-                    <p><strong>Owner:</strong> {{ $boarding->petAssigned->owner->user->first_name ?? 'N/A' }} {{ $boarding->petAssigned->owner->user->last_name ?? '' }}</p>
+                    @php
+                        $ownerUser = optional(optional($boarding->petAssigned)->owner)->user;
+                    @endphp
+                    <p><strong>Owner:</strong>
+                        @if($ownerUser)
+                            {{ $ownerUser->first_name }} {{ $ownerUser->last_name }}
+                        @else
+                            N/A
+                        @endif
+                    </p>
                 </div>
             </div>
         </div>
@@ -305,19 +315,31 @@
         <div class="detail-row">
             <div class="detail-group">
                 <span class="detail-label">Check-in Date</span>
-                <span class="detail-value">{{ \Carbon\Carbon::parse($boarding->start_date)->format('M d, Y') ?? 'N/A' }}</span>
+                <span class="detail-value">
+                    @if($boarding->start_date)
+                        {{ \Carbon\Carbon::parse($boarding->start_date)->format('M d, Y') }}
+                    @else
+                        N/A
+                    @endif
+                </span>
             </div>
             <div class="detail-group">
                 <span class="detail-label">Check-out Date</span>
-                <span class="detail-value">{{ \Carbon\Carbon::parse($boarding->end_date)->format('M d, Y') ?? 'N/A' }}</span>
+                <span class="detail-value">
+                    @if($boarding->end_date)
+                        {{ \Carbon\Carbon::parse($boarding->end_date)->format('M d, Y') }}
+                    @else
+                        N/A
+                    @endif
+                </span>
             </div>
             <div class="detail-group">
                 <span class="detail-label">Check-in Time</span>
-                <span class="detail-value">09:00 (Default)</span>
+                <span class="detail-value text">Not tracked (date-based only)</span>
             </div>
             <div class="detail-group">
                 <span class="detail-label">Check-out Time</span>
-                <span class="detail-value">17:00 (Default)</span>
+                <span class="detail-value text">Not tracked (date-based only)</span>
             </div>
         </div>
 
@@ -326,9 +348,13 @@
                 <span class="detail-label">Days Boarded</span>
                 <span class="detail-value">
                     @php
-                        $days = \Carbon\Carbon::parse($boarding->end_date)->diffInDays(\Carbon\Carbon::parse($boarding->start_date));
+                        $days = null;
+                        if ($boarding->start_date && $boarding->end_date) {
+                            $days = \Carbon\Carbon::parse($boarding->end_date)
+                                ->diffInDays(\Carbon\Carbon::parse($boarding->start_date)) + 1;
+                        }
                     @endphp
-                    {{ $days }} days
+                    {{ $days !== null ? $days . ' day' . ($days === 1 ? '' : 's') : 'N/A' }}
                 </span>
             </div>
             <div class="detail-group">
@@ -377,8 +403,12 @@
 
         <div class="detail-group">
             <span class="detail-label">Medication Instructions</span>
-            @if($boarding->medicationInstruction && $boarding->medicationInstruction->instructions)
-                <span class="detail-value text">{{ $boarding->medicationInstruction->instructions }}</span>
+            @php
+                $medicationNotes = $boarding->medication_notes
+                    ?? optional($boarding->medicationInstruction)->instructions;
+            @endphp
+            @if($medicationNotes)
+                <span class="detail-value text">{{ $medicationNotes }}</span>
             @else
                 <div class="empty-state">
                     <i class="fas fa-info-circle"></i> No medication instructions provided
@@ -431,7 +461,7 @@
         <a href="{{ route('admin.boarding.edit', $boarding->id) }}" class="btn btn-primary">
             <i class="fas fa-edit"></i> Edit Boarding
         </a>
-        <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id) }}" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this boarding record? This action cannot be undone.');">
+        <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id) }}" class="delete-form">
             @csrf
             @method('DELETE')
             <button type="submit" class="btn btn-danger">
@@ -440,4 +470,19 @@
         </form>
     </div>
 </div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var form = document.querySelector('.delete-form');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            var ok = confirm('Are you sure you want to delete this boarding record? This action cannot be undone.');
+            if (!ok) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
+@endpush
 @endsection

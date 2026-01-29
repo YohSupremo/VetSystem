@@ -40,6 +40,7 @@ class AppointmentController extends Controller
         $filters = [
             'status' => $request->query('status'),
             'type' => $request->query('type'),
+            'pet_id' => $request->query('pet_id'),
         ];
 
         if ($hasAppointments) {
@@ -48,6 +49,9 @@ class AppointmentController extends Controller
                 ->leftJoin('pet_owners', 'pets.owner_id', '=', 'pet_owners.id')
                 ->leftJoin('users as owners', 'pet_owners.user_id', '=', 'owners.id')
                 ->leftJoin('users as vets', 'appointments.veterinarian_id', '=', 'vets.id')
+                ->when($filters['pet_id'], function ($query, $petId) {
+                    return $query->where('appointments.pet_id', $petId);
+                })
                 ->when($filters['status'], function ($query, $status) {
                     return $query->where('appointments.status', $status);
                 })
@@ -64,14 +68,15 @@ class AppointmentController extends Controller
                     'appointments.type',
                     'appointments.status',
                     'appointments.notes',
+                    'appointments.start_time',
                     'pets.name as pet_name',
                     DB::raw("COALESCE(pets.species, '') as pet_species"),
-                    DB::raw("TRIM(owners.first_name || ' ' || owners.last_name) as owner_name"),
-                    DB::raw("TRIM(vets.first_name || ' ' || vets.last_name) as veterinarian_name"),
+                    DB::raw("TRIM(CONCAT(owners.first_name, ' ', owners.last_name)) as owner_name"),
+                    DB::raw("TRIM(CONCAT(vets.first_name, ' ', vets.last_name)) as veterinarian_name"),
                 ])
                 ->map(function ($appointment) {
                     $appointment->formatted_date = $appointment->appointment_date
-                        ? Carbon::parse($appointment->appointment_date)->format('M d, Y g:i A')
+                        ? Carbon::parse(trim($appointment->appointment_date . ' ' . ($appointment->start_time ?? '00:00:00')))->format('M d, Y g:i A')
                         : 'TBD';
                     $appointment->type_label = $appointment->type
                         ? ucfirst(str_replace('_', ' ', $appointment->type))
@@ -126,12 +131,16 @@ class AppointmentController extends Controller
             'pet_id' => ['required', 'integer'],
             'veterinarian_id' => ['required', 'integer'],
             'appointment_date' => ['required', 'date'],
-            'start_time' => ['required', 'date_format:H:i'],
-            'end_time' => ['required', 'date_format:H:i'],
+            // Accept HH:MM or HH:MM:SS, then normalize to HH:MM:SS before saving
+            'start_time' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+            'end_time' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'type' => ['required', 'in:' . implode(',', $this->types)],
             'status' => ['required', 'in:' . implode(',', $this->statuses)],
             'notes' => ['nullable', 'string'],
         ]);
+
+        $validated['start_time'] = strlen($validated['start_time']) === 5 ? ($validated['start_time'] . ':00') : $validated['start_time'];
+        $validated['end_time'] = strlen($validated['end_time']) === 5 ? ($validated['end_time'] . ':00') : $validated['end_time'];
 
         DB::table('appointments')->insert([
             'pet_id' => $validated['pet_id'],
@@ -190,12 +199,16 @@ class AppointmentController extends Controller
             'pet_id' => ['required', 'integer'],
             'veterinarian_id' => ['required', 'integer'],
             'appointment_date' => ['required', 'date'],
-            'start_time' => ['required', 'date_format:H:i'],
-            'end_time' => ['required', 'date_format:H:i'],
+            // Accept HH:MM or HH:MM:SS, then normalize to HH:MM:SS before saving
+            'start_time' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+            'end_time' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'type' => ['required', 'in:' . implode(',', $this->types)],
             'status' => ['required', 'in:' . implode(',', $this->statuses)],
             'notes' => ['nullable', 'string'],
         ]);
+
+        $validated['start_time'] = strlen($validated['start_time']) === 5 ? ($validated['start_time'] . ':00') : $validated['start_time'];
+        $validated['end_time'] = strlen($validated['end_time']) === 5 ? ($validated['end_time'] . ':00') : $validated['end_time'];
 
         DB::table('appointments')->where('id', $appointment)->update([
             'pet_id' => $validated['pet_id'],
@@ -245,14 +258,14 @@ class AppointmentController extends Controller
                 'appointments.*',
                 'pets.name as pet_name',
                 DB::raw("COALESCE(pets.species, '') as pet_species"),
-                DB::raw("TRIM(owners.first_name || ' ' || owners.last_name) as owner_name"),
-                DB::raw("TRIM(vets.first_name || ' ' || vets.last_name) as veterinarian_name"),
+                DB::raw("TRIM(CONCAT(owners.first_name, ' ', owners.last_name)) as owner_name"),
+                DB::raw("TRIM(CONCAT(vets.first_name, ' ', vets.last_name)) as veterinarian_name"),
             ]);
 
         abort_if(!$record, 404);
 
         $record->formatted_date = $record->appointment_date
-            ? Carbon::parse($record->appointment_date)->format('M d, Y g:i A')
+            ? Carbon::parse(trim($record->appointment_date . ' ' . ($record->start_time ?? '00:00:00')))->format('M d, Y g:i A')
             : 'TBD';
         $record->type_label = $record->type
             ? ucfirst(str_replace('_', ' ', $record->type))

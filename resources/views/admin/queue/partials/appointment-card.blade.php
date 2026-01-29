@@ -22,10 +22,14 @@
     $appointmentTime = $appointment->appointment_date->format('h:i A');
     
     // Get pet and owner details
-    $petName = $appointment->pet->name ?? 'Unknown Pet';
-    $petType = $appointment->pet->species ?? 'N/A';
-    $ownerName = $appointment->pet->owner->user->first_name . ' ' . $appointment->pet->owner->user->last_name ?? 'Unknown Owner';
-    $veterinarianName = $appointment->veterinarian->first_name . ' ' . $appointment->veterinarian->last_name ?? 'Unassigned';
+    $petName = optional($appointment->pet)->name ?? 'Unknown Pet';
+    $petType = optional($appointment->pet)->species ?? 'N/A';
+    $ownerUser = optional(optional($appointment->pet)->owner)->user;
+    $ownerName = $ownerUser ? ($ownerUser->first_name . ' ' . $ownerUser->last_name) : 'Unknown Owner';
+    $veterinarian = optional($appointment->veterinarian);
+    $veterinarianName = $veterinarian->first_name && $veterinarian->last_name
+        ? ($veterinarian->first_name . ' ' . $veterinarian->last_name)
+        : 'Unassigned';
 @endphp
 
 <div class="queue-item queue-item-{{ $appointment->status }}" data-id="{{ $appointment->id }}">
@@ -38,7 +42,7 @@
         </span>
     </div>
     
-    <div class="d-flex justify-content-between align-items-center mb-2">
+    <a href="{{ route('admin.queue.show', $appointment) }}" class="d-flex justify-content-between align-items-center mb-2" style="text-decoration: none; color: inherit;">
         <div>
             <div class="pet-name">{{ $petName }}</div>
             <div class="pet-type">{{ $petType }}</div>
@@ -49,7 +53,7 @@
                 <span class="badge badge-light">{{ ucfirst($appointment->type) }}</span>
             @endif
         </div>
-    </div>
+    </a>
     
     <div class="small text-muted mb-2">
         <div><i class="fas fa-user-md mr-1"></i> {{ $veterinarianName }}</div>
@@ -70,49 +74,45 @@
     <div class="action-buttons d-flex justify-content-between">
         <div>
             @if($appointment->status === 'scheduled')
-                <button class="btn btn-sm btn-outline-success start-appointment" data-id="{{ $appointment->id }}">
-                    <i class="fas fa-play"></i> Start
-                </button>
+                <form method="POST" action="{{ route('admin.queue.status.update', ['appointment' => $appointment->id]) }}" class="d-inline">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="status" value="in_progress">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-play"></i> Start
+                    </button>
+                </form>
             @elseif($appointment->status === 'in_progress')
-                <button class="btn btn-sm btn-outline-primary complete-appointment" data-id="{{ $appointment->id }}">
-                    <i class="fas fa-check"></i> Complete
-                </button>
+                <form method="POST" action="{{ route('admin.queue.status.update', ['appointment' => $appointment->id]) }}" class="d-inline">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="status" value="completed">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-check"></i> Complete
+                    </button>
+                </form>
             @endif
-            
-            <button class="btn btn-sm btn-outline-secondary edit-notes" data-id="{{ $appointment->id }}" data-notes="{{ $appointment->notes ?? '' }}">
-                <i class="fas fa-edit"></i> Notes
-            </button>
         </div>
         
-        <div class="dropdown d-inline-block">
-            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="moreActions{{ $appointment->id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-ellipsis-v"></i>
-            </button>
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="moreActions{{ $appointment->id }}">
-                <a class="dropdown-item view-details" href="#" data-id="{{ $appointment->id }}">
-                    <i class="fas fa-eye mr-2"></i>View Details
-                </a>
-                @if($appointment->status !== 'cancelled' && $appointment->status !== 'no_show')
-                    <div class="dropdown-divider"></div>
-                    <h6 class="dropdown-header">Change Status</h6>
-                    <a class="dropdown-item change-status" href="#" data-id="{{ $appointment->id }}" data-status="scheduled" data-current-status="{{ $appointment->status }}">
-                        <span class="badge badge-primary mr-2">&nbsp;</span> Scheduled
-                    </a>
-                    <a class="dropdown-item change-status" href="#" data-id="{{ $appointment->id }}" data-status="in_progress" data-current-status="{{ $appointment->status }}">
-                        <span class="badge badge-info mr-2">&nbsp;</span> In Progress
-                    </a>
-                    <a class="dropdown-item change-status" href="#" data-id="{{ $appointment->id }}" data-status="completed" data-current-status="{{ $appointment->status }}">
-                        <span class="badge badge-success mr-2">&nbsp;</span> Completed
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item change-status text-danger" href="#" data-id="{{ $appointment->id }}" data-status="cancelled" data-current-status="{{ $appointment->status }}">
-                        <i class="fas fa-times-circle mr-2"></i> Cancel
-                    </a>
-                    <a class="dropdown-item change-status text-warning" href="#" data-id="{{ $appointment->id }}" data-status="no_show" data-current-status="{{ $appointment->status }}">
-                        <i class="fas fa-user-slash mr-2"></i> Mark as No Show
-                    </a>
-                @endif
-            </div>
+        <div>
+            @if($appointment->status !== 'cancelled' && $appointment->status !== 'no_show')
+                <form method="POST" action="{{ route('admin.queue.status.update', ['appointment' => $appointment->id]) }}" class="d-inline">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="status" value="cancelled">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-times-circle"></i> Cancel
+                    </button>
+                </form>
+                <form method="POST" action="{{ route('admin.queue.status.update', ['appointment' => $appointment->id]) }}" class="d-inline">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="status" value="no_show">
+                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                        <i class="fas fa-user-slash"></i> No Show
+                    </button>
+                </form>
+            @endif
         </div>
     </div>
 </div>

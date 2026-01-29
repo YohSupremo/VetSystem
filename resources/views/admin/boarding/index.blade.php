@@ -243,7 +243,8 @@
                 <tr>
                     <td>
                         <div class="pet-info">
-                            <img src="{{ $boarding->petAssigned?->photo_path ?? asset('images/default-pet.jpg') }}" alt="{{ $boarding->petAssigned?->name ?? 'Pet' }}" class="pet-avatar">
+                            @php $pet = $boarding->petAssigned; @endphp
+                            <img src="{{ $pet ? $pet->photo_url : 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect fill=\"#f0f0f0\" width=\"200\" height=\"200\"/><text x=\"50%\" y=\"50%\" font-size=\"80\" text-anchor=\"middle\" dominant-baseline=\"middle\" fill=\"#ccc\">🐾</text></svg>') }}" alt="{{ $pet->name ?? 'Pet' }}" class="pet-avatar" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3QgZmlsbD0iI2YwZjBmMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iI2NjYyI+8J+QrjwvdGV4dD48L3N2Zz4='">
                             <div>
                                 <strong>{{ $boarding->petAssigned?->name ?? 'N/A' }}</strong>
                                 <span class="text-muted">{{ $boarding->petAssigned?->breed ?? 'N/A' }}</span>
@@ -252,7 +253,7 @@
                     </td>
                     <td>{{ ($boarding->petAssigned && $boarding->petAssigned->owner && $boarding->petAssigned->owner->user) ? $boarding->petAssigned->owner->user->first_name . ' ' . $boarding->petAssigned->owner->user->last_name : 'Unknown Owner' }}</td>
                     <td>
-                        <span class="badge" style="background: #4A90E2;">
+                        <span class="badge badge-cage">
                             {{ $boarding->cageAssigned?->cage_code ?? 'N/A' }}
                         </span>
                     </td>
@@ -261,8 +262,13 @@
                     <td>
                         @php
                             $isActive = $boarding->isActive();
-                            $statusClass = $isActive ? 'success' : 'secondary';
                             $statusText = $isActive ? 'Active' : (now()->toDateString() > $boarding->end_date ? 'Completed' : 'Upcoming');
+                            $statusClass = match ($statusText) {
+                                'Active' => 'success',
+                                'Upcoming' => 'warning',
+                                'Completed' => 'secondary',
+                                default => 'secondary',
+                            };
                         @endphp
                         <span class="badge badge-{{ $statusClass }}">
                             {{ $statusText }}
@@ -275,7 +281,7 @@
                         <a href="{{ route('admin.boarding.edit', $boarding->id) }}" class="btn-icon" title="Edit">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id) }}" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this boarding record?');">
+                        <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id) }}" class="delete-form">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn-icon text-danger" title="Delete">
@@ -295,10 +301,50 @@
 </div>
 
 @push('scripts')
-<!-- No JavaScript needed - all functionality uses server-side form submissions -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var forms = document.querySelectorAll('.delete-form');
+    forms.forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            var ok = confirm('Are you sure you want to delete this boarding record? This action cannot be undone.');
+            if (!ok) {
+                e.preventDefault();
+            }
+        });
+    });
+});
+</script>
 @endpush
 
 <style>
+.table-responsive {
+    margin-top: 0.5rem;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 6px;
+}
+
+.data-table thead th {
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6c757d;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.data-table tbody tr {
+    background: #f9fafb;
+}
+
+.data-table tbody td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+}
+
 .pet-info {
     display: flex;
     align-items: center;
@@ -313,11 +359,18 @@
 }
 
 .badge {
-    padding: 5px 10px;
-    border-radius: 15px;
+    padding: 5px 12px;
+    border-radius: 999px;
     font-size: 12px;
     font-weight: 600;
     color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.badge-cage {
+    background: #4A90E2;
 }
 
 .badge-success { background-color: var(--accent-green); }
@@ -327,7 +380,8 @@
 
 .actions {
     display: flex;
-    gap: 5px;
+    gap: 6px;
+    justify-content: flex-start;
 }
 
 .btn-icon {
@@ -335,7 +389,7 @@
     border: none;
     color: var(--light-text);
     cursor: pointer;
-    padding: 5px;
+    padding: 6px;
     border-radius: 4px;
     transition: all 0.2s;
 }

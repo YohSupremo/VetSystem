@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
+use App\Models\MedicalRecord;
 use App\Models\Pet;
 use App\Models\PetOwner;
 use Illuminate\Http\Request;
@@ -48,8 +50,14 @@ class PetController extends Controller
 
         // Handle photo upload
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('pets', 'public');
-            $validated['photo_path'] = $path;
+            try {
+                $path = $request->file('photo')->store('pets', 'public');
+                $validated['photo_path'] = $path;
+            } catch (\Exception $e) {
+                // Log error but don't fail the request
+                \Log::error('Pet photo upload failed: ' . $e->getMessage());
+                // Continue without photo_path if upload fails
+            }
         }
 
         $pet = Pet::create($validated);
@@ -64,7 +72,18 @@ class PetController extends Controller
     public function show(Pet $pet)
     {
         $pet->load('owner.user');
-        return view('admin.pets.show', compact('pet'));
+        $medicalRecords = MedicalRecord::where('pet_id', $pet->id)
+            ->with('veterinarian')
+            ->orderByDesc('visit_date')
+            ->limit(5)
+            ->get();
+
+        $appointments = Appointment::where('pet_id', $pet->id)
+            ->orderByDesc('appointment_date')
+            ->limit(5)
+            ->get();
+
+        return view('admin.pets.show', compact('pet', 'medicalRecords', 'appointments'));
     }
 
     /**
@@ -82,6 +101,12 @@ class PetController extends Controller
      */
     public function update(Request $request, Pet $pet)
     {
+        // If owner_id is not submitted (e.g., field is disabled in the form),
+        // keep the existing owner_id to avoid validation failures.
+        if (!$request->filled('owner_id')) {
+            $request->merge(['owner_id' => $pet->owner_id]);
+        }
+
         $validated = $request->validate([
             'owner_id' => 'required|exists:pet_owners,id',
             'name' => 'required|string|max:100',
@@ -97,12 +122,18 @@ class PetController extends Controller
 
         // Handle photo upload
         if ($request->hasFile('photo')) {
-            // Delete old photo if it exists
-            if ($pet->photo_path) {
-                Storage::disk('public')->delete($pet->photo_path);
+            try {
+                // Delete old photo if it exists
+                if ($pet->photo_path) {
+                    Storage::disk('public')->delete($pet->photo_path);
+                }
+                $path = $request->file('photo')->store('pets', 'public');
+                $validated['photo_path'] = $path;
+            } catch (\Exception $e) {
+                // Log error but don't fail the request
+                \Log::error('Pet photo upload failed: ' . $e->getMessage());
+                // Continue without updating photo_path if upload fails
             }
-            $path = $request->file('photo')->store('pets', 'public');
-            $validated['photo_path'] = $path;
         }
 
         $pet->update($validated);

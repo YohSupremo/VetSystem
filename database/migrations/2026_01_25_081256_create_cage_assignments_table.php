@@ -17,8 +17,9 @@ return new class extends Migration
             $table->foreignid('pet_id')->references('id')->on('pets')->onDelete('cascade');
             $table->date('start_date');
             $table->date('end_date');
-         
-            
+            // Store boarding-level medication notes directly on the assignment
+            $table->text('medication_notes')->nullable();
+            $table->timestamps();
         });
     }
 

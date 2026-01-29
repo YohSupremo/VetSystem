@@ -13,7 +13,8 @@ class CageAssignment extends Model
         'cage_id',
         'pet_id',
         'start_date',
-        'end_date'
+        'end_date',
+        'medication_notes',
     ];
 
     public function petAssigned(): BelongsTo {

@@ -15,29 +15,7 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle"></i> {{ session('success') }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    @endif
-                    
-                    @if(session('warning'))
-                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-triangle"></i> {{ session('warning') }}
-                            @if(session('pet_id'))
-                                <br><br>
-                                <a href="{{ route('admin.medical-records.pet', session('pet_id')) }}" class="btn btn-sm btn-warning">
-                                    <i class="fas fa-history"></i> View {{ session('pet_name') }}'s Medical History
-                                </a>
-                            @endif
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    @endif
+                   
                     
                     <div class="table-responsive">
                         <table class="table table-hover table-bordered">

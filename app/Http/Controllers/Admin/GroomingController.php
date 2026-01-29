@@ -4,89 +4,267 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use App\Models\Appointment;
+use App\Models\GroomingAppointment;
+use App\Models\GroomingService;
 use App\Models\Pet;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class GroomingController extends BaseController
 {
     /**
-     * Display a listing of grooming services.
+     * Display a listing of grooming appointments.
      */
     public function index()
     {
-        $appointments = Appointment::with(['pet', 'pet.owner', 'services'])->where('type', 'grooming')->paginate(10);
-        $todayAppointments = Appointment::where('type', 'grooming')->whereDate('appointment_date', Carbon::today())->count();
-        $completedAppointments = Appointment::where('type', 'grooming')->where('status', 'completed')->count();
-        $pets = Pet::with('owner')->get();
-        
-        // Dummy services data
-        $services = collect([
-            (object)['id' => 1, 'name' => 'Full Bath', 'description' => 'Complete grooming bath', 'price' => 45.00, 'icon' => 'fa-shower'],
-            (object)['id' => 2, 'name' => 'Nail Trim', 'description' => 'Professional nail trimming', 'price' => 15.00, 'icon' => 'fa-cut'],
-            (object)['id' => 3, 'name' => 'Hair Cut', 'description' => 'Full hair cut and styling', 'price' => 55.00, 'icon' => 'fa-scissors'],
+        $groomingAppointments = GroomingAppointment::with([
+            'appointment.pet.owner.user',
+            'service',
+            'groomer'
+        ])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $todayAppointments = GroomingAppointment::whereHas('appointment', function($q) {
+            $q->where('type', 'grooming')
+              ->whereDate('appointment_date', Carbon::today());
+        })->count();
+
+        $completedAppointments = GroomingAppointment::where('status', 'completed')->count();
+        $servicesCount = GroomingService::count();
+
+        return view('admin.grooming.index', compact('groomingAppointments', 'todayAppointments', 'completedAppointments', 'servicesCount'));
+    }
+
+    /**
+     * Show the form for creating a new grooming appointment.
+     */
+    public function create()
+    {
+        $pets = Pet::with(['owner.user'])
+            ->orderBy('name')
+            ->get();
+
+        $services = GroomingService::orderBy('service_name')->get();
+        $groomers = User::where('role', 'groomer')->orderBy('first_name')->get();
+
+        return view('admin.grooming.create', compact('pets', 'services', 'groomers'));
+    }
+
+    /**
+     * Store a newly created grooming appointment.
+     */
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'pet_id' => 'required|exists:pets,id',
+            'service_id' => 'required|exists:grooming_services,id',
+            'groomer_id' => 'nullable|exists:users,id',
+            'appointment_date' => 'required|date',
+            'special_instructions' => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
-        $allServices = $services;
-        $servicesCount = count($services);
-        
-        // Dummy groomers data
-        $groomers = collect([
-            (object)['id' => 1, 'user' => (object)['first_name' => 'John', 'last_name' => 'Doe']],
-            (object)['id' => 2, 'user' => (object)['first_name' => 'Jane', 'last_name' => 'Smith']],
-            (object)['id' => 3, 'user' => (object)['first_name' => 'Mike', 'last_name' => 'Johnson']],
+
+        $service = GroomingService::findOrFail($data['service_id']);
+        $durationMinutes = $service->duration_minutes ?? 60;
+
+        $appointment = Appointment::create([
+            'pet_id' => $data['pet_id'],
+            'veterinarian_id' => null,
+            'appointment_date' => $data['appointment_date'],
+            'start_time' => '09:00:00',
+            'end_time' => Carbon::parse('09:00:00')->addMinutes($durationMinutes)->format('H:i:s'),
+            'status' => 'scheduled',
+            'type' => 'grooming',
+            'reason' => 'Grooming',
+            'notes' => $data['notes'] ?? null,
         ]);
-        $groomersCount = count($groomers);
+
+        GroomingAppointment::create([
+            'appointment_id' => $appointment->id,
+            'service_id' => $data['service_id'],
+            'groomer_id' => $data['groomer_id'] ?? null,
+            'special_instructions' => $data['special_instructions'] ?? null,
+            'status' => 'scheduled',
+        ]);
+
+        return redirect()->route('admin.grooming.index')
+            ->with('success', 'Grooming appointment created successfully.');
+    }
+
+    /**
+     * Display the specified grooming appointment.
+     */
+    public function show($id)
+    {
+        $groomingAppointment = GroomingAppointment::with([
+            'appointment.pet.owner.user',
+            'service',
+            'groomer'
+        ])->findOrFail($id);
+
+        return view('admin.grooming.show', compact('groomingAppointment'));
+    }
+
+    /**
+     * Show the form for editing the specified grooming appointment.
+     */
+    public function edit($id)
+    {
+        $groomingAppointment = GroomingAppointment::with([
+            'appointment.pet.owner.user',
+            'service',
+            'groomer'
+        ])->findOrFail($id);
+
+        $services = GroomingService::orderBy('service_name')->get();
+        $groomers = User::where('role', 'groomer')->orderBy('first_name')->get();
+
+        return view('admin.grooming.edit', compact('groomingAppointment', 'services', 'groomers'));
+    }
+
+    /**
+     * Update the specified grooming appointment.
+     */
+    public function update(Request $request, $id)
+    {
+        $groomingAppointment = GroomingAppointment::findOrFail($id);
+        $appointment = $groomingAppointment->appointment;
+
+        $data = $request->validate([
+            'service_id' => 'required|exists:grooming_services,id',
+            'groomer_id' => 'nullable|exists:users,id',
+            'appointment_date' => 'required|date',
+            'status' => 'required|in:scheduled,in_progress,completed,cancelled',
+            'special_instructions' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $appointment->update([
+            'appointment_date' => $data['appointment_date'],
+            'status' => $data['status'],
+            'notes' => $data['notes'] ?? null,
+        ]);
+
+        $groomingAppointment->update([
+            'service_id' => $data['service_id'],
+            'groomer_id' => $data['groomer_id'] ?? null,
+            'special_instructions' => $data['special_instructions'] ?? null,
+            'status' => $data['status'],
+        ]);
+
+        return redirect()->route('admin.grooming.show', $groomingAppointment->id)
+            ->with('success', 'Grooming appointment updated successfully.');
+    }
+
+    /**
+     * Remove the specified grooming appointment.
+     */
+    public function destroy($id)
+    {
+        $groomingAppointment = GroomingAppointment::findOrFail($id);
+        $appointment = $groomingAppointment->appointment;
         
-        return view('admin.grooming.index', compact('appointments', 'todayAppointments', 'completedAppointments', 'services', 'pets', 'allServices', 'groomers', 'servicesCount', 'groomersCount'));
+        $groomingAppointment->delete();
+        $appointment->delete();
+
+        return redirect()->route('admin.grooming.index')
+            ->with('success', 'Grooming appointment deleted successfully.');
+    }
+
+    /**
+     * Display a listing of grooming services.
+     */
+    public function servicesIndex()
+    {
+        $services = GroomingService::orderBy('service_name')->get();
+        $totalServices = $services->count();
+        
+        return view('admin.grooming.services.index', compact('services', 'totalServices'));
     }
 
     /**
      * Show the form for creating a new grooming service.
      */
-    public function create()
+    public function servicesCreate()
     {
-        return view('admin.grooming.create');
+        return view('admin.grooming.services.create');
     }
 
     /**
-     * Store a newly created grooming service in storage.
+     * Store a newly created grooming service.
      */
-    public function store(Request $request)
+    public function servicesStore(Request $request)
     {
-        // Placeholder for grooming store logic
-        return redirect()->route('admin.grooming.index')->with('success', 'Grooming created successfully.');
+        $data = $request->validate([
+            'service_name' => 'required|string|max:150',
+            'description' => 'nullable|string',
+            'duration_minutes' => 'nullable|integer|min:1',
+            'price' => 'required|numeric|min:0',
+        ]);
+
+        GroomingService::create($data);
+
+        return redirect()->route('admin.grooming-services.index')
+            ->with('success', 'Grooming service created successfully.');
     }
 
     /**
      * Display the specified grooming service.
      */
-    public function show($id)
+    public function servicesShow($id)
     {
-        return view('admin.grooming.show');
+        $service = GroomingService::findOrFail($id);
+        
+        return view('admin.grooming.services.show', compact('service'));
     }
 
     /**
      * Show the form for editing the specified grooming service.
      */
-    public function edit($id)
+    public function servicesEdit($id)
     {
-        return view('admin.grooming.edit');
+        $service = GroomingService::findOrFail($id);
+        
+        return view('admin.grooming.services.edit', compact('service'));
     }
 
     /**
-     * Update the specified grooming service in storage.
+     * Update the specified grooming service.
      */
-    public function update(Request $request, $id)
+    public function servicesUpdate(Request $request, $id)
     {
-        // Placeholder for grooming update logic
-        return redirect()->route('admin.grooming.index')->with('success', 'Grooming updated successfully.');
+        $service = GroomingService::findOrFail($id);
+
+        $data = $request->validate([
+            'service_name' => 'required|string|max:150',
+            'description' => 'nullable|string',
+            'duration_minutes' => 'nullable|integer|min:1',
+            'price' => 'required|numeric|min:0',
+        ]);
+
+        $service->update($data);
+
+        return redirect()->route('admin.grooming-services.show', $service->id)
+            ->with('success', 'Grooming service updated successfully.');
     }
 
     /**
-     * Remove the specified grooming service from storage.
+     * Remove the specified grooming service.
      */
-    public function destroy($id)
+    public function servicesDestroy($id)
     {
-        // Placeholder for grooming delete logic
-        return redirect()->route('admin.grooming.index')->with('success', 'Grooming deleted successfully.');
+        $service = GroomingService::findOrFail($id);
+        
+        if ($service->groomingAppointments()->count() > 0) {
+            return redirect()->route('admin.grooming-services.index')
+                ->with('error', 'Cannot delete service that has appointments.');
+        }
+        
+        $service->delete();
+
+        return redirect()->route('admin.grooming-services.index')
+            ->with('success', 'Grooming service deleted successfully.');
     }
 }

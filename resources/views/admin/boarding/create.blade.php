@@ -350,18 +350,7 @@
                     <span class="form-hint">Select the pet that will be boarded</span>
                 </div>
 
-                <!-- Pet Preview -->
-                <div class="pet-preview" id="petPreview">
-                    <div class="pet-preview-item">
-                        <img src="" alt="Pet" class="pet-preview-image" id="petImage">
-                        <div class="pet-preview-info">
-                            <h4 id="petName"></h4>
-                            <p><strong>Breed:</strong> <span id="petBreed"></span></p>
-                            <p><strong>Age:</strong> <span id="petAge"></span></p>
-                            <p><strong>Owner:</strong> <span id="petOwner"></span></p>
-                        </div>
-                    </div>
-                </div>
+                <!-- Pet Preview removed (no JavaScript) -->
             </div>
 
             <!-- Boarding Dates Section -->
@@ -441,17 +430,7 @@
                     @enderror
                 </div>
 
-                <!-- Cage Info Display -->
-                <div class="cage-info" id="cageInfo" style="display: none;">
-                    <div class="cage-stat">
-                        <label>Location</label>
-                        <value id="cageLocation">-</value>
-                    </div>
-                    <div class="cage-stat">
-                        <label>Status</label>
-                        <value id="cageStatus">-</value>
-                    </div>
-                </div>
+                <!-- Cage info preview removed (no JavaScript) -->
             </div>
 
             <!-- Medication Notes Section -->

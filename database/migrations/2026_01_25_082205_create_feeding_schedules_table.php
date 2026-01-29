@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('pet_id')->references('id')->on('pets')->onDelete('cascade');
             $table->text('notes');
             $table->text('schedule');
-       
+            $table->timestamps();
         });
     }
 

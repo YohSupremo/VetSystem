@@ -16,17 +16,14 @@
         @forelse($pets as $pet)
             <div class="pet-card">
                 <div class="pet-image" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);">
-                    @if($pet->image_path)
-                        <img src="{{ asset('storage/' . $pet->image_path) }}" alt="{{ $pet->name }}">
-                    @else
-                        <i class="fas fa-scalpel"></i>
-                    @endif
+                    <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <i class="fas fa-scalpel" style="display:none;"></i>
                 </div>
                 <div class="pet-info">
                     <h3 class="pet-name">{{ $pet->name }}</h3>
                     <div class="pet-details">
-                        <p><i class="fas fa-user-tie me-2"></i> {{ $pet->owner->name ?? 'No Owner' }}</p>
-                        <p><i class="fas fa-phone me-2"></i> {{ $pet->owner->phone ?? 'N/A' }}</p>
+                        <p><i class="fas fa-user-tie me-2"></i> {{ $pet->owner->user->first_name ?? '' }} {{ $pet->owner->user->last_name ?? 'No Owner' }}</p>
+                        <p><i class="fas fa-phone me-2"></i> {{ $pet->owner->user->contact_number ?? 'N/A' }}</p>
                         <p><i class="fas fa-paw me-2"></i> {{ $pet->species }} @if($pet->breed) • {{ $pet->breed }} @endif</p>
                         <p><i class="fas fa-scalpel me-2"></i> 
                             @if($pet->surgeries->count() > 0)

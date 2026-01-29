@@ -3,15 +3,23 @@
 namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
+use App\Models\InventoryItem;
 
 class PharmacyController extends BaseController
 {
     /**
-     * Display a listing of pharmacy items.
+     * Display a listing of pharmacy items (medicines).
      */
     public function index()
     {
-        return view('admin.pharmacy.index');
+        $medications = InventoryItem::where('category', 'medicine')
+            ->orderBy('name')
+            ->get();
+        
+        $totalMedications = $medications->count();
+        $lowStockCount = 0; // Can be enhanced later with inventory_stock
+        
+        return view('admin.pharmacy.index', compact('medications', 'totalMedications', 'lowStockCount'));
     }
 
     /**
@@ -27,8 +35,21 @@ class PharmacyController extends BaseController
      */
     public function store(Request $request)
     {
-        // Placeholder for pharmacy store logic
-        return redirect()->route('admin.pharmacy.index')->with('success', 'Pharmacy item created successfully.');
+        $data = $request->validate([
+            'name' => 'required|string|max:150',
+            'sku' => 'nullable|string|max:50|unique:inventory_items,sku',
+            'unit_price' => 'required|numeric|min:0',
+        ]);
+
+        InventoryItem::create([
+            'name' => $data['name'],
+            'category' => 'medicine',
+            'sku' => $data['sku'] ?? null,
+            'unit_price' => $data['unit_price'],
+        ]);
+
+        return redirect()->route('admin.pharmacy.index')
+            ->with('success', 'Medication added successfully.');
     }
 
     /**
@@ -36,7 +57,10 @@ class PharmacyController extends BaseController
      */
     public function show($id)
     {
-        return view('admin.pharmacy.show');
+        $medication = InventoryItem::where('category', 'medicine')
+            ->findOrFail($id);
+        
+        return view('admin.pharmacy.show', compact('medication'));
     }
 
     /**
@@ -44,7 +68,10 @@ class PharmacyController extends BaseController
      */
     public function edit($id)
     {
-        return view('admin.pharmacy.edit');
+        $medication = InventoryItem::where('category', 'medicine')
+            ->findOrFail($id);
+        
+        return view('admin.pharmacy.edit', compact('medication'));
     }
 
     /**
@@ -52,8 +79,23 @@ class PharmacyController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        // Placeholder for pharmacy update logic
-        return redirect()->route('admin.pharmacy.index')->with('success', 'Pharmacy item updated successfully.');
+        $medication = InventoryItem::where('category', 'medicine')
+            ->findOrFail($id);
+
+        $data = $request->validate([
+            'name' => 'required|string|max:150',
+            'sku' => 'nullable|string|max:50|unique:inventory_items,sku,' . $id,
+            'unit_price' => 'required|numeric|min:0',
+        ]);
+
+        $medication->update([
+            'name' => $data['name'],
+            'sku' => $data['sku'] ?? null,
+            'unit_price' => $data['unit_price'],
+        ]);
+
+        return redirect()->route('admin.pharmacy.show', $medication->id)
+            ->with('success', 'Medication updated successfully.');
     }
 
     /**
@@ -61,7 +103,12 @@ class PharmacyController extends BaseController
      */
     public function destroy($id)
     {
-        // Placeholder for pharmacy delete logic
-        return redirect()->route('admin.pharmacy.index')->with('success', 'Pharmacy item deleted successfully.');
+        $medication = InventoryItem::where('category', 'medicine')
+            ->findOrFail($id);
+        
+        $medication->delete();
+
+        return redirect()->route('admin.pharmacy.index')
+            ->with('success', 'Medication deleted successfully.');
     }
 }

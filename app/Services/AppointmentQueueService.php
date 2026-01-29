@@ -183,22 +183,6 @@ class AppointmentQueueService
                 ->where('status', 'completed')
                 ->count(),
             'average_wait_time' => $this->calculateAverageWaitTime($today),
-            'veterinarians' => User::where('role', 'veterinarian')
-                ->withCount(['appointments' => function($query) use ($today) {
-                    $query->whereDate('appointment_date', $today);
-                }])
-                ->get()
-                ->map(function($vet) use ($today) {
-                    return [
-                        'id' => $vet->id,
-                        'name' => $vet->first_name . ' ' . $vet->last_name,
-                        'total_appointments' => $vet->appointments_count,
-                        'in_progress' => $vet->appointments()
-                            ->whereDate('appointment_date', $today)
-                            ->where('status', 'in_progress')
-                            ->count()
-                    ];
-                })
         ];
 
         return $stats;

@@ -59,10 +59,12 @@
                                     <td>{{ $record->visit_date->format('M d, Y') }}</td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="{{ $record->pet->photo_path ?? asset('images/default-pet.jpg') }}" 
+                                            @php $pet = $record->pet; @endphp
+                                            <img src="{{ $pet ? $pet->photo_url : 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect fill=\"#f0f0f0\" width=\"200\" height=\"200\"/><text x=\"50%\" y=\"50%\" font-size=\"80\" text-anchor=\"middle\" dominant-baseline=\"middle\" fill=\"#ccc\">🐾</text></svg>') }}"
+                                                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3QgZmlsbD0iI2YwZjBmMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iI2NjYyI+8J+QrjwvdGV4dD48L3N2Zz4='" 
                                                  class="rounded-circle me-2" width="32" height="32" 
-                                                 alt="{{ $record->pet->name }}">
-                                            {{ $record->pet->name }}
+                                                 alt="{{ $pet->name }}">
+                                            {{ $pet->name }}
                                         </div>
                                     </td>
                                     <td>{{ $record->pet->owner->user->first_name }} {{ $record->pet->owner->user->last_name }}</td>

@@ -23,7 +23,8 @@ return new class extends Migration
             'receptionist', 
             'pharmacist', 
             'pet_owner', 
-            'boarding']
+            'boarding',
+            'groomer']
             )->default('pet_owner');
             $table->string('address');
             $table->string('contact_number');

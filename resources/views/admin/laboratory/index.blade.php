@@ -2,37 +2,133 @@
 
 @push('styles')
 <style>
-    .icon-circle {
-        width: 3rem;
-        height: 3rem;
-        border-radius: 50%;
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .header-title h1 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+        color: #2c3e50;
+    }
+
+    .header-title p {
+        color: #6c757d;
+        margin: 0;
+    }
+
+    .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+    }
+
+    .card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
+        margin-right: 1rem;
+        color: #fff;
         font-size: 1.25rem;
     }
-    .nav-tabs .nav-link {
+
+    .card-info h3 {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 700;
+    }
+
+    .card-info p {
+        margin: 0.25rem 0 0;
+        font-size: 0.85rem;
         color: #6c757d;
-        font-weight: 500;
+    }
+
+    .content-section {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 1.5rem;
+    }
+
+    .section-header h2 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin: 0 0 1rem;
+        color: #2c3e50;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 6px;
+    }
+
+    .data-table thead th {
+        padding: 0.75rem 1rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #6c757d;
+        border-bottom: 1px solid #e9ecef;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .data-table tbody tr {
+        background: #f9fafb;
+    }
+
+    .data-table tbody td {
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+    }
+
+    .badge {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-icon {
+        background: none;
         border: none;
-        padding: 0.75rem 1.5rem;
-        border-bottom: 3px solid transparent;
-    }
-    .nav-tabs .nav-link.active {
-        color: #4e73df;
-        background: transparent;
-        border-bottom: 3px solid #4e73df;
-    }
-    .nav-tabs .nav-link:hover:not(.active) {
-        border-bottom: 3px solid #e3e6f0;
-    }
-    .test-type-card {
-        transition: transform 0.2s, box-shadow 0.2s;
         cursor: pointer;
+        padding: 5px;
+        border-radius: 4px;
+        color: var(--light-text);
     }
-    .test-type-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+
+    .btn-icon:hover {
+        background: var(--paw-medium);
+        color: var(--primary-orange);
     }
 </style>
 @endpush
@@ -41,7 +137,15 @@
 <div class="content-header">
     <div class="header-title">
         <h1><i class="fas fa-flask"></i> Laboratory Management</h1>
-        <p>Manage test requests, types, and results</p>
+        <p>Manage lab tests and lab requisitions (schema-based).</p>
+    </div>
+    <div style="display:flex; gap: .75rem; flex-wrap: wrap;">
+        <a href="{{ route('admin.laboratory.tests.index') }}" class="btn btn-primary" style="text-decoration:none;">
+            <i class="fas fa-vials"></i> Lab Tests
+        </a>
+        <a href="{{ route('admin.laboratory.requisitions.create') }}" class="btn btn-primary" style="text-decoration:none; background: linear-gradient(135deg,#4caf50,#388e3c);">
+            <i class="fas fa-plus"></i> New Requisition
+        </a>
     </div>
 </div>
 
@@ -51,8 +155,8 @@
             <i class="fas fa-hourglass-half"></i>
         </div>
         <div class="card-info">
-            <h3>{{ $pendingTests ?? 0 }}</h3>
-            <p>Pending Tests</p>
+            <h3>{{ $pendingRequisitions ?? 0 }}</h3>
+            <p>Pending Requisitions</p>
         </div>
     </div>
     <div class="dashboard-card">
@@ -60,234 +164,73 @@
             <i class="fas fa-check-circle"></i>
         </div>
         <div class="card-info">
-            <h3>{{ $completedTests ?? 0 }}</h3>
-            <p>Completed Tests</p>
+            <h3>{{ $completedRequisitions ?? 0 }}</h3>
+            <p>Completed Requisitions</p>
         </div>
     </div>
     <div class="dashboard-card">
-        <div class="card-icon" style="background: var(--accent-pink);">
-            <i class="fas fa-vial"></i>
+        <div class="card-icon" style="background: #ff9800;">
+            <i class="fas fa-vials"></i>
         </div>
         <div class="card-info">
-            <h3>{{ $testTypes ?? 0 }}</h3>
-            <p>Test Types</p>
+            <h3>{{ $totalLabTests ?? 0 }}</h3>
+            <p>Available Lab Tests</p>
         </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header">
-        <h3>Test Requests</h3>
+<div class="content-section">
+    <div class="section-header">
+        <h2>Lab Requisitions</h2>
     </div>
-    <div class="card-body">
-        @if($testRequests ?? null)
-            <table class="table table-striped">
-                <thead>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Pet</th>
+                    <th>Owner</th>
+                    <th>Test</th>
+                    <th>Status</th>
+                    <th>Requested</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($requisitions as $req)
                     <tr>
-                        <th>ID</th>
-                        <th>Pet</th>
-                        <th>Owner</th>
-                        <th>Status</th>
-                        <th>Created Date</th>
-                        <th>Actions</th>
+                        <td>{{ $req->id }}</td>
+                        <td>{{ optional(optional($req->medicalRecord)->pet)->name ?? 'N/A' }}</td>
+                        <td>
+                            {{ optional(optional(optional(optional($req->medicalRecord)->pet)->owner)->user)->first_name ?? 'N/A' }}
+                            {{ optional(optional(optional(optional($req->medicalRecord)->pet)->owner)->user)->last_name ?? '' }}
+                        </td>
+                        <td>{{ $req->test->test_name ?? 'N/A' }}</td>
+                        <td><span class="badge">{{ $req->status }}</span></td>
+                        <td>{{ optional($req->requested_date)->format('M d, Y') ?? 'N/A' }}</td>
+                        <td class="actions">
+                            <a href="{{ route('admin.laboratory.requisitions.show', $req->id) }}" class="btn-icon" title="View">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ route('admin.laboratory.requisitions.edit', $req->id) }}" class="btn-icon" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @forelse($testRequests as $request)
-                        <tr>
-                            <td>{{ $request->id }}</td>
-                            <td>{{ $request->pet->name ?? 'N/A' }}</td>
-                            <td>{{ $request->pet->owner->user->first_name ?? 'N/A' }} {{ $request->pet->owner->user->last_name ?? '' }}</td>
-                            <td><span class="badge badge-secondary">{{ $request->status }}</span></td>
-                            <td>{{ $request->created_at->format('M d, Y') }}</td>
-                            <td>
-                                <a href="{{ route('admin.laboratory.test-requests.show', $request->id) }}" class="btn btn-sm btn-info">View</a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="text-center">No test requests found</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        @else
-            <p class="text-center">No test requests found</p>
-        @endif
+                @empty
+                    <tr>
+                        <td colspan="7" class="text-center">No lab requisitions found.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
-</div>
 
-    <!-- Tabs Navigation -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <ul class="nav nav-tabs border-0" id="labTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="test-requests-tab" data-bs-toggle="tab" 
-                            data-bs-target="#test-requests" type="button" role="tab" 
-                            aria-controls="test-requests" aria-selected="true">
-                        <i class="fas fa-clipboard-list me-1"></i> Test Requests
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="test-types-tab" data-bs-toggle="tab" 
-                            data-bs-target="#test-types" type="button" role="tab" 
-                            aria-controls="test-types" aria-selected="false">
-                        <i class="fas fa-vial me-1"></i> Test Types
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="test-results-tab" data-bs-toggle="tab" 
-                            data-bs-target="#test-results" type="button" role="tab" 
-                            aria-controls="test-results" aria-selected="false">
-                        <i class="fas fa-file-medical-alt me-1"></i> Test Results
-                    </button>
-                </li>
-            </ul>
-            <div>
-                <button class="btn btn-primary btn-sm" onclick="openModal('newTestModal')">
-                    <i class="fas fa-plus me-1"></i> New Test
-                </button>
-                <button class="btn btn-outline-secondary btn-sm ms-2" onclick="openModal('newTestTypeModal')">
-                    <i class="fas fa-plus me-1"></i> New Test Type
-                </button>
-            </div>
+    @if(isset($requisitions) && method_exists($requisitions, 'links'))
+        <div style="margin-top: 1rem;">
+            {{ $requisitions->links() }}
         </div>
-        
-        <div class="card-body">
-            <div class="tab-content" id="labTabsContent">
-                <!-- Test Requests Tab -->
-                <div class="tab-pane fade show active" id="test-requests" role="tabpanel" aria-labelledby="test-requests-tab">
-                    <div class="table-responsive">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div class="d-flex">
-                                <div class="input-group me-2" style="width: 250px;">
-                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                    <input type="text" class="form-control" id="searchTestRequests" placeholder="Search test requests...">
-                                </div>
-                                <select class="form-select" id="statusFilter" style="width: 180px;">
-                                    <option value="">All Status</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
-                            </div>
-                            <div>
-                                <input type="date" class="form-control" id="dateFilter">
-                            </div>
-                        </div>
-                        
-                        <table class="table table-hover" id="testRequestsTable">
-                            <thead>
-                                <tr>
-                                    <th>Test ID</th>
-                                    <th>Pet</th>
-                                    <th>Test Type</th>
-                                    <th>Requested By</th>
-                                    <th>Date Requested</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Will be populated by JavaScript -->
-                                <tr>
-                                    <td colspan="7" class="text-center py-4">
-                                        <div class="spinner-border text-primary" role="status">
-                                            <span class="visually-hidden">Loading...</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        
-                        <nav class="mt-3">
-                            <ul class="pagination justify-content-center" id="testRequestsPagination">
-                                <!-- Pagination will be added by JavaScript -->
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-                
-                <!-- Test Types Tab -->
-                <div class="tab-pane fade" id="test-types" role="tabpanel" aria-labelledby="test-types-tab">
-                    <div class="row">
-                        <div class="col-12 mb-3">
-                            <div class="input-group" style="max-width: 300px;">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control" id="searchTestTypes" placeholder="Search test types...">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row" id="testTypesGrid">
-                        <!-- Will be populated by JavaScript -->
-                        <div class="col-12 text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Test Results Tab -->
-                <div class="tab-pane fade" id="test-results" role="tabpanel" aria-labelledby="test-results-tab">
-                    <div class="table-responsive">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div class="d-flex">
-                                <div class="input-group me-2" style="width: 250px;">
-                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                    <input type="text" class="form-control" id="searchTestResults" placeholder="Search test results...">
-                                </div>
-                                <select class="form-select" id="resultStatusFilter" style="width: 180px;">
-                                    <option value="">All Status</option>
-                                    <option value="normal">Normal</option>
-                                    <option value="abnormal">Abnormal</option>
-                                    <option value="critical">Critical</option>
-                                </select>
-                            </div>
-                            <div>
-                                <div class="input-group">
-                                    <span class="input-group-text">From</span>
-                                    <input type="date" class="form-control" id="dateFromFilter">
-                                    <span class="input-group-text">To</span>
-                                    <input type="date" class="form-control" id="dateToFilter">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <table class="table table-hover" id="testResultsTable">
-                            <thead>
-                                <tr>
-                                    <th>Result ID</th>
-                                    <th>Test Type</th>
-                                    <th>Pet</th>
-                                    <th>Result Status</th>
-                                    <th>Tested By</th>
-                                    <th>Test Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Will be populated by JavaScript -->
-                                <tr>
-                                    <td colspan="7" class="text-center py-4">
-                                        <div class="spinner-border text-primary" role="status">
-                                            <span class="visually-hidden">Loading...</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        
-                        <nav class="mt-3">
-                            <ul class="pagination justify-content-center" id="testResultsPagination">
-                                <!-- Pagination will be added by JavaScript -->
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    @endif
+</div>
 @endsection

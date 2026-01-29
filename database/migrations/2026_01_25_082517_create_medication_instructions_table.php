@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('pet_id')->references('id')->on('pets')->onDelete('cascade');
             $table->text('instructions');
+              $table->timestamps();
         });
     }
 

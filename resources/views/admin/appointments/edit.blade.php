@@ -151,7 +151,8 @@
                 <div class="form-group">
                     <label for="start_time">Start Time <span style="color: var(--accent-pink);">*</span></label>
                     <input type="time" name="start_time" id="start_time"
-                           value="{{ old('start_time', $appointment->start_time) }}" required>
+                           step="60"
+                           value="{{ old('start_time', substr((string) $appointment->start_time, 0, 5)) }}" required>
                     @error('start_time')
                         <div class="inline-hint">{{ $message }}</div>
                     @enderror
@@ -160,7 +161,8 @@
                 <div class="form-group">
                     <label for="end_time">End Time <span style="color: var(--accent-pink);">*</span></label>
                     <input type="time" name="end_time" id="end_time"
-                           value="{{ old('end_time', $appointment->end_time) }}" required>
+                           step="60"
+                           value="{{ old('end_time', substr((string) $appointment->end_time, 0, 5)) }}" required>
                     @error('end_time')
                         <div class="inline-hint">{{ $message }}</div>
                     @enderror

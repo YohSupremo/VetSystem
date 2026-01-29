@@ -57,7 +57,7 @@
                         <p>
                             {{ $vaccination->next_due_date ? \Carbon\Carbon::parse($vaccination->next_due_date)->format('M d, Y') : 'N/A' }}
                             @if($vaccination->next_due_date)
-                                @php $daysUntil = \Carbon\Carbon::parse($vaccination->next_due_date)->diffInDays(\Carbon\Carbon::now()); @endphp
+                                @php $daysUntil = \Carbon\Carbon::parse($vaccination->next_due_date)->diffInDays(\Carbon\Carbon::now(), false); @endphp
                                 @if($daysUntil < 0)
                                     <span class="badge-overdue">OVERDUE</span>
                                 @elseif($daysUntil < 30)

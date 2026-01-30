@@ -35,10 +35,10 @@
                         <input type="hidden" name="pet_id" value="{{ request('pet_id') }}" required>
                     </div>
                 @else
-                    <!-- Pet Selection (Editable) -->
+                    <!-- Pet Selection (Editable) - selecting a pet reloads page to show only that pet's medical records -->
                     <div class="form-group">
                         <label>Select Pet <span class="text-danger">*</span></label>
-                        <select name="pet_id" class="form-control" required>
+                        <select name="pet_id" id="pet_id" class="form-control" required>
                             <option value="">Choose a pet...</option>
                             @forelse($pets as $pet)
                                 <option value="{{ $pet->id }}" {{ old('pet_id') == $pet->id ? 'selected' : '' }}>
@@ -54,15 +54,19 @@
                 
                 <div class="form-group">
                     <label>Medical Record (Optional)</label>
-                    <select name="medical_record_id" class="form-control">
-                        <option value="">Select medical record...</option>
-                        @forelse($medicalRecords as $record)
-                            <option value="{{ $record->id }}" {{ old('medical_record_id') == $record->id ? 'selected' : '' }}>
-                                {{ $record->pet->name }} - {{ \Carbon\Carbon::parse($record->visit_date)->format('M d, Y') }}
-                            </option>
-                        @empty
-                            <option value="">No medical records available</option>
-                        @endforelse
+                    <select name="medical_record_id" class="form-control" @if(!request('pet_id')) disabled @endif>
+                        @if(request('pet_id'))
+                            <option value="">Select medical record...</option>
+                            @forelse($medicalRecords as $record)
+                                <option value="{{ $record->id }}" {{ old('medical_record_id') == $record->id ? 'selected' : '' }}>
+                                    {{ \Carbon\Carbon::parse($record->visit_date)->format('M d, Y') }}
+                                </option>
+                            @empty
+                                <option value="">No medical records for this pet</option>
+                            @endforelse
+                        @else
+                            <option value="">Select a pet first</option>
+                        @endif
                     </select>
                 </div>
             </div>
@@ -242,4 +246,14 @@
     }
 }
 </style>
+@if(!request('pet_id'))
+<script>
+document.getElementById('pet_id').addEventListener('change', function() {
+    var petId = this.value;
+    if (petId) {
+        window.location.href = '{{ route('admin.prescriptions.create') }}?pet_id=' + petId;
+    }
+});
+</script>
+@endif
 @endsection

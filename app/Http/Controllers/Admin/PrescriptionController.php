@@ -20,11 +20,15 @@ class PrescriptionController extends BaseController
 
     /**
      * Show the form for creating a new prescription.
+     * Medical records dropdown shows only records for the selected pet (when pet_id in request).
      */
     public function create()
     {
         $pets = Pet::with('owner')->get();
-        $medicalRecords = MedicalRecord::with('pet')->get();
+        $petId = request('pet_id');
+        $medicalRecords = $petId
+            ? MedicalRecord::where('pet_id', $petId)->with('pet')->orderBy('visit_date', 'desc')->get()
+            : collect();
         return view('admin.prescriptions.create', compact('pets', 'medicalRecords'));
     }
 
@@ -60,12 +64,16 @@ class PrescriptionController extends BaseController
 
     /**
      * Show the form for editing the specified prescription.
+     * Medical records dropdown shows only records for this prescription's pet.
      */
     public function edit(Prescription $prescription)
     {
         $prescription->load('pet.owner.user');
         $pets = Pet::with('owner.user')->get();
-        $medicalRecords = MedicalRecord::with('pet', 'veterinarian')->get();
+        $medicalRecords = MedicalRecord::where('pet_id', $prescription->pet_id)
+            ->with('pet', 'veterinarian')
+            ->orderBy('visit_date', 'desc')
+            ->get();
         return view('admin.prescriptions.edit', compact('prescription', 'pets', 'medicalRecords'));
     }
 

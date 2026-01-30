@@ -36,11 +36,13 @@
                     <label>Medical Record (Optional)</label>
                     <select name="medical_record_id" class="form-control @error('medical_record_id') is-invalid @enderror">
                         <option value="">Select a medical record...</option>
-                        @foreach($medicalRecords as $record)
+                        @forelse($medicalRecords as $record)
                             <option value="{{ $record->id }}" {{ $prescription->medical_record_id == $record->id ? 'selected' : '' }}>
-                                {{ $record->pet->name }} - {{ $record->visit_date->format('M d, Y') }}
+                                {{ $record->visit_date->format('M d, Y') }}
                             </option>
-                        @endforeach
+                        @empty
+                            <option value="">No medical records for this pet</option>
+                        @endforelse
                     </select>
                     @error('medical_record_id')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>

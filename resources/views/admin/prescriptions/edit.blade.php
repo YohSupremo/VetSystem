@@ -52,9 +52,29 @@
                 <h3>Medication Details</h3>
                 
                 <div class="form-group">
+                    <label>Medication <span class="text-danger">*</span></label>
+                    <select name="inventory_item_id" id="inventory_item_id" class="form-control">
+                        <option value="">Select from inventory...</option>
+                        @foreach($medicines as $medicine)
+                            <option value="{{ $medicine->id }}" 
+                                    data-name="{{ $medicine->name }}"
+                                    {{ old('inventory_item_id') == $medicine->id ? 'selected' : '' }}>
+                                {{ $medicine->name }}
+                                @if($medicine->strength) - {{ $medicine->strength }}@endif
+                                @if($medicine->dosage_form) - {{ $medicine->dosage_form }}@endif
+                                ({{ $medicine->total_stock ?? 0 }} in stock)
+                            </option>
+                        @endforeach
+                    </select>
+                    <small class="form-text text-muted">Select a medicine from inventory or keep current name</small>
+                    @error('inventory_item_id')<span class="text-danger">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="form-group">
                     <label>Medication Name <span class="text-danger">*</span></label>
-                    <input type="text" name="medication" class="form-control @error('medication') is-invalid @enderror" 
+                    <input type="text" name="medication" id="medication" class="form-control @error('medication') is-invalid @enderror" 
                         value="{{ old('medication', $prescription->medication) }}" required>
+                    <small class="form-text text-muted">Auto-filled when selecting from inventory</small>
                     @error('medication')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
@@ -263,4 +283,16 @@
     }
 }
 </style>
+
+<script>
+document.getElementById('inventory_item_id').addEventListener('change', function() {
+    var selectedOption = this.options[this.selectedIndex];
+    var medicationName = selectedOption.getAttribute('data-name');
+    var medicationInput = document.getElementById('medication');
+    
+    if (medicationName) {
+        medicationInput.value = medicationName;
+    }
+});
+</script>
 @endsection

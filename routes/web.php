@@ -210,6 +210,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Inventory
     Route::resource('inventory', InventoryController::class);
 
+    // Prescriptions
+    Route::resource('prescriptions', PrescriptionController::class);
+    Route::get('prescriptions/pet/{petId}', [PrescriptionController::class, 'byPet'])->name('prescriptions.pet');
+
     // Billing
     Route::resource('billing', BillingController::class);
 

@@ -13,27 +13,28 @@
     </div>
 
     <div class="card-body">
-        <div class="pets-container">
-            @forelse($pets as $pet)
+        <div class="prescriptions-container">
+            @forelse($prescriptions as $prescription)
                 <div class="pet-card">
                     <div class="pet-image">
-                        <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                        <i class="fas fa-paw" style="display:none;"></i>
+                        <i class="fas fa-prescription-bottle"></i>
                     </div>
                     <div class="pet-info">
-                        <div class="pet-name">{{ $pet->name }}</div>
+                        <div class="pet-name">{{ $prescription->medication }}</div>
                         <div class="pet-details">
-                            <div><strong>Owner:</strong> {{ $pet->owner->user->first_name ?? '' }} {{ $pet->owner->user->last_name ?? 'No Owner' }}</div>
-                            <div><strong>Contact:</strong> {{ $pet->owner->user->contact_number ?? 'N/A' }}</div>
-                            <div><strong>Species:</strong> {{ ucfirst($pet->species ?? 'N/A') }} @if($pet->breed) • {{ $pet->breed }} @endif</div>
-                            <div><strong>Prescriptions:</strong> {{ $pet->prescriptions->count() }}</div>
+                            <div><strong>Pet:</strong> {{ $prescription->pet->name }}</div>
+                            <div><strong>Owner:</strong> {{ $prescription->pet->owner->user->first_name ?? '' }} {{ $prescription->pet->owner->user->last_name ?? 'No Owner' }}</div>
+                            <div><strong>Dosage:</strong> {{ $prescription->dosage }}</div>
+                            <div><strong>Frequency:</strong> {{ $prescription->frequency }}</div>
+                            <div><strong>Duration:</strong> {{ $prescription->duration_days }} days</div>
+                            <div><strong>Created:</strong> {{ $prescription->created_at->format('M d, Y') }}</div>
                         </div>
                         <div class="pet-actions">
-                            <a href="{{ route('admin.prescriptions.pet', $pet->id) }}" class="btn btn-secondary btn-sm">
+                            <a href="{{ route('admin.prescriptions.show', $prescription->id) }}" class="btn btn-secondary btn-sm">
                                 <i class="fas fa-eye"></i> View
                             </a>
-                            <a href="{{ route('admin.prescriptions.create', ['pet_id' => $pet->id]) }}" class="btn btn-secondary btn-sm">
-                                <i class="fas fa-plus"></i> Add
+                            <a href="{{ route('admin.prescriptions.edit', $prescription->id) }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-edit"></i> Edit
                             </a>
                         </div>
                     </div>
@@ -41,14 +42,14 @@
             @empty
                 <div class="empty-state">
                     <i class="fas fa-info-circle"></i>
-                    <p>No pets with prescriptions yet.</p>
+                    <p>No prescriptions found.</p>
                 </div>
             @endforelse
         </div>
 
-        @if($pets->hasPages())
+        @if($prescriptions->hasPages())
             <div style="margin-top:16px;">
-                {{ $pets->links() }}
+                {{ $prescriptions->links() }}
             </div>
         @endif
     </div>

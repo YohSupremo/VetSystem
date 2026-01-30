@@ -6,21 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class InventoryItem extends Model
+class InventoryStock extends Model
 {
+    protected $table = 'inventory_stock';
+
     protected $fillable = [
-        'name',
-        'description',
-        'category',
-        'sku',
-        'manufacturer',
-        'batch_number',
-        'dosage_form',
-        'strength',
-        'unit_price',
-        'requires_prescription',
-        'controlled_substance',
-        'storage_instructions',
+        'item_id',
         'supplier_id',
         'quantity',
         'min_stock',
@@ -28,22 +19,22 @@ class InventoryItem extends Model
     ];
 
     protected $casts = [
-        'unit_price' => 'decimal:2',
-        'requires_prescription' => 'boolean',
-        'controlled_substance' => 'boolean',
-        'quantity' => 'integer',
-        'min_stock' => 'integer',
         'expiry_date' => 'date',
     ];
+
+    public function inventoryItem(): BelongsTo
+    {
+        return $this->belongsTo(InventoryItem::class, 'item_id');
+    }
 
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
     }
 
-    public function medicationDispensing(): HasMany
+    public function transactions(): HasMany
     {
-        return $this->hasMany(MedicationDispensing::class, 'inventory_item_id');
+        return $this->hasMany(InventoryTransaction::class, 'stock_id');
     }
 
     public function isLowStock(): bool
@@ -64,10 +55,5 @@ class InventoryItem extends Model
         
         $daysUntilExpiry = $this->expiry_date->diffInDays(now());
         return $daysUntilExpiry >= 0 && $daysUntilExpiry <= $days;
-    }
-
-    public function requiresExpiryDate(): bool
-    {
-        return in_array($this->category, ['medicine', 'vaccine', 'food']);
     }
 }

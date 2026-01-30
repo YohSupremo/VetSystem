@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Pet;
 use App\Models\Prescription;
 use App\Models\MedicalRecord;
+use App\Models\InventoryItem;
 use Illuminate\Http\Request;
 
 class PrescriptionController extends BaseController
@@ -14,8 +15,11 @@ class PrescriptionController extends BaseController
      */
     public function index()
     {
-        $pets = Pet::with('prescriptions', 'owner.user')->paginate(10);
-        return view('admin.prescriptions.index', compact('pets'));
+        $prescriptions = Prescription::with(['pet.owner.user', 'medicalRecord'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+        
+        return view('admin.prescriptions.index', compact('prescriptions'));
     }
 
     /**
@@ -29,7 +33,13 @@ class PrescriptionController extends BaseController
         $medicalRecords = $petId
             ? MedicalRecord::where('pet_id', $petId)->with('pet')->orderBy('visit_date', 'desc')->get()
             : collect();
-        return view('admin.prescriptions.create', compact('pets', 'medicalRecords'));
+        
+        // Get medicines from inventory for selection
+        $medicines = InventoryItem::where('category', 'medicine')
+            ->orderBy('name')
+            ->get();
+        
+        return view('admin.prescriptions.create', compact('pets', 'medicalRecords', 'medicines'));
     }
 
     /**
@@ -40,12 +50,19 @@ class PrescriptionController extends BaseController
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
             'medical_record_id' => 'nullable|exists:medical_records,id',
+            'inventory_item_id' => 'nullable|exists:inventory_items,id',
             'medication' => 'required|string|max:150',
             'dosage' => 'required|string|max:100',
             'frequency' => 'required|string|max:100',
             'duration_days' => 'required|integer|min:1',
             'instructions' => 'nullable|string',
         ]);
+
+        // If inventory item is selected, use its name as medication
+        if ($request->filled('inventory_item_id')) {
+            $inventoryItem = InventoryItem::find($request->inventory_item_id);
+            $validated['medication'] = $inventoryItem->name;
+        }
 
         Prescription::create($validated);
 
@@ -74,7 +91,13 @@ class PrescriptionController extends BaseController
             ->with('pet', 'veterinarian')
             ->orderBy('visit_date', 'desc')
             ->get();
-        return view('admin.prescriptions.edit', compact('prescription', 'pets', 'medicalRecords'));
+        
+        // Get medicines from inventory for selection
+        $medicines = InventoryItem::where('category', 'medicine')
+            ->orderBy('name')
+            ->get();
+        
+        return view('admin.prescriptions.edit', compact('prescription', 'pets', 'medicalRecords', 'medicines'));
     }
 
     /**
@@ -85,12 +108,19 @@ class PrescriptionController extends BaseController
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
             'medical_record_id' => 'nullable|exists:medical_records,id',
+            'inventory_item_id' => 'nullable|exists:inventory_items,id',
             'medication' => 'required|string|max:150',
             'dosage' => 'required|string|max:100',
             'frequency' => 'required|string|max:100',
             'duration_days' => 'required|integer|min:1',
             'instructions' => 'nullable|string',
         ]);
+
+        // If inventory item is selected, use its name as medication
+        if ($request->filled('inventory_item_id')) {
+            $inventoryItem = InventoryItem::find($request->inventory_item_id);
+            $validated['medication'] = $inventoryItem->name;
+        }
 
         $prescription->update($validated);
 

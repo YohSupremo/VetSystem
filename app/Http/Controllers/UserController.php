@@ -40,7 +40,12 @@ class UserController extends Controller
     $user = User::where('username', $username)->first();
 
     if ($user && Hash::check($credentials['password'], $user->password)) {
-        return redirect('/dashboard');
+        if($user->role == 'admin') {
+            return redirect('/admin/dashboard');
+        } else{
+            return redirect('/dashboard');
+        }
+   
     }
 
     return back()->withErrors([

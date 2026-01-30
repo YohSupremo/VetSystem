@@ -214,7 +214,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('billing', BillingController::class);
 
     // Staff
-    Route::resource('staff', StaffController::class);
+    Route::prefix('staff')->name('staff.')->group(function(){
+            Route::get('/create', [StaffController::class, 'create'])->name('create');
+            Route::get('/', [StaffController::class, 'index'])->name('index');
+            Route::post('/store', [StaffController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [StaffController::class, 'edit'])->name('edit');
+            Route::put('/{id}/update', [StaffController::class, 'update'])->name('update');
+            Route::get('/{id}/info', [StaffController::class, 'show'])->name('info');
+            Route::delete('/destroy/{id}', [StaffController::class, 'destroy'])->name('destroy');
+    });
 
     // Reports
     Route::resource('reports', ReportController::class);

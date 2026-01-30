@@ -1,9 +1,9 @@
 <?php
 
 namespace App\Http\Controllers\Admin;
-
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
-
+use App\Models\User;
 class StaffController extends BaseController
 {
     /**
@@ -11,7 +11,10 @@ class StaffController extends BaseController
      */
     public function index()
     {
-        return view('admin.staff.index');
+
+        $staff = User::whereIn('role', ['admin', 'veterinarian', 'receptionist', 'pharmacist', 'groomer'])->get();
+
+        return view('admin.staff.index', compact('staff'));
     }
 
     /**
@@ -22,29 +25,52 @@ class StaffController extends BaseController
         return view('admin.staff.create');
     }
 
-    /**
-     * Store a newly created staff member in storage.
-     */
-    public function store(Request $request)
-    {
-        // Placeholder for staff store logic
-        return redirect()->route('admin.staff.index')->with('success', 'Staff member created successfully.');
+    public function store(Request $request){
+
+        $staff = $request->validate([
+            'first_name' => 'required|string|max:50',
+            'last_name' => 'required|string|max:50',
+            'role' => 'required|string|max:100',
+            'address' => 'required|string|max:100',
+            'contact_number' => 'required|string|max:20',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'username' => 'required|string|max:50|unique:users,username',
+            'password' => 'required|string|min:6|confirmed'
+        ],
+        [
+            'password.confirmed' => 'Password does not match'
+        ]
+        );
+
+        $staff['password'] = bcrypt($staff['password']);
+        
+        $staff_create = User::create($staff);
+
+        
+        return view('admin.staff.index')->with('success', 'Staff member created successfully.');;
     }
 
+    
+    
+   
     /**
      * Display the specified staff member.
      */
     public function show($id)
     {
-        return view('admin.staff.show');
+
+        $member = User::findOrFail($id);
+        
+        return view('admin.staff.show', compact('member'));
     }
 
     /**
      * Show the form for editing the specified staff member.
      */
     public function edit($id)
-    {
-        return view('admin.staff.edit');
+    { 
+        $staff = User::where('id', $id)->first();
+        return view('admin.staff.edit', compact('staff'));
     }
 
     /**
@@ -52,7 +78,34 @@ class StaffController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        // Placeholder for staff update logic
+        $data = $request->validate([
+            'first_name' => 'required|string|max:50',
+            'last_name' => 'required|string|max:50',
+            'role' => 'required|string|max:100',
+            'address' => 'required|string|max:100',
+            'contact_number' => 'required|string|max:20',
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($id)],
+            'username' => ['required', 'string', 'max:50', Rule::unique('users')->ignore($id)],
+            'password' => 'nullable|string|min:6|confirmed'
+        ],
+        [
+            'password.confirmed' => 'Password does not match'
+        ]);
+
+          $user = User::findOrFail($id);
+
+        if(empty($data['password'])){
+            unset($data['password']);
+        } else{ 
+            $data['password'] = bcrypt($data['password']);
+        }
+
+      
+        
+
+      
+        $user->update($data);
+
         return redirect()->route('admin.staff.index')->with('success', 'Staff member updated successfully.');
     }
 
@@ -61,7 +114,8 @@ class StaffController extends BaseController
      */
     public function destroy($id)
     {
-        // Placeholder for staff delete logic
+       $user = User::findOrFail($id);
+       $user->delete();
         return redirect()->route('admin.staff.index')->with('success', 'Staff member deleted successfully.');
     }
 }

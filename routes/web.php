@@ -59,6 +59,16 @@ Route::get('/dashboard', function(){
     return view('dashboard');
 });
 
+Route::get('/logout', function() {
+    session()->forget('username');
+    return redirect('/login');
+});
+
+// Customer Routes
+Route::prefix('customer')->name('customer.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Customer\CustomerDashboardController::class, 'index'])->name('dashboard');
+});
+
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
     // Dashboard
@@ -194,6 +204,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Pharmacy
     Route::resource('pharmacy', PharmacyController::class);
+    Route::prefix('pharmacy')->name('pharmacy.')->group(function () {
+        Route::get('/dispense', [PharmacyController::class, 'dispenseForm'])->name('dispense');
+        Route::post('/dispense', [PharmacyController::class, 'dispense'])->name('dispense.store');
+        Route::get('/dispensing-history', [PharmacyController::class, 'dispensingHistory'])->name('dispensing.history');
+        Route::get('/alerts', [PharmacyController::class, 'alerts'])->name('alerts');
+    });
 
     // Surgeries
     Route::prefix('surgeries')->name('surgeries.')->group(function () {
@@ -216,6 +232,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Billing
     Route::resource('billing', BillingController::class);
+    Route::prefix('billing')->name('billing.')->group(function () {
+        Route::get('/{id}/payment', [BillingController::class, 'paymentForm'])->name('payment');
+        Route::post('/{id}/payment', [BillingController::class, 'processPayment'])->name('payment.process');
+        Route::get('/generate-from-appointment/{appointmentId}', [BillingController::class, 'generateFromAppointment'])->name('generate.from.appointment');
+        Route::post('/{id}/send', [BillingController::class, 'sendInvoice'])->name('send');
+        Route::post('/{id}/mark-overdue', [BillingController::class, 'markOverdue'])->name('mark.overdue');
+    });
 
     // Staff
     Route::prefix('staff')->name('staff.')->group(function(){
@@ -230,6 +253,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Reports
     Route::resource('reports', ReportController::class);
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/financial', [ReportController::class, 'financialReport'])->name('financial');
+        Route::get('/medical', [ReportController::class, 'medicalReport'])->name('medical');
+        Route::get('/inventory', [ReportController::class, 'inventoryReport'])->name('inventory');
+        Route::get('/client', [ReportController::class, 'clientReport'])->name('client');
+        Route::get('/appointment', [ReportController::class, 'appointmentReport'])->name('appointment');
+        Route::get('/export/{reportType}', [ReportController::class, 'exportReport'])->name('export');
+    });
 
     // Settings
     Route::resource('settings', SettingController::class);

@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Billing & Invoices')
+@section('page-description', 'Manage client invoices and billing information')
+
 @section('content')
 <div class="content-header">
     <div class="header-title">

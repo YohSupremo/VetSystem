@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Reports & Analytics')
+@section('page-description', 'View and generate clinic reports and analytics')
+
 @section('content')
 <div class="content-header">
     <div class="header-title">

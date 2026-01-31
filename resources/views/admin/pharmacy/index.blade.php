@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Pharmacy Management')
+@section('page-description', 'Manage clinic medications and inventory')
+
 @push('styles')
 <style>
     .content-header {
@@ -103,37 +106,74 @@
 @endpush
 
 @section('content')
-<div class="content-header">
-    <div class="header-title">
-        <h1><i class="fas fa-capsules"></i> Pharmacy Management</h1>
-        <p>Manage clinic medications.</p>
-    </div>
-    <div>
-        <a href="{{ route('admin.pharmacy.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add Medication
-        </a>
-    </div>
-</div>
-
 <div class="card">
-    <h2 style="font-size:1.2rem; font-weight:600; margin-bottom:1rem;">Medication List</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 style="font-size: 1.2rem; font-weight: 600;">Medication Inventory</h3>
+        <div>
+            <a href="{{ route('admin.pharmacy.dispense') }}" class="btn btn-success me-2">
+                <i class="fas fa-pills"></i> Dispense Medication
+            </a>
+            <a href="{{ route('admin.pharmacy.alerts') }}" class="btn btn-warning me-2">
+                <i class="fas fa-exclamation-triangle"></i> Alerts
+                @if($lowStockCount > 0 || $expiredCount > 0)
+                    <span class="badge bg-danger ms-1">{{ $lowStockCount + $expiredCount }}</span>
+                @endif
+            </a>
+            <a href="{{ route('admin.pharmacy.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Medication
+            </a>
+        </div>
+    </div>
 
     <div class="table-responsive">
         <table class="data-table">
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>SKU</th>
+                    <th>Stock</th>
+                    <th>Min Stock</th>
                     <th>Price</th>
+                    <th>Expiry</th>
+                    <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($medications as $medication)
                     <tr>
-                        <td>{{ $medication->name }}</td>
-                        <td>{{ $medication->sku ?? '—' }}</td>
-                        <td>{{ $medication->unit_price !== null ? number_format($medication->unit_price, 2) : '—' }}</td>
+                        <td>
+                            <strong>{{ $medication->name }}</strong>
+                            @if($medication->strength)
+                                <br><small class="text-muted">{{ $medication->strength }}</small>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="badge {{ $medication->quantity <= $medication->min_stock ? 'bg-danger' : 'bg-success' }}">
+                                {{ $medication->quantity }}
+                            </span>
+                        </td>
+                        <td>{{ $medication->min_stock }}</td>
+                        <td>${{ number_format($medication->unit_price, 2) }}</td>
+                        <td>
+                            @if($medication->expiry_date)
+                                <span class="badge {{ $medication->isExpired() ? 'bg-danger' : ($medication->isExpiringSoon() ? 'bg-warning' : 'bg-info') }}">
+                                    {{ $medication->expiry_date->format('M d, Y') }}
+                                </span>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($medication->isExpired())
+                                <span class="badge bg-danger">Expired</span>
+                            @elseif($medication->isExpiringSoon())
+                                <span class="badge bg-warning">Expiring Soon</span>
+                            @elseif($medication->isLowStock())
+                                <span class="badge bg-warning">Low Stock</span>
+                            @else
+                                <span class="badge bg-success">OK</span>
+                            @endif
+                        </td>
                         <td class="actions">
                             <a href="{{ route('admin.pharmacy.show', $medication->id) }}" class="btn-icon" title="View">
                                 <i class="fas fa-eye"></i>
@@ -152,7 +192,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="text-center">No medications found.</td>
+                        <td colspan="7" class="text-center">No medications found.</td>
                     </tr>
                 @endforelse
             </tbody>

@@ -67,6 +67,36 @@ Route::get('/logout', function() {
 // Customer Routes
 Route::prefix('customer')->name('customer.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Customer\CustomerDashboardController::class, 'index'])->name('dashboard');
+    
+    // Pet Management
+    Route::get('/pets', [App\Http\Controllers\Customer\PetController::class, 'index'])->name('pets.index');
+    Route::get('/pets/create', [App\Http\Controllers\Customer\PetController::class, 'create'])->name('pets.create');
+    Route::post('/pets', [App\Http\Controllers\Customer\PetController::class, 'store'])->name('pets.store');
+    Route::get('/pets/{id}', [App\Http\Controllers\Customer\PetController::class, 'show'])->name('pets.show');
+    Route::get('/pets/{id}/edit', [App\Http\Controllers\Customer\PetController::class, 'edit'])->name('pets.edit');
+    Route::put('/pets/{id}', [App\Http\Controllers\Customer\PetController::class, 'update'])->name('pets.update');
+    Route::delete('/pets/{id}', [App\Http\Controllers\Customer\PetController::class, 'destroy'])->name('pets.destroy');
+    
+    // Appointments
+    Route::get('/appointments', [App\Http\Controllers\Customer\AppointmentController::class, 'index'])->name('appointments.index');
+    Route::get('/appointments/create', [App\Http\Controllers\Customer\AppointmentController::class, 'create'])->name('appointments.create');
+    Route::post('/appointments', [App\Http\Controllers\Customer\AppointmentController::class, 'store'])->name('appointments.store');
+    Route::get('/appointments/{id}', [App\Http\Controllers\Customer\AppointmentController::class, 'show'])->name('appointments.show');
+    Route::get('/appointments/{id}/edit', [App\Http\Controllers\Customer\AppointmentController::class, 'edit'])->name('appointments.edit');
+    Route::put('/appointments/{id}', [App\Http\Controllers\Customer\AppointmentController::class, 'update'])->name('appointments.update');
+    Route::post('/appointments/{id}/cancel', [App\Http\Controllers\Customer\AppointmentController::class, 'cancel'])->name('appointments.cancel');
+    
+    // Medical Records
+    Route::get('/medical-records', [App\Http\Controllers\Customer\MedicalRecordController::class, 'index'])->name('medical-records.index');
+    Route::get('/medical-records/pets/{petId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'petRecords'])->name('medical-records.pet');
+    Route::get('/medical-records/pets/{petId}/records/{recordId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'show'])->name('medical-records.show');
+    
+    // Billing
+    Route::get('/billing', [App\Http\Controllers\Customer\BillingController::class, 'index'])->name('billing.index');
+    Route::get('/billing/{id}', [App\Http\Controllers\Customer\BillingController::class, 'show'])->name('billing.show');
+    Route::get('/billing/{id}/pay', [App\Http\Controllers\Customer\BillingController::class, 'pay'])->name('billing.pay');
+    Route::post('/billing/{id}/pay', [App\Http\Controllers\Customer\BillingController::class, 'processPayment'])->name('billing.process-payment');
+    Route::get('/billing/receipts/{paymentId}', [App\Http\Controllers\Customer\BillingController::class, 'receipt'])->name('billing.receipt');
 });
 
 // Admin Routes

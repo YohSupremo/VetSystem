@@ -556,28 +556,28 @@
             <h2 class="mb-3">Quick Actions</h2>
             <div class="row g-3">
                 <div class="col-md-6 col-lg-3">
-                    <a href="#" class="action-card text-decoration-none">
+                    <a href="{{ route('customer.appointments.create') }}" class="action-card text-decoration-none">
                         <div class="action-icon">📅</div>
                         <h3>Book Appointment</h3>
                         <p>Schedule a visit for your pet</p>
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <a href="#" class="action-card text-decoration-none">
+                    <a href="{{ route('customer.pets.create') }}" class="action-card text-decoration-none">
                         <div class="action-icon">🐾</div>
                         <h3>Add Pet</h3>
                         <p>Register a new pet</p>
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <a href="#" class="action-card text-decoration-none">
+                    <a href="{{ route('customer.medical-records.index') }}" class="action-card text-decoration-none">
                         <div class="action-icon">📋</div>
                         <h3>Medical Records</h3>
                         <p>View pet health history</p>
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <a href="#" class="action-card text-decoration-none">
+                    <a href="{{ route('customer.billing.index') }}" class="action-card text-decoration-none">
                         <div class="action-icon">💳</div>
                         <h3>Billing</h3>
                         <p>View invoices and payments</p>

@@ -18,7 +18,7 @@
         <div class="row mb-4">
             <div class="col-md-8">
                 <form class="d-flex gap-2" method="GET" action="{{ route('admin.staff.filter') }}">
-                    <input type="search" name="q" class="form-control" placeholder="Search by name or email" value="{{ request('q') }}" style="max-width: 300px;">
+                    <input type="search" name="name_filter" class="form-control" placeholder="Search by name or email" value="{{ request('q') }}" style="max-width: 300px;">
                     <select name="position" class="form-select" style="max-width: 200px;">
                         <option value="">All Positions</option>
                         <option value="admin" {{ request('position') == 'admin' ? 'selected' : '' }}>Admin</option>

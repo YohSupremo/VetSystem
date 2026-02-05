@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 class StaffController extends BaseController
 {
     /**
@@ -120,10 +121,28 @@ class StaffController extends BaseController
     }
 
     public function filter(Request $request){
-        $position = $request->position;
+        
+       $position = $request->position;
+        $name = $request->name_filter;
 
-       $staff = User::where('role', $position)->get();
+         $staff = User::where('role', '<>', 'pet_owner');
 
-        return view('admin.staff.index', compact('staff'));
+        if(!empty($position)) {
+            $staff = $staff->where('role', $position);
+        }
+      
+
+      
+       if(!empty($name)){
+      $staff = $staff->where(DB::raw("CONCAT(first_name, ' ',last_name)"), "LIKE", "%$name%");
+       
+       }
+
+        $staff = $staff->get();
+       return view('admin.staff.index', compact('staff'));
+
+      
+
+      
     }
 }

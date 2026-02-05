@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('owner_id')->constrained('pet_owners')->onDelete('cascade');
             $table->string('name');
             $table->string('species');
-            $table->string('breed');
+            $table->string('breed')->nullable();
             $table->date('birth_date')->nullable();
             $table->enum('gender', ['male', 'female', 'unknown'])->default('unknown');
             $table->string('color')->nullable();

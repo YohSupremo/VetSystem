@@ -151,6 +151,8 @@ class AppointmentController extends Controller
             'type' => $validated['type'],
             'status' => $validated['status'],
             'notes' => $validated['notes'] ?? null,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         return redirect()->route('admin.appointments.index')

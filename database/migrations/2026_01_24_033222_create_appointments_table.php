@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('pet_id')->constrained()->onDelete('cascade');
-            $table->foreignId('veterinarian_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('veterinarian_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->date('appointment_date');
             $table->time('start_time');
-            $table->time('end_time');
+            $table->time('end_time')->nullable();
             $table->enum('status', ['scheduled', 'in_progress', 'completed', 'cancelled', 'no_show'])->default('scheduled');
             $table->enum('type', ['checkup', 'vaccination', 'surgery', 'dental', 'grooming', 'other']);
             $table->text('reason')->nullable();

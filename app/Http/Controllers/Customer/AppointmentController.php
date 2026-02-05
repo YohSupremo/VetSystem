@@ -111,28 +111,26 @@ class AppointmentController extends Controller
             return $user;
         }
         
+        $validated = $request->validate([
+            'pet_id' => 'required|exists:pets,id',
+            'type' => 'required|string',
+            'appointment_date' => 'required|date',
+            'start_time' => 'required',
+            'notes' => 'nullable|string'
+        ]);
+        
         $petOwner = PetOwner::where('user_id', $user->id)->first();
         $pet = $petOwner->pets()->findOrFail($request->pet_id);
-        
-        // Combine date and time
-        $appointmentDateTime = Carbon::parse($request->appointment_date . ' ' . $request->appointment_time);
-        
-        // Check if slot is still available
-        $existingAppointment = Appointment::where('appointment_date', $appointmentDateTime)
-            ->where('status', '!=', 'cancelled')
-            ->first();
-            
-        if ($existingAppointment) {
-            return back()->withInput()->with('error', 'This time slot is no longer available. Please choose another time.');
-        }
         
         $appointment = Appointment::create([
             'pet_id' => $pet->id,
             'veterinarian_id' => null, // Will be assigned by admin
-            'appointment_date' => $appointmentDateTime,
-            'type' => $request->type,
-            'status' => 'pending',
-            'notes' => $request->notes
+            'appointment_date' => $validated['appointment_date'],
+            'start_time' => $validated['start_time'] . ':00',
+            'end_time' => null,
+            'type' => $validated['type'],
+            'status' => 'scheduled',
+            'notes' => $validated['notes'] ?? null
         ]);
         
         return redirect()->route('customer.appointments.index')

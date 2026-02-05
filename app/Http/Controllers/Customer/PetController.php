@@ -59,6 +59,8 @@ class PetController extends Controller
         }
         
         view()->share('user', $user);
+        
+        return view('customer.pets.create');
     }
     
     public function store(Request $request)

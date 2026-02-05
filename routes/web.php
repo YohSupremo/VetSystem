@@ -279,6 +279,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/{id}/update', [StaffController::class, 'update'])->name('update');
             Route::get('/{id}/info', [StaffController::class, 'show'])->name('info');
             Route::delete('/destroy/{id}', [StaffController::class, 'destroy'])->name('destroy');
+            Route::get('/filter', [StaffController::class, 'filter'])->name('filter');
     });
 
     // Reports

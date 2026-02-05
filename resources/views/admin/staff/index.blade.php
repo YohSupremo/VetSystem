@@ -17,7 +17,7 @@
     <div class="card-body p-4">
         <div class="row mb-4">
             <div class="col-md-8">
-                <form class="d-flex gap-2" method="GET" action="">
+                <form class="d-flex gap-2" method="GET" action="{{ route('admin.staff.filter') }}">
                     <input type="search" name="q" class="form-control" placeholder="Search by name or email" value="{{ request('q') }}" style="max-width: 300px;">
                     <select name="position" class="form-select" style="max-width: 200px;">
                         <option value="">All Positions</option>
@@ -29,7 +29,7 @@
                         <option value="boarding" {{ request('position') == 'boarding' ? 'selected' : '' }}>Boarding</option>
                         <option value="pet_owner" {{ request('position') == 'pet_owner' ? 'selected' : '' }}>Pet Owner</option>
                     </select>
-                    <button class="btn btn-outline-secondary" type="submit">
+                    <button class="btn btn-outline-secondary" type="submit" >
                         <i class="fas fa-filter"></i> Filter
                     </button>
                 </form>

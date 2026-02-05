@@ -118,4 +118,12 @@ class StaffController extends BaseController
        $user->delete();
         return redirect()->route('admin.staff.index')->with('success', 'Staff member deleted successfully.');
     }
+
+    public function filter(Request $request){
+        $position = $request->position;
+
+       $staff = User::where('role', $position)->get();
+
+        return view('admin.staff.index', compact('staff'));
+    }
 }

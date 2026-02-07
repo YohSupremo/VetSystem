@@ -45,10 +45,10 @@ class AppointmentController extends Controller
         }
         $petIds = $petOwner->pets()->pluck('id');
         
-        // Get upcoming appointments
+        // Get upcoming appointments (including today and cancelled ones)
         $upcomingAppointments = Appointment::whereIn('pet_id', $petIds)
-            ->where('appointment_date', '>', now())
-            ->where('status', '!=', 'cancelled')
+            ->where('appointment_date', '>=', now()->toDateString())
+            ->whereIn('status', ['pending', 'scheduled', 'in_progress', 'cancelled'])
             ->orderBy('appointment_date', 'asc')
             ->get();
         
@@ -129,7 +129,7 @@ class AppointmentController extends Controller
             'start_time' => $validated['start_time'] . ':00',
             'end_time' => null,
             'type' => $validated['type'],
-            'status' => 'scheduled',
+            'status' => 'pending',
             'notes' => $validated['notes'] ?? null
         ]);
         

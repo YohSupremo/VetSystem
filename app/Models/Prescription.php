@@ -15,6 +15,7 @@ class Prescription extends Model
         'frequency',
         'duration_days',
         'instructions',
+        'prescribed_by',
     ];
 
     public function pet(): BelongsTo
@@ -25,5 +26,10 @@ class Prescription extends Model
     public function medicalRecord(): BelongsTo
     {
         return $this->belongsTo(MedicalRecord::class, 'medical_record_id');
+    }
+
+    public function prescribedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'prescribed_by');
     }
 }

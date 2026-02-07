@@ -649,6 +649,15 @@
                                     <h4>{{ $appointment->type }}</h4>
                                     <p>{{ $appointment->pet->name }}</p>
                                     <p class="time">{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('h:i A') }}</p>
+                                    @if($appointment->notes && $appointment->status === 'cancelled')
+                                        <p style="font-size: 0.85rem; color: #991b1b; margin-top: 0.5rem; padding: 0.5rem; background: rgba(254, 202, 202, 0.3); border-radius: 0.5rem;">
+                                            <strong>⚠️ Cancelled:</strong> {{ Str::limit($appointment->notes, 80) }}
+                                        </p>
+                                    @elseif($appointment->notes)
+                                        <p style="font-size: 0.85rem; color: #6B7280; margin-top: 0.5rem;">
+                                            <strong>📝:</strong> {{ Str::limit($appointment->notes, 80) }}
+                                        </p>
+                                    @endif
                                 </div>
                                 <div class="appointment-status">
                                     <span class="status-badge {{ $appointment->status }}">{{ ucfirst($appointment->status) }}</span>

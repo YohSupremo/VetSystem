@@ -31,10 +31,10 @@ class CustomerDashboardController extends Controller
                   ->where('user_id', $user->id);
         })->get();
         
-        // Get upcoming appointments
+        // Get upcoming appointments (including today and cancelled ones)
         $upcomingAppointments = Appointment::whereIn('pet_id', $pets->pluck('id'))
-            ->where('appointment_date', '>', now())
-            ->where('status', '!=', 'cancelled')
+            ->where('appointment_date', '>=', now()->toDateString())
+            ->whereIn('status', ['pending', 'scheduled', 'in_progress', 'cancelled'])
             ->orderBy('appointment_date', 'asc')
             ->take(5)
             ->get();

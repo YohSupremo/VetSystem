@@ -122,6 +122,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Appointments
     Route::resource('appointments', AppointmentController::class);
+    Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
     
     // Queue Management
     Route::prefix('queue')->name('queue.')->group(function () {

@@ -36,4 +36,9 @@ class Vaccination extends Model
     {
         return $this->belongsTo(User::class, 'veterinarian_id');
     }
+
+    public function administeredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'veterinarian_id');
+    }
 }

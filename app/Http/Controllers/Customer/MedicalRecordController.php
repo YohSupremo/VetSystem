@@ -63,25 +63,32 @@ class MedicalRecordController extends Controller
         
         // Get medical records with relationships
         $medicalRecords = $pet->medicalRecords()
-            ->with(['veterinarian', 'prescriptions', 'vaccinations'])
+            ->with(['veterinarian', 'prescriptions'])
             ->orderBy('visit_date', 'desc')
+            ->get();
+        
+        // Get all appointments (completed and scheduled)
+        $appointments = $pet->appointments()
+            ->with(['veterinarian'])
+            ->orderBy('appointment_date', 'desc')
             ->get();
         
         // Get vaccinations separately
         $vaccinations = $pet->vaccinations()
-            ->with(['vaccine', 'administeredBy'])
+            ->with(['administeredBy'])
             ->orderBy('administered_date', 'desc')
             ->get();
         
         // Get prescriptions separately
         $prescriptions = $pet->prescriptions()
-            ->with('medicalRecord')
+            ->with('prescribedBy')
             ->orderBy('created_at', 'desc')
             ->get();
         
         return view('customer.medical-records.pet', compact(
             'pet', 
             'medicalRecords', 
+            'appointments',
             'vaccinations', 
             'prescriptions'
         ));

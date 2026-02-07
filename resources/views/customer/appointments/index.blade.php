@@ -113,9 +113,19 @@
     font-size: 0.85rem;
 }
 
+.badge-pending {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+}
+
 .badge-scheduled {
     background: linear-gradient(135deg, #dbeafe, #bfdbfe);
     color: #1e40af;
+}
+
+.badge-in_progress {
+    background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+    color: #3730a3;
 }
 
 .badge-completed {
@@ -254,8 +264,9 @@
                                         </div>
                                     @endif
                                     @if($appointment->notes)
-                                        <div class="detail-item">
-                                            <strong>Notes:</strong> {{ $appointment->notes }}
+                                        <div class="detail-item" style="flex-direction: column; align-items: flex-start; margin-top: 0.5rem; padding: 0.75rem; background: {{ $appointment->status === 'cancelled' ? 'rgba(254, 202, 202, 0.3)' : 'rgba(167, 139, 250, 0.1)' }}; border-radius: 0.75rem;">
+                                            <strong style="margin-bottom: 0.25rem;">{{ $appointment->status === 'cancelled' ? '⚠️ Cancellation Reason' : '📝 Notes' }}:</strong>
+                                            <span style="white-space: pre-wrap;">{{ $appointment->notes }}</span>
                                         </div>
                                     @endif
                                 </div>
@@ -288,6 +299,12 @@
                                     @if($appointment->veterinarian)
                                         <div class="detail-item">
                                             <strong>Veterinarian:</strong> {{ $appointment->veterinarian->first_name }} {{ $appointment->veterinarian->last_name }}
+                                        </div>
+                                    @endif
+                                    @if($appointment->notes)
+                                        <div class="detail-item" style="flex-direction: column; align-items: flex-start; margin-top: 0.5rem; padding: 0.75rem; background: {{ $appointment->status === 'cancelled' ? 'rgba(254, 202, 202, 0.3)' : 'rgba(167, 139, 250, 0.1)' }}; border-radius: 0.75rem;">
+                                            <strong style="margin-bottom: 0.25rem;">{{ $appointment->status === 'cancelled' ? '⚠️ Cancellation Reason' : '📝 Notes' }}:</strong>
+                                            <span style="white-space: pre-wrap;">{{ $appointment->notes }}</span>
                                         </div>
                                     @endif
                                 </div>

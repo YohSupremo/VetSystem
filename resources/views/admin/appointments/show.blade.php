@@ -203,8 +203,16 @@
                 <a href="{{ route('admin.appointments.edit', $appointment->id) }}" class="btn btn-primary">
                     <i class="fas fa-edit"></i> Edit
                 </a>
+                
+                @if($appointment->status !== 'cancelled' && $appointment->status !== 'completed')
+                    <button type="button" class="btn btn-secondary" style="background: #ff9800; color: white;" 
+                            onclick="showCancelModal()">
+                        <i class="fas fa-ban"></i> Cancel Appointment
+                    </button>
+                @endif
+                
                 <form action="{{ route('admin.appointments.destroy', $appointment->id) }}" method="POST"
-                      onsubmit="return confirm('Delete this appointment?');">
+                      onsubmit="return confirm('Delete this appointment permanently? This action cannot be undone.');">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-secondary" style="background: #ff6b6b; color: white;">
@@ -238,4 +246,55 @@
             </div>
         </div>
     </div>
+
+    <!-- Cancel Appointment Modal -->
+    <div id="cancelModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 18px; padding: 30px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h3 style="margin-top: 0; color: #ff9800;"><i class="fas fa-exclamation-triangle"></i> Cancel Appointment</h3>
+            <p style="color: var(--light-text); margin-bottom: 20px;">
+                Are you sure you want to cancel this appointment? Please provide a reason for cancellation (optional).
+            </p>
+            
+            <form action="{{ route('admin.appointments.cancel', $appointment->id) }}" method="POST">
+                @csrf
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="cancellation_reason" style="display: block; margin-bottom: 8px; font-weight: 600;">Cancellation Reason</label>
+                    <textarea 
+                        id="cancellation_reason" 
+                        name="cancellation_reason" 
+                        rows="4" 
+                        class="form-control" 
+                        placeholder="e.g., Veterinarian not available on this date, schedule conflict, etc."
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;"
+                    ></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="hideCancelModal()">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                    <button type="submit" class="btn btn-primary" style="background: #ff9800;">
+                        <i class="fas fa-ban"></i> Confirm Cancellation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showCancelModal() {
+            document.getElementById('cancelModal').style.display = 'flex';
+        }
+        
+        function hideCancelModal() {
+            document.getElementById('cancelModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('cancelModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideCancelModal();
+            }
+        });
+    </script>
 @endsection

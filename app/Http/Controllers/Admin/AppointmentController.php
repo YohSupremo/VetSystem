@@ -26,6 +26,7 @@ class AppointmentController extends Controller
     ];
 
     protected array $statuses = [
+        'pending',
         'scheduled',
         'in_progress',
         'completed',
@@ -235,6 +236,40 @@ class AppointmentController extends Controller
 
         return redirect()->route('admin.appointments.index')
             ->with('success', 'Appointment deleted successfully.');
+    }
+
+    /**
+     * Cancel an appointment (soft action - changes status to cancelled).
+     */
+    public function cancel(Request $request, int $appointment): RedirectResponse
+    {
+        $this->ensureAppointmentsTable();
+
+        $record = DB::table('appointments')->where('id', $appointment)->first();
+
+        abort_if(!$record, 404);
+
+        // Validate the cancellation reason
+        $validated = $request->validate([
+            'cancellation_reason' => ['nullable', 'string', 'max:500']
+        ]);
+
+        // Update appointment status to cancelled and append cancellation reason to notes
+        $notes = $record->notes ?? '';
+        if (!empty($validated['cancellation_reason'])) {
+            $notes .= ($notes ? "\n\n" : '') . "[CANCELLED by Admin on " . now()->format('Y-m-d H:i:s') . "]\n" . $validated['cancellation_reason'];
+        } else {
+            $notes .= ($notes ? "\n\n" : '') . "[CANCELLED by Admin on " . now()->format('Y-m-d H:i:s') . "]";
+        }
+
+        DB::table('appointments')->where('id', $appointment)->update([
+            'status' => 'cancelled',
+            'notes' => $notes,
+            'updated_at' => now(),
+        ]);
+
+        return redirect()->route('admin.appointments.show', $appointment)
+            ->with('success', 'Appointment has been cancelled successfully.');
     }
 
     /**

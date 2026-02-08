@@ -64,6 +64,10 @@ Route::get('/logout', function() {
     return redirect('/login');
 });
 
+Route::get('/reports', function () {
+    return redirect()->route('admin.reports.index');
+});
+
 // Customer Routes
 Route::prefix('customer')->name('customer.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Customer\CustomerDashboardController::class, 'index'])->name('dashboard');

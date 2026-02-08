@@ -5,12 +5,21 @@
 
 @push('styles')
 <style>
+    .inventory-hero {
+        background: linear-gradient(120deg, #f8fafc 0%, #eef2ff 60%, #fff7ed 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.5rem 1.75rem;
+        margin-bottom: 1.5rem;
+    }
+
     .info-card {
         background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
+        border-radius: 16px;
+        padding: 1.5rem 1.75rem;
         margin-bottom: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
     }
     
     .info-card h5 {
@@ -23,7 +32,7 @@
         display: flex;
         justify-content: space-between;
         padding: 0.5rem 0;
-        border-bottom: 1px solid #f8f9fa;
+        border-bottom: 1px dashed #e2e8f0;
     }
     
     .info-row:last-child {
@@ -32,12 +41,12 @@
     
     .info-label {
         font-weight: 500;
-        color: #6c757d;
+        color: #64748b;
     }
     
     .info-value {
         font-weight: 600;
-        color: #2c3e50;
+        color: #0f172a;
     }
     
     .badge-low-stock {
@@ -51,7 +60,7 @@
     }
     
     .badge-good {
-        background: #28a745;
+        background: #16a34a;
         color: white;
     }
     
@@ -66,13 +75,22 @@
     .stock-good { background: #28a745; }
     .stock-low { background: #ffc107; }
     .stock-critical { background: #dc3545; }
+
+    .info-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="content-header">
+<div class="content-header inventory-hero">
     <div class="header-title">
-        <h1><i class="fas fa-box"></i> {{ $item->name }}</h1>
+        <div class="info-title">
+            <h1 class="mb-0"><i class="fas fa-box"></i> {{ $item->name }}</h1>
+        </div>
         <p class="text-muted">Inventory item details and stock information</p>
     </div>
     <div class="header-actions">

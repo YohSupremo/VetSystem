@@ -20,16 +20,22 @@ class InventoryController extends BaseController
             $query->where('category', $request->category);
         }
 
-        // Filter by low stock
-        if ($request->boolean('low_stock')) {
+        $status = $request->get('status');
+
+        // Filter by status dropdown (fallback to old checkbox params)
+        if ($status === 'low_stock' || $request->boolean('low_stock')) {
             $query->whereRaw('quantity <= min_stock AND quantity IS NOT NULL AND min_stock IS NOT NULL');
         }
 
-        // Filter by expiring soon
-        if ($request->boolean('expiring_soon')) {
+        if ($status === 'expiring_soon' || $request->boolean('expiring_soon')) {
             $query->where('expiry_date', '<=', now()->addDays(10))
-                  ->where('expiry_date', '>=', now())
-                  ->whereNotNull('expiry_date');
+                ->where('expiry_date', '>=', now())
+                ->whereNotNull('expiry_date');
+        }
+
+        if ($status === 'expired' || $request->boolean('expired')) {
+            $query->where('expiry_date', '<', now())
+                ->whereNotNull('expiry_date');
         }
 
         $inventoryItems = $query->paginate(15);
@@ -41,6 +47,9 @@ class InventoryController extends BaseController
             ->where('expiry_date', '>=', now())
             ->whereNotNull('expiry_date')
             ->count();
+        $expiredItems = InventoryItem::where('expiry_date', '<', now())
+            ->whereNotNull('expiry_date')
+            ->count();
 
         $categories = ['medicine', 'vaccine', 'supply', 'food', 'other'];
 
@@ -49,6 +58,7 @@ class InventoryController extends BaseController
             'totalItems',
             'lowStockItems',
             'expiringSoonItems',
+            'expiredItems',
             'categories'
         ));
     }

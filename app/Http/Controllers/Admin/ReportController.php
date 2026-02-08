@@ -15,6 +15,7 @@ use App\Models\Prescription;
 use App\Models\Vaccination;
 use App\Models\Surgery;
 use App\Models\GroomingAppointment;
+use App\Models\Report;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +26,25 @@ class ReportController extends BaseController
      */
     public function index()
     {
-        return view('admin.reports.index');
+        $reports = Report::with('generatedBy')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        $reportTypeLabels = $this->reportTypeLabels();
+
+        $totalReports = Report::count();
+        $financialReports = Report::where('report_type', 'financial')->count();
+        $medicalReports = Report::where('report_type', 'medical')->count();
+        $inventoryReports = Report::where('report_type', 'inventory')->count();
+
+        return view('admin.reports.index', compact(
+            'reports',
+            'totalReports',
+            'financialReports',
+            'medicalReports',
+            'inventoryReports',
+            'reportTypeLabels'
+        ));
     }
 
     /**
@@ -33,7 +52,9 @@ class ReportController extends BaseController
      */
     public function create()
     {
-        return view('admin.reports.create');
+        $reportTypeLabels = $this->reportTypeLabels();
+        $reportTypes = array_keys($reportTypeLabels);
+        return view('admin.reports.create', compact('reportTypes', 'reportTypeLabels'));
     }
 
     /**
@@ -41,8 +62,28 @@ class ReportController extends BaseController
      */
     public function store(Request $request)
     {
-        // Reports are generated, not stored
-        return redirect()->route('admin.reports.index');
+        $reportTypes = array_keys($this->reportTypeLabels());
+
+        $data = $request->validate([
+            'report_type' => 'required|in:' . implode(',', $reportTypes),
+            'title' => 'required|string|max:150',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $report = Report::create([
+            'report_type' => $data['report_type'],
+            'title' => $data['title'],
+            'start_date' => $data['start_date'],
+            'end_date' => $data['end_date'],
+            'status' => 'ready',
+            'notes' => $data['notes'] ?? null,
+            'generated_by' => auth()->id(),
+        ]);
+
+        return redirect()->route('admin.reports.show', $report->id)
+            ->with('success', 'Report created successfully.');
     }
 
     /**
@@ -50,7 +91,9 @@ class ReportController extends BaseController
      */
     public function show($id)
     {
-        return $this->generateReport($id);
+        $report = Report::with('generatedBy')->findOrFail($id);
+        $reportTypeLabels = $this->reportTypeLabels();
+        return view('admin.reports.show', compact('report', 'reportTypeLabels'));
     }
 
     /**
@@ -58,7 +101,11 @@ class ReportController extends BaseController
      */
     public function edit($id)
     {
-        return redirect()->route('admin.reports.index');
+        $report = Report::findOrFail($id);
+        $reportTypeLabels = $this->reportTypeLabels();
+        $reportTypes = array_keys($reportTypeLabels);
+
+        return view('admin.reports.edit', compact('report', 'reportTypes', 'reportTypeLabels'));
     }
 
     /**
@@ -66,7 +113,27 @@ class ReportController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        return redirect()->route('admin.reports.index');
+        $report = Report::findOrFail($id);
+        $reportTypes = array_keys($this->reportTypeLabels());
+
+        $data = $request->validate([
+            'report_type' => 'required|in:' . implode(',', $reportTypes),
+            'title' => 'required|string|max:150',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $report->update([
+            'report_type' => $data['report_type'],
+            'title' => $data['title'],
+            'start_date' => $data['start_date'],
+            'end_date' => $data['end_date'],
+            'notes' => $data['notes'] ?? null,
+        ]);
+
+        return redirect()->route('admin.reports.show', $report->id)
+            ->with('success', 'Report updated successfully.');
     }
 
     /**
@@ -74,7 +141,22 @@ class ReportController extends BaseController
      */
     public function destroy($id)
     {
-        return redirect()->route('admin.reports.index');
+        $report = Report::findOrFail($id);
+        $report->delete();
+
+        return redirect()->route('admin.reports.index')
+            ->with('success', 'Report deleted successfully.');
+    }
+
+    private function reportTypeLabels(): array
+    {
+        return [
+            'financial' => 'Financial',
+            'medical' => 'Medical',
+            'inventory' => 'Inventory',
+            'client' => 'Customer',
+            'appointment' => 'Operational',
+        ];
     }
     
     /**
@@ -156,7 +238,7 @@ class ReportController extends BaseController
             ->where('status', 'completed')->count();
         
         // Medical records
-        $totalMedicalRecords = MedicalRecord::whereBetween('created_at', [$startDate, $endDate])->count();
+        $totalMedicalRecords = MedicalRecord::whereBetween('visit_date', [$startDate, $endDate])->count();
         
         // Prescriptions
         $totalPrescriptions = Prescription::whereBetween('created_at', [$startDate, $endDate])->count();
@@ -165,11 +247,11 @@ class ReportController extends BaseController
         $totalVaccinations = Vaccination::whereBetween('vaccination_date', [$startDate, $endDate])->count();
         
         // Surgeries
-        $totalSurgeries = Surgery::whereBetween('surgery_date', [$startDate, $endDate])->count();
+        $totalSurgeries = Surgery::whereBetween('scheduled_date', [$startDate, $endDate])->count();
         
         // Common diagnoses (from medical records)
         $commonDiagnoses = MedicalRecord::select('diagnosis', DB::raw('COUNT(*) as count'))
-            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereBetween('visit_date', [$startDate, $endDate])
             ->whereNotNull('diagnosis')
             ->groupBy('diagnosis')
             ->orderBy('count', 'desc')
@@ -177,10 +259,10 @@ class ReportController extends BaseController
             ->get();
         
         // Common treatments
-        $commonTreatments = MedicalRecord::select('treatment', DB::raw('COUNT(*) as count'))
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->whereNotNull('treatment')
-            ->groupBy('treatment')
+        $commonTreatments = MedicalRecord::select('treatment_plan', DB::raw('COUNT(*) as count'))
+            ->whereBetween('visit_date', [$startDate, $endDate])
+            ->whereNotNull('treatment_plan')
+            ->groupBy('treatment_plan')
             ->orderBy('count', 'desc')
             ->limit(10)
             ->get();
@@ -188,7 +270,7 @@ class ReportController extends BaseController
         // Pet types treated
         $petTypes = Pet::select('species', DB::raw('COUNT(*) as count'))
             ->join('medical_records', 'pets.id', '=', 'medical_records.pet_id')
-            ->whereBetween('medical_records.created_at', [$startDate, $endDate])
+            ->whereBetween('medical_records.visit_date', [$startDate, $endDate])
             ->groupBy('species')
             ->orderBy('count', 'desc')
             ->get();
@@ -300,10 +382,17 @@ class ReportController extends BaseController
         
         // Top clients by revenue
         $topClients = DB::table('pet_owners')
-            ->select('pet_owners.*', DB::raw('SUM(billing_invoices.total_amount) as total_revenue'))
+            ->join('users', 'pet_owners.user_id', '=', 'users.id')
+            ->select(
+                'pet_owners.id',
+                'users.first_name',
+                'users.last_name',
+                'users.email',
+                DB::raw('SUM(billing_invoices.total_amount) as total_revenue')
+            )
             ->join('billing_invoices', 'pet_owners.id', '=', 'billing_invoices.pet_owner_id')
             ->whereBetween('billing_invoices.invoice_date', [$startDate, $endDate])
-            ->groupBy('pet_owners.id')
+            ->groupBy('pet_owners.id', 'users.first_name', 'users.last_name', 'users.email')
             ->orderBy('total_revenue', 'desc')
             ->limit(20)
             ->get();
@@ -316,10 +405,13 @@ class ReportController extends BaseController
             ->get();
         
         // Pets per client distribution
-        $petsPerClient = DB::table('pet_owners')
-            ->selectRaw('COUNT(pets.id) as pet_count, COUNT(*) as client_count')
-            ->leftJoin('pets', 'pet_owners.id', '=', 'pets.pet_owner_id')
-            ->groupBy('pet_owners.id')
+        $petsPerClient = DB::query()
+            ->fromSub(function ($query) {
+                $query->from('pet_owners')
+                    ->leftJoin('pets', 'pet_owners.id', '=', 'pets.owner_id')
+                    ->selectRaw('pet_owners.id as owner_id, COUNT(pets.id) as pet_count')
+                    ->groupBy('pet_owners.id');
+            }, 'owner_pets')
             ->selectRaw('pet_count, COUNT(*) as client_count')
             ->groupBy('pet_count')
             ->orderBy('pet_count')
@@ -357,9 +449,9 @@ class ReportController extends BaseController
             ->where('status', 'no_show')->count();
         
         // Appointments by type
-        $appointmentsByType = Appointment::select('appointment_type', DB::raw('COUNT(*) as count'))
+        $appointmentsByType = Appointment::select('type', DB::raw('COUNT(*) as count'))
             ->whereBetween('appointment_date', [$startDate, $endDate])
-            ->groupBy('appointment_type')
+            ->groupBy('type')
             ->orderBy('count', 'desc')
             ->get();
         
@@ -371,7 +463,7 @@ class ReportController extends BaseController
             ->get();
         
         // Peak hours
-        $peakHours = Appointment::selectRaw('HOUR(appointment_time) as hour, COUNT(*) as count')
+        $peakHours = Appointment::selectRaw('HOUR(start_time) as hour, COUNT(*) as count')
             ->whereBetween('appointment_date', [$startDate, $endDate])
             ->groupBy('hour')
             ->orderBy('count', 'desc')

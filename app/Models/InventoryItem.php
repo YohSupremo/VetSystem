@@ -61,8 +61,8 @@ class InventoryItem extends Model
         if (!$this->expiry_date) {
             return false;
         }
-        
-        $daysUntilExpiry = $this->expiry_date->diffInDays(now());
+
+        $daysUntilExpiry = now()->diffInDays($this->expiry_date, false);
         return $daysUntilExpiry >= 0 && $daysUntilExpiry <= $days;
     }
 

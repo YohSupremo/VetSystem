@@ -5,20 +5,42 @@
 
 @push('styles')
 <style>
+    .inventory-page-hero {
+        background: linear-gradient(120deg, #f8fafc 0%, #eef2ff 60%, #fff7ed 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.5rem 1.75rem;
+        margin-bottom: 1.5rem;
+    }
+
     .form-section {
         background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        padding: 2rem;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+        padding: 1.75rem;
         margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .form-section.basic {
+        border-top: 4px solid #6366f1;
+    }
+
+    .form-section.stock {
+        border-top: 4px solid #22c55e;
     }
 
     .section-title {
-        color: #2c3e50;
+        color: #0f172a;
         font-weight: 600;
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e9ecef;
+        margin: 0;
+    }
+
+    .section-subtitle {
+        margin: 0.35rem 0 0;
+        color: #64748b;
+        font-size: 0.95rem;
     }
 
     .form-group {
@@ -30,11 +52,59 @@
         color: #495057;
         margin-bottom: 0.5rem;
     }
+
+    .form-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .form-section-header .icon-pill {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: #eef2ff;
+        color: #4338ca;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 0.65rem 0.75rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.15);
+    }
+
+    .input-group-text {
+        border-radius: 12px 0 0 12px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 600;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="content-header">
+<div class="content-header inventory-page-hero">
     <div class="header-title">
         <h1><i class="fas fa-plus"></i> Add Inventory Item</h1>
         <p>Create a new item in the inventory system</p>
@@ -50,8 +120,14 @@
     @csrf
 
     <!-- Basic Information -->
-    <div class="form-section">
-        <h3 class="section-title"><i class="fas fa-info-circle"></i> Basic Information</h3>
+    <div class="form-section basic">
+        <div class="form-section-header">
+            <div>
+                <h3 class="section-title"><i class="fas fa-info-circle"></i> Basic Information</h3>
+                <p class="section-subtitle">Essential details to identify and classify the item.</p>
+            </div>
+            <div class="icon-pill"><i class="fas fa-tag"></i></div>
+        </div>
 
         <div class="row">
             <div class="col-md-6">
@@ -143,8 +219,14 @@
     </div>
 
     <!-- Stock Information -->
-    <div class="form-section">
-        <h3 class="section-title"><i class="fas fa-warehouse"></i> Stock Information</h3>
+    <div class="form-section stock">
+        <div class="form-section-header">
+            <div>
+                <h3 class="section-title"><i class="fas fa-warehouse"></i> Stock Information</h3>
+                <p class="section-subtitle">Track availability and expiry details.</p>
+            </div>
+            <div class="icon-pill" style="background:#ecfdf3;color:#15803d;"><i class="fas fa-box"></i></div>
+        </div>
 
         <div class="row">
             <div class="col-md-4">
@@ -189,7 +271,7 @@
 
     <!-- Form Actions -->
     <div class="form-section">
-        <div class="d-flex justify-content-between">
+        <div class="form-actions">
             <a href="{{ route('admin.inventory.index') }}" class="btn btn-secondary">
                 <i class="fas fa-times"></i> Cancel
             </a>

@@ -43,7 +43,11 @@ class BillingController extends BaseController
      */
     public function create()
     {
-        $petOwners = PetOwner::orderBy('name')->get();
+        $petOwners = PetOwner::select('pet_owners.*')
+            ->join('users', 'pet_owners.user_id', '=', 'users.id')
+            ->orderBy('users.first_name')
+            ->orderBy('users.last_name')
+            ->get();
         $pets = Pet::orderBy('name')->get();
         
         return view('admin.billing.create', compact('petOwners', 'pets'));
@@ -143,11 +147,11 @@ class BillingController extends BaseController
     {
         $invoice = BillingInvoice::with(['invoiceItems'])->findOrFail($id);
         
-        if ($invoice->status === 'paid') {
-            return back()->withErrors(['error' => 'Cannot edit paid invoice.']);
-        }
-        
-        $petOwners = PetOwner::orderBy('name')->get();
+        $petOwners = PetOwner::select('pet_owners.*')
+            ->join('users', 'pet_owners.user_id', '=', 'users.id')
+            ->orderBy('users.first_name')
+            ->orderBy('users.last_name')
+            ->get();
         $pets = Pet::orderBy('name')->get();
         
         return view('admin.billing.edit', compact('invoice', 'petOwners', 'pets'));
@@ -159,10 +163,6 @@ class BillingController extends BaseController
     public function update(Request $request, $id)
     {
         $invoice = BillingInvoice::findOrFail($id);
-        
-        if ($invoice->status === 'paid') {
-            return back()->withErrors(['error' => 'Cannot edit paid invoice.']);
-        }
         
         $data = $request->validate([
             'pet_id' => 'required|exists:pets,id',
@@ -231,10 +231,6 @@ class BillingController extends BaseController
     public function destroy($id)
     {
         $invoice = BillingInvoice::findOrFail($id);
-        
-        if ($invoice->status === 'paid') {
-            return back()->withErrors(['error' => 'Cannot delete paid invoice.']);
-        }
         
         DB::beginTransaction();
         
@@ -326,12 +322,13 @@ class BillingController extends BaseController
      */
     public function generateFromAppointment($appointmentId)
     {
-        $appointment = Appointment::with(['pet', 'petOwner'])->findOrFail($appointmentId);
+        $appointment = Appointment::with(['pet'])->findOrFail($appointmentId);
+        $petOwnerId = $appointment->pet ? $appointment->pet->owner_id : null;
         
         $invoice = BillingInvoice::create([
             'invoice_number' => '',
             'pet_id' => $appointment->pet_id,
-            'pet_owner_id' => $appointment->pet_owner_id,
+            'pet_owner_id' => $petOwnerId,
             'invoice_date' => now()->toDateString(),
             'due_date' => now()->addDays(7)->toDateString(),
             'status' => 'draft',

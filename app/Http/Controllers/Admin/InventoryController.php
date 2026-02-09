@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use Illuminate\Http\Request;
 use App\Models\InventoryItem;
 use App\Models\Supplier;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 class InventoryController extends BaseController
 {
@@ -107,7 +107,14 @@ class InventoryController extends BaseController
         }
 
         if ($request->hasFile('image')) {
-            $validated['image_path'] = $request->file('image')->store('inventory-items', 'public');
+            $file = $request->file('image');
+            $directory = public_path('uploads/inventory-items');
+            if (!File::exists($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+            $filename = $file->hashName();
+            $file->move($directory, $filename);
+            $validated['image_path'] = 'uploads/inventory-items/' . $filename;
         }
 
         InventoryItem::create($validated);
@@ -171,9 +178,16 @@ class InventoryController extends BaseController
 
         if ($request->hasFile('image')) {
             if ($item->image_path) {
-                Storage::disk('public')->delete($item->image_path);
+                File::delete(public_path($item->image_path));
             }
-            $validated['image_path'] = $request->file('image')->store('inventory-items', 'public');
+            $file = $request->file('image');
+            $directory = public_path('uploads/inventory-items');
+            if (!File::exists($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+            $filename = $file->hashName();
+            $file->move($directory, $filename);
+            $validated['image_path'] = 'uploads/inventory-items/' . $filename;
         }
 
         $item->update($validated);
@@ -189,7 +203,7 @@ class InventoryController extends BaseController
     {
         $item = InventoryItem::findOrFail($id);
         if ($item->image_path) {
-            Storage::disk('public')->delete($item->image_path);
+            File::delete(public_path($item->image_path));
         }
         $item->delete();
 

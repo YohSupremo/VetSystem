@@ -289,7 +289,7 @@
             @if($item->image_path)
                 <div class="mt-2">
                     <small class="text-muted">Current image:</small><br>
-                    <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}" style="max-width: 100px; max-height: 100px; border-radius: 4px;">
+                    <img src="{{ asset($item->image_path) }}" alt="{{ $item->name }}" style="max-width: 100px; max-height: 100px; border-radius: 4px;">
                 </div>
             @endif
             @error('image')

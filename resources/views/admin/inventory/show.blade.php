@@ -133,7 +133,7 @@
             <h5><i class="fas fa-info-circle"></i> Item Information</h5>
             <div class="mb-3">
                 @if($item->image_path)
-                    <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}" class="item-image">
+                    <img src="{{ asset($item->image_path) }}" alt="{{ $item->name }}" class="item-image">
                 @else
                     <div class="item-image-placeholder"><i class="fas fa-image"></i></div>
                 @endif

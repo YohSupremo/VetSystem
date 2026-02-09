@@ -393,7 +393,7 @@
                             <td>
                                 <div class="d-flex align-items-center gap-3 justify-content-center">
                                     @if($item->image_path)
-                                        <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}" class="item-thumb">
+                                        <img src="{{ asset($item->image_path) }}" alt="{{ $item->name }}" class="item-thumb">
                                     @else
                                         <span class="item-thumb-placeholder"><i class="fas fa-image"></i></span>
                                     @endif

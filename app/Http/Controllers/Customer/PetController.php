@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Pet;
 use App\Models\PetOwner;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class PetController extends Controller
@@ -69,6 +69,10 @@ class PetController extends Controller
         if ($user instanceof \Illuminate\Http\RedirectResponse) {
             return $user;
         }
+
+        $request->validate([
+            'microchip_number' => 'nullable|string|max:255|unique:pets,microchip_number',
+        ]);
         
         $petOwner = PetOwner::where('user_id', $user->id)->first();
         if (!$petOwner) {
@@ -85,8 +89,12 @@ class PetController extends Controller
         if ($request->hasFile('photo')) {
             $photo = $request->file('photo');
             $filename = Str::random(40) . '.' . $photo->getClientOriginalExtension();
-            $path = $photo->storeAs('pets', $filename, 'public');
-            $petData['photo_path'] = $path;
+            $directory = public_path('uploads/pets');
+            if (!File::exists($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+            $photo->move($directory, $filename);
+            $petData['photo_path'] = 'uploads/pets/' . $filename;
         }
         
         $pet = Pet::create($petData);
@@ -144,13 +152,17 @@ class PetController extends Controller
         if ($request->hasFile('photo')) {
             // Delete old photo if exists
             if ($pet->photo_path) {
-                Storage::disk('public')->delete($pet->photo_path);
+                File::delete(public_path($pet->photo_path));
             }
-            
+
             $photo = $request->file('photo');
             $filename = Str::random(40) . '.' . $photo->getClientOriginalExtension();
-            $path = $photo->storeAs('pets', $filename, 'public');
-            $petData['photo_path'] = $path;
+            $directory = public_path('uploads/pets');
+            if (!File::exists($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+            $photo->move($directory, $filename);
+            $petData['photo_path'] = 'uploads/pets/' . $filename;
         }
         
         $pet->update($petData);
@@ -171,7 +183,7 @@ class PetController extends Controller
         
         // Delete photo if exists
         if ($pet->photo_path) {
-            Storage::disk('public')->delete($pet->photo_path);
+            File::delete(public_path($pet->photo_path));
         }
         
         $pet->delete();

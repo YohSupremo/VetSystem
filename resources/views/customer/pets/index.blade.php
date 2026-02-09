@@ -225,7 +225,7 @@
                 @foreach($pets as $pet)
                     <div class="pet-card" onclick="window.location='{{ route('customer.pets.show', $pet->id) }}'">
                         @if($pet->photo_path)
-                            <img src="{{ asset('storage/' . $pet->photo_path) }}" alt="{{ $pet->name }}" class="pet-photo">
+                            <img src="{{ asset($pet->photo_path) }}" alt="{{ $pet->name }}" class="pet-photo">
                         @else
                             <div class="pet-photo d-flex align-items-center justify-content-center">
                                 <span style="font-size: 4rem;">

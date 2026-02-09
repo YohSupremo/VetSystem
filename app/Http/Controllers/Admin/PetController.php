@@ -8,7 +8,7 @@ use App\Models\MedicalRecord;
 use App\Models\Pet;
 use App\Models\PetOwner;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 class PetController extends Controller
 {
@@ -51,8 +51,14 @@ class PetController extends Controller
         // Handle photo upload
         if ($request->hasFile('photo')) {
             try {
-                $path = $request->file('photo')->store('pets', 'public');
-                $validated['photo_path'] = $path;
+                $photo = $request->file('photo');
+                $directory = public_path('uploads/pets');
+                if (!File::exists($directory)) {
+                    File::makeDirectory($directory, 0755, true);
+                }
+                $filename = $photo->hashName();
+                $photo->move($directory, $filename);
+                $validated['photo_path'] = 'uploads/pets/' . $filename;
             } catch (\Exception $e) {
                 // Log error but don't fail the request
                 \Log::error('Pet photo upload failed: ' . $e->getMessage());
@@ -125,10 +131,16 @@ class PetController extends Controller
             try {
                 // Delete old photo if it exists
                 if ($pet->photo_path) {
-                    Storage::disk('public')->delete($pet->photo_path);
+                    File::delete(public_path($pet->photo_path));
                 }
-                $path = $request->file('photo')->store('pets', 'public');
-                $validated['photo_path'] = $path;
+                $photo = $request->file('photo');
+                $directory = public_path('uploads/pets');
+                if (!File::exists($directory)) {
+                    File::makeDirectory($directory, 0755, true);
+                }
+                $filename = $photo->hashName();
+                $photo->move($directory, $filename);
+                $validated['photo_path'] = 'uploads/pets/' . $filename;
             } catch (\Exception $e) {
                 // Log error but don't fail the request
                 \Log::error('Pet photo upload failed: ' . $e->getMessage());
@@ -149,7 +161,7 @@ class PetController extends Controller
     {
         // Delete photo if exists
         if ($pet->photo_path) {
-            Storage::disk('public')->delete($pet->photo_path);
+            File::delete(public_path($pet->photo_path));
         }
 
         $pet->delete();

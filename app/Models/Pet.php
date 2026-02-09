@@ -45,28 +45,12 @@ class Pet extends Model
     public function getPhotoUrlAttribute()
     {
         if ($this->photo_path && !empty(trim($this->photo_path))) {
-            // Normalize path (remove leading slashes)
-            // The path is already stored as 'pets/filename.jpg' by store() method
             $path = ltrim($this->photo_path, '/');
-            
-            // Try public/storage symlink path first (standard Laravel)
-            // This is the correct path after running: php artisan storage:link
-            $publicStoragePath = public_path('storage/' . $path);
-            if (file_exists($publicStoragePath)) {
-                return asset('storage/' . $path);
+            $publicPath = public_path($path);
+            if (file_exists($publicPath)) {
+                return asset($path);
             }
-            
-            // Try storage/app/public path (if symlink doesn't exist yet)
-            $storagePath = storage_path('app/public/' . $path);
-            if (file_exists($storagePath)) {
-                // File exists but symlink doesn't - return URL that should work
-                // Note: You need to run 'php artisan storage:link' for this to work via web
-                return asset('storage/' . $path);
-            }
-            
-            // If path exists in DB but file not found, still return the asset URL
-            // This allows the image to load once symlink is created
-            return asset('storage/' . $path);
+            return asset($path);
         }
         
         // Default fallback - return a placeholder SVG

@@ -10,6 +10,8 @@ use App\Models\PetOwner;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Appointment;
+use App\Models\Order;
+use App\Models\OrderItem;
 
 class BillingController extends Controller
 {
@@ -197,5 +199,113 @@ class BillingController extends Controller
         })->with(['invoice.pet', 'invoice.items'])->findOrFail($paymentId);
         
         return view('customer.billing.receipt', compact('payment'));
+    }
+
+    /**
+     * Display customer's orders.
+     */
+    public function orders()
+    {
+        $user = $this->authenticateUser();
+        if ($user instanceof \Illuminate\Http\RedirectResponse) {
+            return $user;
+        }
+        
+        view()->share('user', $user);
+        
+        $petOwner = PetOwner::where('user_id', $user->id)->first();
+        if (!$petOwner) {
+            $orders = collect();
+        } else {
+            $orders = Order::where('owner_id', $petOwner->id)
+                ->with(['items.inventoryItem', 'pet'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+        
+        return view('customer.billing.orders', compact('orders'));
+    }
+
+    /**
+     * Display order details.
+     */
+    public function orderDetails($orderId)
+    {
+        $user = $this->authenticateUser();
+        if ($user instanceof \Illuminate\Http\RedirectResponse) {
+            return $user;
+        }
+        
+        view()->share('user', $user);
+        
+        $petOwner = PetOwner::where('user_id', $user->id)->first();
+        if (!$petOwner) {
+            return back()->with('error', 'Order not found.');
+        }
+        
+        $order = Order::where('owner_id', $petOwner->id)
+            ->where('id', $orderId)
+            ->with(['items.inventoryItem', 'pet', 'createdBy'])
+            ->firstOrFail();
+            
+        return view('customer.billing.order-details', compact('order'));
+    }
+
+    /**
+     * Cancel an order.
+     */
+    public function cancelOrder($orderId)
+    {
+        $user = $this->authenticateUser();
+        if ($user instanceof \Illuminate\Http\RedirectResponse) {
+            return $user;
+        }
+        
+        $petOwner = PetOwner::where('user_id', $user->id)->first();
+        if (!$petOwner) {
+            return back()->with('error', 'Order not found.');
+        }
+        
+        $order = Order::where('owner_id', $petOwner->id)
+            ->where('id', $orderId)
+            ->firstOrFail();
+            
+        // Check if order can be cancelled
+        if ($order->status === 'cancelled') {
+            return back()->with('error', 'Order is already cancelled.');
+        }
+        
+        if ($order->status === 'fulfilled') {
+            return back()->with('error', 'Cannot cancel fulfilled order.');
+        }
+        
+        // For product orders, restore stock if items were deducted
+        if ($order->order_type === 'product' && $order->status === 'confirmed') {
+            foreach ($order->items as $item) {
+                if ($item->item_type === 'inventory' && $item->inventoryItem) {
+                    $item->inventoryItem->increment('quantity', $item->quantity);
+                    
+                    // Create inventory transaction for stock restoration
+                    $inventoryStock = \App\Models\InventoryStock::where('item_id', $item->reference_id)->first();
+                    if ($inventoryStock) {
+                        \App\Models\InventoryTransaction::create([
+                            'stock_id' => $inventoryStock->id,
+                            'type' => 'in',
+                            'quantity' => $item->quantity,
+                            'reference' => 'Cancelled Order #' . $order->id,
+                            'notes' => 'Stock restored from cancelled order',
+                        ]);
+                    }
+                }
+            }
+        }
+        
+        $order->update([
+            'status' => 'cancelled',
+            'notes' => ($order->notes ?? '') . "\n\nCancelled by customer on " . now()->format('Y-m-d H:i:s')
+        ]);
+        
+        return redirect()->route('customer.billing.orders')
+            ->with('success', 'Order cancelled successfully.');
     }
 }

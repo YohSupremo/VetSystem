@@ -150,6 +150,7 @@
 @endpush
 
 @section('content')
+@include('layout.customer-navbar')
 <div class="floating-shapes">
     <div class="shape"></div>
     <div class="shape"></div>
@@ -157,25 +158,6 @@
 </div>
 
 <div class="customer-container">
-    <!-- Header -->
-    <header class="customer-header">
-        <div class="header-content d-flex justify-content-between align-items-center">
-            <div class="logo-section d-flex align-items-center gap-3">
-                <div class="paw-icon">🐾</div>
-                <h1 class="mb-0">PawCare</h1>
-            </div>
-            <div class="user-menu d-flex align-items-center gap-3">
-                <div class="user-info d-flex align-items-center gap-2">
-                    <span class="welcome-text">Welcome, {{ $user->first_name }}!</span>
-                    <div class="user-avatar">
-                        {{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}
-                    </div>
-                </div>
-                <a href="/logout" class="logout-btn">Logout</a>
-            </div>
-        </div>
-    </header>
-
     <!-- Main Content -->
     <main class="customer-main">
         <div class="form-card">

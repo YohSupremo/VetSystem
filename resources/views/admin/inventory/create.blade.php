@@ -269,6 +269,22 @@
         </div>
     </div>
 
+     <div class="form-section image-upload-section">
+        <div class="form-section-header">
+            <div>
+                <h3 class="section-title"><i class="fas fa-image"></i> Product Image</h3>
+                <p class="section-subtitle">Upload an image for inventory item.</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="image" class="form-label">Image File</label>
+            <input type="file" id="image" name="image" class="form-control @error('image') is-invalid @enderror" accept="image/*">
+            <small class="text-muted">Accepted formats: JPG, PNG, GIF. Max size: 2MB.</small>
+            @error('image')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+    </div>
     <!-- Form Actions -->
     <div class="form-section">
         <div class="form-actions">

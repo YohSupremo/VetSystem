@@ -95,12 +95,29 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::get('/medical-records/pets/{petId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'petRecords'])->name('medical-records.pet');
     Route::get('/medical-records/pets/{petId}/records/{recordId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'show'])->name('medical-records.show');
     
+    // Products / Shop
+    Route::get('/products', [App\Http\Controllers\Customer\ProductController::class, 'index'])->name('products.index');
+    Route::post('/products/{productId}/order', [App\Http\Controllers\Customer\ProductController::class, 'order'])->name('products.order');
+    Route::post('/products/{productId}/add-to-cart', [App\Http\Controllers\Customer\ProductController::class, 'addToCart'])->name('products.add-to-cart');
+    
+    // Shopping Cart
+    Route::get('/cart', [App\Http\Controllers\Customer\CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/update/{itemId}', [App\Http\Controllers\Customer\CartController::class, 'update'])->name('cart.update');
+    Route::post('/cart/remove/{itemId}', [App\Http\Controllers\Customer\CartController::class, 'remove'])->name('cart.remove');
+    Route::post('/cart/clear', [App\Http\Controllers\Customer\CartController::class, 'clear'])->name('cart.clear');
+    Route::post('/cart/checkout', [App\Http\Controllers\Customer\CartController::class, 'checkout'])->name('cart.checkout');
+    
     // Billing
     Route::get('/billing', [App\Http\Controllers\Customer\BillingController::class, 'index'])->name('billing.index');
     Route::get('/billing/{id}', [App\Http\Controllers\Customer\BillingController::class, 'show'])->name('billing.show');
     Route::get('/billing/{id}/pay', [App\Http\Controllers\Customer\BillingController::class, 'pay'])->name('billing.pay');
     Route::post('/billing/{id}/pay', [App\Http\Controllers\Customer\BillingController::class, 'processPayment'])->name('billing.process-payment');
     Route::get('/billing/receipts/{paymentId}', [App\Http\Controllers\Customer\BillingController::class, 'receipt'])->name('billing.receipt');
+    
+    // Orders
+    Route::get('/orders', [App\Http\Controllers\Customer\BillingController::class, 'orders'])->name('billing.orders');
+    Route::get('/orders/{orderId}', [App\Http\Controllers\Customer\BillingController::class, 'orderDetails'])->name('billing.order-details');
+    Route::post('/orders/{orderId}/cancel', [App\Http\Controllers\Customer\BillingController::class, 'cancelOrder'])->name('billing.cancel-order');
 });
 
 // Admin Routes
@@ -127,6 +144,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Appointments
     Route::resource('appointments', AppointmentController::class);
     Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+    
+    // Inventory Management
+    Route::resource('inventory', InventoryController::class);
     
     // Queue Management
     Route::prefix('queue')->name('queue.')->group(function () {
@@ -258,11 +278,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/pet/{pet}', [SurgeryController::class, 'byPet'])->name('pet');
     });
 
-    // Inventory
-    Route::resource('inventory', InventoryController::class);
-
-    // Prescriptions
-    Route::resource('prescriptions', PrescriptionController::class);
+// Customer Routes
     Route::get('prescriptions/pet/{petId}', [PrescriptionController::class, 'byPet'])->name('prescriptions.pet');
 
     // Billing

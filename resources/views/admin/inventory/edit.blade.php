@@ -274,6 +274,30 @@
         </div>
     </div>
 
+       <!-- Image Upload Section -->
+    <div class="form-section image-upload-section">
+        <div class="form-section-header">
+            <div>
+                <h3 class="section-title"><i class="fas fa-image"></i> Product Image</h3>
+                <p class="section-subtitle">Update the inventory item image.</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="image" class="form-label">Product Image</label>
+            <input type="file" id="image" name="image" class="form-control @error('image') is-invalid @enderror" accept="image/*">
+            <small class="text-muted">Leave empty to keep current image. Accepted formats: JPG, PNG, GIF. Max size: 2MB.</small>
+            @if($item->image_path)
+                <div class="mt-2">
+                    <small class="text-muted">Current image:</small><br>
+                    <img src="{{ asset($item->image_path) }}" alt="{{ $item->name }}" style="max-width: 100px; max-height: 100px; border-radius: 4px;">
+                </div>
+            @endif
+            @error('image')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+    </div>
+    
     <!-- Form Actions -->
     <div class="form-section">
         <div class="form-actions">

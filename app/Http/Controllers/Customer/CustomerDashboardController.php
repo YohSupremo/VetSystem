@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Pet;
 use App\Models\Appointment;
+use App\Models\InventoryItem;
+use App\Models\ShoppingCart;
 use Illuminate\Support\Facades\Auth;
 
 class CustomerDashboardController extends Controller
@@ -50,6 +52,9 @@ class CustomerDashboardController extends Controller
         // Get pet count and statistics
         $petCount = $pets->count();
         $upcomingCount = $upcomingAppointments->count();
+
+        // Get user's cart information
+        $cart = ShoppingCart::getOrCreateForUser($user->id);
         
         return view('customer.dashboard', compact(
             'user',
@@ -57,7 +62,8 @@ class CustomerDashboardController extends Controller
             'upcomingAppointments',
             'recentAppointments',
             'petCount',
-            'upcomingCount'
+            'upcomingCount',
+            'cart'
         ));
     }
 }

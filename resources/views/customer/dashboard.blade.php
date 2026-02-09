@@ -490,6 +490,7 @@
 @endpush
 
 @section('content')
+@include('layout.customer-navbar')
 <div class="floating-shapes">
     <div class="shape"></div>
     <div class="shape"></div>
@@ -497,25 +498,6 @@
 </div>
 
 <div class="customer-container">
-    <!-- Header -->
-    <header class="customer-header">
-        <div class="header-content d-flex justify-content-between align-items-center">
-            <div class="logo-section d-flex align-items-center gap-3">
-                <div class="paw-icon">🐾</div>
-                <h1 class="mb-0">PawCare</h1>
-            </div>
-            <div class="user-menu d-flex align-items-center gap-3">
-                <div class="user-info d-flex align-items-center gap-2">
-                    <span class="welcome-text">Welcome, {{ $user->first_name }}!</span>
-                    <div class="user-avatar">
-                        {{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}
-                    </div>
-                </div>
-                <a href="/logout" class="logout-btn">Logout</a>
-            </div>
-        </div>
-    </header>
-
     <!-- Main Content -->
     <main class="customer-main">
         <!-- Stats Cards -->
@@ -577,10 +559,36 @@
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-3">
+                    <a href="{{ route('customer.billing.orders') }}" class="action-card text-decoration-none">
+                        <div class="action-icon">📋</div>
+                        <h3>My Orders</h3>
+                        <p>View order history and status</p>
+                    </a>
+                </div>
+                <div class="col-md-6 col-lg-3">
                     <a href="{{ route('customer.billing.index') }}" class="action-card text-decoration-none">
                         <div class="action-icon">💳</div>
                         <h3>Billing</h3>
                         <p>View invoices and payments</p>
+                    </a>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <a href="{{ route('customer.products.index') }}" class="action-card text-decoration-none">
+                        <div class="action-icon">🛍️</div>
+                        <h3>Shop Products</h3>
+                        <p>Browse pet care products and place orders</p>
+                    </a>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <a href="{{ route('customer.cart.index') }}" class="action-card text-decoration-none position-relative">
+                        <div class="action-icon">🛒</div>
+                        <h3>Shopping Cart</h3>
+                        <p>Review your cart and checkout</p>
+                        @if($cart && $cart->total_items > 0)
+                            <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+                                {{ $cart->total_items }}
+                            </span>
+                        @endif
                     </a>
                 </div>
             </div>
@@ -592,7 +600,7 @@
                 <div class="pets-section">
                     <div class="section-header d-flex justify-content-between align-items-center mb-3">
                         <h2 class="mb-0">My Pets</h2>
-                        <a href="#" class="btn-add">+ Add New Pet</a>
+                        <a href="{{ route('customer.pets.create') }}" class="btn-add">+ Add New Pet</a>
                     </div>
                 <div class="pets-list">
                     @if($pets->count() > 0)
@@ -624,7 +632,7 @@
                             <div class="empty-icon">🐾</div>
                             <h3>No pets registered yet</h3>
                             <p>Add your first pet to get started</p>
-                            <a href="#" class="btn-primary">Add Your First Pet</a>
+                            <a href="{{ route('customer.pets.create') }}" class="btn-primary">Add Your First Pet</a>
                         </div>
                     @endif
                 </div>
@@ -635,7 +643,7 @@
                 <div class="appointments-section">
                     <div class="section-header d-flex justify-content-between align-items-center mb-3">
                         <h2 class="mb-0">Upcoming Appointments</h2>
-                        <a href="#" class="btn-view-all">View All</a>
+                        <a href="{{ route('customer.appointments.index') }}" class="btn-view-all">View All</a>
                     </div>
                 <div class="appointments-list">
                     @if($upcomingAppointments->count() > 0)
@@ -669,7 +677,7 @@
                             <div class="empty-icon">📅</div>
                             <h3>No upcoming appointments</h3>
                             <p>Schedule your next visit</p>
-                            <a href="#" class="btn-primary">Book Appointment</a>
+                            <a href="{{ route('customer.appointments.create') }}" class="btn-primary">Book Appointment</a>
                         </div>
                     @endif
                 </div>

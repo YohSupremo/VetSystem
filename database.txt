@@ -264,28 +264,24 @@ CREATE TABLE medication_instructions (
 -- =============================
 -- INVENTORY
 -- =============================
-CREATE TABLE suppliers (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    supplier_name VARCHAR(150)
-);
-
 CREATE TABLE inventory_items (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(150),
+    name VARCHAR(150) NOT NULL,
     category ENUM('medicine','vaccine','supply','food','other'),
-    sku VARCHAR(50) UNIQUE,
-    unit_price DECIMAL(10,2)
+    sku VARCHAR(50) UNIQUE NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    image_path VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE inventory_stock (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     item_id BIGINT UNSIGNED,
-    supplier_id BIGINT UNSIGNED,
     quantity INT,
     min_stock INT,
     expiry_date DATE,
-    FOREIGN KEY (item_id) REFERENCES inventory_items(id),
-    FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
+    FOREIGN KEY (item_id) REFERENCES inventory_items(id)
 );
 
 CREATE TABLE inventory_transactions (
@@ -299,6 +295,58 @@ CREATE TABLE inventory_transactions (
     FOREIGN KEY (stock_id) REFERENCES inventory_stock(id)
 );
 
+CREATE TABLE orders (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    appointment_id BIGINT UNSIGNED,
+    pet_id BIGINT UNSIGNED,
+    owner_id BIGINT UNSIGNED,
+    created_by BIGINT UNSIGNED NOT NULL,
+    order_type ENUM('consultation','pharmacy','lab','grooming','boarding','product','other'),
+    status ENUM('draft','confirmed','fulfilled','cancelled') DEFAULT 'draft',
+    order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    notes TEXT,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(id),
+    FOREIGN KEY (pet_id) REFERENCES pets(id),
+    FOREIGN KEY (owner_id) REFERENCES pet_owners(id),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+CREATE TABLE order_items (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT UNSIGNED NOT NULL,
+    item_type ENUM('service','inventory','medicine','lab','grooming'),
+    reference_id BIGINT UNSIGNED,
+    description VARCHAR(255),
+    quantity INT NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    total DECIMAL(12,2) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+
+-- =============================
+-- SHOPPING CART
+-- =============================
+CREATE TABLE shopping_carts (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    UNIQUE KEY (user_id)
+);
+
+CREATE TABLE cart_items (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    cart_id BIGINT UNSIGNED NOT NULL,
+    inventory_item_id BIGINT UNSIGNED NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    unit_price DECIMAL(10,2) NOT NULL,
+    total DECIMAL(12,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (cart_id) REFERENCES shopping_carts(id) ON DELETE CASCADE,
+    FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE CASCADE
+);
 -- =============================
 -- GROOMING SERVICES
 -- =============================
@@ -327,6 +375,7 @@ CREATE TABLE grooming_appointments (
 -- =============================
 CREATE TABLE invoices (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT UNSIGNED NOT NULL,
     appointment_id BIGINT UNSIGNED,
     pet_id BIGINT UNSIGNED,
     invoice_number VARCHAR(50) UNIQUE,
@@ -336,6 +385,7 @@ CREATE TABLE invoices (
     paid_amount DECIMAL(12,2),
     status ENUM('pending','partial','paid','overdue'),
     notes TEXT,
+    FOREIGN KEY (order_id) REFERENCES orders(id),
     FOREIGN KEY (appointment_id) REFERENCES appointments(id),
     FOREIGN KEY (pet_id) REFERENCES pets(id)
 );
@@ -390,8 +440,8 @@ CREATE TABLE staff_schedules (
 
 -- =============================
 -- SUMMARY
--- Total Tables: 37
+-- Total Tables: 41
 -- Foreign Keys: Inline (no ALTER TABLE)
 -- JSON: Removed (changed to TEXT)
--- Includes: Grooming services
+-- Includes: Grooming services, Shopping cart, Product images, Admin product management
 -- =============================

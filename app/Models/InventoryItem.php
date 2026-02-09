@@ -25,6 +25,7 @@ class InventoryItem extends Model
         'quantity',
         'min_stock',
         'expiry_date',
+        'image_path',
     ];
 
     protected $casts = [

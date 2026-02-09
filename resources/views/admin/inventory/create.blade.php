@@ -116,7 +116,7 @@
     </div>
 </div>
 
-<form action="{{ route('admin.inventory.store') }}" method="POST">
+<form action="{{ route('admin.inventory.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
 
     <!-- Basic Information -->

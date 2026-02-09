@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use Illuminate\Http\Request;
 use App\Models\InventoryItem;
 use App\Models\Supplier;
+use Illuminate\Support\Facades\Storage;
 
 class InventoryController extends BaseController
 {
@@ -97,11 +98,16 @@ class InventoryController extends BaseController
             'quantity' => 'required|integer|min:0',
             'min_stock' => 'required|integer|min:0',
             'expiry_date' => $requiresExpiry ? 'nullable|date|after:today' : 'nullable',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
         ]);
 
         // Remove expiry_date if not required for this category
         if (!$requiresExpiry) {
             $validated['expiry_date'] = null;
+        }
+
+        if ($request->hasFile('image')) {
+            $validated['image_path'] = $request->file('image')->store('inventory-items', 'public');
         }
 
         InventoryItem::create($validated);
@@ -155,11 +161,19 @@ class InventoryController extends BaseController
             'quantity' => 'required|integer|min:0',
             'min_stock' => 'required|integer|min:0',
             'expiry_date' => $requiresExpiry ? 'nullable|date|after:today' : 'nullable',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
         ]);
 
         // Remove expiry_date if not required for this category
         if (!$requiresExpiry) {
             $validated['expiry_date'] = null;
+        }
+
+        if ($request->hasFile('image')) {
+            if ($item->image_path) {
+                Storage::disk('public')->delete($item->image_path);
+            }
+            $validated['image_path'] = $request->file('image')->store('inventory-items', 'public');
         }
 
         $item->update($validated);
@@ -174,6 +188,9 @@ class InventoryController extends BaseController
     public function destroy($id)
     {
         $item = InventoryItem::findOrFail($id);
+        if ($item->image_path) {
+            Storage::disk('public')->delete($item->image_path);
+        }
         $item->delete();
 
         return redirect()->route('admin.inventory.index')

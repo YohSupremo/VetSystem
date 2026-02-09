@@ -231,6 +231,28 @@
         font-weight: 600;
         color: #0f172a;
     }
+
+    .item-thumb {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+
+    .item-thumb-placeholder {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        border: 1px dashed #cbd5f5;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        background: #f8fafc;
+        font-size: 1rem;
+    }
 </style>
 @endpush
 
@@ -369,14 +391,21 @@
                     @foreach($inventoryItems as $item)
                         <tr>
                             <td>
-                                <div>
-                                    <strong>{{ $item->name }}</strong>
+                                <div class="d-flex align-items-center gap-3 justify-content-center">
+                                    @if($item->image_path)
+                                        <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}" class="item-thumb">
+                                    @else
+                                        <span class="item-thumb-placeholder"><i class="fas fa-image"></i></span>
+                                    @endif
+                                    <div class="text-start">
+                                        <strong>{{ $item->name }}</strong>
                                     @if($item->sku)
                                         <br><small class="text-muted">SKU: {{ $item->sku }}</small>
                                     @endif
                                     @if($item->manufacturer)
                                         <br><small class="text-muted">{{ $item->manufacturer }}</small>
                                     @endif
+                                    </div>
                                 </div>
                             </td>
                             <td>

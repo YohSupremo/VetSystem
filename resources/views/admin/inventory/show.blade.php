@@ -82,6 +82,29 @@
         gap: 0.5rem;
         margin-bottom: 0.25rem;
     }
+
+    .item-image {
+        width: 100%;
+        max-width: 280px;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        object-fit: cover;
+        background: #f8fafc;
+    }
+
+    .item-image-placeholder {
+        width: 100%;
+        max-width: 280px;
+        height: 220px;
+        border-radius: 16px;
+        border: 1px dashed #cbd5f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        background: #f8fafc;
+        font-size: 2rem;
+    }
 </style>
 @endpush
 
@@ -108,6 +131,13 @@
     <div class="col-md-6">
         <div class="info-card">
             <h5><i class="fas fa-info-circle"></i> Item Information</h5>
+            <div class="mb-3">
+                @if($item->image_path)
+                    <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}" class="item-image">
+                @else
+                    <div class="item-image-placeholder"><i class="fas fa-image"></i></div>
+                @endif
+            </div>
             <div class="info-row">
                 <span class="info-label">Name:</span>
                 <span class="info-value">{{ $item->name }}</span>

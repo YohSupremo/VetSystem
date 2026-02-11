@@ -58,11 +58,12 @@ class VaccinationController extends Controller
             return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
         }
 
-        $pet = Pet::with('owner')
-            ->whereHas('appointments', function($query) use ($veterinarian) {
-                $query->where('veterinarian_id', $veterinarian->id);
-            })
-            ->findOrFail($petId);
+        $pet = Pet::whereHas('appointments', function($query) use ($veterinarian) {
+            $query->where('veterinarian_id', $veterinarian->id)
+                  ->orWhereNull('veterinarian_id');
+        })
+        ->with('owner.user')
+        ->findOrFail($petId);
 
         return view('veterinarian.vaccinations.create', compact('pet', 'veterinarian'));
     }
@@ -78,7 +79,8 @@ class VaccinationController extends Controller
         }
 
         $pet = Pet::whereHas('appointments', function($query) use ($veterinarian) {
-            $query->where('veterinarian_id', $veterinarian->id);
+            $query->where('veterinarian_id', $veterinarian->id)
+                  ->orWhereNull('veterinarian_id');
         })->findOrFail($petId);
 
         $request->validate([

@@ -23,14 +23,23 @@ class LaboratoryController extends Controller
 
         if ($petId) {
             // Show lab tests for specific pet
-            $labTests = LaboratoryTest::where('veterinarian_id', $veterinarian->id)
+            $labTests = LaboratoryTest::where(function($query) use ($veterinarian, $petId) {
+                $query->where('veterinarian_id', $veterinarian->id)
+                      ->orWhere(function($subQuery) use ($petId) {
+                          $subQuery->where('pet_id', $petId)
+                                   ->whereNull('veterinarian_id');
+                      });
+            })
                 ->where('pet_id', $petId)
                 ->with(['pet', 'pet.owner'])
                 ->orderBy('test_date', 'desc')
                 ->paginate(10);
         } else {
             // Show all lab tests for this veterinarian
-            $labTests = LaboratoryTest::where('veterinarian_id', $veterinarian->id)
+            $labTests = LaboratoryTest::where(function($query) use ($veterinarian) {
+                $query->where('veterinarian_id', $veterinarian->id)
+                      ->orWhereNull('veterinarian_id');
+            })
                 ->with(['pet', 'pet.owner'])
                 ->orderBy('test_date', 'desc')
                 ->paginate(10);

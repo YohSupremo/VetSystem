@@ -31,7 +31,7 @@
                                 <div>
                                     <strong>{{ $appointment->appointment_date->format('M j, Y') }}</strong>
                                     <br>
-                                    <small class="text-muted">{{ $appointment->start_time->format('g:i A') }} - {{ $appointment->end_time->format('g:i A') }}</small>
+                                    <small class="text-muted">{{ $appointment->start_time->format('g:i A') }} - {{ $appointment->end_time ? $appointment->end_time->format('g:i A') : 'TBD' }}</small>
                                 </div>
                             </td>
                             <td>
@@ -61,17 +61,26 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a href="{{ route('veterinarian.appointments.show', $appointment->id) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
-                                    @if($appointment->status !== 'completed' && $appointment->status !== 'cancelled')
-                                        <form action="#" method="POST" class="d-inline">
+                                    @if(is_null($appointment->veterinarian_id))
+                                        <form action="{{ route('veterinarian.appointments.claim', $appointment->id) }}" method="POST" class="d-inline">
                                             @csrf
-                                            <input type="hidden" name="status" value="{{ $appointment->status === 'scheduled' ? 'in_progress' : 'completed' }}">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">
-                                                <i class="fas fa-check"></i> {{ $appointment->status === 'scheduled' ? 'Start' : 'Complete' }}
+                                            <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                <i class="fas fa-hand-paper"></i> Claim
                                             </button>
                                         </form>
+                                    @else
+                                        <a href="{{ route('veterinarian.appointments.show', $appointment->id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        @if($appointment->status !== 'completed' && $appointment->status !== 'cancelled')
+                                            <form action="#" method="POST" class="d-inline">
+                                                @csrf
+                                                <input type="hidden" name="status" value="{{ $appointment->status === 'scheduled' ? 'in_progress' : 'completed' }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                    <i class="fas fa-check"></i> {{ $appointment->status === 'scheduled' ? 'Start' : 'Complete' }}
+                                                </button>
+                                            </form>
+                                        @endif
                                     @endif
                                 </div>
                             </td>

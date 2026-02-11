@@ -166,16 +166,25 @@ class PrescriptionController extends Controller
 
         if ($petId) {
             // Show prescriptions for specific pet
-            $prescriptions = Prescription::where('veterinarian_id', $veterinarian->id)
+            $prescriptions = Prescription::where(function($query) use ($veterinarian, $petId) {
+                $query->where('veterinarian_id', $veterinarian->id)
+                      ->orWhere(function($subQuery) use ($petId) {
+                          $subQuery->where('pet_id', $petId)
+                                   ->whereNull('veterinarian_id');
+                      });
+            })
                 ->where('pet_id', $petId)
                 ->with(['pet', 'pet.owner', 'medication'])
-                ->orderBy('prescription_date', 'desc')
+                ->orderBy('created_at', 'desc')
                 ->paginate(10);
         } else {
             // Show all prescriptions for this veterinarian
-            $prescriptions = Prescription::where('veterinarian_id', $veterinarian->id)
+            $prescriptions = Prescription::where(function($query) use ($veterinarian) {
+                $query->where('veterinarian_id', $veterinarian->id)
+                      ->orWhereNull('veterinarian_id');
+            })
                 ->with(['pet', 'pet.owner', 'medication'])
-                ->orderBy('prescription_date', 'desc')
+                ->orderBy('created_at', 'desc')
                 ->paginate(10);
         }
 

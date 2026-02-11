@@ -132,6 +132,7 @@ Route::prefix('veterinarian')->name('veterinarian.')->group(function () {
     Route::get('/appointments/{id}', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'showAppointment'])->name('appointments.show');
     Route::post('/appointments/{id}/status', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'updateAppointmentStatus'])->name('appointments.update-status');
     Route::post('/appointments/{id}/cancel', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'cancelAppointment'])->name('appointments.cancel');
+    Route::post('/appointments/{id}/claim', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'claimAppointment'])->name('appointments.claim');
     Route::get('/patients', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'patients'])->name('patients.index');
     Route::get('/patients/{id}', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'showPatient'])->name('patients.show');
     Route::get('/medical-records', [App\Http\Controllers\Veterinarian\MedicalRecordController::class, 'index'])->name('medical-records.index');

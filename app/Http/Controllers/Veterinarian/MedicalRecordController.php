@@ -164,17 +164,26 @@ class MedicalRecordController extends Controller
 
         if ($petId) {
             // Show medical records for specific pet
-            $medicalRecords = MedicalRecord::where('veterinarian_id', $veterinarian->id)
+            $medicalRecords = MedicalRecord::where(function($query) use ($veterinarian, $petId) {
+                $query->where('veterinarian_id', $veterinarian->id)
+                      ->orWhere(function($subQuery) use ($petId) {
+                          $subQuery->where('pet_id', $petId)
+                                   ->whereNull('veterinarian_id');
+                      });
+            })
                 ->where('pet_id', $petId)
                 ->with(['pet', 'pet.owner'])
                 ->orderBy('record_date', 'desc')
                 ->paginate(10);
         } else {
             // Show all medical records for this veterinarian
-            $medicalRecords = MedicalRecord::where('veterinarian_id', $veterinarian->id)
-                ->with(['pet', 'pet.owner'])
-                ->orderBy('record_date', 'desc')
-                ->paginate(10);
+            $medicalRecords = MedicalRecord::where(function($query) use ($veterinarian) {
+                $query->where('veterinarian_id', $veterinarian->id)
+                      ->orWhereNull('veterinarian_id');
+            })
+            ->with(['pet', 'pet.owner'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
         }
 
         return view('veterinarian.medical-records.index', compact('medicalRecords', 'petId'));

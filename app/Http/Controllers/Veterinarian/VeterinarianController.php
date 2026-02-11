@@ -73,8 +73,12 @@ class VeterinarianController extends Controller
             return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
         }
 
-        $appointments = Appointment::where('veterinarian_id', $veterinarian->id)
+        $appointments = Appointment::where(function($query) use ($veterinarian) {
+            $query->where('veterinarian_id', $veterinarian->id)
+                  ->orWhereNull('veterinarian_id');
+        })
             ->with(['pet', 'pet.owner'])
+            ->orderBy('veterinarian_id', 'asc') // Show assigned appointments first
             ->orderBy('appointment_date', 'desc')
             ->orderBy('start_time', 'desc')
             ->paginate(10);
@@ -196,7 +200,8 @@ class VeterinarianController extends Controller
         }
 
         $patients = Pet::whereHas('appointments', function($query) use ($veterinarian) {
-            $query->where('veterinarian_id', $veterinarian->id);
+            $query->where('veterinarian_id', $veterinarian->id)
+                  ->orWhereNull('veterinarian_id');
         })
         ->with('owner')
         ->orderBy('created_at', 'desc')
@@ -248,5 +253,25 @@ class VeterinarianController extends Controller
 
         return redirect()->route('veterinarian.appointments.index')
             ->with('success', 'Appointment cancelled successfully!');
+    }
+
+    public function claimAppointment($id)
+    {
+        // Get authenticated veterinarian from session
+        $username = session('username');
+        $veterinarian = User::where('username', $username)->first();
+        
+        if (!$veterinarian || !$veterinarian->isVeterinarian()) {
+            return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
+        }
+
+        $appointment = Appointment::whereNull('veterinarian_id')->findOrFail($id);
+
+        $appointment->veterinarian_id = $veterinarian->id;
+        $appointment->status = 'scheduled';
+        $appointment->save();
+
+        return redirect()->route('veterinarian.appointments.index')
+            ->with('success', 'Appointment claimed successfully!');
     }
 }

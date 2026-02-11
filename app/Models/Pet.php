@@ -104,4 +104,9 @@ class Pet extends Model
      public function prescriptions(): HasMany {
         return $this->hasMany(Prescription::class);
     }
+
+    public function laboratoryTests(): HasMany
+    {
+        return $this->hasMany(LaboratoryTest::class);
+    }
 }

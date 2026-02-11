@@ -38,7 +38,7 @@
                             <div class="col-6">{{ $patient->appointments->count() }}</div>
                         </div>
 
-                        <a href="#" class="btn-action w-100">
+                        <a href="{{ route('veterinarian.patients.show', $patient->id) }}" class="btn-action w-100">
                             <i class="fas fa-eye me-2"></i>View Details
                         </a>
                     </div>

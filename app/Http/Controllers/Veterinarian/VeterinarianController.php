@@ -8,6 +8,8 @@ use App\Models\Appointment;
 use App\Models\User;
 use App\Models\Pet;
 use App\Models\MedicalRecord;
+use App\Models\Vaccination;
+use App\Models\LaboratoryTest;
 use Carbon\Carbon;
 
 class VeterinarianController extends Controller
@@ -25,15 +27,18 @@ class VeterinarianController extends Controller
         // Get today's appointments for this veterinarian
         $todayAppointments = Appointment::where('veterinarian_id', $veterinarian->id)
             ->whereDate('appointment_date', now()->toDateString())
-            ->with(['pet.owner', 'pet.type'])
+            ->with(['pet.owner'])
             ->orderBy('start_time', 'asc')
             ->get();
 
         // Get upcoming appointments (next 7 days)
-        $upcomingAppointments = Appointment::where('veterinarian_id', $veterinarian->id)
+        $upcomingAppointments = Appointment::where(function($query) use ($veterinarian) {
+            $query->where('veterinarian_id', $veterinarian->id)
+                  ->orWhereNull('veterinarian_id');
+        })
             ->whereDate('appointment_date', '>', now()->toDateString())
             ->whereDate('appointment_date', '<=', now()->addDays(7)->toDateString())
-            ->with(['pet.owner', 'pet.type'])
+            ->with(['pet.owner'])
             ->orderBy('appointment_date', 'asc')
             ->orderBy('start_time', 'asc')
             ->get();
@@ -45,9 +50,43 @@ class VeterinarianController extends Controller
             'completed' => $todayAppointments->where('status', 'completed')->count(),
         ];
 
+        // Get vaccination statistics
+        $vaccinationStats = [
+            'total' => Vaccination::where(function($query) use ($veterinarian) {
+                $query->where('veterinarian_id', $veterinarian->id)
+                      ->orWhereNull('veterinarian_id');
+            })->count(),
+            'today' => Vaccination::where(function($query) use ($veterinarian) {
+                $query->where('veterinarian_id', $veterinarian->id)
+                      ->orWhereNull('veterinarian_id');
+            })->whereDate('vaccination_date', now()->toDateString())->count(),
+            'upcoming' => Vaccination::where(function($query) use ($veterinarian) {
+                $query->where('veterinarian_id', $veterinarian->id)
+                      ->orWhereNull('veterinarian_id');
+            })->whereDate('vaccination_date', '>', now()->toDateString())
+              ->whereDate('vaccination_date', '<=', now()->addDays(30)->toDateString())->count(),
+        ];
+
+        // Get laboratory statistics
+        $labStats = [
+            'total' => LaboratoryTest::where(function($query) use ($veterinarian) {
+                $query->where('veterinarian_id', $veterinarian->id)
+                      ->orWhereNull('veterinarian_id');
+            })->count(),
+            'pending' => LaboratoryTest::where(function($query) use ($veterinarian) {
+                $query->where('veterinarian_id', $veterinarian->id)
+                      ->orWhereNull('veterinarian_id');
+            })->where('status', 'pending')->count(),
+            'completed' => LaboratoryTest::where(function($query) use ($veterinarian) {
+                $query->where('veterinarian_id', $veterinarian->id)
+                      ->orWhereNull('veterinarian_id');
+            })->where('status', 'completed')->count(),
+        ];
+
         // Get recent patients (pets this veterinarian has seen)
         $recentPatients = Pet::whereHas('appointments', function ($query) use ($veterinarian) {
-            $query->where('veterinarian_id', $veterinarian->id);
+            $query->where('veterinarian_id', $veterinarian->id)
+                  ->orWhereNull('veterinarian_id');
         })
         ->with('owner')
         ->orderBy('created_at', 'desc')
@@ -59,6 +98,8 @@ class VeterinarianController extends Controller
             'todayAppointments',
             'upcomingAppointments',
             'queueStats',
+            'vaccinationStats',
+            'labStats',
             'recentPatients'
         ));
     }
@@ -220,13 +261,14 @@ class VeterinarianController extends Controller
             return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
         }
 
-        $patient = Pet::whereHas('appointments', function($query) use ($veterinarian) {
-            $query->where('veterinarian_id', $veterinarian->id);
+        $pet = Pet::whereHas('appointments', function($query) use ($veterinarian) {
+            $query->where('veterinarian_id', $veterinarian->id)
+                  ->orWhereNull('veterinarian_id');
         })
-        ->with(['owner', 'medicalRecords', 'appointments'])
+        ->with(['owner', 'medicalRecords', 'appointments', 'vaccinations', 'laboratoryTests'])
         ->findOrFail($id);
 
-        return view('veterinarian.patients.show', compact('patient'));
+        return view('veterinarian.patients.show', compact('pet'));
     }
 
     public function cancelAppointment($id)

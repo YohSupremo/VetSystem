@@ -85,7 +85,10 @@ class MedicalRecordController extends Controller
             return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
         }
 
-        $medicalRecord = MedicalRecord::where('veterinarian_id', $veterinarian->id)
+        $medicalRecord = MedicalRecord::where(function($query) use ($veterinarian) {
+            $query->where('veterinarian_id', $veterinarian->id)
+                  ->orWhereNull('veterinarian_id');
+        })
             ->where('pet_id', $petId)
             ->with(['pet', 'pet.owner', 'veterinarian'])
             ->findOrFail($recordId);

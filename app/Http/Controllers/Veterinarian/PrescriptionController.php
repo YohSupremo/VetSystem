@@ -87,7 +87,10 @@ class PrescriptionController extends Controller
             return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
         }
 
-        $prescription = Prescription::where('veterinarian_id', $veterinarian->id)
+        $prescription = Prescription::where(function($query) use ($veterinarian) {
+            $query->where('veterinarian_id', $veterinarian->id)
+                  ->orWhereNull('veterinarian_id');
+        })
             ->where('pet_id', $petId)
             ->with(['pet', 'pet.owner', 'veterinarian', 'medication'])
             ->findOrFail($prescriptionId);

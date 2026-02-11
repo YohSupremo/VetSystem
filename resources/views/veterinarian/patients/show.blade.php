@@ -6,7 +6,7 @@
 <div class="content-card">
     <div class="section-header">
         <h2 class="mb-3">Patient Profile</h2>
-        <a href="#" class="btn-action">
+        <a href="{{ route('veterinarian.patients.index') }}" class="btn-action">
             <i class="fas fa-arrow-left me-2"></i>Back to Patients
         </a>
     </div>
@@ -81,16 +81,16 @@
     <div class="content-card" style="padding: 1.5rem;">
         <h5 class="mb-3">Quick Actions</h5>
         <div class="d-flex flex-wrap gap-2">
-            <a href="#" class="btn btn-primary">
+            <a href="{{ route('veterinarian.medical-records.create', $pet->id) }}" class="btn btn-primary">
                 <i class="fas fa-file-medical me-2"></i>Add Medical Record
             </a>
-            <a href="#" class="btn btn-warning">
+            <a href="{{ route('veterinarian.prescriptions.create', $pet->id) }}" class="btn btn-warning">
                 <i class="fas fa-prescription-bottle-alt me-2"></i>Write Prescription
             </a>
-            <a href="#" class="btn btn-success">
+            <a href="{{ route('veterinarian.vaccinations.create', $pet->id) }}" class="btn btn-success">
                 <i class="fas fa-syringe me-2"></i>Add Vaccination
             </a>
-            <a href="#" class="btn btn-info">
+            <a href="{{ route('veterinarian.laboratory.create', $pet->id) }}" class="btn btn-info">
                 <i class="fas fa-microscope me-2"></i>Order Lab Test
             </a>
         </div>
@@ -120,6 +120,11 @@
                     Vaccinations
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="laboratory-tab" data-bs-toggle="tab" data-bs-target="#laboratory" type="button" role="tab">
+                    Laboratory
+                </button>
+            </li>
         </ul>
 
         <!-- Tab Content -->
@@ -141,10 +146,10 @@
                                         <small class="text-muted">{{ $record->record_date->format('M j, Y g:i A') }}</small>
                                     </div>
                                     <div class="btn-group">
-                                        <a href="#" class="btn btn-sm btn-outline-primary">
+                                        <a href="{{ route('veterinarian.medical-records.show', [$record->pet_id, $record->id]) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-outline-secondary">
+                                        <a href="{{ route('veterinarian.medical-records.edit', [$record->pet_id, $record->id]) }}" class="btn btn-sm btn-outline-secondary">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                     </div>
@@ -174,15 +179,16 @@
                                         <p class="mb-1"><strong>Frequency:</strong> {{ $prescription->frequency }}</p>
                                         <p class="mb-1"><strong>Duration:</strong> {{ $prescription->duration }}</p>
                                         <p class="mb-1"><strong>Instructions:</strong> {{ $prescription->instructions }}</p>
-                                        <span class="status-badge {{ $prescription->status }}">
-                                            {{ ucfirst($prescription->status) }}
-                                        </span>
+                                        @if($prescription->notes)
+                                            <p class="mb-1"><strong>Notes:</strong> {{ $prescription->notes }}</p>
+                                        @endif
+                                        <small class="text-muted">{{ $prescription->created_at->format('M j, Y g:i A') }}</small>
                                     </div>
                                     <div class="btn-group">
-                                        <a href="#" class="btn btn-sm btn-outline-primary">
+                                        <a href="{{ route('veterinarian.prescriptions.show', [$prescription->pet_id, $prescription->id]) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-outline-secondary">
+                                        <a href="{{ route('veterinarian.prescriptions.edit', [$prescription->pet_id, $prescription->id]) }}" class="btn btn-sm btn-outline-secondary">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                     </div>
@@ -209,7 +215,7 @@
                                     <div class="item-details flex-grow-1">
                                         <h6>{{ ucfirst($appointment->type) }}</h6>
                                         <p class="mb-1"><strong>Date:</strong> {{ $appointment->appointment_date->format('M j, Y') }}</p>
-                                        <p class="mb-1"><strong>Time:</strong> {{ $appointment->start_time->format('g:i A') }} - {{ $appointment->end_time->format('g:i A') }}</p>
+                                        <p class="mb-1"><strong>Time:</strong> {{ $appointment->start_time->format('g:i A') }} - {{ $appointment->end_time ? $appointment->end_time->format('g:i A') : 'TBD' }}</p>
                                         @if($appointment->reason)
                                             <p class="mb-1"><strong>Reason:</strong> {{ $appointment->reason }}</p>
                                         @endif
@@ -217,7 +223,7 @@
                                             {{ ucfirst(str_replace('_', ' ', $appointment->status)) }}
                                         </span>
                                     </div>
-                                    <a href="#" class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ route('veterinarian.appointments.show', $appointment->id) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                 </div>
@@ -249,7 +255,7 @@
                                             <p class="mb-1"><strong>Notes:</strong> {{ $vaccination->notes }}</p>
                                         @endif
                                     </div>
-                                    <a href="#" class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ route('veterinarian.vaccinations.show', [$vaccination->pet_id, $vaccination->id]) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                 </div>
@@ -261,6 +267,43 @@
                         <div class="empty-icon">💉</div>
                         <h3>No vaccinations found</h3>
                         <p>No vaccinations have been recorded for this patient.</p>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Laboratory Tab -->
+            <div class="tab-pane fade" id="laboratory" role="tabpanel">
+                @if($pet->laboratoryTests->count() > 0)
+                    <div class="row g-3">
+                        @foreach($pet->laboratoryTests as $labTest)
+                            <div class="col-12">
+                                <div class="appointment-item">
+                                    <div class="item-details flex-grow-1">
+                                        <h6>{{ $labTest->test_name }}</h6>
+                                        <p class="mb-1"><strong>Type:</strong> {{ ucfirst($labTest->test_type) }}</p>
+                                        <p class="mb-1"><strong>Specimen:</strong> {{ ucfirst($labTest->specimen_type) }}</p>
+                                        <p class="mb-1"><strong>Date:</strong> {{ $labTest->test_date->format('M j, Y') }}</p>
+                                        <p class="mb-1"><strong>Status:</strong> 
+                                            <span class="status-badge {{ $labTest->status }}">
+                                                {{ ucfirst(str_replace('_', ' ', $labTest->status)) }}
+                                            </span>
+                                        </p>
+                                        @if($labTest->results)
+                                            <p class="mb-1"><strong>Results:</strong> {{ Str::limit($labTest->results, 100) }}</p>
+                                        @endif
+                                    </div>
+                                    <a href="{{ route('veterinarian.laboratory.show', [$labTest->pet_id, $labTest->id]) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="empty-state">
+                        <div class="empty-icon">🔬</div>
+                        <h3>No lab tests found</h3>
+                        <p>No laboratory tests have been performed for this patient.</p>
                     </div>
                 @endif
             </div>

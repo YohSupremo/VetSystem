@@ -63,7 +63,7 @@
             <div class="col-md-6">{{ $appointment->appointment_date->format('F j, Y') }}</div>
             
             <div class="col-md-6"><strong>Time:</strong></div>
-            <div class="col-md-6">{{ $appointment->start_time->format('g:i A') }} - {{ $appointment->end_time->format('g:i A') }}</div>
+            <div class="col-md-6">{{ $appointment->start_time->format('g:i A') }} - {{ $appointment->end_time ? $appointment->end_time->format('g:i A') : 'TBD' }}</div>
             
             <div class="col-md-6"><strong>Type:</strong></div>
             <div class="col-md-6">{{ ucfirst($appointment->type) }}</div>
@@ -145,7 +145,7 @@
                 <div class="mt-3">
                     <h5 class="mb-2">Quick Actions</h5>
                     <div class="d-flex flex-wrap gap-2">
-                        <a href="{{ route('veterinarian.medical-record.create', $appointment->pet->id) }}" class="btn-action">
+                        <a href="{{ route('veterinarian.medical-records.create', $appointment->pet->id) }}" class="btn-action">
                             <i class="fas fa-file-medical me-2"></i>Add Medical Record
                         </a>
                         <a href="{{ route('veterinarian.prescriptions.create', $appointment->pet->id) }}" class="btn-action">

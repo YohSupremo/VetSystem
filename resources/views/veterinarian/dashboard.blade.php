@@ -45,6 +45,48 @@
     </div>
 </section>
 
+<!-- Medical Stats Cards -->
+<section class="stats-section mb-4">
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="stat-card vaccination">
+                <div class="stat-icon">💉</div>
+                <div class="stat-content">
+                    <h3>{{ $vaccinationStats['total'] }}</h3>
+                    <p>Total Vaccinations</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card vaccination-today">
+                <div class="stat-icon">🏥</div>
+                <div class="stat-content">
+                    <h3>{{ $vaccinationStats['today'] }}</h3>
+                    <p>Today</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card lab-total">
+                <div class="stat-icon">🔬</div>
+                <div class="stat-content">
+                    <h3>{{ $labStats['total'] }}</h3>
+                    <p>Lab Tests</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card lab-pending">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-content">
+                    <h3>{{ $labStats['pending'] }}</h3>
+                    <p>Pending</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <div class="row g-4">
     <!-- Today's Appointments -->
     <section class="col-lg-7">
@@ -152,3 +194,23 @@
 </section>
 @endif
 @endsection
+
+@push('styles')
+<style>
+.stat-card.vaccination {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-card.vaccination-today {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.stat-card.lab-total {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.stat-card.lab-pending {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+</style>
+@endpush

@@ -120,7 +120,10 @@ class VaccinationController extends Controller
             return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
         }
 
-        $vaccination = Vaccination::where('veterinarian_id', $veterinarian->id)
+        $vaccination = Vaccination::where(function($query) use ($veterinarian) {
+            $query->where('veterinarian_id', $veterinarian->id)
+                  ->orWhereNull('veterinarian_id');
+        })
             ->where('pet_id', $petId)
             ->with(['pet', 'pet.owner', 'veterinarian'])
             ->findOrFail($vaccinationId);

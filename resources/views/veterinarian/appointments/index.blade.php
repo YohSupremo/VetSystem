@@ -61,7 +61,7 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a href="#" class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ route('veterinarian.appointments.show', $appointment->id) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i> View
                                     </a>
                                     @if($appointment->status !== 'completed' && $appointment->status !== 'cancelled')

@@ -127,14 +127,38 @@ Route::prefix('veterinarian')->name('veterinarian.')->group(function () {
     });
     Route::get('/dashboard', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'dashboard'])->name('dashboard');
     Route::get('/appointments', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'appointments'])->name('appointments.index');
+    Route::get('/appointments/create', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'createAppointment'])->name('appointments.create');
+    Route::post('/appointments', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'storeAppointment'])->name('appointments.store');
     Route::get('/appointments/{id}', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'showAppointment'])->name('appointments.show');
     Route::post('/appointments/{id}/status', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'updateAppointmentStatus'])->name('appointments.update-status');
+    Route::post('/appointments/{id}/cancel', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'cancelAppointment'])->name('appointments.cancel');
     Route::get('/patients', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'patients'])->name('patients.index');
     Route::get('/patients/{id}', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'showPatient'])->name('patients.show');
+    Route::get('/medical-records', [App\Http\Controllers\Veterinarian\MedicalRecordController::class, 'index'])->name('medical-records.index');
     Route::get('/medical-records/pets/{petId}/create', [App\Http\Controllers\Veterinarian\MedicalRecordController::class, 'create'])->name('medical-records.create');
     Route::post('/medical-records/pets/{petId}', [App\Http\Controllers\Veterinarian\MedicalRecordController::class, 'store'])->name('medical-records.store');
+    Route::get('/medical-records/pets/{petId}/{recordId}', [App\Http\Controllers\Veterinarian\MedicalRecordController::class, 'show'])->name('medical-records.show');
+    Route::get('/medical-records/pets/{petId}/{recordId}/edit', [App\Http\Controllers\Veterinarian\MedicalRecordController::class, 'edit'])->name('medical-records.edit');
+    Route::put('/medical-records/pets/{petId}/{recordId}', [App\Http\Controllers\Veterinarian\MedicalRecordController::class, 'update'])->name('medical-records.update');
+    Route::get('/prescriptions', [App\Http\Controllers\Veterinarian\PrescriptionController::class, 'index'])->name('prescriptions.index');
     Route::get('/prescriptions/pets/{petId}/create', [App\Http\Controllers\Veterinarian\PrescriptionController::class, 'create'])->name('prescriptions.create');
     Route::post('/prescriptions/pets/{petId}', [App\Http\Controllers\Veterinarian\PrescriptionController::class, 'store'])->name('prescriptions.store');
+    Route::get('/prescriptions/pets/{petId}/{prescriptionId}', [App\Http\Controllers\Veterinarian\PrescriptionController::class, 'show'])->name('prescriptions.show');
+    Route::get('/prescriptions/pets/{petId}/{prescriptionId}/edit', [App\Http\Controllers\Veterinarian\PrescriptionController::class, 'edit'])->name('prescriptions.edit');
+    Route::put('/prescriptions/pets/{petId}/{prescriptionId}', [App\Http\Controllers\Veterinarian\PrescriptionController::class, 'update'])->name('prescriptions.update');
+    Route::post('/prescriptions/pets/{petId}/{prescriptionId}/status', [App\Http\Controllers\Veterinarian\PrescriptionController::class, 'updateStatus'])->name('prescriptions.update-status');
+    Route::get('/vaccinations', [App\Http\Controllers\Veterinarian\VaccinationController::class, 'index'])->name('vaccinations.index');
+    Route::get('/vaccinations/pets/{petId}/create', [App\Http\Controllers\Veterinarian\VaccinationController::class, 'create'])->name('vaccinations.create');
+    Route::post('/vaccinations/pets/{petId}', [App\Http\Controllers\Veterinarian\VaccinationController::class, 'store'])->name('vaccinations.store');
+    Route::get('/vaccinations/pets/{petId}/{vaccinationId}', [App\Http\Controllers\Veterinarian\VaccinationController::class, 'show'])->name('vaccinations.show');
+    Route::get('/vaccinations/pets/{petId}/{vaccinationId}/edit', [App\Http\Controllers\Veterinarian\VaccinationController::class, 'edit'])->name('vaccinations.edit');
+    Route::put('/vaccinations/pets/{petId}/{vaccinationId}', [App\Http\Controllers\Veterinarian\VaccinationController::class, 'update'])->name('vaccinations.update');
+    Route::get('/laboratory', [App\Http\Controllers\Veterinarian\LaboratoryController::class, 'index'])->name('laboratory.index');
+    Route::get('/laboratory/pets/{petId}/create', [App\Http\Controllers\Veterinarian\LaboratoryController::class, 'create'])->name('laboratory.create');
+    Route::post('/laboratory/pets/{petId}', [App\Http\Controllers\Veterinarian\LaboratoryController::class, 'store'])->name('laboratory.store');
+    Route::get('/laboratory/pets/{petId}/{testId}', [App\Http\Controllers\Veterinarian\LaboratoryController::class, 'show'])->name('laboratory.show');
+    Route::get('/laboratory/pets/{petId}/{testId}/edit', [App\Http\Controllers\Veterinarian\LaboratoryController::class, 'edit'])->name('laboratory.edit');
+    Route::put('/laboratory/pets/{petId}/{testId}', [App\Http\Controllers\Veterinarian\LaboratoryController::class, 'update'])->name('laboratory.update');
 });
 
 // Admin Routes

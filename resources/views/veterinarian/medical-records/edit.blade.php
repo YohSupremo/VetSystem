@@ -1,21 +1,21 @@
 @extends('veterinarian.layout')
 
-@section('title', 'Create Medical Record - PawCare')
+@section('title', 'Edit Medical Record - PawCare')
 
 @section('content')
 <div class="content-card">
     <div class="section-header">
-        <h2 class="mb-3">Create Medical Record</h2>
+        <h2 class="mb-3">Edit Medical Record</h2>
         <div class="d-flex align-items-center gap-3">
             <div class="text-muted">
-                <strong>Patient:</strong> {{ $pet->name }} ({{ $pet->species }} - {{ $pet->breed }})
+                <strong>Patient:</strong> {{ $medicalRecord->pet->name }} ({{ $medicalRecord->pet->species }})
             </div>
             <div class="text-muted">
-                <strong>Owner:</strong> {{ $pet->owner->first_name }} {{ $pet->owner->last_name }}
+                <strong>Record Date:</strong> {{ $medicalRecord->record_date->format('M d, Y') }}
             </div>
         </div>
-        <a href="{{ route('veterinarian.patients.show', $pet->id) }}" class="btn-action">
-            <i class="fas fa-arrow-left me-2"></i>Back to Patient
+        <a href="{{ route('veterinarian.medical-records.show', [$medicalRecord->pet->id, $medicalRecord->id]) }}" class="btn-action">
+            <i class="fas fa-arrow-left me-2"></i>Back to Record
         </a>
     </div>
 
@@ -35,14 +35,15 @@
         </div>
     @endif
 
-    <form action="{{ route('veterinarian.medical-records.store', $pet->id) }}" method="POST">
+    <form action="{{ route('veterinarian.medical-records.update', [$medicalRecord->pet->id, $medicalRecord->id]) }}" method="POST">
         @csrf
+        @method('PUT')
         <div class="row g-3">
             <div class="col-12">
                 <div class="mb-3">
                     <label for="chief_complaint" class="form-label">Chief Complaint *</label>
                     <textarea name="chief_complaint" id="chief_complaint" class="form-control" rows="2" required
-                              placeholder="Main reason for visit...">{{ old('chief_complaint') }}</textarea>
+                              placeholder="Main reason for visit...">{{ old('chief_complaint', $medicalRecord->chief_complaint) }}</textarea>
                 </div>
             </div>
         </div>
@@ -52,7 +53,7 @@
                 <div class="mb-3">
                     <label for="symptoms" class="form-label">Symptoms *</label>
                     <textarea name="symptoms" id="symptoms" class="form-control" rows="4" required
-                              placeholder="Describe the patient's symptoms...">{{ old('symptoms') }}</textarea>
+                              placeholder="Describe the patient's symptoms...">{{ old('symptoms', $medicalRecord->symptoms) }}</textarea>
                 </div>
             </div>
         </div>
@@ -62,7 +63,7 @@
                 <div class="mb-3">
                     <label for="physical_exam" class="form-label">Physical Examination *</label>
                     <textarea name="physical_exam" id="physical_exam" class="form-control" rows="4" required
-                              placeholder="Findings from physical examination...">{{ old('physical_exam') }}</textarea>
+                              placeholder="Findings from physical examination...">{{ old('physical_exam', $medicalRecord->physical_exam) }}</textarea>
                 </div>
             </div>
         </div>
@@ -72,7 +73,7 @@
                 <div class="mb-3">
                     <label for="diagnosis" class="form-label">Diagnosis *</label>
                     <textarea name="diagnosis" id="diagnosis" class="form-control" rows="3" required
-                              placeholder="Medical diagnosis...">{{ old('diagnosis') }}</textarea>
+                              placeholder="Medical diagnosis...">{{ old('diagnosis', $medicalRecord->diagnosis) }}</textarea>
                 </div>
             </div>
         </div>
@@ -82,7 +83,7 @@
                 <div class="mb-3">
                     <label for="treatment" class="form-label">Treatment Plan *</label>
                     <textarea name="treatment" id="treatment" class="form-control" rows="4" required
-                              placeholder="Treatment and procedures performed...">{{ old('treatment') }}</textarea>
+                              placeholder="Treatment and procedures performed...">{{ old('treatment', $medicalRecord->treatment) }}</textarea>
                 </div>
             </div>
         </div>
@@ -92,7 +93,7 @@
                 <div class="mb-3">
                     <label for="lab_results" class="form-label">Laboratory Results</label>
                     <textarea name="lab_results" id="lab_results" class="form-control" rows="3"
-                              placeholder="Lab test results and findings...">{{ old('lab_results') }}</textarea>
+                              placeholder="Lab test results and findings...">{{ old('lab_results', $medicalRecord->lab_results) }}</textarea>
                 </div>
             </div>
         </div>
@@ -102,7 +103,7 @@
                 <div class="mb-3">
                     <label for="follow_up_instructions" class="form-label">Follow-up Instructions</label>
                     <textarea name="follow_up_instructions" id="follow_up_instructions" class="form-control" rows="3"
-                              placeholder="Instructions for follow-up care...">{{ old('follow_up_instructions') }}</textarea>
+                              placeholder="Instructions for follow-up care...">{{ old('follow_up_instructions', $medicalRecord->follow_up_instructions) }}</textarea>
                 </div>
             </div>
         </div>
@@ -112,16 +113,16 @@
                 <div class="mb-3">
                     <label for="notes" class="form-label">Additional Notes</label>
                     <textarea name="notes" id="notes" class="form-control" rows="3"
-                              placeholder="Any additional notes or observations...">{{ old('notes') }}</textarea>
+                              placeholder="Any additional notes or observations...">{{ old('notes', $medicalRecord->notes) }}</textarea>
                 </div>
             </div>
         </div>
 
         <div class="d-flex gap-2">
             <button type="submit" class="btn-action">
-                <i class="fas fa-save me-2"></i>Save Medical Record
+                <i class="fas fa-save me-2"></i>Update Medical Record
             </button>
-            <a href="{{ route('veterinarian.patients.show', $pet->id) }}" class="btn-secondary">
+            <a href="{{ route('veterinarian.medical-records.show', [$medicalRecord->pet->id, $medicalRecord->id]) }}" class="btn-secondary">
                 <i class="fas fa-times me-2"></i>Cancel
             </a>
         </div>

@@ -43,10 +43,21 @@ class UserController extends Controller
         // Store username in session
         session(['username' => $username]);
         
+        // Redirect based on user role
         if($user->role == 'admin') {
             return redirect('/admin/dashboard');
         } elseif($user->role == 'pet_owner') {
             return redirect('/customer/dashboard');
+        } elseif($user->role == 'veterinarian') {
+            return redirect('/veterinarian/dashboard');
+        } elseif($user->role == 'receptionist') {
+            return redirect('/receptionist/dashboard');
+        } elseif($user->role == 'pharmacist') {
+            return redirect('/pharmacy/dashboard');
+        } elseif($user->role == 'groomer') {
+            return redirect('/grooming/dashboard');
+        } elseif($user->role == 'boarding') {
+            return redirect('/boarding/dashboard');
         } else{
             return redirect('/dashboard');
         }

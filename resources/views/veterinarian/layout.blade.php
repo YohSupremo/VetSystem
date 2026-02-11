@@ -51,17 +51,17 @@
                 <nav class="sidebar-menu">
                     <h3>Main Menu</h3>
                     <ul>
-                        <li><a href="#" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                        <li><a href="#"><i class="fas fa-calendar-check"></i> Appointments</a></li>
-                        <li><a href="#"><i class="fas fa-paw"></i> Patients</a></li>
+                        <li><a href="{{ route('veterinarian.dashboard') }}" class="{{ request()->routeIs('veterinarian.dashboard') ? 'active' : '' }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                        <li><a href="{{ route('veterinarian.appointments.index') }}" class="{{ request()->routeIs('veterinarian.appointments.*') ? 'active' : '' }}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
+                        <li><a href="{{ route('veterinarian.patients.index') }}" class="{{ request()->routeIs('veterinarian.patients.*') ? 'active' : '' }}"><i class="fas fa-paw"></i> Patients</a></li>
                     </ul>
                     
                     <h3>Medical</h3>
                     <ul>
-                        <li><a href="#"><i class="fas fa-file-medical"></i> Medical Records</a></li>
-                        <li><a href="#"><i class="fas fa-prescription-bottle-alt"></i> Prescriptions</a></li>
-                        <li><a href="#"><i class="fas fa-syringe"></i> Vaccinations</a></li>
-                        <li><a href="#"><i class="fas fa-microscope"></i> Laboratory</a></li>
+                        <li><a href="{{ route('veterinarian.medical-records.index') }}" class="{{ request()->routeIs('veterinarian.medical-records.*') ? 'active' : '' }}"><i class="fas fa-file-medical"></i> Medical Records</a></li>
+                        <li><a href="{{ route('veterinarian.prescriptions.index') }}" class="{{ request()->routeIs('veterinarian.prescriptions.*') ? 'active' : '' }}"><i class="fas fa-prescription-bottle-alt"></i> Prescriptions</a></li>
+                        <li><a href="{{ route('veterinarian.vaccinations.index') }}" class="{{ request()->routeIs('veterinarian.vaccinations.*') ? 'active' : '' }}"><i class="fas fa-syringe"></i> Vaccinations</a></li>
+                        <li><a href="{{ route('veterinarian.laboratory.index') }}" class="{{ request()->routeIs('veterinarian.laboratory.*') ? 'active' : '' }}"><i class="fas fa-microscope"></i> Laboratory</a></li>
                     </ul>
                 </nav>
             </aside>

@@ -129,37 +129,62 @@
         <h5 class="mb-3">Actions</h5>
         <div class="d-flex flex-wrap gap-2">
             @if($appointment->status === 'scheduled')
-                <form action="#" method="POST" class="d-inline">
-                    @csrf
-                    <input type="hidden" name="status" value="in_progress">
-                    <button type="submit" class="btn btn-primary">
+                <div class="d-flex gap-2 mb-3">
+                    <a href="#" class="btn-action" onclick="updateAppointmentStatus({{ $appointment->id }}, 'in_progress')">
                         <i class="fas fa-play me-2"></i>Start Consultation
-                    </button>
-                </form>
+                    </a>
+                    <a href="#" class="btn-action" onclick="updateAppointmentStatus({{ $appointment->id }}, 'completed')">
+                        <i class="fas fa-check me-2"></i>Mark Complete
+                    </a>
+                    <a href="#" class="btn-secondary" onclick="cancelAppointment({{ $appointment->id }})">
+                        <i class="fas fa-times me-2"></i>Cancel Appointment
+                    </a>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="mt-3">
+                    <h5 class="mb-2">Quick Actions</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{{ route('veterinarian.medical-record.create', $appointment->pet->id) }}" class="btn-action">
+                            <i class="fas fa-file-medical me-2"></i>Add Medical Record
+                        </a>
+                        <a href="{{ route('veterinarian.prescriptions.create', $appointment->pet->id) }}" class="btn-action">
+                            <i class="fas fa-prescription-bottle-alt me-2"></i>Write Prescription
+                        </a>
+                    </div>
+                </div>
             @endif
-
-            @if($appointment->status === 'in_progress')
-                <form action="#" method="POST" class="d-inline">
-                    @csrf
-                    <input type="hidden" name="status" value="completed">
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-check me-2"></i>Complete Appointment
-                    </button>
-                </form>
-            @endif
-
-            <a href="#" class="btn btn-info">
-                <i class="fas fa-file-medical me-2"></i>Add Medical Record
-            </a>
-
-            <a href="#" class="btn btn-warning">
-                <i class="fas fa-prescription-bottle-alt me-2"></i>Write Prescription
-            </a>
-
-            <a href="#" class="btn btn-secondary">
-                <i class="fas fa-paw me-2"></i>View Patient Profile
-            </a>
         </div>
     </div>
 </div>
+
+<!-- Hidden forms for status updates -->
+<form id="statusForm" method="POST" style="display: none;">
+    @csrf
+    <input type="hidden" name="status" id="status">
+    <input type="hidden" name="notes" id="notes">
+</form>
+
+<form id="cancelForm" method="POST" style="display: none;">
+    @csrf
+</form>
+
+@push('scripts')
+<script>
+function updateAppointmentStatus(appointmentId, status) {
+    if (confirm('Are you sure you want to update this appointment status?')) {
+        document.getElementById('status').value = status;
+        document.getElementById('statusForm').action = '{{ route("veterinarian.appointments.update-status", ":id") }}'.replace(':id', appointmentId);
+        document.getElementById('statusForm').submit();
+    }
+}
+
+function cancelAppointment(appointmentId) {
+    if (confirm('Are you sure you want to cancel this appointment?')) {
+        document.getElementById('cancelForm').action = '{{ route("veterinarian.appointments.cancel", ":id") }}'.replace(':id', appointmentId);
+        document.getElementById('cancelForm').submit();
+    }
+}
+</script>
+@endpush
 @endsection

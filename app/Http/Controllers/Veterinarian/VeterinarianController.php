@@ -14,63 +14,50 @@ class VeterinarianController extends Controller
 {
     public function dashboard()
     {
-        // Mock veterinarian data for now
-        $veterinarian = new User([
-            'id' => 1,
-            'first_name' => 'Sarah',
-            'last_name' => 'Johnson',
-            'specialization' => 'Small Animals'
-        ]);
+        // Get authenticated veterinarian from session
+        $username = session('username');
+        $veterinarian = User::where('username', $username)->first();
         
-        // Get today's appointments
-        $todayAppointments = Appointment::with(['pet', 'pet.owner'])
-            ->where('veterinarian_id', $veterinarian->id)
-            ->whereDate('appointment_date', Carbon::today())
-            ->orderBy('start_time')
+        if (!$veterinarian || !$veterinarian->isVeterinarian()) {
+            return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
+        }
+
+        // Get today's appointments for this veterinarian
+        $todayAppointments = Appointment::where('veterinarian_id', $veterinarian->id)
+            ->whereDate('appointment_date', now()->toDateString())
+            ->with(['pet.owner', 'pet.type'])
+            ->orderBy('start_time', 'asc')
             ->get();
 
-        // Get upcoming appointments
-        $upcomingAppointments = Appointment::with(['pet', 'pet.owner'])
-            ->where('veterinarian_id', $veterinarian->id)
-            ->where('status', 'scheduled')
-            ->whereDate('appointment_date', '>=', Carbon::today())
-            ->orderBy('appointment_date')
-            ->orderBy('start_time')
-            ->take(5)
+        // Get upcoming appointments (next 7 days)
+        $upcomingAppointments = Appointment::where('veterinarian_id', $veterinarian->id)
+            ->whereDate('appointment_date', '>', now()->toDateString())
+            ->whereDate('appointment_date', '<=', now()->addDays(7)->toDateString())
+            ->with(['pet.owner', 'pet.type'])
+            ->orderBy('appointment_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
-        // Get queue statistics
+        // Get queue statistics for today
         $queueStats = [
-            'waiting' => Appointment::where('veterinarian_id', $veterinarian->id)
-                ->where('status', 'scheduled')
-                ->whereDate('appointment_date', Carbon::today())
-                ->count(),
-            'in_progress' => Appointment::where('veterinarian_id', $veterinarian->id)
-                ->where('status', 'in_progress')
-                ->whereDate('appointment_date', Carbon::today())
-                ->count(),
-            'completed' => Appointment::where('veterinarian_id', $veterinarian->id)
-                ->where('status', 'completed')
-                ->whereDate('appointment_date', Carbon::today())
-                ->count(),
+            'waiting' => $todayAppointments->where('status', 'scheduled')->count(),
+            'in_progress' => $todayAppointments->where('status', 'in_progress')->count(),
+            'completed' => $todayAppointments->where('status', 'completed')->count(),
         ];
 
-        // Get recent patients
-        $recentPatients = Pet::with(['owner', 'appointments' => function($query) use ($veterinarian) {
-            $query->where('veterinarian_id', $veterinarian->id)
-                  ->orderBy('created_at', 'desc')
-                  ->limit(1);
-        }])
-        ->whereHas('appointments', function($query) use ($veterinarian) {
+        // Get recent patients (pets this veterinarian has seen)
+        $recentPatients = Pet::whereHas('appointments', function ($query) use ($veterinarian) {
             $query->where('veterinarian_id', $veterinarian->id);
         })
-        ->orderBy('updated_at', 'desc')
-        ->take(5)
+        ->with('owner')
+        ->orderBy('created_at', 'desc')
+        ->limit(10)
         ->get();
 
         return view('veterinarian.dashboard', compact(
+            'veterinarian',
             'todayAppointments',
-            'upcomingAppointments', 
+            'upcomingAppointments',
             'queueStats',
             'recentPatients'
         ));
@@ -78,11 +65,16 @@ class VeterinarianController extends Controller
 
     public function appointments()
     {
-        // Mock veterinarian data
-        $veterinarian = new User(['id' => 1]);
+        // Get authenticated veterinarian from session
+        $username = session('username');
+        $veterinarian = User::where('username', $username)->first();
         
-        $appointments = Appointment::with(['pet', 'pet.owner'])
-            ->where('veterinarian_id', $veterinarian->id)
+        if (!$veterinarian || !$veterinarian->isVeterinarian()) {
+            return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
+        }
+
+        $appointments = Appointment::where('veterinarian_id', $veterinarian->id)
+            ->with(['pet', 'pet.owner'])
             ->orderBy('appointment_date', 'desc')
             ->orderBy('start_time', 'desc')
             ->paginate(10);
@@ -92,11 +84,16 @@ class VeterinarianController extends Controller
 
     public function showAppointment($id)
     {
-        // Mock veterinarian data
-        $veterinarian = new User(['id' => 1]);
+        // Get authenticated veterinarian from session
+        $username = session('username');
+        $veterinarian = User::where('username', $username)->first();
         
-        $appointment = Appointment::with(['pet', 'pet.owner', 'pet.medicalRecords'])
-            ->where('veterinarian_id', $veterinarian->id)
+        if (!$veterinarian || !$veterinarian->isVeterinarian()) {
+            return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
+        }
+
+        $appointment = Appointment::where('veterinarian_id', $veterinarian->id)
+            ->with(['pet', 'pet.owner', 'pet.medicalRecords'])
             ->findOrFail($id);
 
         return view('veterinarian.appointments.show', compact('appointment'));
@@ -104,22 +101,21 @@ class VeterinarianController extends Controller
 
     public function updateAppointmentStatus(Request $request, $id)
     {
-        // Mock veterinarian data
-        $veterinarian = new User(['id' => 1]);
+        // Get authenticated veterinarian from session
+        $username = session('username');
+        $veterinarian = User::where('username', $username)->first();
         
+        if (!$veterinarian || !$veterinarian->isVeterinarian()) {
+            return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
+        }
+
         $appointment = Appointment::where('veterinarian_id', $veterinarian->id)
             ->findOrFail($id);
 
         $request->validate([
             'status' => 'required|in:scheduled,in_progress,completed,cancelled',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string|max:1000'
         ]);
-
-        $appointment->status = $request->status;
-        
-        if ($request->notes) {
-            $appointment->notes = $request->notes;
-        }
 
         // Update timestamps based on status
         if ($request->status === 'in_progress' && !$appointment->start_service_time) {
@@ -128,54 +124,129 @@ class VeterinarianController extends Controller
             $appointment->end_service_time = now();
         }
 
+        $appointment->status = $request->status;
+        
+        if ($request->notes) {
+            $appointment->notes = $request->notes;
+        }
+
         $appointment->save();
 
-        return redirect()->back()->with('success', 'Appointment status updated successfully.');
+        return redirect()->back()->with('success', 'Appointment status updated successfully!');
+    }
+
+    public function createAppointment()
+    {
+        // Get authenticated veterinarian from session
+        $username = session('username');
+        $veterinarian = User::where('username', $username)->first();
+        
+        if (!$veterinarian || !$veterinarian->isVeterinarian()) {
+            return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
+        }
+
+        // Get all pets for dropdown
+        $pets = Pet::with('owner')->get();
+        
+        return view('veterinarian.appointments.create', compact('veterinarian', 'pets'));
+    }
+
+    public function storeAppointment(Request $request)
+    {
+        // Get authenticated veterinarian from session
+        $username = session('username');
+        $veterinarian = User::where('username', $username)->first();
+        
+        if (!$veterinarian || !$veterinarian->isVeterinarian()) {
+            return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
+        }
+
+        $request->validate([
+            'pet_id' => 'required|exists:pets,id',
+            'appointment_date' => 'required|date|after_or_equal:today',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'reason' => 'required|string|max:500',
+            'notes' => 'nullable|string|max:1000'
+        ]);
+
+        $appointment = Appointment::create([
+            'pet_id' => $request->pet_id,
+            'veterinarian_id' => $veterinarian->id,
+            'appointment_date' => $request->appointment_date,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'reason' => $request->reason,
+            'notes' => $request->notes,
+            'status' => 'scheduled'
+        ]);
+
+        return redirect()->route('veterinarian.appointments.index')
+            ->with('success', 'Appointment created successfully!');
     }
 
     public function patients()
     {
-        // Mock veterinarian data
-        $veterinarian = new User(['id' => 1]);
+        // Get authenticated veterinarian from session
+        $username = session('username');
+        $veterinarian = User::where('username', $username)->first();
         
-        $patients = Pet::with(['owner', 'appointments' => function($query) use ($veterinarian) {
-            $query->where('veterinarian_id', $veterinarian->id);
-        }])
-        ->whereHas('appointments', function($query) use ($veterinarian) {
+        if (!$veterinarian || !$veterinarian->isVeterinarian()) {
+            return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
+        }
+
+        $patients = Pet::whereHas('appointments', function($query) use ($veterinarian) {
             $query->where('veterinarian_id', $veterinarian->id);
         })
-        ->orderBy('name')
-        ->paginate(10);
+        ->with('owner')
+        ->orderBy('created_at', 'desc')
+        ->paginate(12);
 
         return view('veterinarian.patients.index', compact('patients'));
     }
 
     public function showPatient($id)
     {
-        // Mock veterinarian data
-        $veterinarian = new User(['id' => 1]);
+        // Get authenticated veterinarian from session
+        $username = session('username');
+        $veterinarian = User::where('username', $username)->first();
         
-        $pet = Pet::with([
-            'owner',
-            'medicalRecords' => function($query) use ($veterinarian) {
-                $query->where('veterinarian_id', $veterinarian->id)
-                      ->orderBy('created_at', 'desc');
-            },
-            'appointments' => function($query) use ($veterinarian) {
-                $query->where('veterinarian_id', $veterinarian->id)
-                      ->orderBy('appointment_date', 'desc');
-            },
-            'vaccinations',
-            'prescriptions' => function($query) use ($veterinarian) {
-                $query->where('veterinarian_id', $veterinarian->id)
-                      ->orderBy('created_at', 'desc');
-            }
-        ])
-        ->whereHas('appointments', function($query) use ($veterinarian) {
+        if (!$veterinarian || !$veterinarian->isVeterinarian()) {
+            return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
+        }
+
+        $patient = Pet::whereHas('appointments', function($query) use ($veterinarian) {
             $query->where('veterinarian_id', $veterinarian->id);
         })
+        ->with(['owner', 'medicalRecords', 'appointments'])
         ->findOrFail($id);
 
-        return view('veterinarian.patients.show', compact('pet'));
+        return view('veterinarian.patients.show', compact('patient'));
+    }
+
+    public function cancelAppointment($id)
+    {
+        // Get authenticated veterinarian from session
+        $username = session('username');
+        $veterinarian = User::where('username', $username)->first();
+        
+        if (!$veterinarian || !$veterinarian->isVeterinarian()) {
+            return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
+        }
+
+        $appointment = Appointment::where('veterinarian_id', $veterinarian->id)
+            ->findOrFail($id);
+
+        // Only allow cancellation of scheduled appointments
+        if ($appointment->status !== 'scheduled') {
+            return redirect()->back()->with('error', 'Only scheduled appointments can be cancelled.');
+        }
+
+        $appointment->status = 'cancelled';
+        $appointment->notes = ($appointment->notes ?? '') . "\n\nCancelled on: " . now()->format('Y-m-d H:i');
+        $appointment->save();
+
+        return redirect()->route('veterinarian.appointments.index')
+            ->with('success', 'Appointment cancelled successfully!');
     }
 }

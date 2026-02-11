@@ -72,13 +72,18 @@ class AppointmentController extends Controller
                     'appointments.start_time',
                     'pets.name as pet_name',
                     DB::raw("COALESCE(pets.species, '') as pet_species"),
-                    DB::raw("TRIM(CONCAT(owners.first_name, ' ', owners.last_name)) as owner_name"),
-                    DB::raw("TRIM(CONCAT(vets.first_name, ' ', vets.last_name)) as veterinarian_name"),
+                    DB::raw("TRIM(owners.first_name || ' ' || owners.last_name) as owner_name"),
+                    DB::raw("TRIM(vets.first_name || ' ' || vets.last_name) as veterinarian_name"),
                 ])
                 ->map(function ($appointment) {
                     $appointment->formatted_date = $appointment->appointment_date
-                        ? Carbon::parse(trim($appointment->appointment_date . ' ' . ($appointment->start_time ?? '00:00:00')))->format('M d, Y g:i A')
+                        ? Carbon::parse($appointment->appointment_date)->format('M d, Y')
                         : 'TBD';
+                    
+                    if ($appointment->formatted_date !== 'TBD' && $appointment->start_time) {
+                        $appointment->formatted_date .= ' ' . Carbon::parse($appointment->start_time)->format('g:i A');
+                    }
+                    
                     $appointment->type_label = $appointment->type
                         ? ucfirst(str_replace('_', ' ', $appointment->type))
                         : 'Unknown';
@@ -295,15 +300,19 @@ class AppointmentController extends Controller
                 'appointments.*',
                 'pets.name as pet_name',
                 DB::raw("COALESCE(pets.species, '') as pet_species"),
-                DB::raw("TRIM(CONCAT(owners.first_name, ' ', owners.last_name)) as owner_name"),
-                DB::raw("TRIM(CONCAT(vets.first_name, ' ', vets.last_name)) as veterinarian_name"),
+                DB::raw("TRIM(owners.first_name || ' ' || owners.last_name) as owner_name"),
+                DB::raw("TRIM(vets.first_name || ' ' || vets.last_name) as veterinarian_name"),
             ]);
 
         abort_if(!$record, 404);
 
         $record->formatted_date = $record->appointment_date
-            ? Carbon::parse(trim($record->appointment_date . ' ' . ($record->start_time ?? '00:00:00')))->format('M d, Y g:i A')
+            ? Carbon::parse($record->appointment_date)->format('M d, Y')
             : 'TBD';
+        
+        if ($record->formatted_date !== 'TBD' && $record->start_time) {
+            $record->formatted_date .= ' ' . Carbon::parse($record->start_time)->format('g:i A');
+        }
         $record->type_label = $record->type
             ? ucfirst(str_replace('_', ' ', $record->type))
             : 'Unknown';

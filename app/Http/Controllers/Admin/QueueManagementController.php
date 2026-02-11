@@ -46,7 +46,7 @@ class QueueManagementController extends Controller
         $veterinarians = DB::table('users')
             ->where('role', 'veterinarian')
             ->orderBy('first_name')
-            ->get(['id', DB::raw("CONCAT(first_name, ' ', last_name) as name")
+            ->get(['id', DB::raw("first_name || ' ' || last_name as name")
             ]);
 
         $stats = $this->appointmentQueueService->getQueueStats();

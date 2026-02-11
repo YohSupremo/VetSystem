@@ -120,6 +120,23 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::post('/orders/{orderId}/cancel', [App\Http\Controllers\Customer\BillingController::class, 'cancelOrder'])->name('billing.cancel-order');
 });
 
+// Veterinarian Routes
+Route::prefix('veterinarian')->name('veterinarian.')->group(function () {
+    Route::get('/test', function() {
+        return view('veterinarian.test');
+    });
+    Route::get('/dashboard', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'dashboard'])->name('dashboard');
+    Route::get('/appointments', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'appointments'])->name('appointments.index');
+    Route::get('/appointments/{id}', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'showAppointment'])->name('appointments.show');
+    Route::post('/appointments/{id}/status', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'updateAppointmentStatus'])->name('appointments.update-status');
+    Route::get('/patients', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'patients'])->name('patients.index');
+    Route::get('/patients/{id}', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'showPatient'])->name('patients.show');
+    Route::get('/medical-records/pets/{petId}/create', [App\Http\Controllers\Veterinarian\MedicalRecordController::class, 'create'])->name('medical-records.create');
+    Route::post('/medical-records/pets/{petId}', [App\Http\Controllers\Veterinarian\MedicalRecordController::class, 'store'])->name('medical-records.store');
+    Route::get('/prescriptions/pets/{petId}/create', [App\Http\Controllers\Veterinarian\PrescriptionController::class, 'create'])->name('prescriptions.create');
+    Route::post('/prescriptions/pets/{petId}', [App\Http\Controllers\Veterinarian\PrescriptionController::class, 'store'])->name('prescriptions.store');
+});
+
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
     // Dashboard

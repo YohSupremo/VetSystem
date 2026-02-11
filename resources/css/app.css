@@ -914,6 +914,498 @@ body.customer-body::before {
     }
 }
 
+/* Veterinarian Dashboard Styles */
+body.veterinarian-body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    position: relative;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+body.veterinarian-body * {
+    box-sizing: border-box;
+}
+
+body.veterinarian-body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 15% 20%, rgba(167, 139, 250, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 85% 40%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 45% 70%, rgba(196, 181, 253, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.veterinarian-body .floating-shapes {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.veterinarian-body .shape {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.15;
+    animation: float 15s infinite ease-in-out;
+}
+
+.veterinarian-body .shape:nth-child(1) {
+    width: 150px;
+    height: 150px;
+    background: var(--secondary-purple);
+    top: 10%;
+    left: 5%;
+    animation-delay: 0s;
+}
+
+.veterinarian-body .shape:nth-child(2) {
+    width: 200px;
+    height: 200px;
+    background: var(--pink);
+    top: 60%;
+    right: 10%;
+    animation-delay: 2s;
+}
+
+.veterinarian-body .shape:nth-child(3) {
+    width: 120px;
+    height: 120px;
+    background: var(--light-purple);
+    bottom: 15%;
+    left: 15%;
+    animation-delay: 4s;
+}
+
+.veterinarian-container {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+}
+
+.veterinarian-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(167, 139, 250, 0.2);
+    padding: 1.5rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-radius: 0 0 2rem 2rem;
+}
+
+.veterinarian-header .logo-section .paw-icon {
+    font-size: 2.5rem;
+    animation: bounce 2s infinite;
+}
+
+.veterinarian-header .logo-section h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.veterinarian-header .welcome-text {
+    color: var(--primary-purple);
+    font-weight: 500;
+    font-size: 1.1rem;
+}
+
+.veterinarian-header .user-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.veterinarian-header .logout-btn {
+    color: var(--primary-purple);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.6rem 1.2rem;
+    border: 2px solid var(--light-purple);
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.veterinarian-header .logout-btn:hover {
+    background: var(--light-purple);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.2);
+    color: var(--primary-purple);
+}
+
+.veterinarian-main {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    gap: 2rem;
+}
+
+.veterinarian-sidebar {
+    width: 280px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 2rem;
+    padding: 2rem;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.1);
+    height: fit-content;
+    position: sticky;
+    top: 100px;
+}
+
+.sidebar-menu h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--light-purple);
+}
+
+.sidebar-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 0.5rem;
+}
+
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--primary-purple);
+    text-decoration: none;
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.sidebar-menu a:hover {
+    background: var(--light-purple);
+    transform: translateX(4px);
+    text-decoration: none;
+    color: var(--primary-purple);
+}
+
+.sidebar-menu a.active {
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    color: white;
+    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3);
+    text-decoration: none;
+}
+
+.sidebar-menu i {
+    width: 20px;
+    text-align: center;
+}
+
+.veterinarian-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.veterinarian-body .stat-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 2rem;
+    padding: 2rem;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.1);
+    height: 100%;
+    min-height: 140px;
+}
+
+.veterinarian-body .stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(147, 51, 234, 0.2);
+}
+
+.veterinarian-body .stat-card .stat-icon {
+    font-size: 3rem;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1.5rem;
+}
+
+.veterinarian-body .stat-card.waiting .stat-icon {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.veterinarian-body .stat-card.progress .stat-icon {
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.veterinarian-body .stat-card.completed .stat-icon {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.veterinarian-body .stat-card.total .stat-icon {
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    box-shadow: 0 8px 20px rgba(147, 51, 234, 0.3);
+}
+
+.veterinarian-body .stat-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.veterinarian-body .stat-content h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-purple);
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.veterinarian-body .stat-content p {
+    color: #6B7280;
+    font-weight: 500;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.veterinarian-body .content-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 2rem;
+    padding: 2rem;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.1);
+    margin-bottom: 2rem;
+}
+
+.veterinarian-body .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.veterinarian-body .section-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.veterinarian-body .appointment-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(167, 139, 250, 0.1);
+    border-radius: 1.5rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(167, 139, 250, 0.1);
+    margin-bottom: 1rem;
+}
+
+.veterinarian-body .appointment-item:hover {
+    background: rgba(167, 139, 250, 0.15);
+    transform: translateY(-2px);
+}
+
+.veterinarian-body .patient-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 1.5rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(167, 139, 250, 0.1);
+    margin-bottom: 1rem;
+}
+
+.veterinarian-body .patient-item:hover {
+    background: rgba(167, 139, 250, 0.1);
+    transform: translateY(-2px);
+}
+
+.veterinarian-body .pet-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--light-purple), var(--secondary-purple));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.veterinarian-body .item-details h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-purple);
+    margin-bottom: 0.5rem;
+}
+
+.veterinarian-body .item-details p {
+    color: #6B7280;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.veterinarian-body .status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.veterinarian-body .status-badge.scheduled {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+}
+
+.veterinarian-body .status-badge.in_progress {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #1e40af;
+}
+
+.veterinarian-body .status-badge.completed {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+}
+
+.veterinarian-body .btn-action {
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    color: white;
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 1rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3);
+    display: inline-block;
+}
+
+.veterinarian-body .btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.4);
+    text-decoration: none;
+    color: white;
+}
+
+.veterinarian-body .btn-secondary {
+    background: transparent;
+    color: var(--primary-purple);
+    border: 2px solid var(--light-purple);
+    padding: 0.75rem 1.5rem;
+    border-radius: 1rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.veterinarian-body .btn-secondary:hover {
+    background: var(--light-purple);
+    text-decoration: none;
+    color: var(--primary-purple);
+    transform: translateY(-2px);
+}
+
+.veterinarian-body .empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 2rem;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.1);
+}
+
+.veterinarian-body .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+}
+
+.veterinarian-body .empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-purple);
+    margin-bottom: 1rem;
+}
+
+.veterinarian-body .empty-state p {
+    color: #6B7280;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+}
+
+@media (max-width: 1024px) {
+    .veterinarian-main {
+        flex-direction: column;
+    }
+    
+    .veterinarian-sidebar {
+        width: 100%;
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .veterinarian-header {
+        padding: 1rem;
+    }
+    
+    .veterinarian-main {
+        padding: 1rem;
+    }
+    
+    .veterinarian-body .stat-card, .veterinarian-body .content-card {
+        padding: 1.5rem;
+    }
+}
+
 @media (max-width: 640px) {
     body.auth-body .auth-card {
         padding: 2rem 1.5rem;
@@ -923,6 +1415,7 @@ body.customer-body::before {
     body.auth-body .logo-section h2 {
         font-size: 1.75rem;
     }
+}
 
 body.landing-body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -1316,5 +1809,4 @@ body.landing-body {
         padding: 0.5rem 1rem;
         font-size: 0.875rem;
     }
-}
 }

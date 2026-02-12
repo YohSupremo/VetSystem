@@ -129,6 +129,7 @@ class PetController extends Controller
         // Handle photo upload
         if ($request->hasFile('photo')) {
             try {
+                \Log::info('Admin Pet update: photo file detected', ['pet_id' => $pet->id]);
                 // Delete old photo if it exists
                 if ($pet->photo_path) {
                     File::delete(public_path($pet->photo_path));
@@ -141,6 +142,7 @@ class PetController extends Controller
                 $filename = $photo->hashName();
                 $photo->move($directory, $filename);
                 $validated['photo_path'] = 'uploads/pets/' . $filename;
+                \Log::info('Admin Pet update: photo moved', ['path' => $validated['photo_path']]);
             } catch (\Exception $e) {
                 // Log error but don't fail the request
                 \Log::error('Pet photo upload failed: ' . $e->getMessage());
@@ -148,7 +150,9 @@ class PetController extends Controller
             }
         }
 
+        \Log::info('Admin Pet update: before update', ['pet_id' => $pet->id, 'photo_path' => $pet->photo_path]);
         $pet->update($validated);
+        \Log::info('Admin Pet update: after update', ['pet_id' => $pet->id, 'photo_path' => $pet->photo_path]);
 
         return redirect()->route('admin.pets.show', $pet)
             ->with('success', 'Pet updated successfully!');

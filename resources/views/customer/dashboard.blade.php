@@ -608,11 +608,7 @@
                             <div class="pet-card">
                                 <div class="pet-info">
                                     <div class="pet-avatar">
-                                        @if($pet->photo_path)
-                                            <img src="{{ asset($pet->photo_path) }}" alt="{{ $pet->name }}">
-                                        @else
-                                            <div class="default-avatar">🐾</div>
-                                        @endif
+                                        <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}">
                                     </div>
                                     <div class="pet-details">
                                         <h3>{{ $pet->name }}</h3>

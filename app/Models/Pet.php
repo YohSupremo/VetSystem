@@ -48,9 +48,11 @@ class Pet extends Model
             $path = ltrim($this->photo_path, '/');
             $publicPath = public_path($path);
             if (file_exists($publicPath)) {
-                return asset($path);
+                $version = $this->updated_at ? $this->updated_at->timestamp : time();
+                return asset($path) . '?v=' . $version;
             }
-            return asset($path);
+            $version = $this->updated_at ? $this->updated_at->timestamp : time();
+            return asset($path) . '?v=' . $version;
         }
         
         // Default fallback - return a placeholder SVG

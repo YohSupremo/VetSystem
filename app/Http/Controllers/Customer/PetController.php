@@ -87,7 +87,9 @@ class PetController extends Controller
         
         // Handle photo upload
         if ($request->hasFile('photo')) {
+            \Log::info('Customer Pet update: photo file detected', ['pet_id' => $pet->id ?? null, 'user_id' => $user->id ?? null]);
             $photo = $request->file('photo');
+            \Log::info('Customer Pet update: uploaded file info', ['originalName' => $photo->getClientOriginalName(), 'size' => $photo->getSize(), 'mime' => $photo->getMimeType()]);
             $filename = Str::random(40) . '.' . $photo->getClientOriginalExtension();
             $directory = public_path('uploads/pets');
             if (!File::exists($directory)) {
@@ -165,8 +167,10 @@ class PetController extends Controller
             $petData['photo_path'] = 'uploads/pets/' . $filename;
         }
         
+        \Log::info('Customer Pet update: before update', ['pet_id' => $pet->id, 'photo_path' => $pet->photo_path]);
         $pet->update($petData);
-        
+        \Log::info('Customer Pet update: after update', ['pet_id' => $pet->id, 'photo_path' => $pet->photo_path]);
+
         return redirect()->route('customer.pets.show', $pet->id)
             ->with('success', 'Pet information updated successfully!');
     }

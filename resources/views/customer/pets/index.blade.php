@@ -224,21 +224,9 @@
             <div class="pets-grid">
                 @foreach($pets as $pet)
                     <div class="pet-card" onclick="window.location='{{ route('customer.pets.show', $pet->id) }}'">
-                        @if($pet->photo_path)
-                            <img src="{{ asset($pet->photo_path) }}" alt="{{ $pet->name }}" class="pet-photo">
-                        @else
-                            <div class="pet-photo d-flex align-items-center justify-content-center">
-                                <span style="font-size: 4rem;">
-                                    @if($pet->species == 'Dog') 🐕
-                                    @elseif($pet->species == 'Cat') 🐈
-                                    @elseif($pet->species == 'Bird') 🦜
-                                    @elseif($pet->species == 'Rabbit') 🐇
-                                    @elseif($pet->species == 'Hamster') 🐹
-                                    @else 🐾
-                                    @endif
-                                </span>
+                            <div class="pet-avatar">
+                                <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" class="pet-photo">
                             </div>
-                        @endif
                         
                         <div class="pet-info">
                             <h3 class="pet-name">{{ $pet->name }}</h3>

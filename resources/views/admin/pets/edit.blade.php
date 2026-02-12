@@ -359,12 +359,15 @@
                 </div>
             </div>
 
-            <label for="photo" class="photo-upload">
+            <div class="photo-upload">
                 <i class="fas fa-cloud-upload-alt"></i>
                 <p>Click to upload or drag and drop</p>
                 <p style="font-size: 11px; margin-top: 5px;">PNG, JPG, GIF up to 2MB</p>
-                <input type="file" name="photo" id="photo" accept="image/*" style="display: none;">
-            </label>
+                <input type="file" name="photo" id="photo" accept="image/*" style="position: absolute; left: -9999px;">
+                <div style="margin-top:8px;">
+                    <button type="button" id="adminChooseFileBtn" class="btn btn-secondary">Choose file</button>
+                </div>
+            </div>
             @if($errors->has('photo'))
                 <div class="error-message">{{ $errors->first('photo') }}</div>
             @endif
@@ -385,17 +388,28 @@
     // Photo upload preview
     const photoUpload = document.querySelector('.photo-upload');
     const photoInput = document.getElementById('photo');
+    const adminChooseBtn = document.getElementById('adminChooseFileBtn');
 
-    photoUpload.addEventListener('click', () => photoInput.click());
-    
+    adminChooseBtn.addEventListener('click', () => photoInput.click());
+
     photoInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
             const file = e.target.files[0];
-            photoUpload.innerHTML = `
-                <i class="fas fa-check" style="color: var(--accent-green);"></i>
-                <p>${file.name}</p>
-                <p style="font-size: 11px; margin-top: 5px;">Ready to upload</p>
-            `;
+            // Update the existing paragraphs instead of replacing innerHTML so the input stays in the DOM
+            const paragraphs = photoUpload.querySelectorAll('p');
+            if (paragraphs.length > 0) {
+                paragraphs[0].textContent = file.name;
+                if (paragraphs.length > 1) {
+                    paragraphs[1].textContent = 'Ready to upload';
+                }
+            }
+            // show a visual OK icon if present
+            const icon = photoUpload.querySelector('i');
+            if (icon) {
+                icon.classList.remove('fa-cloud-upload-alt');
+                icon.classList.add('fa-check');
+                icon.style.color = 'var(--accent-green)';
+            }
         }
     });
 </script>

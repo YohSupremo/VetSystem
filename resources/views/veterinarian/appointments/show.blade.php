@@ -140,14 +140,15 @@
                         <i class="fas fa-times me-2"></i>Cancel Appointment
                     </a>
                 </div>
-
-                <!-- Quick Actions -->
-                <div class="mt-3">
-                    <h5 class="mb-2">Quick Actions</h5>
-                    <div class="d-flex flex-wrap gap-2">
-                        <a href="{{ route('veterinarian.medical-records.create', $appointment->pet->id) }}" class="btn-action">
-                            <i class="fas fa-file-medical me-2"></i>Add Medical Record
-                        </a>
+            @else
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This appointment is currently <strong>{{ ucfirst(str_replace('_', ' ', $appointment->status)) }}</strong>.
+                    @if($appointment->status === 'in_progress')
+                        Consultation is in progress.
+                    @elseif($appointment->status === 'completed')
+                        Consultation has been completed.
+                    @endif
                         <a href="{{ route('veterinarian.prescriptions.create', $appointment->pet->id) }}" class="btn-action">
                             <i class="fas fa-prescription-bottle-alt me-2"></i>Write Prescription
                         </a>

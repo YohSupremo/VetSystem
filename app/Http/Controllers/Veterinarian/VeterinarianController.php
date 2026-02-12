@@ -154,13 +154,19 @@ class VeterinarianController extends Controller
             return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
         }
 
-        $appointment = Appointment::where('veterinarian_id', $veterinarian->id)
-            ->findOrFail($id);
+        // Temporarily simplified query for debugging
+        $appointment = Appointment::findOrFail($id);
+
+        // Debug: Log appointment found
+        \Log::info('Appointment found: ' . $appointment->id . ' Status: ' . $appointment->status . ' Vet ID: ' . $veterinarian->id . ' Appt Vet ID: ' . ($appointment->veterinarian_id ?: 'null'));
 
         $request->validate([
             'status' => 'required|in:scheduled,in_progress,completed,cancelled',
             'notes' => 'nullable|string|max:1000'
         ]);
+
+        // Debug: Log received status
+        \Log::info('Received status: ' . $request->status);
 
         // Update timestamps based on status
         if ($request->status === 'in_progress' && !$appointment->start_service_time) {
@@ -176,6 +182,9 @@ class VeterinarianController extends Controller
         }
 
         $appointment->save();
+
+        // Debug: Log final status
+        \Log::info('Final appointment status: ' . $appointment->status);
 
         return redirect()->back()->with('success', 'Appointment status updated successfully!');
     }

@@ -174,7 +174,7 @@
                             <div class="col-12">
                                 <div class="appointment-item">
                                     <div class="item-details flex-grow-1">
-                                        <h6>{{ $prescription->medication->name }}</h6>
+                                        <h6>{{ $prescription->medication ? $prescription->medication->name : 'Medication Not Found' }}</h6>
                                         <p class="mb-1"><strong>Dosage:</strong> {{ $prescription->dosage }}</p>
                                         <p class="mb-1"><strong>Frequency:</strong> {{ $prescription->frequency }}</p>
                                         <p class="mb-1"><strong>Duration:</strong> {{ $prescription->duration }}</p>

@@ -9,23 +9,21 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::create('vaccinations', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('pet_id')->constrained('pets')->onDelete('cascade');
-            $table->string('vaccine_name');
-            $table->date('vaccination_date');
-            $table->date('next_due_date')->nullable();
-            $table->foreignId('veterinarian_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->string('batch_number')->nullable();
-            $table->enum('route_of_administration', ['intramuscular', 'subcutaneous', 'intranasal', 'oral'])->nullable();
-            $table->string('site_of_injection')->nullable();
-            $table->text('adverse_reactions')->nullable();
-            $table->text('notes')->nullable();
-            $table->timestamps();
-        });
-    }
+    public function up()
+{
+    Schema::create('vaccinations', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('pet_id')->constrained()->onDelete('cascade');
+        $table->foreignId('administered_by')->constrained('users');
+        $table->string('vaccine_name');
+        $table->string('manufacturer')->nullable();
+        $table->string('batch_number')->nullable();
+        $table->date('administered_date');
+        $table->date('expiration_date');
+        $table->text('notes')->nullable();
+        $table->timestamps();
+    });
+}
 
     /**
      * Reverse the migrations.

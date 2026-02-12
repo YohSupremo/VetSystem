@@ -35,6 +35,11 @@ class PrescriptionController extends Controller
 
     public function store(Request $request, $petId)
     {
+        // Debug: Log entry into store method
+        \Log::info('Prescription store method called');
+        \Log::info('Request data: ' . json_encode($request->all()));
+        \Log::info('Pet ID: ' . $petId);
+
         // Get authenticated veterinarian from session
         $username = session('username');
         $veterinarian = User::where('username', $username)->first();
@@ -47,34 +52,73 @@ class PrescriptionController extends Controller
             $query->where('veterinarian_id', $veterinarian->id);
         })->findOrFail($petId);
 
-        $request->validate([
-            'medication_id' => 'required|exists:medications,id',
-            'diagnosis' => 'required|string|max:500',
-            'dosage' => 'required|string|max:100',
-            'frequency' => 'required|string|max:100',
-            'duration' => 'required|string|max:100',
-            'instructions' => 'nullable|string|max:1000',
-            'notes' => 'nullable|string|max:1000'
-        ]);
+        // Debug: Log pet found
+        \Log::info('Pet found: ' . $pet->name);
 
-        Prescription::create([
-            'pet_id' => $petId,
-            'veterinarian_id' => $veterinarian->id,
-            'medication_id' => $request->medication_id,
-            'diagnosis' => $request->diagnosis,
-            'dosage' => $request->dosage,
-            'frequency' => $request->frequency,
-            'duration' => $request->duration,
-            'instructions' => $request->instructions,
-            'notes' => $request->notes,
-            'prescription_date' => now(),
-            'status' => 'active',
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
+        try {
+            $validated = $request->validate([
+                'medication_id' => 'nullable|exists:medications,id',  // Temporarily nullable for testing
+                'diagnosis' => 'required|string|max:500',
+                'dosage' => 'required|string|max:100',
+                'frequency' => 'required|string|max:100',
+                'duration' => 'required|string|max:100',
+                'instructions' => 'nullable|string|max:1000',
+                'notes' => 'nullable|string|max:1000'
+            ]);
+            
+            \Log::info('Validation passed successfully');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation failed: ' . json_encode($e->errors()));
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput();
+        }
 
-        return redirect()->route('veterinarian.patients.show', $petId)
-            ->with('success', 'Prescription created successfully!');
+        // Debug: Log received data
+        \Log::info('Prescription data received: ' . json_encode($request->all()));
+        \Log::info('Validated data: ' . json_encode($validated));
+        \Log::info('Medication ID specifically: ' . $validated['medication_id']);
+
+        try {
+            // Handle medication_id explicitly
+            $medicationId = $validated['medication_id'] ?? null;
+            
+            if (!$medicationId) {
+                \Log::warning('No medication ID provided - using NULL');
+                return redirect()->back()
+                    ->with('error', 'Please select a medication')
+                    ->withInput();
+            }
+
+            $prescription = Prescription::create([
+                'pet_id' => $petId,
+                'veterinarian_id' => $veterinarian->id,
+                'medication_id' => $medicationId,
+                'diagnosis' => $request->diagnosis,
+                'dosage' => $request->dosage,
+                'frequency' => $request->frequency,
+                'duration' => $request->duration,
+                'instructions' => $request->instructions,
+                'notes' => $request->notes,
+                'prescription_date' => now(),
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            \Log::info('Prescription created successfully with ID: ' . $prescription->id);
+            \Log::info('Prescription medication_id: ' . $prescription->medication_id);
+
+            return redirect()->route('veterinarian.patients.show', $petId)
+                ->with('success', 'Prescription created successfully!');
+
+        } catch (\Exception $e) {
+            \Log::error('Prescription creation failed: ' . $e->getMessage());
+            \Log::error('Prescription creation error trace: ' . $e->getTraceAsString());
+            return redirect()->back()
+                ->with('error', 'Failed to create prescription: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     public function show($petId, $prescriptionId)

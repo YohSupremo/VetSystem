@@ -3,50 +3,43 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Notification extends Model
 {
     protected $fillable = [
         'user_id',
+        'type',
         'title',
         'message',
-        'type',
-        'icon',
-        'is_read',
-        'notifiable_type',
-        'notifiable_id',
+        'method',
+        'status',
+        'scheduled_for',
+        'sent_at',
+        'read_at',
+        'reference_type',
+        'reference_id',
+        'error_message',
+        'retry_count',
     ];
 
     protected $casts = [
-        'is_read' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'scheduled_for' => 'datetime',
+        'sent_at' => 'datetime',
+        'read_at' => 'datetime',
     ];
 
-    public function user(): BelongsTo
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function notifiable(): MorphTo
-    {
-        return $this->morphTo();
-    }
-
     public function scopeUnread($query)
     {
-        return $query->where('is_read', false);
+        return $query->where('status', '!=', 'read');
     }
 
     public function scopeForUser($query, $userId)
     {
         return $query->where('user_id', $userId);
-    }
-
-    public function markAsRead()
-    {
-        $this->update(['is_read' => true]);
     }
 }

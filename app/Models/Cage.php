@@ -3,32 +3,27 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+
 class Cage extends Model
 {
     protected $fillable = [
-        'id',
         'cage_code',
         'location',
-        'status'
+        'size',
+        'status',
+        'qr_code_path',
+        'notes',
     ];
 
-    public function assignments(): HasMany {
+    public function assignments()
+    {
         return $this->hasMany(CageAssignment::class);
     }
 
-    public function currentAssignment(): HasOne {
+    public function currentAssignment()
+    {
         return $this->hasOne(CageAssignment::class)
-        ->whereDate('start_date', '<=', now())
-        ->whereDate('end_date', '>=', now());
-    }
-
-    public function currentPet() {
-        return $this->currentAssignment ? $this->currentAssignment->pet : null;
-    }
-
-    public function available(): bool{
-        return $this->status === 'available' && is_null($this->currentAssignment);
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now());
     }
 }

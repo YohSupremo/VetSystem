@@ -47,8 +47,8 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Vaccination Date <span class="text-danger">*</span></label>
-                        <input type="date" name="vaccination_date" class="form-control" value="{{ old('vaccination_date', date('Y-m-d')) }}" required>
-                        @error('vaccination_date')<span class="text-danger">{{ $message }}</span>@enderror
+                        <input type="date" name="administered_date" class="form-control" value="{{ old('administered_date', date('Y-m-d')) }}" required>
+                        @error('administered_date')<span class="text-danger">{{ $message }}</span>@enderror
                     </div>
                     <div class="form-group">
                         <label>Veterinarian</label>

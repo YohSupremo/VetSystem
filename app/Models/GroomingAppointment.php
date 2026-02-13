@@ -13,6 +13,7 @@ class GroomingAppointment extends Model
         'groomer_id',
         'special_instructions',
         'status',
+        'actual_duration_minutes',
     ];
 
     /**

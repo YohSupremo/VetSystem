@@ -16,12 +16,15 @@ class LabRequisition extends Model
         'sample_collection_date',
         'status',
         'results',
+        'result_date',
         'notes',
+        'result_notification_sent',
     ];
 
     protected $casts = [
         'requested_date' => 'datetime',
         'sample_collection_date' => 'datetime',
+        'result_date' => 'datetime',
         'sample_collected' => 'boolean',
     ];
 

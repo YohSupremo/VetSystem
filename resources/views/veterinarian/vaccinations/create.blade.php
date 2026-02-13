@@ -98,11 +98,11 @@
 
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="vaccination_date" class="form-label">Vaccination Date *</label>
-                            <input type="date" class="form-control @error('vaccination_date') is-invalid @enderror" 
-                                   id="vaccination_date" name="vaccination_date" 
-                                   value="{{ old('vaccination_date', now()->format('Y-m-d')) }}" required>
-                            @error('vaccination_date')
+                            <label for="administered_date" class="form-label">Vaccination Date *</label>
+                            <input type="date" class="form-control @error('administered_date') is-invalid @enderror" 
+                                   id="administered_date" name="administered_date" 
+                                   value="{{ old('administered_date', now()->format('Y-m-d')) }}" required>
+                            @error('administered_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

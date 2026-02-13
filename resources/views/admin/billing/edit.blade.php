@@ -158,7 +158,7 @@
                             <td><input type="text" name="items[{{ $index }}][description]" class="form-control" value="{{ $item->description }}" required></td>
                             <td><input type="number" name="items[{{ $index }}][quantity]" class="form-control" min="1" value="{{ $item->quantity }}" required></td>
                             <td><input type="number" name="items[{{ $index }}][unit_price]" class="form-control" min="0" step="0.01" value="{{ $item->unit_price }}" required></td>
-                            <td class="text-muted">{{ number_format($item->total_price, 2) }}</td>
+                            <td class="text-muted">{{ number_format($item->total, 2) }}</td>
                             <td><button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="fas fa-trash"></i></button></td>
                         </tr>
                     @endforeach

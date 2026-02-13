@@ -3,33 +3,56 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\User;
+use App\Models\Pet;
 
 class PetOwner extends Model
 {
     protected $fillable = [
         'user_id',
         'notes',
+        'preferred_contact_method',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'emergency_contact_relationship',
     ];
 
-    public function user(): BelongsTo
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    // always eager load user for convenience
+    protected $with = ['user'];
+
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function emergencyContacts(): HasMany
-    {
-        return $this->hasMany(OwnerEmergencyContact::class, 'owner_id');
-    }
-
-    public function pets(): HasMany
+    public function pets()
     {
         return $this->hasMany(Pet::class, 'owner_id');
     }
 
+
     public function getFullNameAttribute()
     {
-        return $this->user->first_name . ' ' . $this->user->last_name;
+        return $this->user ? trim($this->user->first_name . ' ' . $this->user->last_name) : '';
+    }
+
+    public function getNameAttribute()
+    {
+        return $this->full_name;
+    }
+
+    public function getFirstNameAttribute()
+    {
+        return $this->user?->first_name;
+    }
+
+    public function getLastNameAttribute()
+    {
+        return $this->user?->last_name;
     }
 }

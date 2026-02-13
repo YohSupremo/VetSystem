@@ -357,22 +357,7 @@
                         @enderror
                     </div>
 
-                    <!-- Microchip Number -->
-                    <div class="col-md-6">
-                        <label class="form-label" for="microchip_number">Microchip Number</label>
-                        <input
-                            id="microchip_number"
-                            type="text"
-                            name="microchip_number"
-                            class="form-control @error('microchip_number') is-invalid @enderror"
-                            placeholder="Enter microchip number"
-                            value="{{ old('microchip_number') }}"
-                        >
-                        @error('microchip_number')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
-                    </div>
-
+                
                     <!-- Photo Upload -->
                     <div class="col-12">
                         <label class="form-label">Pet Photo</label>

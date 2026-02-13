@@ -37,6 +37,22 @@
         gap: 0.5rem;
         color: #fff;
         text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(78, 115, 223, 0.3);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: #fff;
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        color: #fff;
     }
 
     .card {
@@ -49,74 +65,202 @@
     .data-table {
         width: 100%;
         border-collapse: separate;
-        border-spacing: 0 6px;
+        border-spacing: 0;
     }
 
     .data-table thead th {
-        padding: 0.75rem 1rem;
-        font-size: 0.8rem;
+        background: #f8f9fa;
+        padding: 1rem 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.04em;
-        color: #6c757d;
-        border-bottom: 1px solid #e9ecef;
+        color: #495057;
+        border-bottom: 2px solid #e9ecef;
         text-align: left;
     }
 
     .data-table tbody tr {
-        background: #f9fafb;
+        transition: background-color 0.2s ease;
+    }
+
+    .data-table tbody tr:hover {
+        background-color: #f8f9fa;
     }
 
     .data-table tbody td {
-        padding: 0.75rem 1rem;
+        padding: 1rem 0.75rem;
         vertical-align: middle;
+        border-bottom: 1px solid #e9ecef;
     }
 
-    .badge {
-        padding: 4px 10px;
-        border-radius: 999px;
+    .medication-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .medication-image {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 2px solid #e9ecef;
+    }
+
+    .medication-details {
+        flex: 1;
+    }
+
+    .medication-name {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .medication-meta {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .stock-info {
+        text-align: center;
+        min-width: 80px;
+    }
+
+    .stock-quantity {
+        font-weight: 700;
+        font-size: 1.1rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+    }
+
+    .stock-normal {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .stock-low {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .stock-out {
+        background: #f5c6cb;
+        color: #856404;
+    }
+
+    .price {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .expiry-info {
+        text-align: center;
+        min-width: 100px;
+    }
+
+    .expiry-normal {
+        color: #28a745;
+        font-weight: 500;
+    }
+
+    .expiry-warning {
+        color: #ffc107;
+        font-weight: 600;
+    }
+
+    .expiry-expired {
+        color: #dc3545;
+        font-weight: 700;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
         font-size: 0.75rem;
         font-weight: 600;
-        background: #e3f2fd;
-        color: #1565c0;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .status-ok {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-low {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-expired {
+        background: #f8d7da;
+        color: #721c24;
     }
 
     .actions {
         display: flex;
-        gap: 6px;
+        gap: 0.5rem;
+        justify-content: center;
     }
 
     .btn-icon {
         background: none;
         border: none;
         cursor: pointer;
-        padding: 5px;
-        border-radius: 4px;
-        color: var(--light-text);
+        padding: 0.5rem;
+        border-radius: 6px;
+        color: #6c757d;
+        transition: all 0.2s ease;
     }
 
     .btn-icon:hover {
-        background: var(--paw-medium);
-        color: var(--primary-orange);
+        background: #e9ecef;
+        color: #495057;
     }
 
-    .btn-icon.text-danger:hover {
-        color: #c82333;
+    .btn-icon.edit:hover {
+        background: #007bff;
+        color: #fff;
+    }
+
+    .btn-icon.delete:hover {
+        background: #dc3545;
+        color: #fff;
+    }
+
+    .alert-badge {
+        background: #dc3545;
+        color: #fff;
+        border-radius: 50%;
+        min-width: 20px;
+        height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin-left: 0.5rem;
     }
 </style>
 @endpush
 
 @section('content')
 <div class="card">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 style="font-size: 1.2rem; font-weight: 600;">Medication Inventory</h3>
+    <div class="content-header">
+        <div class="header-title">
+            <h1><i class="fas fa-capsules me-2"></i>Pharmacy Management</h1>
+            <p class="mb-0">Manage clinic medications and inventory</p>
+        </div>
         <div>
             <a href="{{ route('admin.pharmacy.dispense') }}" class="btn btn-success me-2">
                 <i class="fas fa-pills"></i> Dispense Medication
             </a>
             <a href="{{ route('admin.pharmacy.alerts') }}" class="btn btn-warning me-2">
-                <i class="fas fa-exclamation-triangle"></i> Alerts
+                <i class="fas fa-exclamation-triangle"></i> Inventory Alerts
                 @if($lowStockCount > 0 || $expiredCount > 0)
-                    <span class="badge bg-danger ms-1">{{ $lowStockCount + $expiredCount }}</span>
+                    <span class="alert-badge">{{ $lowStockCount + $expiredCount }}</span>
                 @endif
             </a>
             <a href="{{ route('admin.pharmacy.create') }}" class="btn btn-primary">
@@ -125,11 +269,20 @@
         </div>
     </div>
 
-    <div class="table-responsive">
+  
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    <div class="table-responsive mt-4">
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Name</th>
+                    <th>Medication</th>
                     <th>Stock</th>
                     <th>Min Stock</th>
                     <th>Price</th>
@@ -140,51 +293,80 @@
             </thead>
             <tbody>
                 @forelse($medications as $medication)
+                    @php
+                        $totalStock = $medication->inventoryStocks->sum('quantity');
+                        $minStock = $medication->inventoryStocks->max('min_stock') ?? 10;
+                        $earliestExpiry = $medication->inventoryStocks
+                            ->whereNotNull('expiry_date')
+                            ->min('expiry_date');
+                        
+                        $isLowStock = $totalStock <= $minStock;
+                        $isExpired = $medication->isExpired();
+                        $isExpiringSoon = $medication->isExpiringSoon();
+                    @endphp
+                    
                     <tr>
                         <td>
-                            <strong>{{ $medication->name }}</strong>
-                            @if($medication->strength)
-                                <br><small class="text-muted">{{ $medication->strength }}</small>
+                            <div class="medication-info">
+                                @if($medication->image_path)
+                                    <img src="{{ asset($medication->image_path) }}" alt="{{ $medication->name }}" class="medication-image">
+                                @else
+                                    <div class="medication-image d-flex align-items-center justify-content-center bg-light">
+                                        <i class="fas fa-capsules text-muted"></i>
+                                    </div>
+                                @endif
+                                <div class="medication-details">
+                                    <div class="medication-name">{{ $medication->name }}</div>
+                                    <div class="medication-meta">{{ $medication->sku ?? 'No SKU' }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="stock-info">
+                            @if($totalStock == 0)
+                                <span class="stock-quantity stock-out">0</span>
+                            @elseif($isLowStock)
+                                <span class="stock-quantity stock-low">{{ $totalStock }}</span>
+                            @else
+                                <span class="stock-quantity stock-normal">{{ $totalStock }}</span>
                             @endif
                         </td>
-                        <td>
-                            <span class="badge {{ $medication->quantity <= $medication->min_stock ? 'bg-danger' : 'bg-success' }}">
-                                {{ $medication->quantity }}
-                            </span>
-                        </td>
-                        <td>{{ $medication->min_stock }}</td>
-                        <td>${{ number_format($medication->unit_price, 2) }}</td>
-                        <td>
-                            @if($medication->expiry_date)
-                                <span class="badge {{ $medication->isExpired() ? 'bg-danger' : ($medication->isExpiringSoon() ? 'bg-warning' : 'bg-info') }}">
-                                    {{ $medication->expiry_date->format('M d, Y') }}
-                                </span>
+                        <td class="text-center">{{ $minStock }}</td>
+                        <td class="price">${{ number_format($medication->unit_price, 2) }}</td>
+                        <td class="expiry-info">
+                            @if($earliestExpiry)
+                                @if($isExpired)
+                                    <span class="expiry-expired">{{ $earliestExpiry->format('M d, Y') }}</span>
+                                @elseif($isExpiringSoon)
+                                    <span class="expiry-warning">{{ $earliestExpiry->format('M d, Y') }}</span>
+                                @else
+                                    <span class="expiry-normal">{{ $earliestExpiry->format('M d, Y') }}</span>
+                                @endif
                             @else
                                 <span class="text-muted">—</span>
                             @endif
                         </td>
-                        <td>
-                            @if($medication->isExpired())
-                                <span class="badge bg-danger">Expired</span>
-                            @elseif($medication->isExpiringSoon())
-                                <span class="badge bg-warning">Expiring Soon</span>
-                            @elseif($medication->isLowStock())
-                                <span class="badge bg-warning">Low Stock</span>
+                        <td class="text-center">
+                            @if($isExpired)
+                                <span class="status-badge status-expired">Expired</span>
+                            @elseif($isExpiringSoon)
+                                <span class="status-badge status-low">Expiring Soon</span>
+                            @elseif($isLowStock)
+                                <span class="status-badge status-low">Low Stock</span>
                             @else
-                                <span class="badge bg-success">OK</span>
+                                <span class="status-badge status-ok">OK</span>
                             @endif
                         </td>
                         <td class="actions">
-                            <a href="{{ route('admin.pharmacy.show', $medication->id) }}" class="btn-icon" title="View">
+                            <a href="{{ route('admin.pharmacy.show', $medication->id) }}" class="btn-icon" title="View Details">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ route('admin.pharmacy.edit', $medication->id) }}" class="btn-icon" title="Edit">
+                            <a href="{{ route('admin.pharmacy.edit', $medication->id) }}" class="btn-icon edit" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <form method="POST" action="{{ route('admin.pharmacy.destroy', $medication->id) }}" class="delete-form">
+                            <form method="POST" action="{{ route('admin.pharmacy.destroy', $medication->id) }}" onsubmit="return confirm('Are you sure you want to delete this medication?')">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn-icon text-danger" title="Delete">
+                                <button type="submit" class="btn-icon delete" title="Delete">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -192,13 +374,18 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center">No medications found.</td>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <div class="h5 mb-0">No medications found</div>
+                            <p class="text-muted">Get started by adding your first medication to the inventory.</p>
+                        </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 </div>
+@endsection
 
 @push('scripts')
 <script>
@@ -215,4 +402,3 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
-@endsection

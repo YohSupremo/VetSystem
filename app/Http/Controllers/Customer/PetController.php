@@ -20,7 +20,7 @@ class PetController extends Controller
         }
         
         $user = User::where('username', $username)->first();
-        if (!$user || $user->role !== 'pet_owner') {
+        if (!$user || ($user->role !== 'pet_owner' && $user->role !== 'registered_user')) {
             return redirect('/login')->with('error', 'Access denied');
         }
         
@@ -71,7 +71,7 @@ class PetController extends Controller
         }
 
         $request->validate([
-            'microchip_number' => 'nullable|string|max:255|unique:pets,microchip_number',
+            'registration_number' => 'nullable|string|max:255|unique:pets,registration_number',
         ]);
         
         $petOwner = PetOwner::where('user_id', $user->id)->first();
@@ -100,6 +100,9 @@ class PetController extends Controller
         }
         
         $pet = Pet::create($petData);
+        
+        // Automatically change user role to pet_owner since they now have pets
+        $user->update(['role' => 'pet_owner']);
         
         return redirect()->route('customer.pets.index')
             ->with('success', 'Pet registered successfully!');

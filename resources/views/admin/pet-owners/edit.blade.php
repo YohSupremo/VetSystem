@@ -76,26 +76,15 @@
         font-family: 'Fredoka', sans-serif;
     }
 
-    .emergency-contacts {
+    .form-row {
+        display: flex;
+        gap: 20px;
         margin-bottom: 20px;
     }
 
-    .contact-item {
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        border-left: 4px solid var(--primary-orange);
-    }
-
-    .btn-add-contact {
-        background: var(--primary-orange);
-        color: white;
-        margin-top: 10px;
-    }
-
-    .btn-add-contact:hover {
-        background: var(--accent-pink);
+    .form-row .form-group {
+        flex: 1;
+        margin-bottom: 0;
     }
 
     .form-actions {
@@ -147,88 +136,86 @@
         @csrf
         @method('PUT')
 
-        <!-- User Information -->
+        <!-- User Selection -->
         <div class="form-section">
-            <h3><i class="fas fa-user"></i> Owner Information</h3>
-
-            <div class="form-group {{ $errors->has('first_name') ? 'error' : '' }}">
-                <label for="first_name">First Name <span style="color: var(--accent-pink);">*</span></label>
-                <input type="text" name="first_name" id="first_name" 
-                       value="{{ old('first_name', $petOwner->user->first_name) }}" required>
-                @if($errors->has('first_name'))
-                    <div class="error-message">{{ $errors->first('first_name') }}</div>
-                @endif
-            </div>
-
-            <div class="form-group {{ $errors->has('last_name') ? 'error' : '' }}">
-                <label for="last_name">Last Name <span style="color: var(--accent-pink);">*</span></label>
-                <input type="text" name="last_name" id="last_name" 
-                       value="{{ old('last_name', $petOwner->user->last_name) }}" required>
-                @if($errors->has('last_name'))
-                    <div class="error-message">{{ $errors->first('last_name') }}</div>
-                @endif
-            </div>
-
-            <div class="form-group {{ $errors->has('email') ? 'error' : '' }}">
-                <label for="email">Email <span style="color: var(--accent-pink);">*</span></label>
-                <input type="email" name="email" id="email" 
-                       value="{{ old('email', $petOwner->user->email) }}" required>
-                @if($errors->has('email'))
-                    <div class="error-message">{{ $errors->first('email') }}</div>
-                @endif
-            </div>
-
-            <div class="form-group {{ $errors->has('contact_number') ? 'error' : '' }}">
-                <label for="contact_number">Contact Number <span style="color: var(--accent-pink);">*</span></label>
-                <input type="text" name="contact_number" id="contact_number" 
-                       value="{{ old('contact_number', $petOwner->user->contact_number) }}" required>
-                @if($errors->has('contact_number'))
-                    <div class="error-message">{{ $errors->first('contact_number') }}</div>
-                @endif
-            </div>
-
-            <div class="form-group {{ $errors->has('address') ? 'error' : '' }}">
-                <label for="address">Address <span style="color: var(--accent-pink);">*</span></label>
-                <textarea name="address" id="address" required>{{ old('address', $petOwner->user->address) }}</textarea>
-                @if($errors->has('address'))
-                    <div class="error-message">{{ $errors->first('address') }}</div>
+            <h3><i class="fas fa-user"></i> User Assignment</h3>
+            
+            <div class="form-group {{ $errors->has('user_id') ? 'error' : '' }}">
+                <label for="user_id">Select User <span style="color: var(--accent-pink);">*</span></label>
+                <select name="user_id" id="user_id" required>
+                    <option value="">-- Select a user --</option>
+                    @foreach($allUsers ?? [] as $user)
+                        <option value="{{ $user->id }}" {{ $petOwner->user_id == $user->id ? 'selected' : '' }}>
+                            {{ $user->first_name }} {{ $user->last_name }} ({{ $user->email }})
+                        </option>
+                    @endforeach
+                </select>
+                @if($errors->has('user_id'))
+                    <div class="error-message">{{ $errors->first('user_id') }}</div>
                 @endif
             </div>
         </div>
 
-        <!-- Notes -->
-        <div class="form-group {{ $errors->has('notes') ? 'error' : '' }}">
-            <label for="notes">Notes</label>
-            <textarea name="notes" id="notes" placeholder="Add any additional notes about this pet owner...">{{ old('notes', $petOwner->notes) }}</textarea>
-            @if($errors->has('notes'))
-                <div class="error-message">{{ $errors->first('notes') }}</div>
-            @endif
+        <!-- Pet Owner Information -->
+        <div class="form-section">
+            <h3><i class="fas fa-info-circle"></i> Pet Owner Information</h3>
+            
+            <div class="form-group {{ $errors->has('preferred_contact_method') ? 'error' : '' }}">
+                <label for="preferred_contact_method">Preferred Contact Method</label>
+                <select name="preferred_contact_method" id="preferred_contact_method">
+                    <option value="">-- Select preference --</option>
+                    <option value="email" {{ $petOwner->preferred_contact_method === 'email' ? 'selected' : '' }}>Email</option>
+                    <option value="sms" {{ $petOwner->preferred_contact_method === 'sms' ? 'selected' : '' }}>SMS</option>
+                </select>
+                @if($errors->has('preferred_contact_method'))
+                    <div class="error-message">{{ $errors->first('preferred_contact_method') }}</div>
+                @endif
+            </div>
+
+            <div class="form-group {{ $errors->has('notes') ? 'error' : '' }}">
+                <label for="notes">Notes</label>
+                <textarea name="notes" id="notes" placeholder="Add any additional notes about this pet owner...">{{ old('notes', $petOwner->notes) }}</textarea>
+                @if($errors->has('notes'))
+                    <div class="error-message">{{ $errors->first('notes') }}</div>
+                @endif
+            </div>
         </div>
 
         <!-- Emergency Contacts -->
         <div class="form-section">
             <h3><i class="fas fa-phone-alt"></i> Emergency Contacts</h3>
             
-            <div class="emergency-contacts" id="emergencyContactsContainer">
-                @foreach($petOwner->emergencyContacts as $index => $contact)
-                    <div class="contact-item" id="contact-{{ $index }}">
-                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <input type="text" name="emergency_contacts[{{ $index }}][contact_name]" 
-                                   value="{{ $contact->contact_name }}" placeholder="Contact Name" required>
-                            <input type="text" name="emergency_contacts[{{ $index }}][contact_number]" 
-                                   value="{{ $contact->contact_number }}" placeholder="Phone Number" required>
-                            <button type="button" onclick="removeEmergencyContact({{ $index }})" 
-                                    class="btn btn-secondary" style="padding: 8px 12px;">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                @endforeach
+            <div class="form-group {{ $errors->has('emergency_contact_name') ? 'error' : '' }}">
+                <label for="emergency_contact_name">Emergency Contact Name</label>
+                <input type="text" id="emergency_contact_name" name="emergency_contact_name" 
+                       value="{{ old('emergency_contact_name', $petOwner->emergency_contact_name) }}" 
+                       placeholder="Emergency contact name">
+                @if($errors->has('emergency_contact_name'))
+                    <div class="error-message">{{ $errors->first('emergency_contact_name') }}</div>
+                @endif
             </div>
-            
-            <button type="button" class="btn btn-add-contact" onclick="addEmergencyContact()">
-                <i class="fas fa-plus"></i> Add Emergency Contact
-            </button>
+
+            <div class="form-row">
+                <div class="form-group {{ $errors->has('emergency_contact_phone') ? 'error' : '' }}">
+                    <label for="emergency_contact_phone">Emergency Contact Phone</label>
+                    <input type="text" id="emergency_contact_phone" name="emergency_contact_phone" 
+                           value="{{ old('emergency_contact_phone', $petOwner->emergency_contact_phone) }}" 
+                           placeholder="Emergency contact phone number">
+                    @if($errors->has('emergency_contact_phone'))
+                        <div class="error-message">{{ $errors->first('emergency_contact_phone') }}</div>
+                    @endif
+                </div>
+                
+                <div class="form-group {{ $errors->has('emergency_contact_relationship') ? 'error' : '' }}">
+                    <label for="emergency_contact_relationship">Relationship</label>
+                    <input type="text" id="emergency_contact_relationship" name="emergency_contact_relationship" 
+                           value="{{ old('emergency_contact_relationship', $petOwner->emergency_contact_relationship) }}" 
+                           placeholder="e.g., Spouse, Parent, Friend">
+                    @if($errors->has('emergency_contact_relationship'))
+                        <div class="error-message">{{ $errors->first('emergency_contact_relationship') }}</div>
+                    @endif
+                </div>
+            </div>
         </div>
 
         <div class="form-actions">
@@ -242,36 +229,4 @@
     </form>
 </div>
 
-<script>
-    let contactCount = {{ $petOwner->emergencyContacts->count() }};
-
-    function addEmergencyContact() {
-        const container = document.getElementById('emergencyContactsContainer');
-        const contactId = contactCount++;
-        
-        const html = `
-            <div class="contact-item" id="contact-${contactId}">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <input type="text" name="emergency_contacts[${contactId}][contact_name]" 
-                           placeholder="Contact Name" required>
-                    <input type="text" name="emergency_contacts[${contactId}][contact_number]" 
-                           placeholder="Phone Number" required>
-                    <button type="button" onclick="removeEmergencyContact(${contactId})" 
-                            class="btn btn-secondary" style="padding: 8px 12px;">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        container.insertAdjacentHTML('beforeend', html);
-    }
-
-    function removeEmergencyContact(contactId) {
-        const element = document.getElementById(`contact-${contactId}`);
-        if (element) {
-            element.remove();
-        }
-    }
-</script>
 @endsection

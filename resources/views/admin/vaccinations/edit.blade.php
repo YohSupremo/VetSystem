@@ -39,8 +39,8 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Vaccination Date <span class="text-danger">*</span></label>
-                        <input type="date" name="vaccination_date" class="form-control" value="{{ $vaccination->vaccination_date ? $vaccination->vaccination_date->format('Y-m-d') : '' }}" required>
-                        @error('vaccination_date')<span class="text-danger">{{ $message }}</span>@enderror
+                        <input type="date" name="administered_date" class="form-control" value="{{ $vaccination->administered_date ? $vaccination->administered_date->format('Y-m-d') : '' }}" required>
+                        @error('administered_date')<span class="text-danger">{{ $message }}</span>@enderror
                     </div>
                     <div class="form-group">
                         <label>Next Due Date</label>

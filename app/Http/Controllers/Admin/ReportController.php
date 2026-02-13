@@ -9,13 +9,11 @@ use App\Models\Appointment;
 use App\Models\Pet;
 use App\Models\PetOwner;
 use App\Models\InventoryItem;
-use App\Models\MedicationDispensing;
 use App\Models\MedicalRecord;
 use App\Models\Prescription;
-use App\Models\Vaccination;
+use App\Models\PetVaccination;
 use App\Models\Surgery;
 use App\Models\GroomingAppointment;
-use App\Models\Report;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -168,39 +166,38 @@ class ReportController extends BaseController
         $endDate = $request->input('end_date', now()->toDateString());
         $reportType = $request->input('report_type', 'summary');
         
-        $query = BillingInvoice::whereBetween('invoice_date', [$startDate, $endDate]);
-        
-        // Summary data
-        $totalInvoices = $query->count();
-        $totalRevenue = $query->sum('total_amount');
-        $paidAmount = $query->sum('paid_amount');
-        $outstandingAmount = $totalRevenue - $paidAmount;
-        
-        // Revenue by month
-        $revenueByMonth = BillingInvoice::selectRaw('DATE_FORMAT(invoice_date, "%Y-%m") as month, SUM(total_amount) as revenue')
-            ->whereBetween('invoice_date', [$startDate, $endDate])
-            ->groupBy('month')
-            ->orderBy('month')
+        $invoices = BillingInvoice::with(['invoiceItems', 'payments'])
+            ->whereBetween('issue_date', [$startDate, $endDate])
             ->get();
-        
-        // Top services
-        $topServices = DB::table('billing_invoice_items')
-            ->select('item_type', DB::raw('COUNT(*) as count, SUM(total_price) as total'))
-            ->join('billing_invoices', 'billing_invoice_items.invoice_id', '=', 'billing_invoices.id')
-            ->whereBetween('billing_invoices.invoice_date', [$startDate, $endDate])
+        $totalInvoices = $invoices->count();
+        $totalRevenue = $invoices->sum('total_amount');
+        $paidAmount = $invoices->sum('paid_amount');
+        $outstandingAmount = $totalRevenue - $paidAmount;
+
+        $revenueByMonth = BillingInvoice::with('invoiceItems')
+            ->whereBetween('issue_date', [$startDate, $endDate])
+            ->get()
+            ->groupBy(function ($inv) { return $inv->issue_date->format('Y-m'); })
+            ->map(function ($group) {
+                return (object)['month' => $group->first()->issue_date->format('Y-m'), 'revenue' => $group->sum('total_amount')];
+            })->values();
+
+        $topServices = DB::table('invoice_items')
+            ->select('item_type', DB::raw('COUNT(*) as count, SUM(quantity * unit_price) as total'))
+            ->join('invoices', 'invoice_items.invoice_id', '=', 'invoices.id')
+            ->whereBetween('invoices.issue_date', [$startDate, $endDate])
             ->groupBy('item_type')
-            ->orderBy('total', 'desc')
+            ->orderByDesc('total')
             ->limit(10)
             ->get();
-        
-        // Payment methods
-        $paymentMethods = BillingPayment::select('payment_method', DB::raw('COUNT(*) as count, SUM(amount) as total'))
-            ->join('billing_invoices', 'billing_payments.invoice_id', '=', 'billing_invoices.id')
-            ->whereBetween('billing_payments.payment_date', [$startDate, $endDate])
+
+        $paymentMethods = DB::table('payments')
+            ->select('payment_method', DB::raw('COUNT(*) as count, SUM(amount) as total'))
+            ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
+            ->whereBetween('payments.payment_date', [$startDate, $endDate])
             ->groupBy('payment_method')
             ->get();
-        
-        // Outstanding invoices
+
         $outstandingInvoices = BillingInvoice::with(['pet', 'petOwner'])
             ->where('status', '!=', 'paid')
             ->where('due_date', '<', now())
@@ -244,7 +241,7 @@ class ReportController extends BaseController
         $totalPrescriptions = Prescription::whereBetween('created_at', [$startDate, $endDate])->count();
         
         // Vaccinations
-        $totalVaccinations = Vaccination::whereBetween('vaccination_date', [$startDate, $endDate])->count();
+        $totalVaccinations = PetVaccination::whereBetween('administered_date', [$startDate, $endDate])->count();
         
         // Surgeries
         $totalSurgeries = Surgery::whereBetween('scheduled_date', [$startDate, $endDate])->count();
@@ -494,7 +491,7 @@ class ReportController extends BaseController
         switch ($reportType) {
             case 'financial':
                 $data = BillingInvoice::with(['pet', 'petOwner'])
-                    ->whereBetween('invoice_date', [$startDate, $endDate])
+                    ->whereBetween('issue_date', [$startDate, $endDate])
                     ->get()
                     ->map(function ($invoice) {
                         return [
@@ -518,11 +515,11 @@ class ReportController extends BaseController
                     ->map(function ($record) {
                         return [
                             'Date' => $record->created_at->format('Y-m-d'),
-                            'Pet Owner' => $record->pet->petOwner->name,
+                            'Pet Owner' => $record->pet->owner->name ?? '',
                             'Pet' => $record->pet->name,
                             'Diagnosis' => $record->diagnosis,
-                            'Treatment' => $record->treatment,
-                            'Veterinarian' => $record->veterinarian_name ?? 'N/A',
+                            'Treatment' => $record->treatment_plan ?? '',
+                            'Veterinarian' => $record->veterinarian ? $record->veterinarian->full_name : 'N/A',
                         ];
                     });
                 $filename = 'medical_report_' . $startDate . '_to_' . $endDate . '.csv';

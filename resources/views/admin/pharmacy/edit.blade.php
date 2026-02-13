@@ -60,7 +60,7 @@
 <div class="form-container">
     <div class="page-header">
         <h1><i class="fas fa-capsules"></i> Edit Medication</h1>
-        <p>Update the information for this medicine.</p>
+        <p>Update information for this medicine.</p>
     </div>
 
     <form method="POST" action="{{ route('admin.pharmacy.update', $medication->id) }}">
@@ -68,18 +68,82 @@
         @method('PUT')
 
         <div class="form-group">
-            <label for="name">Medication Name</label>
+            <label for="name">Medication Name *</label>
             <input type="text" id="name" name="name" class="form-control" value="{{ old('name', $medication->name) }}" required>
+            @error('name')
+                <div class="text-danger">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" class="form-control" rows="3">{{ old('description', $medication->description) }}</textarea>
+            @error('description')
+                <div class="text-danger">{{ $message }}</div>
+            @enderror
         </div>
 
         <div class="form-group">
             <label for="sku">SKU (optional)</label>
             <input type="text" id="sku" name="sku" class="form-control" value="{{ old('sku', $medication->sku) }}">
+            @error('sku')
+                <div class="text-danger">{{ $message }}</div>
+            @enderror
         </div>
 
         <div class="form-group">
-            <label for="unit_price">Unit Price</label>
+            <label for="unit_price">Unit Price *</label>
             <input type="number" id="unit_price" name="unit_price" class="form-control" min="0" step="0.01" value="{{ old('unit_price', $medication->unit_price) }}" required>
+            @error('unit_price')
+                <div class="text-danger">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <div class="form-group">
+            <label for="quantity">Current Quantity *</label>
+            <input type="number" id="quantity" name="quantity" class="form-control" min="0" value="{{ old('quantity', $medication->inventoryStocks->first()->quantity ?? 0) }}" required>
+            @error('quantity')
+                <div class="text-danger">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <div class="form-group">
+            <label for="min_stock">Minimum Stock Level *</label>
+            <input type="number" id="min_stock" name="min_stock" class="form-control" min="0" value="{{ old('min_stock', $medication->inventoryStocks->first()->min_stock ?? 10) }}" required>
+            @error('min_stock')
+                <div class="text-danger">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <div class="form-group">
+            <label for="expiry_date">Expiry Date</label>
+            <input type="date" id="expiry_date" name="expiry_date" class="form-control" value="{{ old('expiry_date', $medication->inventoryStocks->first()->expiry_date ? $medication->inventoryStocks->first()->expiry_date->format('Y-m-d') : '') }}">
+            @error('expiry_date')
+                <div class="text-danger">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <div class="form-group">
+            <label for="location">Storage Location</label>
+            <input type="text" id="location" name="location" class="form-control" value="{{ old('location', $medication->inventoryStocks->first()->location ?? '') }}" placeholder="e.g., Pharmacy Cabinet A">
+            @error('location')
+                <div class="text-danger">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <div class="form-group">
+            <label for="image">Medication Image</label>
+            <input type="file" id="image" name="image" class="form-control" accept="image/*">
+            @error('image')
+                <div class="text-danger">{{ $message }}</div>
+            @enderror
+            <small class="form-text text-muted">Allowed formats: JPG, PNG, GIF. Maximum size: 2MB.</small>
+            @if($medication->image_path)
+                <div class="mt-2">
+                    <img src="{{ asset($medication->image_path) }}" alt="{{ $medication->name }}" style="max-width: 200px; border-radius: 8px; border: 2px solid #e9ecef;">
+                    <br><small class="text-muted">Current image</small>
+                </div>
+            @endif
         </div>
 
         <div class="form-actions">
@@ -89,16 +153,20 @@
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Update
             </button>
-            <form method="POST" action="{{ route('admin.pharmacy.destroy', $medication->id) }}" class="delete-form">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn btn-danger">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </form>
         </div>
     </form>
 </div>
+
+<!-- Delete Form - Separate from Update Form -->
+<form method="POST" action="{{ route('admin.pharmacy.destroy', $medication->id) }}" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this medication?')">
+    @csrf
+    @method('DELETE')
+    <button type="submit" class="btn btn-danger">
+        <i class="fas fa-trash"></i> Delete
+    </button>
+</form>
+</div>
+@endsection
 
 @push('scripts')
 <script>
@@ -115,5 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+
+@section('content')
 @endsection
 

@@ -20,7 +20,7 @@ class AppointmentController extends Controller
         }
         
         $user = User::where('username', $username)->first();
-        if (!$user || $user->role !== 'pet_owner') {
+       if (!$user || ($user->role !== 'pet_owner' && $user->role !== 'registered_user')) {
             return redirect('/login')->with('error', 'Access denied');
         }
         

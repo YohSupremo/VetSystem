@@ -232,17 +232,20 @@
             <i class="fas fa-phone-alt"></i> Emergency Contacts
         </h3>
         
-        @if($petOwner->emergencyContacts->isEmpty())
+        @if($petOwner->emergency_contact_name)
+            <div class="emergency-contact-card">
+                <strong>{{ $petOwner->emergency_contact_name }}</strong>
+                @if($petOwner->emergency_contact_relationship)
+                    <div class="relationship">{{ $petOwner->emergency_contact_relationship }}</div>
+                @endif
+                @if($petOwner->emergency_contact_phone)
+                    <div class="phone"><i class="fas fa-phone"></i> {{ $petOwner->emergency_contact_phone }}</div>
+                @endif
+            </div>
+        @else
             <div class="empty-message">
                 No emergency contacts registered
             </div>
-        @else
-            @foreach($petOwner->emergencyContacts as $contact)
-                <div class="emergency-contact-card">
-                    <strong>{{ $contact->contact_name }}</strong>
-                    <div class="phone"><i class="fas fa-phone"></i> {{ $contact->contact_number }}</div>
-                </div>
-            @endforeach
         @endif
     </div>
 

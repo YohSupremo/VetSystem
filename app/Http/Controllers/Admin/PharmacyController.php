@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use App\Models\InventoryItem;
-use App\Models\MedicationDispensing;
 use App\Models\Prescription;
 use App\Models\InventoryStock;
 use App\Models\InventoryTransaction;
@@ -18,7 +17,7 @@ class PharmacyController extends BaseController
     public function index()
     {
         $medications = InventoryItem::where('category', 'medicine')
-            ->with(['supplier', 'medicationDispensing'])
+            ->with('inventoryStocks')
             ->orderBy('name')
             ->get();
         
@@ -50,54 +49,94 @@ class PharmacyController extends BaseController
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:150',
-            'description' => 'nullable|string',
-            'sku' => 'nullable|string|max:50|unique:inventory_items,sku',
-            'manufacturer' => 'nullable|string|max:150',
-            'batch_number' => 'nullable|string|max:50',
-            'dosage_form' => 'nullable|string|max:50',
-            'strength' => 'nullable|string|max:50',
-            'unit_price' => 'required|numeric|min:0',
-            'requires_prescription' => 'boolean',
-            'controlled_substance' => 'boolean',
-            'storage_instructions' => 'nullable|string',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-            'quantity' => 'required|integer|min:0',
-            'min_stock' => 'required|integer|min:0',
+            'name' => 'required|string|max:150|unique:inventory_items,name,' . ($request->id ?? 'NULL'),
+            'description' => 'nullable|string|max:1000',
+            'sku' => 'nullable|string|max:50|unique:inventory_items,sku,' . ($request->id ?? 'NULL'),
+            'unit_price' => 'required|numeric|min:0.01|max:99999.99',
+            'quantity' => 'required|integer|min:1|max:999999',
+            'min_stock' => 'required|integer|min:0|max:999999',
             'expiry_date' => 'nullable|date|after:today',
+            'location' => 'nullable|string|max:100',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048|dimensions:min_width=100,min_height=100',
+        ], [
+            'name.unique' => 'A medication with this name already exists.',
+            'name.required' => 'Medication name is required.',
+            'sku.unique' => 'This SKU is already in use.',
+            'unit_price.min' => 'Unit price must be at least 0.01.',
+            'unit_price.numeric' => 'Unit price must be a valid number.',
+            'quantity.min' => 'Quantity must be at least 1.',
+            'quantity.max' => 'Quantity cannot exceed 999,999.',
+            'quantity.integer' => 'Quantity must be a whole number.',
+            'min_stock.min' => 'Minimum stock cannot be negative.',
+            'expiry_date.after' => 'Expiry date must be in the future.',
+            'image.mimes' => 'Image must be a valid image file (JPEG, PNG, GIF).',
+            'image.max' => 'Image size cannot exceed 2MB.',
+            'image.dimensions' => 'Image must be at least 100x100 pixels.',
         ]);
 
-        $medication = InventoryItem::create([
-            'name' => $data['name'],
-            'category' => 'medicine',
-            'description' => $data['description'] ?? null,
-            'sku' => $data['sku'] ?? null,
-            'manufacturer' => $data['manufacturer'] ?? null,
-            'batch_number' => $data['batch_number'] ?? null,
-            'dosage_form' => $data['dosage_form'] ?? null,
-            'strength' => $data['strength'] ?? null,
-            'unit_price' => $data['unit_price'],
-            'requires_prescription' => $data['requires_prescription'] ?? false,
-            'controlled_substance' => $data['controlled_substance'] ?? false,
-            'storage_instructions' => $data['storage_instructions'] ?? null,
-            'supplier_id' => $data['supplier_id'] ?? null,
-            'quantity' => $data['quantity'],
-            'min_stock' => $data['min_stock'],
-            'expiry_date' => $data['expiry_date'] ?? null,
-        ]);
+        DB::beginTransaction();
+        
+        try {
+            // Handle image upload
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imageName = time() . '_' . str_replace(' ', '_', $data['name']) . '.' . $image->getClientOriginalExtension();
+                
+                // Move image to public directory
+                $image->move(public_path('images/medications'), $imageName);
+                $imagePath = 'images/medications/' . $imageName;
+            }
 
-        // Create initial inventory transaction
-        InventoryTransaction::create([
-            'inventory_item_id' => $medication->id,
-            'transaction_type' => 'initial_stock',
-            'quantity' => $data['quantity'],
-            'unit_price' => $data['unit_price'],
-            'total_price' => $data['quantity'] * $data['unit_price'],
-            'notes' => 'Initial stock entry',
-        ]);
+            // Create inventory item
+            $medication = InventoryItem::create([
+                'name' => $data['name'],
+                'category' => 'medicine',
+                'description' => $data['description'] ?? null,
+                'sku' => $data['sku'] ?? null,
+                'unit_price' => $data['unit_price'],
+                'image_path' => $imagePath,
+                'is_active' => true,
+            ]);
 
-        return redirect()->route('admin.pharmacy.index')
-            ->with('success', 'Medication added successfully.');
+            // Create inventory stock record
+            $stock = InventoryStock::create([
+                'item_id' => $medication->id,
+                'quantity' => $data['quantity'],
+                'min_stock' => $data['min_stock'],
+                'expiry_date' => $data['expiry_date'] ?? null,
+                'location' => $data['location'] ?? null,
+            ]);
+
+            // Create initial inventory transaction
+            InventoryTransaction::create([
+                'stock_id' => $stock->id,
+                'type' => 'in',
+                'quantity' => $data['quantity'],
+                'reference' => 'Initial stock entry',
+                'performed_by' => auth()->id(),
+                'notes' => 'Initial stock for medication: ' . $medication->name,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.pharmacy.index')
+                ->with('success', 'Medication added successfully.');
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            // Log the detailed error for debugging
+            \Log::error('Pharmacy store error: ' . $e->getMessage(), [
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()
+                ->withInput()
+                ->withErrors($e->getMessage())
+                ->with('error', 'Failed to add medication: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -106,15 +145,17 @@ class PharmacyController extends BaseController
     public function show($id)
     {
         $medication = InventoryItem::where('category', 'medicine')
-            ->with(['supplier', 'medicationDispensing' => function($query) {
-                $query->with(['prescription.pet', 'dispensedBy'])
-                      ->orderBy('dispensed_at', 'desc');
+            ->with(['inventoryStocks', 'inventoryStocks.transactions' => function($query) {
+                $query->with('performedBy')
+                      ->orderBy('transaction_date', 'desc');
             }])
             ->findOrFail($id);
         
-        $recentDispensing = $medication->medicationDispensing->take(10);
+        $recentTransactions = $medication->inventoryStocks->flatMap(function($stock) {
+            return $stock->transactions;
+        })->take(10);
         
-        return view('admin.pharmacy.show', compact('medication', 'recentDispensing'));
+        return view('admin.pharmacy.show', compact('medication', 'recentTransactions'));
     }
 
     /**
@@ -123,12 +164,10 @@ class PharmacyController extends BaseController
     public function edit($id)
     {
         $medication = InventoryItem::where('category', 'medicine')
-            ->with('supplier')
+            ->with('inventoryStocks')
             ->findOrFail($id);
         
-        $suppliers = \App\Models\Supplier::orderBy('name')->get();
-        
-        return view('admin.pharmacy.edit', compact('medication', 'suppliers'));
+        return view('admin.pharmacy.edit', compact('medication'));
     }
 
     /**
@@ -137,64 +176,122 @@ class PharmacyController extends BaseController
     public function update(Request $request, $id)
     {
         $medication = InventoryItem::where('category', 'medicine')
+            ->with('inventoryStocks')
             ->findOrFail($id);
 
         $data = $request->validate([
-            'name' => 'required|string|max:150',
-            'description' => 'nullable|string',
+            'name' => 'required|string|max:150|unique:inventory_items,name,' . $id,
+            'description' => 'nullable|string|max:1000',
             'sku' => 'nullable|string|max:50|unique:inventory_items,sku,' . $id,
-            'manufacturer' => 'nullable|string|max:150',
-            'batch_number' => 'nullable|string|max:50',
-            'dosage_form' => 'nullable|string|max:50',
-            'strength' => 'nullable|string|max:50',
-            'unit_price' => 'required|numeric|min:0',
-            'requires_prescription' => 'boolean',
-            'controlled_substance' => 'boolean',
-            'storage_instructions' => 'nullable|string',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-            'quantity' => 'required|integer|min:0',
-            'min_stock' => 'required|integer|min:0',
+            'unit_price' => 'required|numeric|min:0.01|max:99999.99',
+            'quantity' => 'required|integer|min:0|max:999999',
+            'min_stock' => 'required|integer|min:0|max:999999',
             'expiry_date' => 'nullable|date|after:today',
+            'location' => 'nullable|string|max:100',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048|dimensions:min_width=100,min_height=100',
+        ], [
+            'name.unique' => 'A medication with this name already exists.',
+            'name.required' => 'Medication name is required.',
+            'sku.unique' => 'This SKU is already in use.',
+            'unit_price.min' => 'Unit price must be at least 0.01.',
+            'unit_price.numeric' => 'Unit price must be a valid number.',
+            'quantity.min' => 'Quantity must be at least 0.',
+            'quantity.max' => 'Quantity cannot exceed 999,999.',
+            'quantity.integer' => 'Quantity must be a whole number.',
+            'min_stock.min' => 'Minimum stock cannot be negative.',
+            'expiry_date.after' => 'Expiry date must be in the future.',
+            'image.mimes' => 'Image must be a valid image file (JPEG, PNG, GIF).',
+            'image.max' => 'Image size cannot exceed 2MB.',
+            'image.dimensions' => 'Image must be at least 100x100 pixels.',
         ]);
 
-        $oldQuantity = $medication->quantity;
-        $newQuantity = $data['quantity'];
+        DB::beginTransaction();
         
-        $medication->update([
-            'name' => $data['name'],
-            'description' => $data['description'] ?? null,
-            'sku' => $data['sku'] ?? null,
-            'manufacturer' => $data['manufacturer'] ?? null,
-            'batch_number' => $data['batch_number'] ?? null,
-            'dosage_form' => $data['dosage_form'] ?? null,
-            'strength' => $data['strength'] ?? null,
-            'unit_price' => $data['unit_price'],
-            'requires_prescription' => $data['requires_prescription'] ?? false,
-            'controlled_substance' => $data['controlled_substance'] ?? false,
-            'storage_instructions' => $data['storage_instructions'] ?? null,
-            'supplier_id' => $data['supplier_id'] ?? null,
-            'quantity' => $newQuantity,
-            'min_stock' => $data['min_stock'],
-            'expiry_date' => $data['expiry_date'] ?? null,
-        ]);
-        
-        // Create inventory transaction if quantity changed
-        if ($oldQuantity != $newQuantity) {
-            $difference = $newQuantity - $oldQuantity;
-            $transactionType = $difference > 0 ? 'stock_in' : 'stock_adjustment';
-            
-            InventoryTransaction::create([
-                'inventory_item_id' => $medication->id,
-                'transaction_type' => $transactionType,
-                'quantity' => abs($difference),
+        try {
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imageName = time() . '_' . str_replace(' ', '_', $data['name']) . '.' . $image->getClientOriginalExtension();
+                
+                // Move image to public directory
+                $image->move(public_path('images/medications'), $imageName);
+                $imagePath = 'images/medications/' . $imageName;
+                
+                // Delete old image if exists
+                if ($medication->image_path && file_exists(public_path($medication->image_path))) {
+                    unlink(public_path($medication->image_path));
+                }
+            } else {
+                $imagePath = $medication->image_path;
+            }
+
+            // Update inventory item
+            $medication->update([
+                'name' => $data['name'],
+                'description' => $data['description'] ?? null,
+                'sku' => $data['sku'] ?? null,
                 'unit_price' => $data['unit_price'],
-                'total_price' => abs($difference) * $data['unit_price'],
-                'notes' => 'Stock adjustment during update',
+                'image_path' => $imagePath,
+                'is_active' => true,
             ]);
-        }
 
-        return redirect()->route('admin.pharmacy.show', $medication->id)
-            ->with('success', 'Medication updated successfully.');
+            // Update or create inventory stock
+            $stock = $medication->inventoryStocks->first();
+            $oldQuantity = $stock ? $stock->quantity : 0;
+            $newQuantity = $data['quantity'];
+            
+            if ($stock) {
+                $stock->update([
+                    'quantity' => $data['quantity'],
+                    'min_stock' => $data['min_stock'],
+                    'expiry_date' => $data['expiry_date'] ?? null,
+                    'location' => $data['location'] ?? null,
+                ]);
+            } else {
+                $stock = InventoryStock::create([
+                    'item_id' => $medication->id,
+                    'quantity' => $data['quantity'],
+                    'min_stock' => $data['min_stock'],
+                    'expiry_date' => $data['expiry_date'] ?? null,
+                    'location' => $data['location'] ?? null,
+                ]);
+            }
+            
+            // Create inventory transaction if quantity changed
+            if ($oldQuantity != $newQuantity) {
+                $difference = $newQuantity - $oldQuantity;
+                $transactionType = $difference > 0 ? 'in' : 'adjustment';
+                
+                InventoryTransaction::create([
+                    'stock_id' => $stock->id,
+                    'type' => $transactionType,
+                    'quantity' => abs($difference),
+                    'reference' => 'Stock adjustment during update',
+                    'performed_by' => auth()->id(),
+                    'notes' => 'Updated medication: ' . $medication->name,
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.pharmacy.show', $medication->id)
+                ->with('success', 'Medication updated successfully.');
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            // Log the detailed error for debugging
+            \Log::error('Pharmacy update error: ' . $e->getMessage(), [
+                'medication_id' => $id,
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()
+                ->withInput()
+                ->withErrors($e->getMessage())
+                ->with('error', 'Failed to update medication: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -217,15 +314,17 @@ class PharmacyController extends BaseController
     public function dispenseForm()
     {
         $prescriptions = Prescription::with(['pet', 'medicalRecord'])
-            ->whereDoesntHave('medicationDispensing')
-            ->orWhereHas('medicationDispensing', function($query) {
-                $query->where('quantity_dispensed', '<', DB::raw('(SELECT duration_days * 1 FROM prescriptions WHERE id = prescriptions.id)'));
+            ->where('dispensed', false)
+            ->where(function($query) {
+                $query->whereRaw('quantity < COALESCE(duration_days, 0)');
             })
             ->orderBy('created_at', 'desc')
             ->get();
             
         $medications = InventoryItem::where('category', 'medicine')
-            ->where('quantity', '>', 0)
+            ->whereHas('inventoryStocks', function($query) {
+                $query->where('quantity', '>', 0);
+            })
             ->orderBy('name')
             ->get();
         
@@ -245,40 +344,54 @@ class PharmacyController extends BaseController
             'notes' => 'nullable|string',
         ]);
         
-        $medication = InventoryItem::findOrFail($data['inventory_item_id']);
+        $medication = InventoryItem::with('inventoryStocks')->findOrFail($data['inventory_item_id']);
         $prescription = Prescription::findOrFail($data['prescription_id']);
         
-        if ($medication->quantity < $data['quantity_dispensed']) {
+        // Check stock availability
+        $totalStock = $medication->inventoryStocks->sum('quantity');
+        if ($totalStock < $data['quantity_dispensed']) {
             return back()->withErrors(['quantity_dispensed' => 'Insufficient stock available.']);
         }
         
         DB::beginTransaction();
         
         try {
-            // Create medication dispensing record
-            MedicationDispensing::create([
-                'prescription_id' => $data['prescription_id'],
-                'inventory_item_id' => $data['inventory_item_id'],
-                'dispensed_by' => auth()->id(),
-                'quantity_dispensed' => $data['quantity_dispensed'],
-                'unit_price' => $medication->unit_price,
-                'total_price' => $data['quantity_dispensed'] * $medication->unit_price,
-                'dispensed_at' => now(),
-                'instructions' => $data['instructions'] ?? $prescription->instructions,
-                'notes' => $data['notes'],
-            ]);
+            // Find the stock record to deduct from (FIFO - use oldest stock first)
+            $stock = $medication->inventoryStocks
+                ->where('quantity', '>', 0)
+                ->sortBy('expiry_date')
+                ->first();
             
-            // Update medication stock
-            $medication->decrement('quantity', $data['quantity_dispensed']);
+            if (!$stock) {
+                throw new \Exception('No available stock found');
+            }
+            
+            // Create medication dispensing record (if this model exists)
+            if (class_exists('App\Models\MedicationDispensing')) {
+                MedicationDispensing::create([
+                    'prescription_id' => $data['prescription_id'],
+                    'inventory_item_id' => $data['inventory_item_id'],
+                    'dispensed_by' => auth()->id(),
+                    'quantity_dispensed' => $data['quantity_dispensed'],
+                    'unit_price' => $medication->unit_price,
+                    'total_price' => $data['quantity_dispensed'] * $medication->unit_price,
+                    'dispensed_at' => now(),
+                    'instructions' => $data['instructions'] ?? $prescription->instructions,
+                    'notes' => $data['notes'],
+                ]);
+            }
+            
+            // Update stock
+            $stock->decrement('quantity', $data['quantity_dispensed']);
             
             // Create inventory transaction
             InventoryTransaction::create([
-                'inventory_item_id' => $medication->id,
-                'transaction_type' => 'dispensed',
+                'stock_id' => $stock->id,
+                'type' => 'out',
                 'quantity' => $data['quantity_dispensed'],
-                'unit_price' => $medication->unit_price,
-                'total_price' => $data['quantity_dispensed'] * $medication->unit_price,
-                'notes' => 'Medication dispensed for prescription #' . $prescription->id,
+                'reference' => 'Medication dispensed for prescription #' . $prescription->id,
+                'performed_by' => auth()->id(),
+                'notes' => 'Dispensed: ' . $medication->name,
             ]);
             
             // Update prescription as dispensed
@@ -298,13 +411,29 @@ class PharmacyController extends BaseController
     /**
      * Show dispensing history.
      */
-    public function dispensingHistory()
+    public function dispensingHistory(Request $request)
     {
-        $dispensingHistory = MedicationDispensing::with(['prescription.pet', 'inventoryItem', 'dispensedBy'])
-            ->orderBy('dispensed_at', 'desc')
-            ->paginate(50);
-            
-        return view('admin.pharmacy.dispensing-history', compact('dispensingHistory'));
+        $medications = InventoryItem::where('category', 'medicine')->orderBy('name')->get();
+
+        $query = InventoryTransaction::where('type', 'out')
+            ->with(['stock.inventoryItem', 'performedBy'])
+            ->orderBy('transaction_date', 'desc');
+
+        if ($request->filled('medication_id')) {
+            $query->whereHas('stock.inventoryItem', function($q) use ($request) {
+                $q->where('id', $request->medication_id);
+            });
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('transaction_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('transaction_date', '<=', $request->date_to);
+        }
+
+        $dispensingRecords = $query->paginate(50)->appends($request->query());
+
+        return view('admin.pharmacy.dispensing-history', compact('dispensingRecords', 'medications'));
     }
     
     /**
@@ -312,20 +441,24 @@ class PharmacyController extends BaseController
      */
     public function alerts()
     {
-        $lowStockItems = InventoryItem::where('category', 'medicine')
+        $lowStockStocks = InventoryStock::with('inventoryItem')
             ->whereColumn('quantity', '<=', 'min_stock')
-            ->with('supplier')
             ->get();
-            
-        $expiredItems = InventoryItem::where('category', 'medicine')
+        $lowStockItems = $lowStockStocks->map(fn ($s) => $s->inventoryItem)->filter()->unique('id')->values();
+
+        $expiredStocks = InventoryStock::with('inventoryItem')
+            ->whereNotNull('expiry_date')
             ->where('expiry_date', '<', now())
             ->get();
-            
-        $expiringSoonItems = InventoryItem::where('category', 'medicine')
+        $expiredItems = $expiredStocks->map(fn ($s) => $s->inventoryItem)->filter()->unique('id')->values();
+
+        $expiringSoonStocks = InventoryStock::with('inventoryItem')
+            ->whereNotNull('expiry_date')
             ->where('expiry_date', '>', now())
             ->where('expiry_date', '<=', now()->addDays(30))
             ->get();
-            
+        $expiringSoonItems = $expiringSoonStocks->map(fn ($s) => $s->inventoryItem)->filter()->unique('id')->values();
+
         return view('admin.pharmacy.alerts', compact(
             'lowStockItems',
             'expiredItems',

@@ -425,7 +425,7 @@
                                     <div>
                                         <div class="record-date">{{ $vaccination->vaccine_name }}</div>
                                         <div style="color: #6B7280; margin-top: 0.25rem;">
-                                            {{ \Carbon\Carbon::parse($vaccination->vaccination_date)->format('F d, Y') }}
+                                            {{ \Carbon\Carbon::parse($vaccination->administered_date)->format('F d, Y') }}
                                         </div>
                                     </div>
                                     <span class="record-badge badge-completed">✓ Administered</span>

@@ -39,7 +39,7 @@
                 <tbody>
                     @foreach($medicalRecords as $record)
                         <tr>
-                            <td>{{ $record->record_date->format('M d, Y') }}</td>
+                            <td>{{ $record->visit_date->format('M d, Y') }}</td>
                             <td>
                                 <a href="{{ route('veterinarian.patients.show', $record->pet->id) }}" 
                                    class="text-decoration-none">
@@ -47,7 +47,7 @@
                                 </a>
                             </td>
                             <td>{{ $record->pet->owner->first_name }} {{ $record->pet->owner->last_name }}</td>
-                            <td>{{ Str::limit($record->chief_complaint, 50) }}</td>
+                            <td>{{ Str::limit($record->complaint, 50) }}</td>
                             <td>{{ Str::limit($record->diagnosis, 50) }}</td>
                             <td>
                                 <div class="btn-group" role="group">

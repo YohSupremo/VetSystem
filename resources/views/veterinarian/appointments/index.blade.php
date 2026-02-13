@@ -31,7 +31,7 @@
                                 <div>
                                     <strong>{{ $appointment->appointment_date->format('M j, Y') }}</strong>
                                     <br>
-                                    <small class="text-muted">{{ $appointment->start_time->format('g:i A') }} - {{ $appointment->end_time ? $appointment->end_time->format('g:i A') : 'TBD' }}</small>
+                                    <small class="text-muted">{{ $appointment->appointment_date->format('g:i A') }}</small>
                                 </div>
                             </td>
                             <td>
@@ -47,7 +47,7 @@
                             <td>
                                 {{ $appointment->pet->owner->first_name }} {{ $appointment->pet->owner->last_name }}
                                 <br>
-                                <small class="text-muted">{{ $appointment->pet->owner->contact_number }}</small>
+                                <small class="text-muted">{{ $appointment->pet->owner->user->contact_number }}</small>
                             </td>
                             <td>
                                 <span class="status-badge {{ $appointment->status }}">
@@ -75,9 +75,9 @@
                                         @if($appointment->status !== 'completed' && $appointment->status !== 'cancelled')
                                             <form action="#" method="POST" class="d-inline">
                                                 @csrf
-                                                <input type="hidden" name="status" value="{{ $appointment->status === 'scheduled' ? 'in_progress' : 'completed' }}">
+                                                <input type="hidden" name="status" value="{{ $appointment->status === 'confirmed' ? 'in_progress' : 'completed' }}">
                                                 <button type="submit" class="btn btn-sm btn-outline-success">
-                                                    <i class="fas fa-check"></i> {{ $appointment->status === 'scheduled' ? 'Start' : 'Complete' }}
+                                                    <i class="fas fa-check"></i> {{ $appointment->status === 'confirmed' ? 'Start' : 'Complete' }}
                                                 </button>
                                             </form>
                                         @endif

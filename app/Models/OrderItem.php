@@ -3,29 +3,30 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\InventoryItem;
 
 class OrderItem extends Model
 {
+    public $timestamps = false;
+
     protected $fillable = [
         'order_id',
-        'item_type',
-        'reference_id',
+        'inventory_item_id',
         'description',
         'quantity',
         'unit_price',
-        'total',
     ];
 
-    public function order(): BelongsTo
+    protected $casts = [
+        'unit_price' => 'decimal:2',
+    ];
+
+    public function order()
     {
         return $this->belongsTo(Order::class);
     }
 
-    public function inventoryItem(): BelongsTo
+    public function inventoryItem()
     {
-        return $this->belongsTo(InventoryItem::class, 'reference_id');
+        return $this->belongsTo(InventoryItem::class);
     }
 }
-

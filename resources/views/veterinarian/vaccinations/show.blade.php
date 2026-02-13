@@ -54,7 +54,7 @@
                     <div class="col-md-6">{{ $vaccination->batch_number ?: 'N/A' }}</div>
                     
                     <div class="col-md-6"><strong>Administration Date:</strong></div>
-                    <div class="col-md-6">{{ $vaccination->vaccination_date->format('F j, Y') }}</div>
+                    <div class="col-md-6">{{ $vaccination->administered_date->format('F j, Y') }}</div>
                     
                     <div class="col-md-6"><strong>Next Due Date:</strong></div>
                     <div class="col-md-6">{{ $vaccination->next_due_date ? $vaccination->next_due_date->format('F j, Y') : 'N/A' }}</div>
@@ -103,7 +103,7 @@
                             <div class="history-item">
                                 <div class="d-flex justify-content-between">
                                     <strong>{{ $histVaccination->vaccine_name }}</strong>
-                                    <small>{{ $histVaccination->vaccination_date->format('M j, Y') }}</small>
+                                    <small>{{ $histVaccination->administered_date->format('M j, Y') }}</small>
                                 </div>
                                 <span class="status-badge {{ $histVaccination->status }}">
                                     {{ ucfirst(str_replace('_', ' ', $histVaccination->status)) }}

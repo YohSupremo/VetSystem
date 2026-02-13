@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PetOwner;
 use App\Models\User;
-use App\Models\OwnerEmergencyContact;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -16,7 +15,7 @@ class PetOwnerController extends Controller
      */
     public function index()
     {
-        $owners = PetOwner::with('user', 'emergencyContacts', 'pets')->get();
+        $owners = PetOwner::with(['user', 'pets'])->get();
         return view('admin.pet-owners.index', compact('owners'));
     }
 
@@ -25,7 +24,7 @@ class PetOwnerController extends Controller
      */
     public function create()
     {
-        $users = User::where('role', 'pet_owner')->doesntHave('petOwner')->get();
+        $users = User::where('role', 'registered_user')->doesntHave('petOwner')->get();
         return view('admin.pet-owners.create', compact('users'));
     }
 
@@ -35,23 +34,27 @@ class PetOwnerController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id|unique:pet_owners,user_id',
+            'user_id' => 'required|exists:users,id',
             'notes' => 'nullable|string',
-            'emergency_contacts' => 'nullable|array',
-            'emergency_contacts.*.contact_name' => 'required_with:emergency_contacts|string',
-            'emergency_contacts.*.contact_number' => 'required_with:emergency_contacts|string',
+            'preferred_contact_method' => 'nullable|in:email,sms',
+            // Single emergency contact fields stored on pet_owners
+            'emergency_contact_name' => 'nullable|string',
+            'emergency_contact_phone' => 'nullable|string',
+            'emergency_contact_relationship' => 'nullable|string',
         ]);
 
         $owner = PetOwner::create([
             'user_id' => $validated['user_id'],
             'notes' => $validated['notes'] ?? null,
+            'preferred_contact_method' => $validated['preferred_contact_method'] ?? null,
+            'emergency_contact_name' => $validated['emergency_contact_name'] ?? null,
+            'emergency_contact_phone' => $validated['emergency_contact_phone'] ?? null,
+            'emergency_contact_relationship' => $validated['emergency_contact_relationship'] ?? null,
         ]);
 
-        // Create emergency contacts
-        if (!empty($validated['emergency_contacts'])) {
-            foreach ($validated['emergency_contacts'] as $contact) {
-                $owner->emergencyContacts()->create($contact);
-            }
+        // Automatically change user role to pet_owner if they have pets
+        if ($owner->user && $owner->user->pets->count() > 0) {
+            $owner->user->update(['role' => 'pet_owner']);
         }
 
         return redirect()->route('admin.pet-owners.show', $owner)
@@ -63,7 +66,7 @@ class PetOwnerController extends Controller
      */
     public function show(PetOwner $petOwner)
     {
-        $petOwner->load('user', 'emergencyContacts', 'pets');
+        $petOwner->load(['user', 'pets']);
         return view('admin.pet-owners.show', compact('petOwner'));
     }
 
@@ -72,8 +75,21 @@ class PetOwnerController extends Controller
      */
     public function edit(PetOwner $petOwner)
     {
-        $petOwner->load('user', 'emergencyContacts');
-        return view('admin.pet-owners.edit', compact('petOwner'));
+        $petOwner->load(['user']);
+        
+        // Get users with registered_user role who are not already assigned as pet owners
+        $unassignedUsers = User::where('role', 'registered_user')
+            ->whereDoesntHave('petOwner')
+            ->where('id', '!=', $petOwner->user_id) // Exclude current assigned user
+            ->get();
+            
+        // Get current assigned user to show first
+        $currentUser = User::find($petOwner->user_id);
+        
+        // Combine: current user first, then unassigned users
+        $allUsers = collect([$currentUser])->merge($unassignedUsers);
+            
+        return view('admin.pet-owners.edit', compact('petOwner', 'allUsers'));
     }
 
     /**
@@ -82,35 +98,28 @@ class PetOwnerController extends Controller
     public function update(Request $request, PetOwner $petOwner)
     {
         $validated = $request->validate([
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
-            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($petOwner->user_id)],
-            'contact_number' => 'required|string',
-            'address' => 'required|string',
+            'user_id' => 'required|exists:users,id|unique:pet_owners,user_id,' . $petOwner->id,
             'notes' => 'nullable|string',
-            'emergency_contacts' => 'nullable|array',
-            'emergency_contacts.*.contact_name' => 'required_with:emergency_contacts|string',
-            'emergency_contacts.*.contact_number' => 'required_with:emergency_contacts|string',
+            'preferred_contact_method' => 'nullable|in:email,sms',
+            'emergency_contact_name' => 'nullable|string',
+            'emergency_contact_phone' => 'nullable|string',
+            'emergency_contact_relationship' => 'nullable|string',
         ]);
 
-        // Update user info
-        $petOwner->user->update([
-            'first_name' => $validated['first_name'],
-            'last_name' => $validated['last_name'],
-            'email' => $validated['email'],
-            'contact_number' => $validated['contact_number'],
-            'address' => $validated['address'],
+        // Update pet owner with new user assignment
+        $petOwner->update([
+            'user_id' => $validated['user_id'],
+            'notes' => $validated['notes'] ?? $petOwner->notes,
+            'preferred_contact_method' => $validated['preferred_contact_method'] ?? $petOwner->preferred_contact_method,
+            'emergency_contact_name' => $validated['emergency_contact_name'] ?? $petOwner->emergency_contact_name,
+            'emergency_contact_phone' => $validated['emergency_contact_phone'] ?? $petOwner->emergency_contact_phone,
+            'emergency_contact_relationship' => $validated['emergency_contact_relationship'] ?? $petOwner->emergency_contact_relationship,
         ]);
 
-        // Update owner notes
-        $petOwner->update(['notes' => $validated['notes'] ?? null]);
-
-        // Update emergency contacts
-        $petOwner->emergencyContacts()->delete();
-        if (!empty($validated['emergency_contacts'])) {
-            foreach ($validated['emergency_contacts'] as $contact) {
-                $petOwner->emergencyContacts()->create($contact);
-            }
+        // Automatically change user role to pet_owner if they have pets
+        $petOwner->load(['user', 'pets']);
+        if ($petOwner->user && $petOwner->pets->count() > 0) {
+            $petOwner->user->update(['role' => 'pet_owner']);
         }
 
         return redirect()->route('admin.pet-owners.show', $petOwner)

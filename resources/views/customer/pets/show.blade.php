@@ -547,7 +547,7 @@
                                                 {{ $vaccination->vaccine_name }}
                                             </div>
                                             <div class="medical-item-meta">
-                                                {{ \Carbon\Carbon::parse($vaccination->vaccination_date)->format('M d, Y') }}
+                                                {{ \Carbon\Carbon::parse($vaccination->administered_date)->format('M d, Y') }}
                                                 @if($vaccination->next_due_date)
                                                     • Next Due: {{ \Carbon\Carbon::parse($vaccination->next_due_date)->format('M d, Y') }}
                                                 @endif

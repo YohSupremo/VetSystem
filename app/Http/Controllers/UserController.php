@@ -46,7 +46,7 @@ class UserController extends Controller
         // Redirect based on user role
         if($user->role == 'admin') {
             return redirect('/admin/dashboard');
-        } elseif($user->role == 'pet_owner') {
+        } elseif($user->role == 'pet_owner' || $user->role == 'registered_user') {
             return redirect('/customer/dashboard');
         } elseif($user->role == 'veterinarian') {
             return redirect('/veterinarian/dashboard');

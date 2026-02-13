@@ -46,7 +46,7 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td>{{ $vaccination->vaccination_date ? $vaccination->vaccination_date->format('M d, Y') : 'N/A' }}</td>
+                                <td>{{ $vaccination->administered_date ? $vaccination->administered_date->format('M d, Y') : 'N/A' }}</td>
                                 <td>{{ $vaccination->next_due_date ? $vaccination->next_due_date->format('M d, Y') : 'N/A' }}</td>
                                 <td>{{ $vaccination->veterinarian ? 'Dr. ' . $vaccination->veterinarian->first_name . ' ' . $vaccination->veterinarian->last_name : 'N/A' }}</td>
                                 <td style="text-align:right;">

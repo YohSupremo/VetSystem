@@ -3,15 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventoryTransaction extends Model
 {
+    public $timestamps = false;
+
     protected $fillable = [
         'stock_id',
         'type',
         'quantity',
         'reference',
+        'performed_by',
         'notes',
         'transaction_date',
     ];
@@ -20,8 +22,13 @@ class InventoryTransaction extends Model
         'transaction_date' => 'datetime',
     ];
 
-    public function inventoryStock(): BelongsTo
+    public function inventoryStock()
     {
         return $this->belongsTo(InventoryStock::class, 'stock_id');
+    }
+
+    public function performedBy()
+    {
+        return $this->belongsTo(User::class, 'performed_by');
     }
 }

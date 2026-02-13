@@ -707,6 +707,10 @@
                         <i class="fas fa-paw"></i>
                         <span>Pets Registry</span>
                     </a>
+                    <a href="{{ route('admin.users.index') }}" class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <i class="fas fa-user"></i>
+                        <span>Users</span>
+                    </a>
                     <a href="{{ route('admin.pet-owners.index') }}" class="nav-item {{ request()->routeIs('admin.pet-owners.*') ? 'active' : '' }}">
                         <i class="fas fa-users"></i>
                         <span>Pet Owners</span>

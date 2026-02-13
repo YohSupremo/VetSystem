@@ -12,10 +12,12 @@ class LabTest extends Model
         'category',
         'description',
         'standard_price',
+        'is_active',
     ];
 
     protected $casts = [
         'standard_price' => 'decimal:2',
+        'is_active' => 'boolean',
     ];
 
     /**

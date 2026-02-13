@@ -11,7 +11,7 @@
                 <strong>Patient:</strong> {{ $medicalRecord->pet->name }} ({{ $medicalRecord->pet->species }})
             </div>
             <div class="text-muted">
-                <strong>Date:</strong> {{ $medicalRecord->record_date->format('M d, Y') }}
+                <strong>Date:</strong> {{ $medicalRecord->visit_date->format('M d, Y') }}
             </div>
         </div>
         <div class="d-flex gap-2">
@@ -55,17 +55,12 @@
                 
                 <div class="mb-3">
                     <h6 class="text-primary">Chief Complaint</h6>
-                    <p>{{ $medicalRecord->chief_complaint }}</p>
+                    <p>{{ $medicalRecord->complaint }}</p>
                 </div>
 
                 <div class="mb-3">
-                    <h6 class="text-primary">Symptoms</h6>
-                    <p>{{ nl2br($medicalRecord->symptoms) }}</p>
-                </div>
-
-                <div class="mb-3">
-                    <h6 class="text-primary">Physical Examination</h6>
-                    <p>{{ nl2br($medicalRecord->physical_exam) }}</p>
+                    <h6 class="text-primary">Examination Notes</h6>
+                    <p>{{ nl2br($medicalRecord->examination_notes) }}</p>
                 </div>
 
                 <div class="mb-3">
@@ -75,29 +70,9 @@
 
                 <div class="mb-3">
                     <h6 class="text-primary">Treatment Plan</h6>
-                    <p>{{ nl2br($medicalRecord->treatment) }}</p>
+                    <p>{{ nl2br($medicalRecord->treatment_plan) }}</p>
                 </div>
 
-                @if($medicalRecord->lab_results)
-                    <div class="mb-3">
-                        <h6 class="text-primary">Laboratory Results</h6>
-                        <p>{{ nl2br($medicalRecord->lab_results) }}</p>
-                    </div>
-                @endif
-
-                @if($medicalRecord->follow_up_instructions)
-                    <div class="mb-3">
-                        <h6 class="text-primary">Follow-up Instructions</h6>
-                        <p>{{ nl2br($medicalRecord->follow_up_instructions) }}</p>
-                    </div>
-                @endif
-
-                @if($medicalRecord->notes)
-                    <div class="mb-3">
-                        <h6 class="text-primary">Additional Notes</h6>
-                        <p>{{ nl2br($medicalRecord->notes) }}</p>
-                    </div>
-                @endif
 
                 <div class="mt-4 pt-3 border-top">
                     <div class="d-flex justify-content-between align-items-center">

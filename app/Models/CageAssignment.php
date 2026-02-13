@@ -3,8 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+
 class CageAssignment extends Model
 {
     protected $table = 'cage_assignments';
@@ -14,44 +13,36 @@ class CageAssignment extends Model
         'pet_id',
         'start_date',
         'end_date',
-        'medication_notes',
+        'check_in_time',
+        'check_out_time',
+        'feeding_schedule',
+        'feeding_times',
+        'special_diet_notes',
+        'medication_instructions',
+        'medication_times',
+        'notes',
+        'daily_rate',
+        'checkout_reminder_sent',
     ];
 
-    public function petAssigned(): BelongsTo {
-        return $this->belongsTo(Pet::class, 'pet_id');
-    }
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'check_in_time' => 'datetime',
+        'check_out_time' => 'datetime',
+    ];
 
-    public function cageAssigned(): BelongsTo {
-        return $this->belongsTo(Cage::class, 'cage_id');
-    }
-
-    // Alias relationships for easier access in views
-    public function pet(): BelongsTo {
-        return $this->petAssigned();
-    }
-
-    public function cage(): BelongsTo {
-        return $this->cageAssigned();
-    }
-
-    public function feedingSchedule(): HasOne {
-        return $this->hasOne(FeedingSchedule::class, 'pet_id', 'pet_id');
-    }
-
-    public function medicationInstruction(): HasOne {
-        return $this->hasOne(MedicationInstruction::class, 'pet_id', 'pet_id');
-    }
-
-    // Accessor for status (calculated dynamically)
-    public function getStatusAttribute(): string
+    public function cage()
     {
-        if ($this->isActive()) {
-            return 'active';
-        }
-        return now()->toDateString() > $this->end_date ? 'completed' : 'upcoming';
+        return $this->belongsTo(Cage::class);
     }
 
-      public function isActive(): bool
+    public function pet()
+    {
+        return $this->belongsTo(Pet::class);
+    }
+
+    public function isActive()
     {
         $today = now()->toDateString();
         return $today >= $this->start_date && $today <= $this->end_date;

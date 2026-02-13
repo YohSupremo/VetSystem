@@ -331,22 +331,6 @@
             </div>
         </div>
 
-        <!-- Medical Information -->
-        <div class="form-section">
-            <h3><i class="fas fa-qrcode"></i> Medical Information</h3>
-
-            <div class="form-group {{ $errors->has('microchip_number') ? 'error' : '' }}">
-                <label for="microchip_number">Microchip Number</label>
-                <input type="text" name="microchip_number" id="microchip_number" 
-                       placeholder="Enter microchip ID if available" 
-                       value="{{ old('microchip_number', $pet->microchip_number) }}">
-                <small style="color: var(--light-text);">Must be unique if provided</small>
-                @if($errors->has('microchip_number'))
-                    <div class="error-message">{{ $errors->first('microchip_number') }}</div>
-                @endif
-            </div>
-        </div>
-
         <!-- Photo Upload -->
         <div class="form-section">
             <h3><i class="fas fa-camera"></i> Pet Photo</h3>

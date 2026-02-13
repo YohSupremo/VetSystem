@@ -40,9 +40,9 @@
         <div class="row g-3">
             <div class="col-12">
                 <div class="mb-3">
-                    <label for="chief_complaint" class="form-label">Chief Complaint *</label>
-                    <textarea name="chief_complaint" id="chief_complaint" class="form-control" rows="2" required
-                              placeholder="Main reason for visit...">{{ old('chief_complaint') }}</textarea>
+                    <label for="complaint" class="form-label">Chief Complaint *</label>
+                    <textarea name="complaint" id="complaint" class="form-control" rows="2" required
+                              placeholder="Main reason for visit...">{{ old('complaint') }}</textarea>
                 </div>
             </div>
         </div>
@@ -50,19 +50,9 @@
         <div class="row g-3">
             <div class="col-12">
                 <div class="mb-3">
-                    <label for="symptoms" class="form-label">Symptoms *</label>
-                    <textarea name="symptoms" id="symptoms" class="form-control" rows="4" required
-                              placeholder="Describe the patient's symptoms...">{{ old('symptoms') }}</textarea>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-3">
-            <div class="col-12">
-                <div class="mb-3">
-                    <label for="physical_exam" class="form-label">Physical Examination *</label>
-                    <textarea name="physical_exam" id="physical_exam" class="form-control" rows="4" required
-                              placeholder="Findings from physical examination...">{{ old('physical_exam') }}</textarea>
+                    <label for="examination_notes" class="form-label">Examination Notes *</label>
+                    <textarea name="examination_notes" id="examination_notes" class="form-control" rows="4" required
+                              placeholder="Findings from physical examination...">{{ old('examination_notes') }}</textarea>
                 </div>
             </div>
         </div>
@@ -80,39 +70,13 @@
         <div class="row g-3">
             <div class="col-12">
                 <div class="mb-3">
-                    <label for="treatment" class="form-label">Treatment Plan *</label>
-                    <textarea name="treatment" id="treatment" class="form-control" rows="4" required
-                              placeholder="Treatment and procedures performed...">{{ old('treatment') }}</textarea>
+                    <label for="treatment_plan" class="form-label">Treatment Plan *</label>
+                    <textarea name="treatment_plan" id="treatment_plan" class="form-control" rows="4" required
+                              placeholder="Treatment and procedures performed...">{{ old('treatment_plan') }}</textarea>
                 </div>
             </div>
         </div>
 
-        <div class="row g-3">
-            <div class="col-12">
-                <div class="mb-3">
-                    <label for="lab_results" class="form-label">Laboratory Results</label>
-                    <textarea name="lab_results" id="lab_results" class="form-control" rows="3"
-                              placeholder="Lab test results and findings...">{{ old('lab_results') }}</textarea>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-3">
-            <div class="col-12">
-                <div class="mb-3">
-                    <label for="follow_up_instructions" class="form-label">Follow-up Instructions</label>
-                    <textarea name="follow_up_instructions" id="follow_up_instructions" class="form-control" rows="3"
-                              placeholder="Instructions for follow-up care...">{{ old('follow_up_instructions') }}</textarea>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-3">
-            <div class="col-12">
-                <div class="mb-3">
-                    <label for="notes" class="form-label">Additional Notes</label>
-                    <textarea name="notes" id="notes" class="form-control" rows="3"
-                              placeholder="Any additional notes or observations...">{{ old('notes') }}</textarea>
                 </div>
             </div>
         </div>

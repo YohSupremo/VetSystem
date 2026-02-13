@@ -36,7 +36,7 @@
                         <tr>
                             <td>
                                 <div>
-                                    <strong>{{ $vaccination->vaccination_date->format('M j, Y') }}</strong>
+                                    <strong>{{ $vaccination->administered_date->format('M j, Y') }}</strong>
                                     @if($vaccination->next_due_date)
                                         <br>
                                         <small class="text-muted">Next: {{ $vaccination->next_due_date->format('M j, Y') }}</small>

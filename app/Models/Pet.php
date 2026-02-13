@@ -3,10 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOneThrough;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
+
 class Pet extends Model
 {
     protected $fillable = [
@@ -18,21 +16,59 @@ class Pet extends Model
         'gender',
         'color',
         'weight',
-        'microchip_number',
+        'registration_number',
         'photo_path',
+        'qr_code_path',
+        'is_active',
+        'deceased_date',
     ];
 
     protected $casts = [
         'birth_date' => 'date',
+        'deceased_date' => 'date',
         'weight' => 'float',
+        'is_active' => 'boolean',
     ];
 
-    public function owner(): BelongsTo
+    public function owner()
     {
-        return $this->belongsTo(PetOwner::class);
+        return $this->belongsTo(PetOwner::class, 'owner_id');
     }
 
- 
+    public function chronicConditions()
+    {
+        return $this->hasMany(ChronicCondition::class);
+    }
+
+    public function petAllergies()
+    {
+        return $this->hasMany(PetAllergy::class);
+    }
+
+    public function surgeries()
+    {
+        return $this->hasMany(Surgery::class);
+    }
+
+    public function medicalRecords()
+    {
+        return $this->hasMany(MedicalRecord::class);
+    }
+
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
+    public function petVaccinations()
+    {
+        return $this->hasMany(PetVaccination::class);
+    }
+
+    public function cageAssignments()
+    {
+        return $this->hasMany(CageAssignment::class);
+    }
 
     public function getAgeAttribute()
     {
@@ -44,71 +80,51 @@ class Pet extends Model
 
     public function getPhotoUrlAttribute()
     {
-        if ($this->photo_path && !empty(trim($this->photo_path))) {
+        if ($this->photo_path && trim($this->photo_path) !== '') {
             $path = ltrim($this->photo_path, '/');
-            $publicPath = public_path($path);
-            if (file_exists($publicPath)) {
-                $version = $this->updated_at ? $this->updated_at->timestamp : time();
-                return asset($path) . '?v=' . $version;
-            }
-            $version = $this->updated_at ? $this->updated_at->timestamp : time();
-            return asset($path) . '?v=' . $version;
+            return asset($path) . '?v=' . ($this->updated_at ? $this->updated_at->timestamp : time());
         }
-        
-        // Default fallback - return a placeholder SVG
-        return 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect fill="#f0f0f0" width="200" height="200"/><text x="50%" y="50%" font-size="80" text-anchor="middle" dominant-baseline="middle" fill="#ccc">🐾</text></svg>');
+        return 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect fill="#f0f0f0" width="200" height="200"/><text x="50%" y="50%" font-size="80" text-anchor="middle" dominant-baseline="middle" fill="#ccc">?</text></svg>');
     }
 
-    public function surgeries(): HasMany
+    public function currentCage()
     {
-        return $this->hasMany(Surgery::class);
-    }
-
-    public function medicalRecords(): HasMany
-    {
-        return $this->hasMany(MedicalRecord::class);
-    }
-
-    public function appointments(): HasMany
-    {
-        return $this->hasMany(Appointment::class);
-    }
-
-    public function vaccinations(): HasMany
-    {
-        return $this->hasMany(Vaccination::class);
-    }
-
-    public function cageAssignments(): HasMany
-    {
-        return $this->hasMany(CageAssignment::class);
-    }
-
-    public function feedingSchedules(): HasMany {
-        return $this->hasMany(FeedingSchedule::class);
-    }
-
-    public function medicationIntructions(): HasMany {
-        return $this->hasMany(MedicationInstruction::class);
-    }
-    public function currentCage(): HasOneThrough {
         return $this->hasOneThrough(
-            Cage::class,          // The final model
-            CageAssignment::class, // The intermediate model
-            'pet_id',             // FK on CageAssignment
-            'id',                 // FK on Cage
-            'id',                 // Local key on Pet
-            'cage_id'             // Local key on CageAssignment
-        )->whereDate('start_date', '<=', now())
-         ->whereDate('end_date', '>=', now());
+            Cage::class,
+            CageAssignment::class,
+            'pet_id',
+            'id',
+            'id',
+            'cage_id'
+        )->whereDate('start_date', '<=', now())->whereDate('end_date', '>=', now());
     }
 
-     public function prescriptions(): HasMany {
-        return $this->hasMany(Prescription::class);
-    }
-
-    public function laboratoryTests(): HasMany
+    protected static function booted()
     {
-        return $this->hasMany(LaboratoryTest::class);
+        static::creating(function ($pet) {
+            if (empty($pet->registration_number)) {
+                $year = now()->year;
+                $prefix = "PET-{$year}-";
+
+                $last = DB::table('pets')
+                    ->where('registration_number', 'like', $prefix . '%')
+                    ->orderByDesc('id')
+                    ->value('registration_number');
+
+                $seq = 1;
+                if ($last) {
+                    $parts = explode('-', $last);
+                    $lastSeq = intval(end($parts));
+                    $seq = $lastSeq + 1;
+                } else {
+                    $count = DB::table('pets')->where('registration_number', 'like', $prefix . '%')->count();
+                    if ($count > 0) {
+                        $seq = $count + 1;
+                    }
+                }
+
+                $pet->registration_number = $prefix . str_pad($seq, 6, '0', STR_PAD_LEFT);
+            }
+        });
     }
 }

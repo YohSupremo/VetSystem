@@ -3,33 +3,45 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Prescription extends Model
 {
     protected $fillable = [
-        'pet_id',
         'medical_record_id',
-        'medication',
+        'medication_name',
         'dosage',
         'frequency',
         'duration_days',
+        'quantity',
         'instructions',
-        'prescribed_by',
+        'dispensed',
+        'dispensed_at',
+        'dispensed_by',
+        'refill_reminder_sent',
     ];
 
-    public function pet(): BelongsTo
+    protected $casts = [
+        'dispensed' => 'boolean',
+        'dispensed_at' => 'datetime',
+    ];
+
+    public function medicalRecord()
     {
-        return $this->belongsTo(Pet::class);
+        return $this->belongsTo(MedicalRecord::class);
     }
 
-    public function medicalRecord(): BelongsTo
+    public function dispensedBy()
     {
-        return $this->belongsTo(MedicalRecord::class, 'medical_record_id');
+        return $this->belongsTo(User::class, 'dispensed_by');
     }
 
-    public function prescribedBy(): BelongsTo
+    public function getPetAttribute()
     {
-        return $this->belongsTo(User::class, 'prescribed_by');
+        return $this->medicalRecord?->pet;
+    }
+
+    public function getPrescribedByAttribute()
+    {
+        return $this->medicalRecord?->veterinarian;
     }
 }

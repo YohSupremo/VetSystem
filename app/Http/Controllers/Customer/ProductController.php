@@ -23,7 +23,7 @@ class ProductController extends Controller
         }
 
         $user = User::where('username', $username)->first();
-        if (!$user || $user->role !== 'pet_owner') {
+        if (!$user || ($user->role !== 'pet_owner' && $user->role !== 'registered_user')) {
             return redirect('/login')->with('error', 'Access denied');
         }
 
@@ -43,7 +43,9 @@ class ProductController extends Controller
         view()->share('user', $user);
 
         $products = InventoryItem::query()
-            ->where('quantity', '>', 0)
+            ->whereHas('inventoryStocks', function($query) {
+                $query->where('quantity', '>', 0);
+            })
             ->orderBy('name')
             ->get();
 
@@ -78,13 +80,13 @@ class ProductController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $product = InventoryItem::findOrFail($productId);
+        $product = InventoryItem::with('inventoryStocks')->findOrFail($productId);
 
         if ($product->requires_prescription) {
             return back()->with('error', 'This product requires a prescription. Please consult your veterinarian.');
         }
 
-        if ($product->quantity <= 0) {
+        if ($product->inventoryStocks->sum('quantity') <= 0) {
             return back()->with('error', 'This product is currently out of stock.');
         }
 

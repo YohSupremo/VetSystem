@@ -166,14 +166,40 @@
             @endif
         </div>
 
-        <div class="emergency-contacts">
-            <h3><i class="fas fa-phone-alt"></i> Emergency Contacts (Optional)</h3>
-            <div id="emergencyContactsContainer">
-                <!-- Will be added dynamically -->
-            </div>
-            <button type="button" class="btn btn-add-contact" onclick="addEmergencyContact()">
-                <i class="fas fa-plus"></i> Add Emergency Contact
-            </button>
+        <div class="form-group {{ $errors->has('preferred_contact_method') ? 'error' : '' }}">
+            <label for="preferred_contact_method">Preferred Contact Method</label>
+            <select name="preferred_contact_method" id="preferred_contact_method">
+                <option value="">-- Select --</option>
+                <option value="email" {{ old('preferred_contact_method') == 'email' ? 'selected' : '' }}>Email</option>
+                <option value="sms" {{ old('preferred_contact_method') == 'sms' ? 'selected' : '' }}>SMS</option>
+            </select>
+            @if($errors->has('preferred_contact_method'))
+                <div class="error-message">{{ $errors->first('preferred_contact_method') }}</div>
+            @endif
+        </div>
+
+        <div class="form-group {{ $errors->has('emergency_contact_name') ? 'error' : '' }}">
+            <label for="emergency_contact_name">Emergency Contact Name</label>
+            <input type="text" name="emergency_contact_name" id="emergency_contact_name" value="{{ old('emergency_contact_name') }}" placeholder="Full name">
+            @if($errors->has('emergency_contact_name'))
+                <div class="error-message">{{ $errors->first('emergency_contact_name') }}</div>
+            @endif
+        </div>
+
+        <div class="form-group {{ $errors->has('emergency_contact_phone') ? 'error' : '' }}">
+            <label for="emergency_contact_phone">Emergency Contact Phone</label>
+            <input type="text" name="emergency_contact_phone" id="emergency_contact_phone" value="{{ old('emergency_contact_phone') }}" placeholder="Phone number">
+            @if($errors->has('emergency_contact_phone'))
+                <div class="error-message">{{ $errors->first('emergency_contact_phone') }}</div>
+            @endif
+        </div>
+
+        <div class="form-group {{ $errors->has('emergency_contact_relationship') ? 'error' : '' }}">
+            <label for="emergency_contact_relationship">Relationship</label>
+            <input type="text" name="emergency_contact_relationship" id="emergency_contact_relationship" value="{{ old('emergency_contact_relationship') }}" placeholder="e.g., spouse, neighbor">
+            @if($errors->has('emergency_contact_relationship'))
+                <div class="error-message">{{ $errors->first('emergency_contact_relationship') }}</div>
+            @endif
         </div>
 
         <div class="form-actions">
@@ -187,36 +213,7 @@
     </form>
 </div>
 
-<script>
-    let contactCount = 0;
-
-    function addEmergencyContact() {
-        const container = document.getElementById('emergencyContactsContainer');
-        const contactId = contactCount++;
-        
-        const html = `
-            <div class="contact-item" id="contact-${contactId}">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <input type="text" name="emergency_contacts[${contactId}][contact_name]" 
-                           placeholder="Contact Name" required>
-                    <input type="text" name="emergency_contacts[${contactId}][contact_number]" 
-                           placeholder="Phone Number" required>
-                    <button type="button" onclick="removeEmergencyContact(${contactId})" 
-                            class="btn btn-secondary" style="padding: 8px 12px;">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        container.insertAdjacentHTML('beforeend', html);
-    }
-
-    function removeEmergencyContact(contactId) {
-        const element = document.getElementById(`contact-${contactId}`);
-        if (element) {
-            element.remove();
-        }
-    }
-</script>
+    <script>
+        // No dynamic multiple emergency contacts: DB stores a single emergency contact on pet_owners
+    </script>
 @endsection

@@ -12,11 +12,13 @@ class GroomingService extends Model
         'description',
         'duration_minutes',
         'price',
+        'is_active',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'duration_minutes' => 'integer',
+        'is_active' => 'boolean',
     ];
 
     /**

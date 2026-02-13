@@ -123,39 +123,35 @@
                         <div class="patient-info">
                             <i class="fas fa-paw text-primary"></i>
                             <div>
-                                <strong>{{ $record->prescription->medicalRecord->pet->name }}</strong><br>
+                                <strong>{{ $record->medicalRecord->pet->name ?? 'N/A' }}</strong><br>
                                 <small class="text-muted">
-                                    {{ $record->prescription->medicalRecord->pet->owner->user->first_name }}
-                                    {{ $record->prescription->medicalRecord->pet->owner->user->last_name }}
+                                    {{ $record->medicalRecord->pet->owner->first_name ?? '' }}
+                                    {{ $record->medicalRecord->pet->owner->last_name ?? '' }}
                                 </small>
                             </div>
                         </div>
                     </td>
                     <td>
-                        <span class="medication-badge">{{ $record->inventoryItem->name }}</span>
-                        @if($record->inventoryItem->strength)
-                            <br><small class="text-muted">{{ $record->inventoryItem->strength }}</small>
+                        <span class="medication-badge">{{ $record->medication_name }}</span>
+                        @if($record->dosage)
+                            <br><small class="text-muted">{{ $record->dosage }}</small>
                         @endif
                     </td>
                     <td>
-                        <span class="badge bg-info">{{ $record->quantity_dispensed }}</span>
+                        <span class="badge bg-info">{{ $record->quantity }}</span>
                     </td>
                     <td>
-                        <span class="amount-badge">${{ number_format($record->total_price, 2) }}</span>
+                        <span class="text-muted">—</span>
                     </td>
                     <td>
-                        {{ $record->dispensedBy->first_name }} {{ $record->dispensedBy->last_name }}
+                        {{ $record->dispensedBy ? $record->dispensedBy->first_name . ' ' . $record->dispensedBy->last_name : 'N/A' }}
                     </td>
                     <td>
                         <div class="btn-group" role="group">
-                            <a href="{{ route('admin.pharmacy.show-prescription', $record->prescription_id) }}"
+                            <a href="{{ route('admin.pharmacy.show-prescription', $record->id) }}"
                                class="btn btn-sm btn-outline-primary" title="View Prescription">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <button class="btn btn-sm btn-outline-info" title="Print Receipt"
-                                    onclick="printReceipt({{ $record->id }})">
-                                <i class="fas fa-print"></i>
-                            </button>
                         </div>
                     </td>
                 </tr>
@@ -182,7 +178,7 @@
 <!-- Summary Statistics -->
 @if($dispensingRecords->count() > 0)
     <div class="row mt-4">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card text-center">
                 <div class="card-body">
                     <h5 class="card-title text-primary">{{ $dispensingRecords->total() }}</h5>
@@ -190,20 +186,10 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title text-success">
-                        ${{ number_format($dispensingRecords->sum('total_price'), 2) }}
-                    </h5>
-                    <p class="card-text">Total Revenue</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title text-info">{{ $dispensingRecords->sum('quantity_dispensed') }}</h5>
+                    <h5 class="card-title text-info">{{ $dispensingRecords->sum('quantity') }}</h5>
                     <p class="card-text">Total Units Dispensed</p>
                 </div>
             </div>
@@ -212,9 +198,9 @@
             <div class="card text-center">
                 <div class="card-body">
                     <h5 class="card-title text-warning">
-                        {{ $dispensingRecords->unique('prescription.medicalRecord.pet.owner_id')->count() }}
+                        {{ $dispensingRecords->map(fn($r) => $r->medicalRecord?->pet?->owner_id)->unique()->filter()->count() }}
                     </h5>
-                    <p class="card-text">Unique Patients Served</p>
+                    <p class="card-text">Unique Patients (this page)</p>
                 </div>
             </div>
         </div>

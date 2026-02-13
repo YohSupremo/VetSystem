@@ -50,7 +50,7 @@
                     </div>
                     <div class="info-item">
                         <label>Vaccination Date</label>
-                        <p>{{ $vaccination->vaccination_date ? \Carbon\Carbon::parse($vaccination->vaccination_date)->format('M d, Y') : 'N/A' }}</p>
+                        <p>{{ $vaccination->administered_date ? \Carbon\Carbon::parse($vaccination->administered_date)->format('M d, Y') : 'N/A' }}</p>
                     </div>
                     <div class="info-item">
                         <label>Next Due Date</label>

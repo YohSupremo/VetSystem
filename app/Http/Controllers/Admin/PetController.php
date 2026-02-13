@@ -44,7 +44,7 @@ class PetController extends Controller
             'gender' => 'required|in:male,female,unknown',
             'color' => 'nullable|string|max:100',
             'weight' => 'nullable|numeric|min:0',
-            'microchip_number' => 'nullable|string|unique:pets,microchip_number',
+            'registration_number' => 'nullable|string|unique:pets,registration_number',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -67,6 +67,12 @@ class PetController extends Controller
         }
 
         $pet = Pet::create($validated);
+
+        // Automatically change owner's user role to pet_owner since they now have pets
+        $pet->load('owner.user');
+        if ($pet->owner && $pet->owner->user) {
+            $pet->owner->user->update(['role' => 'pet_owner']);
+        }
 
         return redirect()->route('admin.pets.show', $pet)
             ->with('success', 'Pet created successfully!');
@@ -122,7 +128,7 @@ class PetController extends Controller
             'gender' => 'required|in:male,female,unknown',
             'color' => 'nullable|string|max:100',
             'weight' => 'nullable|numeric|min:0',
-            'microchip_number' => 'nullable|string|unique:pets,microchip_number,' . $pet->id,
+            'registration_number' => 'nullable|string|unique:pets,registration_number,' . $pet->id,
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -170,6 +176,11 @@ class PetController extends Controller
 
         $pet->delete();
 
+        $pet->load('owner.user');
+        if ($pet->owner && $pet->owner->user && $pet->owner->pets->count() === 0) {
+            $pet->owner->user->update(['role' => 'registered_user']);
+        }   
+
         return redirect()->route('admin.pets.index')
             ->with('success', 'Pet deleted successfully!');
     }
@@ -184,7 +195,7 @@ class PetController extends Controller
             ->where('name', 'like', "%{$query}%")
             ->orWhere('species', 'like', "%{$query}%")
             ->orWhere('breed', 'like', "%{$query}%")
-            ->orWhere('microchip_number', 'like', "%{$query}%")
+            ->orWhere('registration_number', 'like', "%{$query}%")
             ->get();
 
         return response()->json($pets->map(function ($pet) {

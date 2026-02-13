@@ -178,6 +178,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Pet Owners
     Route::resource('pet-owners', PetOwnerController::class);
     Route::get('/pet-owners/search', [PetOwnerController::class, 'search'])->name('pet-owners.search');
+
+    // Admin Users
+    Route::resource('users', App\Http\Controllers\Admin\UserController::class);
     
     // Pets
     Route::resource('pets', PetController::class);
@@ -300,8 +303,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 
     // Pharmacy
-    Route::resource('pharmacy', PharmacyController::class);
+
     Route::prefix('pharmacy')->name('pharmacy.')->group(function () {
+        Route::get('/', [PharmacyController::class, 'index'])->name('index');
+        Route::get('/create', [PharmacyController::class, 'create'])->name('create');
+        Route::post('/', [PharmacyController::class, 'store'])->name('store');
+        Route::get('/{id}', [PharmacyController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [PharmacyController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [PharmacyController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PharmacyController::class, 'destroy'])->name('destroy');
         Route::get('/dispense', [PharmacyController::class, 'dispenseForm'])->name('dispense');
         Route::post('/dispense', [PharmacyController::class, 'dispense'])->name('dispense.store');
         Route::get('/dispensing-history', [PharmacyController::class, 'dispensingHistory'])->name('dispensing.history');

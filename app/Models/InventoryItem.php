@@ -3,72 +3,75 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InventoryItem extends Model
 {
     protected $fillable = [
         'name',
-        'description',
         'category',
         'sku',
-        'manufacturer',
-        'batch_number',
-        'dosage_form',
-        'strength',
+        'description',
         'unit_price',
-        'requires_prescription',
-        'controlled_substance',
-        'storage_instructions',
-        'supplier_id',
-        'quantity',
-        'min_stock',
-        'expiry_date',
         'image_path',
+        'is_active',
     ];
 
     protected $casts = [
         'unit_price' => 'decimal:2',
-        'requires_prescription' => 'boolean',
-        'controlled_substance' => 'boolean',
-        'quantity' => 'integer',
-        'min_stock' => 'integer',
-        'expiry_date' => 'date',
+        'is_active' => 'boolean',
     ];
 
-    public function supplier(): BelongsTo
+    public function inventoryStocks()
     {
-        return $this->belongsTo(Supplier::class);
+        return $this->hasMany(InventoryStock::class, 'item_id');
     }
 
-    public function medicationDispensing(): HasMany
+    public function cartItems()
     {
-        return $this->hasMany(MedicationDispensing::class, 'inventory_item_id');
+        return $this->hasMany(CartItem::class, 'inventory_item_id');
     }
 
-    public function isLowStock(): bool
+    public function isLowStock()
     {
-        return $this->quantity <= $this->min_stock;
+        $total = $this->inventoryStocks->sum('quantity');
+        $min = $this->inventoryStocks->max('min_stock') ?? 10;
+        return $total <= $min;
     }
 
-    public function isExpired(): bool
+    public function isExpired()
     {
-        return $this->expiry_date && $this->expiry_date->isPast();
+        return $this->inventoryStocks->whereNotNull('expiry_date')
+            ->filter(fn ($s) => $s->expiry_date && $s->expiry_date->isPast())->isNotEmpty();
     }
 
-    public function isExpiringSoon(int $days = 10): bool
+    public function isExpiringSoon($days = 30)
     {
-        if (!$this->expiry_date) {
-            return false;
-        }
-
-        $daysUntilExpiry = now()->diffInDays($this->expiry_date, false);
-        return $daysUntilExpiry >= 0 && $daysUntilExpiry <= $days;
+        return $this->inventoryStocks->whereNotNull('expiry_date')
+            ->filter(fn ($s) => $s->expiry_date && $s->expiry_date->isFuture() && $s->expiry_date->lte(now()->addDays($days)))->isNotEmpty();
     }
 
-    public function requiresExpiryDate(): bool
+    public function alerts()
     {
-        return in_array($this->category, ['medicine', 'vaccine', 'food']);
+        return $this->hasMany(Alert::class, 'inventory_item_id');
+    }
+
+    public function hasAlerts()
+    {
+        return $this->alerts()->exists();
+    }
+
+    public function hasExpiredAlerts()
+    {
+        return $this->alerts()->where('type', 'expired')->exists();
+    }
+
+    public function hasLowStockAlerts()
+    {
+        return $this->alerts()->where('type', 'low_stock')->exists();
+    }
+
+    public function hasExpiringSoonAlerts()
+    {
+        return $this->alerts()->where('type', 'expiring_soon')->exists();
     }
 }

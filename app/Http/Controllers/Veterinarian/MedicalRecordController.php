@@ -164,7 +164,7 @@ class MedicalRecordController extends Controller
         if (!$veterinarian || !$veterinarian->isVeterinarian()) {
             return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
         }
-
+        
         if ($petId) {
             // Show medical records for specific pet
             $medicalRecords = MedicalRecord::where(function($query) use ($veterinarian, $petId) {
@@ -184,11 +184,11 @@ class MedicalRecordController extends Controller
                 $query->where('veterinarian_id', $veterinarian->id)
                       ->orWhereNull('veterinarian_id');
             })
-            ->with(['pet', 'pet.owner'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+                ->with(['pet', 'pet.owner'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
         }
-
+        
         return view('veterinarian.medical-records.index', compact('medicalRecords', 'petId'));
     }
 }

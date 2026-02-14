@@ -38,7 +38,7 @@
                             <tr>
                                 <td>
                                     <div style="font-weight:700; color: var(--dark-text);">
-                                        {{ $vaccination->vaccine_name }}
+                                        {{ $vaccination->vaccine->vaccine_name ?? 'N/A' }}
                                     </div>
                                     @if($vaccination->batch_number)
                                         <div style="font-size:12px; color: var(--light-text);">
@@ -46,9 +46,9 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td>{{ $vaccination->administered_date ? $vaccination->administered_date->format('M d, Y') : 'N/A' }}</td>
-                                <td>{{ $vaccination->next_due_date ? $vaccination->next_due_date->format('M d, Y') : 'N/A' }}</td>
-                                <td>{{ $vaccination->veterinarian ? 'Dr. ' . $vaccination->veterinarian->first_name . ' ' . $vaccination->veterinarian->last_name : 'N/A' }}</td>
+                                <td>{{ $vaccination->administered_date ? \Carbon\Carbon::parse($vaccination->administered_date)->format('M d, Y') : 'N/A' }}</td>
+                                <td>{{ $vaccination->next_due_date ? \Carbon\Carbon::parse($vaccination->next_due_date)->format('M d, Y') : 'N/A' }}</td>
+                                <td>{{ $vaccination->administeredBy ? 'Dr. ' . $vaccination->administeredBy->first_name . ' ' . $vaccination->administeredBy->last_name : 'N/A' }}</td>
                                 <td style="text-align:right;">
                                     <a href="{{ route('admin.vaccinations.show', $vaccination->id) }}" class="btn btn-secondary btn-sm">
                                         <i class="fas fa-eye"></i>
@@ -56,10 +56,10 @@
                                     <a href="{{ route('admin.vaccinations.edit', $vaccination->id) }}" class="btn btn-secondary btn-sm">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('admin.vaccinations.destroy', $vaccination->id) }}" method="POST" style="display:inline;">
+                                    <form action="{{ route('admin.vaccinations.destroy', $vaccination->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this vaccination record?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-secondary btn-sm" style="background:#ff6b6b; color:white;">
+                                        <button type="submit" class="btn btn-secondary btn-sm" style="background:#ff6b6b; color:white; border:none;">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>

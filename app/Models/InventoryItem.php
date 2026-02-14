@@ -74,4 +74,12 @@ class InventoryItem extends Model
     {
         return $this->alerts()->where('type', 'expiring_soon')->exists();
     }
+
+    /**
+     * Get total stock quantity across all inventory stock records
+     */
+    public function getTotalStockAttribute()
+    {
+        return $this->inventoryStocks()->sum('quantity');
+    }
 }

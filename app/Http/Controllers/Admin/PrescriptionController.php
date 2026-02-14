@@ -11,15 +11,54 @@ use Illuminate\Http\Request;
 class PrescriptionController extends BaseController
 {
     /**
-     * Display a listing of prescriptions.
+     * Display a listing of prescriptions - one entry per pet showing latest prescription.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $prescriptions = Prescription::with(['pet.owner.user', 'medicalRecord'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        $query = Prescription::with(['medicalRecord.pet.owner.user', 'medicalRecord.veterinarian']);
         
-        return view('admin.prescriptions.index', compact('prescriptions'));
+        // Apply filters
+        if ($request->filled('pet_id')) {
+            $query->whereHas('medicalRecord', function($q) use ($request) {
+                $q->where('pet_id', $request->pet_id);
+            });
+        }
+        
+        if ($request->filled('dispensed')) {
+            $query->where('dispensed', $request->dispensed);
+        }
+        
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        
+        $prescriptions = $query->orderBy('created_at', 'desc')->get();
+        
+        // Group prescriptions by pet (not medical record) to show one entry per pet
+        $groupedPrescriptions = $prescriptions->groupBy(function($prescription) {
+            return $prescription->medicalRecord->pet_id;
+        })->map(function($group) {
+            $latestPrescription = $group->first();
+            return [
+                'medical_record' => $latestPrescription->medicalRecord,
+                'latest_prescription' => $latestPrescription,
+                'count' => $group->count()
+            ];
+        })->sortByDesc(function($group) {
+            return $group['latest_prescription']->created_at;
+        });
+        
+        // Get all pets for filter dropdown
+        $pets = Pet::with('owner.user')
+            ->whereHas('medicalRecords.prescriptions')
+            ->orderBy('name')
+            ->get();
+        
+        return view('admin.prescriptions.index', compact('groupedPrescriptions', 'pets'));
     }
 
     /**
@@ -28,14 +67,18 @@ class PrescriptionController extends BaseController
      */
     public function create()
     {
-        $pets = Pet::with('owner')->get();
+        // Only show pets that have medical records
+        $pets = Pet::with('owner')
+            ->whereHas('medicalRecords')
+            ->get();
         $petId = request('pet_id');
         $medicalRecords = $petId
             ? MedicalRecord::where('pet_id', $petId)->with('pet')->orderBy('visit_date', 'desc')->get()
             : collect();
         
-        // Get medicines from inventory for selection
+        // Get medicines from inventory for selection, with stock information
         $medicines = InventoryItem::where('category', 'medicine')
+            ->with('inventoryStocks')
             ->orderBy('name')
             ->get();
         
@@ -48,20 +91,20 @@ class PrescriptionController extends BaseController
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'pet_id' => 'required|exists:pets,id',
-            'medical_record_id' => 'nullable|exists:medical_records,id',
+            'medical_record_id' => 'required|exists:medical_records,id',
             'inventory_item_id' => 'nullable|exists:inventory_items,id',
-            'medication' => 'required|string|max:150',
+            'medication_name' => 'required|string|max:150',
             'dosage' => 'required|string|max:100',
             'frequency' => 'required|string|max:100',
             'duration_days' => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1',
             'instructions' => 'nullable|string',
         ]);
 
         // If inventory item is selected, use its name as medication
         if ($request->filled('inventory_item_id')) {
             $inventoryItem = InventoryItem::find($request->inventory_item_id);
-            $validated['medication'] = $inventoryItem->name;
+            $validated['medication_name'] = $inventoryItem->name;
         }
 
         Prescription::create($validated);
@@ -75,7 +118,7 @@ class PrescriptionController extends BaseController
      */
     public function show(Prescription $prescription)
     {
-        $prescription->load('pet.owner.user', 'medicalRecord.veterinarian');
+        $prescription->load('medicalRecord.pet.owner.user', 'medicalRecord.veterinarian');
         return view('admin.prescriptions.show', compact('prescription'));
     }
 
@@ -85,15 +128,24 @@ class PrescriptionController extends BaseController
      */
     public function edit(Prescription $prescription)
     {
-        $prescription->load('pet.owner.user');
-        $pets = Pet::with('owner.user')->get();
-        $medicalRecords = MedicalRecord::where('pet_id', $prescription->pet_id)
-            ->with('pet', 'veterinarian')
-            ->orderBy('visit_date', 'desc')
+        $prescription->load('medicalRecord.pet.owner.user', 'medicalRecord.veterinarian');
+        // Only show pets that have medical records
+        $pets = Pet::with('owner.user')
+            ->whereHas('medicalRecords')
             ->get();
         
-        // Get medicines from inventory for selection
+        // Get pet_id through medical record relationship
+        $petId = $prescription->medicalRecord?->pet_id;
+        $medicalRecords = $petId 
+            ? MedicalRecord::where('pet_id', $petId)
+                ->with('pet', 'veterinarian')
+                ->orderBy('visit_date', 'desc')
+                ->get()
+            : collect();
+        
+        // Get medicines from inventory for selection, with stock information
         $medicines = InventoryItem::where('category', 'medicine')
+            ->with('inventoryStocks')
             ->orderBy('name')
             ->get();
         
@@ -106,20 +158,20 @@ class PrescriptionController extends BaseController
     public function update(Request $request, Prescription $prescription)
     {
         $validated = $request->validate([
-            'pet_id' => 'required|exists:pets,id',
-            'medical_record_id' => 'nullable|exists:medical_records,id',
+            'medical_record_id' => 'required|exists:medical_records,id',
             'inventory_item_id' => 'nullable|exists:inventory_items,id',
-            'medication' => 'required|string|max:150',
+            'medication_name' => 'required|string|max:150',
             'dosage' => 'required|string|max:100',
             'frequency' => 'required|string|max:100',
             'duration_days' => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1',
             'instructions' => 'nullable|string',
         ]);
 
         // If inventory item is selected, use its name as medication
         if ($request->filled('inventory_item_id')) {
             $inventoryItem = InventoryItem::find($request->inventory_item_id);
-            $validated['medication'] = $inventoryItem->name;
+            $validated['medication_name'] = $inventoryItem->name;
         }
 
         $prescription->update($validated);
@@ -139,16 +191,30 @@ class PrescriptionController extends BaseController
     }
 
     /**
-     * Display prescriptions for a specific pet.
+     * Display prescriptions for a specific pet grouped by medical records.
      */
     public function byPet($petId)
     {
         $pet = Pet::with('owner.user')->findOrFail($petId);
-        $prescriptions = Prescription::where('pet_id', $petId)
-            ->with('medicalRecord')
+        
+        $prescriptions = Prescription::whereHas('medicalRecord', function($query) use ($petId) {
+                $query->where('pet_id', $petId);
+            })
+            ->with(['medicalRecord.veterinarian'])
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->get();
 
-        return view('admin.prescriptions.pet', compact('pet', 'prescriptions'));
+        // Group prescriptions by medical record
+        $groupedPrescriptions = $prescriptions->groupBy('medical_record_id')->map(function($group) {
+            return [
+                'medical_record' => $group->first()->medicalRecord,
+                'prescriptions' => $group->sortByDesc('created_at'),
+                'count' => $group->count()
+            ];
+        })->sortByDesc(function($group) {
+            return $group['prescriptions']->first()->created_at;
+        });
+
+        return view('admin.prescriptions.pet', compact('pet', 'groupedPrescriptions'));
     }
 }

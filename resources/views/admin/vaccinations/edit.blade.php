@@ -31,9 +31,18 @@
                 <h3>Vaccination Details</h3>
                 
                 <div class="form-group">
-                    <label>Vaccine Name <span class="text-danger">*</span></label>
-                    <input type="text" name="vaccine_name" class="form-control" value="{{ $vaccination->vaccine_name }}" required>
-                    @error('vaccine_name')<span class="text-danger">{{ $message }}</span>@enderror
+                    <label>Vaccine <span class="text-danger">*</span></label>
+                    <select name="vaccine_id" class="form-control" required>
+                        <option value="">Choose a vaccine...</option>
+                        @forelse($vaccines as $vaccine)
+                            <option value="{{ $vaccine->id }}" {{ $vaccination->vaccine_id == $vaccine->id ? 'selected' : '' }}>
+                                {{ $vaccine->vaccine_name }}{{ $vaccine->manufacturer ? ' (' . $vaccine->manufacturer . ')' : '' }}
+                            </option>
+                        @empty
+                            <option value="">No vaccines available</option>
+                        @endforelse
+                    </select>
+                    @error('vaccine_id')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-row">
@@ -50,17 +59,30 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Veterinarian</label>
-                    <select name="veterinarian_id" class="form-control">
+                    <label>Veterinarian <span class="text-danger">*</span></label>
+                    <select name="administered_by" class="form-control" required>
                         <option value="">Select veterinarian...</option>
                         @forelse($veterinarians as $vet)
-                            <option value="{{ $vet->id }}" {{ $vaccination->veterinarian_id == $vet->id ? 'selected' : '' }}>
+                            <option value="{{ $vet->id }}" {{ $vaccination->administered_by == $vet->id ? 'selected' : '' }}>
                                 Dr. {{ $vet->first_name }} {{ $vet->last_name }}
                             </option>
                         @empty
                             <option value="">No veterinarians available</option>
                         @endforelse
                     </select>
+                    @error('administered_by')<span class="text-danger">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="form-group">
+                    <label>Dose Number</label>
+                    <select name="dose_number" class="form-control">
+                        <option value="">Select dose...</option>
+                        <option value="1" {{ $vaccination->dose_number == 1 ? 'selected' : '' }}>1st Dose (Initial)</option>
+                        <option value="2" {{ $vaccination->dose_number == 2 ? 'selected' : '' }}>2nd Dose</option>
+                        <option value="3" {{ $vaccination->dose_number == 3 ? 'selected' : '' }}>3rd Dose</option>
+                        <option value="4" {{ $vaccination->dose_number == 4 ? 'selected' : '' }}>Booster</option>
+                    </select>
+                    @error('dose_number')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-row">
@@ -69,30 +91,15 @@
                         <input type="text" name="batch_number" class="form-control" value="{{ $vaccination->batch_number }}">
                     </div>
                     <div class="form-group">
-                        <label>Route of Administration</label>
-                        <select name="route_of_administration" class="form-control">
-                            <option value="">Select route...</option>
-                            <option value="intramuscular" {{ $vaccination->route_of_administration === 'intramuscular' ? 'selected' : '' }}>Intramuscular (IM)</option>
-                            <option value="subcutaneous" {{ $vaccination->route_of_administration === 'subcutaneous' ? 'selected' : '' }}>Subcutaneous (SC)</option>
-                            <option value="intranasal" {{ $vaccination->route_of_administration === 'intranasal' ? 'selected' : '' }}>Intranasal</option>
-                            <option value="oral" {{ $vaccination->route_of_administration === 'oral' ? 'selected' : '' }}>Oral</option>
-                        </select>
+                        <label>Expiry Date</label>
+                        <input type="date" name="expiry_date" class="form-control" value="{{ $vaccination->expiry_date ? $vaccination->expiry_date->format('Y-m-d') : '' }}">
+                        @error('expiry_date')<span class="text-danger">{{ $message }}</span>@enderror
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Site of Injection</label>
-                    <input type="text" name="site_of_injection" class="form-control" value="{{ $vaccination->site_of_injection }}">
-                </div>
-
-                <div class="form-group">
-                    <label>Adverse Reactions/Effects</label>
-                    <textarea name="adverse_reactions" class="form-control" rows="3">{{ $vaccination->adverse_reactions }}</textarea>
-                </div>
-
-                <div class="form-group">
                     <label>Notes</label>
-                    <textarea name="notes" class="form-control" rows="3">{{ $vaccination->notes }}</textarea>
+                    <textarea name="notes" class="form-control" rows="4">{{ $vaccination->notes }}</textarea>
                 </div>
             </div>
 

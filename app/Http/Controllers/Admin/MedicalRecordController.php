@@ -11,158 +11,169 @@ use Illuminate\Http\Request;
 class MedicalRecordController extends Controller
 {
     /**
-     * Display a listing of medical records.
+     * Display a listing of medical records - one latest record per pet.
      */
     public function index()
     {
-        $medicalRecords = MedicalRecord::with('pet', 'veterinarian')->paginate(15);
-        return view('admin.medical-records.index', compact('medicalRecords'));
+        // Get IDs of the latest record for each pet
+        $latestIds = MedicalRecord::selectRaw('MAX(id) as id')
+            ->groupBy('pet_id')
+            ->pluck('id');
+
+        // Fetch the full records for these IDs
+        $records = MedicalRecord::whereIn('id', $latestIds)
+            ->with(['pet.owner.user', 'veterinarian'])
+            ->orderBy('visit_date', 'desc')
+            ->paginate(15);
+        
+        return view('admin.medical-records.index', compact('records'));
     }
 
-    /**
-     * Show the form for creating a new medical record.
-     */
     public function create(Request $request)
     {
         $pets = Pet::with('owner')->get();
         $veterinarians = User::where('role', 'veterinarian')->where('is_active', 1)->get();
+        $appointments = \App\Models\Appointment::where('status', '!=', 'completed')
+            ->orderBy('appointment_date', 'desc')
+            ->get();
         $selectedPetId = $request->get('pet_id');
-        return view('admin.medical-records.create', compact('pets', 'veterinarians', 'selectedPetId'));
+        
+        return view('admin.medical-records.create', compact('pets', 'veterinarians', 'appointments', 'selectedPetId'));
     }
 
-    /**
-     * Store a newly created medical record in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
             'veterinarian_id' => 'required|exists:users,id',
+            'appointment_id' => 'nullable|exists:appointments,id',
             'visit_date' => 'required|date',
             'complaint' => 'required|string',
             'examination_notes' => 'nullable|string',
-            'diagnosis' => 'nullable|string',
-            'treatment_plan' => 'nullable|string',
-            'follow_up_date' => 'nullable|date',
-            'temperature' => 'nullable|numeric',
-            'heart_rate' => 'nullable|integer',
-            'respiratory_rate' => 'nullable|integer',
+            'temperature' => 'nullable|numeric|between:30,45',
+            'heart_rate' => 'nullable|integer|min:0',
+            'respiratory_rate' => 'nullable|integer|min:0',
             'blood_pressure_systolic' => 'nullable|integer',
             'blood_pressure_diastolic' => 'nullable|integer',
-            'weight' => 'nullable|numeric',
+            'diagnosis' => 'nullable|string',
+            'treatment_plan' => 'nullable|string',
+            'follow_up_date' => 'nullable|date|after_or_equal:visit_date',
+            'weight' => 'nullable|numeric|min:0',
             'other_vitals' => 'nullable|string',
         ]);
 
-        // Only check for existing records if NOT coming from pet history page
-        // (when pet_id is pre-selected in the URL, user is intentionally adding another record)
-        $existingRecord = MedicalRecord::where('pet_id', $validated['pet_id'])
-            ->latest()
-            ->first();
-
-        if ($existingRecord) {
-            $pet = Pet::find($validated['pet_id']);
-            return redirect()->route('admin.medical-records.index')
-                ->with('warning', 'This pet already has a medical record. Please view the pet\'s history to see all records.')
-                ->with('pet_id', $validated['pet_id'])
-                ->with('pet_name', $pet->name);
+        // Combine BP
+        $bloodPressure = null;
+        if ($request->blood_pressure_systolic && $request->blood_pressure_diastolic) {
+            $bloodPressure = $request->blood_pressure_systolic . '/' . $request->blood_pressure_diastolic;
         }
 
-        $vitalSigns = [
-            'temperature' => $request->temperature,
-            'heart_rate' => $request->heart_rate,
-            'respiratory_rate' => $request->respiratory_rate,
-            'blood_pressure' => $request->blood_pressure_systolic && $request->blood_pressure_diastolic 
-                ? $request->blood_pressure_systolic . '/' . $request->blood_pressure_diastolic 
-                : null,
-            'weight' => $request->weight,
-            'other_vitals' => $request->other_vitals,
-        ];
+        // Update Pet Weight if provided
+        if ($request->filled('weight')) {
+            $pet = Pet::find($validated['pet_id']);
+            if ($pet) {
+                $pet->update(['weight' => $request->weight]);
+            }
+        }
+
+        // Append other_vitals to examination_notes if present
+        $examNotes = $validated['examination_notes'] ?? '';
+        if ($request->filled('other_vitals')) {
+            $examNotes .= "\n\nOther Vitals: " . $request->other_vitals;
+        }
 
         MedicalRecord::create([
             'pet_id' => $validated['pet_id'],
             'veterinarian_id' => $validated['veterinarian_id'],
+            'appointment_id' => $validated['appointment_id'],
             'visit_date' => $validated['visit_date'],
             'complaint' => $validated['complaint'],
-            'examination_notes' => $validated['examination_notes'] ?? null,
-            'diagnosis' => $validated['diagnosis'] ?? null,
-            'treatment_plan' => $validated['treatment_plan'] ?? null,
-            'follow_up_date' => $validated['follow_up_date'] ?? null,
-            'vital_signs' => $vitalSigns,
+            'examination_notes' => $examNotes,
+            'temperature' => $validated['temperature'],
+            'heart_rate' => $validated['heart_rate'],
+            'respiratory_rate' => $validated['respiratory_rate'],
+            'blood_pressure' => $bloodPressure,
+            'diagnosis' => $validated['diagnosis'],
+            'treatment_plan' => $validated['treatment_plan'],
+            'follow_up_date' => $validated['follow_up_date'],
         ]);
-
-        // If pet had existing records, redirect to pet history; otherwise go to index
-        if ($existingRecord) {
-            $pet = Pet::find($validated['pet_id']);
-            return redirect()->route('admin.medical-records.pet', $validated['pet_id'])
-                ->with('success', 'Medical record added to ' . $pet->name . '\'s history!');
-        }
 
         return redirect()->route('admin.medical-records.index')
             ->with('success', 'Medical record created successfully!');
     }
 
-    /**
-     * Display the specified medical record.
-     */
     public function show(MedicalRecord $medicalRecord)
     {
-        $record = $medicalRecord->load('pet', 'veterinarian', 'prescriptions');
+        $record = $medicalRecord->load(['pet', 'veterinarian', 'appointment', 'prescriptions']);
         return view('admin.medical-records.show', compact('record'));
     }
 
-    /**
-     * Show the form for editing the specified medical record.
-     */
     public function edit(MedicalRecord $medicalRecord)
     {
         $record = $medicalRecord;
         $veterinarians = User::where('role', 'veterinarian')->where('is_active', 1)->get();
-        $vitalSigns = $record->vital_signs ?? [];
-        return view('admin.medical-records.edit', compact('record', 'veterinarians', 'vitalSigns'));
+        $appointments = \App\Models\Appointment::orderBy('appointment_date', 'desc')->get();
+        
+        // Parse BP if exists
+        $bpSystolic = '';
+        $bpDiastolic = '';
+        if ($record->blood_pressure && strpos($record->blood_pressure, '/') !== false) {
+            [$bpSystolic, $bpDiastolic] = explode('/', $record->blood_pressure);
+        }
+
+        return view('admin.medical-records.edit', compact('record', 'veterinarians', 'appointments', 'bpSystolic', 'bpDiastolic'));
     }
 
-    /**
-     * Update the specified medical record in storage.
-     */
     public function update(Request $request, MedicalRecord $medicalRecord)
     {
         $validated = $request->validate([
             'veterinarian_id' => 'required|exists:users,id',
+            'appointment_id' => 'nullable|exists:appointments,id',
             'visit_date' => 'required|date',
             'complaint' => 'required|string',
             'examination_notes' => 'nullable|string',
-            'diagnosis' => 'nullable|string',
-            'treatment_plan' => 'nullable|string',
-            'follow_up_date' => 'nullable|date',
-            'temperature' => 'nullable|numeric',
-            'heart_rate' => 'nullable|integer',
-            'respiratory_rate' => 'nullable|integer',
+            'temperature' => 'nullable|numeric|between:30,45',
+            'heart_rate' => 'nullable|integer|min:0',
+            'respiratory_rate' => 'nullable|integer|min:0',
             'blood_pressure_systolic' => 'nullable|integer',
             'blood_pressure_diastolic' => 'nullable|integer',
-            'weight' => 'nullable|numeric',
+            'diagnosis' => 'nullable|string',
+            'treatment_plan' => 'nullable|string',
+            'follow_up_date' => 'nullable|date|after_or_equal:visit_date',
+            'weight' => 'nullable|numeric|min:0',
             'other_vitals' => 'nullable|string',
         ]);
 
-        $vitalSigns = [
-            'temperature' => $request->temperature,
-            'heart_rate' => $request->heart_rate,
-            'respiratory_rate' => $request->respiratory_rate,
-            'blood_pressure' => $request->blood_pressure_systolic && $request->blood_pressure_diastolic 
-                ? $request->blood_pressure_systolic . '/' . $request->blood_pressure_diastolic 
-                : null,
-            'weight' => $request->weight,
-            'other_vitals' => $request->other_vitals,
-        ];
+        // Combine BP
+        $bloodPressure = null;
+        if ($request->blood_pressure_systolic && $request->blood_pressure_diastolic) {
+            $bloodPressure = $request->blood_pressure_systolic . '/' . $request->blood_pressure_diastolic;
+        }
+
+        // Update Pet Weight if provided
+        if ($request->filled('weight')) {
+            $medicalRecord->pet->update(['weight' => $request->weight]);
+        }
+
+        // Append other_vitals to examination_notes if present
+        $examNotes = $validated['examination_notes'] ?? '';
+        if ($request->filled('other_vitals')) {
+            $examNotes .= "\n\nOther Vitals: " . $request->other_vitals;
+        }
 
         $medicalRecord->update([
             'veterinarian_id' => $validated['veterinarian_id'],
+            'appointment_id' => $validated['appointment_id'],
             'visit_date' => $validated['visit_date'],
             'complaint' => $validated['complaint'],
-            'examination_notes' => $validated['examination_notes'] ?? null,
-            'diagnosis' => $validated['diagnosis'] ?? null,
-            'treatment_plan' => $validated['treatment_plan'] ?? null,
-            'follow_up_date' => $validated['follow_up_date'] ?? null,
-            'vital_signs' => $vitalSigns,
+            'examination_notes' => $examNotes,
+            'temperature' => $validated['temperature'],
+            'heart_rate' => $validated['heart_rate'],
+            'respiratory_rate' => $validated['respiratory_rate'],
+            'blood_pressure' => $bloodPressure,
+            'diagnosis' => $validated['diagnosis'],
+            'treatment_plan' => $validated['treatment_plan'],
+            'follow_up_date' => $validated['follow_up_date'],
         ]);
 
         return redirect()->route('admin.medical-records.show', $medicalRecord->id)

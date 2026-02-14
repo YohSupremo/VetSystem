@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'pet_id',
         'veterinarian_id',
@@ -25,35 +28,24 @@ class Appointment extends Model
         'appointment_date' => 'datetime',
         'arrival_time' => 'datetime',
         'reminder_sent_at' => 'datetime',
+        'reminder_sent' => 'boolean',
+        'queue_priority' => 'integer',
+        'estimated_wait_time' => 'integer',
     ];
 
+    /**
+     * Get the pet that owns the appointment.
+     */
     public function pet()
     {
         return $this->belongsTo(Pet::class);
     }
 
+    /**
+     * Get the veterinarian assigned to the appointment.
+     */
     public function veterinarian()
     {
         return $this->belongsTo(User::class, 'veterinarian_id');
-    }
-
-    public function groomingAppointment()
-    {
-        return $this->hasOne(GroomingAppointment::class);
-    }
-
-    public function scopeScheduled($query)
-    {
-        return $query->where('status', 'scheduled');
-    }
-
-    public function scopeForDate($query, $date)
-    {
-        return $query->whereDate('appointment_date', $date);
-    }
-
-    public function scopeForVeterinarian($query, $veterinarianId)
-    {
-        return $query->where('veterinarian_id', $veterinarianId);
     }
 }

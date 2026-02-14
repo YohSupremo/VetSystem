@@ -32,7 +32,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($medicalRecords as $record)
+                                @forelse($records as $record)
                                     <tr>
                                         <td>{{ $record->id }}</td>
                                         <td>
@@ -60,6 +60,10 @@
                                         <td>{{ $record->diagnosis ? Str::limit($record->diagnosis, 40) : '-' }}</td>
                                         <td>
                                             <div class="btn-group" role="group">
+                                                <a href="{{ route('admin.medical-records.pet', $record->pet_id) }}" 
+                                                   class="btn btn-sm btn-primary" title="View Full History">
+                                                    <i class="fas fa-history"></i>
+                                                </a>
                                                 <a href="{{ route('admin.medical-records.show', $record->id) }}" 
                                                    class="btn btn-sm btn-info" title="View Details">
                                                     <i class="fas fa-eye"></i>
@@ -67,10 +71,6 @@
                                                 <a href="{{ route('admin.medical-records.edit', $record->id) }}" 
                                                    class="btn btn-sm btn-warning" title="Edit">
                                                     <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a href="{{ route('admin.medical-records.pet', $record->pet_id) }}" 
-                                                   class="btn btn-sm btn-secondary" title="Medical History">
-                                                    <i class="fas fa-history"></i>
                                                 </a>
                                                 <form action="{{ route('admin.medical-records.destroy', $record->id) }}" 
                                                       method="POST" 
@@ -100,16 +100,11 @@
                         </table>
                     </div>
                     
-                    @if($medicalRecords->hasPages())
+                    @if($records->hasPages())
                         <div class="mt-4">
-                            {{ $medicalRecords->links() }}
+                            {{ $records->links() }}
                         </div>
                     @endif
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <style>
 .card {

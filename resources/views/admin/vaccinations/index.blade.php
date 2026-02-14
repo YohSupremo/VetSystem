@@ -7,9 +7,14 @@
 <div class="card">
     <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
         <h3 style="margin:0;"><i class="fas fa-syringe"></i> Vaccination Records</h3>
-        <a href="{{ route('admin.vaccinations.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add Vaccination
-        </a>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ route('admin.vaccines.index') }}" class="btn btn-success">
+                <i class="fas fa-vial"></i> Manage Vaccines
+            </a>
+            <a href="{{ route('admin.vaccinations.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Vaccination
+            </a>
+        </div>
     </div>
 
     <div class="card-body">

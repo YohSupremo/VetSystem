@@ -170,6 +170,39 @@
         font-size: 0.9rem;
         color: #6c757d;
     }
+    .item-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border: 1px solid #dee2e6;
+        transition: all 0.2s ease;
+    }
+    .item-card:last-child {
+        margin-bottom: 0;
+    }
+    .item-card:hover {
+        background: #fff;
+        border-color: #adb5bd;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .item-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .item-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .item-details > div {
+        padding: 0.25rem 0;
+    }
     .stock-status {
         font-size: 0.9rem;
         padding: 0.25rem 0.5rem;
@@ -244,12 +277,17 @@
                             </a>
                         </div>
                     </div>
-                    <div class="medication-info">
+                    <div>
                         @foreach($lowStockItems as $item)
-                            <div><strong>{{ $item->name }}</strong> ({{ $item->sku ?? 'N/A' }})</div>
-                            <div><strong>Current Stock:</strong> {{ $item->quantity }}</div>
-                            <div><strong>Min Stock:</strong> {{ $item->min_stock }}</div>
-                            <div><strong>Location:</strong> {{ $item->location ?? 'N/A' }}</div>
+                            <div class="item-card">
+                                <span class="item-name">{{ $item->name }}</span>
+                                <div class="item-details">
+                                    <div><strong>SKU:</strong> {{ $item->sku ?? 'N/A' }}</div>
+                                    <div><strong>Current Stock:</strong> <span style="color: #dc3545; font-weight: 600;">{{ $item->quantity }}</span></div>
+                                    <div><strong>Min Stock:</strong> {{ $item->min_stock }}</div>
+                                    <div><strong>Location:</strong> {{ $item->location ?? 'N/A' }}</div>
+                                </div>
+                            </div>
                         @endforeach
                     </div>
                 </div>
@@ -272,11 +310,16 @@
                             </a>
                         </div>
                     </div>
-                    <div class="medication-info">
+                    <div>
                         @foreach($expiredItems as $item)
-                            <div><strong>{{ $item->name }}</strong> ({{ $item->sku ?? 'N/A' }})</div>
-                            <div><strong>Expired Date:</strong> {{ $item->expiry_date->format('M j, Y') }}</div>
-                            <div><strong>Location:</strong> {{ $item->location ?? 'N/A' }}</div>
+                            <div class="item-card">
+                                <span class="item-name">{{ $item->name }}</span>
+                                <div class="item-details">
+                                    <div><strong>SKU:</strong> {{ $item->sku ?? 'N/A' }}</div>
+                                    <div><strong>Expired Date:</strong> <span style="color: #dc3545; font-weight: 600;">{{ $item->expiry_date?->format('M j, Y') ?? 'N/A' }}</span></div>
+                                    <div><strong>Location:</strong> {{ $item->location ?? 'N/A' }}</div>
+                                </div>
+                            </div>
                         @endforeach
                     </div>
                 </div>
@@ -299,28 +342,27 @@
                             </a>
                         </div>
                     </div>
-                    <div class="medication-info">
+                    <div>
                         @foreach($expiringSoonItems as $item)
-                            <div><strong>{{ $item->name }}</strong> ({{ $item->sku ?? 'N/A' }})</div>
-                            <div><strong>Expires:</strong> {{ $item->expiry_date->format('M j, Y') }}</div>
-                            <div><strong>Days Until Expiry:</strong> {{ $item->expiry_date->diffInDays(now()) }} days</div>
-                            <div><strong>Location:</strong> {{ $item->location ?? 'N/A' }}</div>
-                            <div><strong>Stock Status:</strong>
-                                <span class="stock-status status-expiring-soon">
-                                    Expiring Soon
-                                </span>
+                            <div class="item-card">
+                                <span class="item-name">{{ $item->name }}</span>
+                                <div class="item-details">
+                                    <div><strong>SKU:</strong> {{ $item->sku ?? 'N/A' }}</div>
+                                    <div><strong>Expires:</strong> <span style="color: #fd7e14; font-weight: 600;">{{ $item->expiry_date?->format('M j, Y') ?? 'N/A' }}</span></div>
+                                    <div><strong>Days Until Expiry:</strong> {{ $item->expiry_date ? $item->expiry_date->diffInDays(now()) . ' days' : 'N/A' }}</div>
+                                    <div><strong>Location:</strong> {{ $item->location ?? 'N/A' }}</div>
+                                    <div style="grid-column: 1 / -1;"><strong>Status:</strong>
+                                        <span class="stock-status status-expiring-soon">
+                                            Expiring Soon
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         @endforeach
                     </div>
                 </div>
             @endif
-        @else
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>No medications found</strong>
-                <p>There are no medications in the inventory to check for alerts.</p>
-            </div>
-        @endforelse
+        @endif
     </div>
 </div>
 @endsection

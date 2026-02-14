@@ -130,30 +130,22 @@
 
     <!-- Stats Row -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="stats-card">
                 <div class="stat-value">{{ $stats['waiting'] ?? 0 }}</div>
                 <div class="stat-label">Waiting</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="stats-card">
                 <div class="stat-value">{{ $stats['in_progress'] ?? 0 }}</div>
                 <div class="stat-label">In Progress</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="stats-card">
                 <div class="stat-value">{{ $stats['completed'] ?? 0 }}</div>
                 <div class="stat-label">Completed Today</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card">
-                <div class="stat-value">
-                    {{ $stats['average_wait_time'] ?? 'No data' }}
-                </div>
-                <div class="stat-label">Avg. Wait Time</div>
             </div>
         </div>
     </div>
@@ -161,12 +153,34 @@
     <div class="queue-container">
         <!-- Waiting Column -->
         <div class="queue-column">
-            <h3>Waiting <span class="badge badge-primary">{{ $appointments['scheduled']->count() }}</span></h3>
+            <h3>Waiting <span class="badge badge-primary">{{ $appointments['waiting']->count() }}</span></h3>
             <div>
-                @forelse($appointments['scheduled'] as $appointment)
-                    @include('admin.queue.partials.appointment-card', ['appointment' => $appointment])
+                @forelse($appointments['waiting'] as $appointment)
+                    <div class="queue-item">
+                        <div class="queue-item-header">
+                            <span class="pet-name">{{ $appointment->pet->name ?? 'Unknown' }}</span>
+                            <span class="queue-number">#{{ $appointment->queue_priority ?? 0 }}</span>
+                        </div>
+                        <div class="pet-type">{{ ucfirst($appointment->pet->species ?? 'N/A') }}</div>
+                        <div class="pet-type">Type: {{ ucfirst(str_replace('_', ' ', $appointment->type)) }}</div>
+                        @if($appointment->arrival_time)
+                            <div class="wait-time">
+                                Arrived: {{ $appointment->arrival_time->format('h:i A') }}
+                                ({{ now()->diffInMinutes($appointment->arrival_time) }} min ago)
+                            </div>
+                        @endif
+                        <div class="action-buttons">
+                            <form method="POST" action="{{ route('admin.queue.status.update', $appointment->id) }}" style="display: inline;">
+                                @csrf
+                                @method('PUT')
+                                <input type="hidden" name="status" value="in_progress">
+                                <button type="submit" class="btn btn-sm btn-primary">Start</button>
+                            </form>
+                            <a href="{{ route('admin.appointments.show', $appointment->id) }}" class="btn btn-sm btn-secondary">View</a>
+                        </div>
+                    </div>
                 @empty
-                    <p class="text-muted small mb-0">No scheduled appointments.</p>
+                    <p class="text-muted small mb-0">No waiting appointments.</p>
                 @endforelse
             </div>
         </div>
@@ -176,7 +190,28 @@
             <h3>In Progress <span class="badge badge-info">{{ $appointments['in_progress']->count() }}</span></h3>
             <div>
                 @forelse($appointments['in_progress'] as $appointment)
-                    @include('admin.queue.partials.appointment-card', ['appointment' => $appointment])
+                    <div class="queue-item in-progress">
+                        <div class="queue-item-header">
+                            <span class="pet-name">{{ $appointment->pet->name ?? 'Unknown' }}</span>
+                            <span class="queue-number">#{{ $appointment->queue_priority ?? 0 }}</span>
+                        </div>
+                        <div class="pet-type">{{ ucfirst($appointment->pet->species ?? 'N/A') }}</div>
+                        <div class="pet-type">Type: {{ ucfirst(str_replace('_', ' ', $appointment->type)) }}</div>
+                        @if($appointment->arrival_time)
+                            <div class="wait-time">
+                                Started: {{ $appointment->arrival_time->format('h:i A') }}
+                            </div>
+                        @endif
+                        <div class="action-buttons">
+                            <form method="POST" action="{{ route('admin.queue.status.update', $appointment->id) }}" style="display: inline;">
+                                @csrf
+                                @method('PUT')
+                                <input type="hidden" name="status" value="completed">
+                                <button type="submit" class="btn btn-sm btn-success">Complete</button>
+                            </form>
+                            <a href="{{ route('admin.appointments.show', $appointment->id) }}" class="btn btn-sm btn-secondary">View</a>
+                        </div>
+                    </div>
                 @empty
                     <p class="text-muted small mb-0">No appointments in progress.</p>
                 @endforelse
@@ -188,7 +223,17 @@
             <h3>Completed <span class="badge badge-secondary">{{ $appointments['completed']->count() }}</span></h3>
             <div>
                 @forelse($appointments['completed'] as $appointment)
-                    @include('admin.queue.partials.appointment-card', ['appointment' => $appointment])
+                    <div class="queue-item completed">
+                        <div class="queue-item-header">
+                            <span class="pet-name">{{ $appointment->pet->name ?? 'Unknown' }}</span>
+                            <span class="queue-number">#{{ $appointment->queue_priority ?? 0 }}</span>
+                        </div>
+                        <div class="pet-type">{{ ucfirst($appointment->pet->species ?? 'N/A') }}</div>
+                        <div class="pet-type">Type: {{ ucfirst(str_replace('_', ' ', $appointment->type)) }}</div>
+                        <div class="action-buttons">
+                            <a href="{{ route('admin.appointments.show', $appointment->id) }}" class="btn btn-sm btn-secondary">View</a>
+                        </div>
+                    </div>
                 @empty
                     <p class="text-muted small mb-0">No completed appointments yet.</p>
                 @endforelse

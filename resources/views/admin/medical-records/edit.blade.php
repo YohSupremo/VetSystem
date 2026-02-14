@@ -28,7 +28,7 @@
 
                 <div class="form-group">
                     <label>Veterinarian <span class="text-danger">*</span></label>
-                    <select name="veterinarian_id" class="form-control" required>
+                    <select name="veterinarian_id" class="form-control">
                         <option value="">Choose veterinarian...</option>
                         @forelse($veterinarians as $vet)
                             <option value="{{ $vet->id }}" {{ $record->veterinarian_id == $vet->id ? 'selected' : '' }}>
@@ -42,8 +42,25 @@
                 </div>
 
                 <div class="form-group">
+                    <label>Linked Appointment (Optional)</label>
+                    <select name="appointment_id" class="form-control">
+                        <option value="">Select an appointment...</option>
+                        @forelse($appointments as $app)
+                            @if($app->pet_id == $record->pet_id)
+                                <option value="{{ $app->id }}" {{ $record->appointment_id == $app->id ? 'selected' : '' }}>
+                                    {{ $app->appointment_date->format('M d, Y h:i A') }} ({{ ucfirst($app->type) }})
+                                </option>
+                            @endif
+                        @empty
+                            <option value="">No recent appointments</option>
+                        @endforelse
+                    </select>
+                    @error('appointment_id')<span class="text-danger">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="form-group">
                     <label>Visit Date <span class="text-danger">*</span></label>
-                    <input type="date" name="visit_date" class="form-control" value="{{ $record->visit_date ? date('Y-m-d', strtotime($record->visit_date)) : '' }}" required>
+                    <input type="date" name="visit_date" class="form-control" value="{{ $record->visit_date ? date('Y-m-d', strtotime($record->visit_date)) : '' }}">
                     @error('visit_date')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
             </div>
@@ -53,7 +70,7 @@
                 
                 <div class="form-group">
                     <label>Chief Complaint <span class="text-danger">*</span></label>
-                    <textarea name="complaint" class="form-control" rows="3" required>{{ $record->complaint }}</textarea>
+                    <textarea name="complaint" class="form-control" rows="3">{{ $record->complaint }}</textarea>
                     @error('complaint')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
@@ -85,22 +102,13 @@
                         <div class="form-group">
                             <label>Blood Pressure (Diastolic)</label>
                             <input type="number" name="blood_pressure_diastolic" class="form-control" value="{{ old('blood_pressure_diastolic', $bp[1] ?? '') }}" placeholder="80">
-                        </div>
-                        <div class="form-group">
-                            <label>Weight (kg)</label>
-                            <input type="number" name="weight" class="form-control" step="0.1" value="{{ old('weight', isset($vitalSigns['weight']) ? $vitalSigns['weight'] : '') }}" placeholder="25.5">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Other Vitals / Notes</label>
-                        <textarea name="other_vitals" class="form-control" rows="2" placeholder="Additional vital signs or observations...">{{ old('other_vitals', isset($vitalSigns['other_vitals']) ? $vitalSigns['other_vitals'] : '') }}</textarea>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Examination Notes</label>
                     <textarea name="examination_notes" class="form-control" rows="4" placeholder="Physical examination findings, observations, etc...">{{ $record->examination_notes }}</textarea>
+                    @error('examination_notes')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
             </div>
 

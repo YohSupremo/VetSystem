@@ -32,13 +32,13 @@
                                 {{ $selectedPet->owner->user->first_name ?? '' }} {{ $selectedPet->owner->user->last_name ?? '' }} • {{ $selectedPet->species }} @if($selectedPet->breed)• {{ $selectedPet->breed }}@endif
                             </small>
                         </div>
-                        <input type="hidden" name="pet_id" value="{{ request('pet_id') }}" required>
+                        <input type="hidden" name="medical_record_id" value="{{ request('medical_record_id') }}">
                     </div>
                 @else
                     <!-- Pet Selection (Editable) - selecting a pet reloads page to show only that pet's medical records -->
                     <div class="form-group">
                         <label>Select Pet <span class="text-danger">*</span></label>
-                        <select name="pet_id" id="pet_id" class="form-control" required>
+                        <select name="pet_id" id="pet_id" class="form-control">
                             <option value="">Choose a pet...</option>
                             @forelse($pets as $pet)
                                 <option value="{{ $pet->id }}" {{ old('pet_id') == $pet->id ? 'selected' : '' }}>
@@ -53,7 +53,7 @@
                 @endif
                 
                 <div class="form-group">
-                    <label>Medical Record (Optional)</label>
+                    <label>Medical Record <span class="text-danger">*</span></label>
                     <select name="medical_record_id" class="form-control" @if(!request('pet_id')) disabled @endif>
                         @if(request('pet_id'))
                             <option value="">Select medical record...</option>
@@ -68,6 +68,7 @@
                             <option value="">Select a pet first</option>
                         @endif
                     </select>
+                    @error('medical_record_id')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
             </div>
 
@@ -94,35 +95,43 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Custom Medication Name <span class="text-danger">*</span></label>
-                    <input type="text" name="medication" id="medication" class="form-control" 
-                           value="{{ old('medication') }}" placeholder="e.g., Amoxicillin" required>
+                    <label>Medication Name <span class="text-danger">*</span></label>
+                    <input type="text" name="medication_name" id="medication_name" class="form-control" 
+                           value="{{ old('medication_name') }}" placeholder="e.g., Amoxicillin">
                     <small class="form-text text-muted">Auto-filled when selecting from inventory, or enter custom name</small>
-                    @error('medication')<span class="text-danger">{{ $message }}</span>@enderror
+                    @error('medication_name')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-group">
                     <label>Dosage <span class="text-danger">*</span></label>
-                    <input type="text" name="dosage" class="form-control" value="{{ old('dosage') }}" placeholder="e.g., 500mg" required>
+                    <input type="text" name="dosage" class="form-control" value="{{ old('dosage') }}" placeholder="e.g., 500mg">
                     @error('dosage')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>Frequency <span class="text-danger">*</span></label>
-                        <input type="text" name="frequency" class="form-control" value="{{ old('frequency') }}" placeholder="e.g., 3 times daily" required>
+                        <input type="text" name="frequency" class="form-control" value="{{ old('frequency') }}" placeholder="e.g., 3 times daily">
                         @error('frequency')<span class="text-danger">{{ $message }}</span>@enderror
                     </div>
                     <div class="form-group">
                         <label>Duration (Days) <span class="text-danger">*</span></label>
-                        <input type="number" name="duration_days" class="form-control" value="{{ old('duration_days') }}" placeholder="10" required>
+                        <input type="number" name="duration_days" class="form-control" value="{{ old('duration_days') }}" placeholder="10" min="1">
                         @error('duration_days')<span class="text-danger">{{ $message }}</span>@enderror
                     </div>
                 </div>
 
                 <div class="form-group">
+                    <label>Quantity <span class="text-danger">*</span></label>
+                    <input type="number" name="quantity" class="form-control" value="{{ old('quantity') }}" placeholder="30" min="1">
+                    <small class="form-text text-muted">Number of units to dispense</small>
+                    @error('quantity')<span class="text-danger">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="form-group">
                     <label>Instructions</label>
                     <textarea name="instructions" class="form-control" rows="3" placeholder="Special instructions, side effects, etc.">{{ old('instructions') }}</textarea>
+                    @error('instructions')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
             </div>
 
@@ -282,7 +291,7 @@ document.getElementById('pet_id').addEventListener('change', function() {
 document.getElementById('inventory_item_id').addEventListener('change', function() {
     var selectedOption = this.options[this.selectedIndex];
     var medicationName = selectedOption.getAttribute('data-name');
-    var medicationInput = document.getElementById('medication');
+    var medicationInput = document.getElementById('medication_name');
     
     if (medicationName) {
         medicationInput.value = medicationName;

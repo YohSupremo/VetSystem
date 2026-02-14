@@ -24,7 +24,7 @@
                     <select name="pet_id" class="form-control" required>
                         <option value="">Choose a pet...</option>
                         @forelse($pets as $pet)
-                            <option value="{{ $pet->id }}" {{ old('pet_id') == $pet->id ? 'selected' : '' }}>
+                            <option value="{{ $pet->id }}" {{ (old('pet_id', request('pet_id')) == $pet->id) ? 'selected' : '' }}>
                                 {{ $pet->name }} - {{ $pet->owner->user->first_name ?? 'Unknown' }}
                             </option>
                         @empty
@@ -39,14 +39,63 @@
                     <select name="medical_record_id" class="form-control">
                         <option value="">Select medical record...</option>
                         @forelse($medicalRecords as $record)
-                            <option value="{{ $record->id }}" {{ old('medical_record_id') == $record->id ? 'selected' : '' }}>
-                                {{ $record->pet->name }} - {{ \Carbon\Carbon::parse($record->visit_date)->format('M d, Y') }}
+                            <option value="{{ $record->id }}" data-pet-id="{{ $record->pet_id }}" {{ old('medical_record_id') == $record->id ? 'selected' : '' }}>
+                                {{ \Carbon\Carbon::parse($record->visit_date)->format('M d, Y') }} - {{ Str::limit($record->diagnosis ?? $record->complaint ?? 'Check-up', 30) }}
                             </option>
                         @empty
                             <option value="">No medical records available</option>
                         @endforelse
                     </select>
                 </div>
+                
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const petSelect = document.querySelector('select[name="pet_id"]');
+                        const recordSelect = document.querySelector('select[name="medical_record_id"]');
+                        
+                        if (!petSelect || !recordSelect) return;
+
+                        // Store all original record options (skipping placeholder)
+                        const allRecordOptions = Array.from(recordSelect.options).slice(1);
+                        const placeholder = recordSelect.options[0];
+
+                        function updateRecords() {
+                            const selectedPetId = petSelect.value;
+                            const currentRecordId = recordSelect.value;
+                            
+                            // Clear dropdown
+                            recordSelect.innerHTML = '';
+                            recordSelect.appendChild(placeholder);
+                            
+                            if (selectedPetId) {
+                                // Add only matching records
+                                allRecordOptions.forEach(option => {
+                                    if (option.dataset.petId == selectedPetId) {
+                                        recordSelect.appendChild(option);
+                                    }
+                                });
+                            }
+                            
+                            // Restore selection if valid
+                            if (currentRecordId && recordSelect.querySelector(`option[value="${currentRecordId}"]`)) {
+                                recordSelect.value = currentRecordId;
+                            } else {
+                                recordSelect.value = "";
+                            }
+                        }
+
+                        petSelect.addEventListener('change', updateRecords);
+                        
+                        // Initial run
+                        if (petSelect.value) {
+                            updateRecords();
+                        } else {
+                             // If no pet selected, clear records initially
+                            recordSelect.innerHTML = '';
+                            recordSelect.appendChild(placeholder);
+                        }
+                    });
+                </script>
 
                 <div class="form-group">
                     <label>Surgeon <span class="text-danger">*</span></label>

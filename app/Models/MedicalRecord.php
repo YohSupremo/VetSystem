@@ -25,6 +25,9 @@ class MedicalRecord extends Model
     protected $casts = [
         'visit_date' => 'date',
         'follow_up_date' => 'date',
+        'temperature' => 'decimal:1',
+        'heart_rate' => 'integer',
+        'respiratory_rate' => 'integer',
     ];
 
     public function pet()

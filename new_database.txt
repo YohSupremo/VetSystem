@@ -263,9 +263,10 @@ CREATE TABLE pet_vaccinations (
     pet_id BIGINT UNSIGNED NOT NULL,
     vaccine_id BIGINT UNSIGNED NOT NULL,
     batch_number VARCHAR(50),
-    dose_number INT DEFAULT 1,
+    dose_number INT DEFAULT 1 COMMENT '1=First dose, 2=Second dose, 3=Booster, etc.',
     administered_date DATE NOT NULL,
     next_due_date DATE,
+    expiry_date DATE COMMENT 'Expiration date of the vaccine batch',
     administered_by BIGINT UNSIGNED NOT NULL,
     certificate_path VARCHAR(255),
     notes TEXT,
@@ -277,6 +278,7 @@ CREATE TABLE pet_vaccinations (
     INDEX idx_pet (pet_id),
     INDEX idx_vaccine (vaccine_id),
     INDEX idx_next_due (next_due_date),
+    INDEX idx_expiry (expiry_date),
     INDEX idx_vaccination_search (pet_id, next_due_date)
 ) ENGINE=InnoDB;
 

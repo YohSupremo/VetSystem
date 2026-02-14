@@ -145,30 +145,10 @@
                     <h3><i class="fas fa-calendar-alt"></i> Appointment Details</h3>
 
                     <div class="form-group">
-                        <label for="appointment_date">Date <span style="color: var(--accent-pink);">*</span></label>
-                        <input type="date" name="appointment_date" id="appointment_date"
+                        <label for="appointment_date">Appointment Date & Time <span style="color: var(--accent-pink);">*</span></label>
+                        <input type="datetime-local" name="appointment_date" id="appointment_date"
                                value="{{ old('appointment_date') }}" required>
                         @error('appointment_date')
-                            <div class="inline-hint">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="start_time">Start Time <span style="color: var(--accent-pink);">*</span></label>
-                        <input type="time" name="start_time" id="start_time"
-                               step="60"
-                               value="{{ old('start_time') }}" required>
-                        @error('start_time')
-                            <div class="inline-hint">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="end_time">End Time <span style="color: var(--accent-pink);">*</span></label>
-                        <input type="time" name="end_time" id="end_time"
-                               step="60"
-                               value="{{ old('end_time') }}" required>
-                        @error('end_time')
                             <div class="inline-hint">{{ $message }}</div>
                         @enderror
                     </div>
@@ -197,6 +177,16 @@
                             @endforeach
                         </select>
                         @error('status')
+                            <div class="inline-hint">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="queue_priority">Queue Priority (0-10)</label>
+                        <input type="number" name="queue_priority" id="queue_priority" 
+                               min="0" max="10" value="{{ old('queue_priority', 0) }}">
+                        <div class="inline-hint">Higher priority = seen first (0 = normal, 10 = urgent)</div>
+                        @error('queue_priority')
                             <div class="inline-hint">{{ $message }}</div>
                         @enderror
                     </div>

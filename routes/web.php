@@ -234,6 +234,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/pet/{pet}', [VaccinationController::class, 'byPet'])->name('pet');
     });
 
+    // Vaccines
+    Route::prefix('vaccines')->name('vaccines.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\VaccineController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\VaccineController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\VaccineController::class, 'store'])->name('store');
+        Route::get('/{vaccine}/edit', [App\Http\Controllers\Admin\VaccineController::class, 'edit'])->name('edit');
+        Route::put('/{vaccine}', [App\Http\Controllers\Admin\VaccineController::class, 'update'])->name('update');
+        Route::delete('/{vaccine}', [App\Http\Controllers\Admin\VaccineController::class, 'destroy'])->name('destroy');
+    });
+
     // Prescriptions
     Route::prefix('prescriptions')->name('prescriptions.')->group(function () {
         Route::get('/', [PrescriptionController::class, 'index'])->name('index');
@@ -307,15 +317,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::prefix('pharmacy')->name('pharmacy.')->group(function () {
         Route::get('/', [PharmacyController::class, 'index'])->name('index');
         Route::get('/create', [PharmacyController::class, 'create'])->name('create');
+        // Specific routes must come before dynamic {id} routes
+        Route::get('/dispense', [PharmacyController::class, 'dispenseForm'])->name('dispense');
+        Route::post('/dispense', [PharmacyController::class, 'dispense'])->name('dispense.store');
+        Route::get('/dispensing-history', [PharmacyController::class, 'dispensingHistory'])->name('dispensing.history');
+        Route::get('/alerts', [PharmacyController::class, 'alerts'])->name('alerts');
+        // Dynamic routes come after specific routes
         Route::post('/', [PharmacyController::class, 'store'])->name('store');
         Route::get('/{id}', [PharmacyController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [PharmacyController::class, 'edit'])->name('edit');
         Route::put('/{id}', [PharmacyController::class, 'update'])->name('update');
         Route::delete('/{id}', [PharmacyController::class, 'destroy'])->name('destroy');
-        Route::get('/dispense', [PharmacyController::class, 'dispenseForm'])->name('dispense');
-        Route::post('/dispense', [PharmacyController::class, 'dispense'])->name('dispense.store');
-        Route::get('/dispensing-history', [PharmacyController::class, 'dispensingHistory'])->name('dispensing.history');
-        Route::get('/alerts', [PharmacyController::class, 'alerts'])->name('alerts');
     });
 
     // Surgeries

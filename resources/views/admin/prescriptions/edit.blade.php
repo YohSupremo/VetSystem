@@ -8,7 +8,7 @@
     <div class="form-container">
         <div class="form-header">
             <h2><i class="fas fa-prescription-bottle"></i> Edit Prescription</h2>
-            <a href="{{ route('admin.prescriptions.pet', $prescription->pet->id) }}" class="btn btn-secondary">
+            <a href="{{ route('admin.prescriptions.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>
@@ -24,16 +24,16 @@
                 <div class="form-group">
                     <label>Pet</label>
                     <div class="form-control-static">
-                        <strong>{{ $prescription->pet->name }}</strong>
+                        <strong>{{ $prescription->medicalRecord?->pet?->name ?? 'Unknown' }}</strong>
                         <small class="text-muted d-block">
-                            {{ $prescription->pet->owner->user->first_name ?? '' }} {{ $prescription->pet->owner->user->last_name ?? '' }} • {{ $prescription->pet->species }} @if($prescription->pet->breed)• {{ $prescription->pet->breed }}@endif
+                            {{ $prescription->medicalRecord?->pet?->owner?->user?->first_name ?? '' }} {{ $prescription->medicalRecord?->pet?->owner?->user?->last_name ?? '' }} • {{ $prescription->medicalRecord?->pet?->species ?? '' }} @if($prescription->medicalRecord?->pet?->breed)• {{ $prescription->medicalRecord->pet->breed }}@endif
                         </small>
                     </div>
-                    <input type="hidden" name="pet_id" value="{{ $prescription->pet_id }}">
+                    <input type="hidden" name="medical_record_id" value="{{ $prescription->medical_record_id }}">
                 </div>
 
                 <div class="form-group">
-                    <label>Medical Record (Optional)</label>
+                    <label>Medical Record <span class="text-danger">*</span></label>
                     <select name="medical_record_id" class="form-control @error('medical_record_id') is-invalid @enderror">
                         <option value="">Select a medical record...</option>
                         @forelse($medicalRecords as $record)
@@ -72,16 +72,16 @@
 
                 <div class="form-group">
                     <label>Medication Name <span class="text-danger">*</span></label>
-                    <input type="text" name="medication" id="medication" class="form-control @error('medication') is-invalid @enderror" 
-                        value="{{ old('medication', $prescription->medication) }}" required>
+                    <input type="text" name="medication_name" id="medication_name" class="form-control @error('medication_name') is-invalid @enderror" 
+                        value="{{ old('medication_name', $prescription->medication_name) }}">
                     <small class="form-text text-muted">Auto-filled when selecting from inventory</small>
-                    @error('medication')<span class="text-danger">{{ $message }}</span>@enderror
+                    @error('medication_name')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-group">
                     <label>Dosage <span class="text-danger">*</span></label>
                     <input type="text" name="dosage" class="form-control @error('dosage') is-invalid @enderror" 
-                        placeholder="e.g., 500mg, 2 tablets" value="{{ old('dosage', $prescription->dosage) }}" required>
+                        placeholder="e.g., 500mg, 2 tablets" value="{{ old('dosage', $prescription->dosage) }}">
                     @error('dosage')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
@@ -89,22 +89,23 @@
                     <div class="form-group">
                         <label>Frequency <span class="text-danger">*</span></label>
                         <input type="text" name="frequency" class="form-control @error('frequency') is-invalid @enderror" 
-                            placeholder="e.g., Twice daily, Every 8 hours" value="{{ old('frequency', $prescription->frequency) }}" required>
+                            placeholder="e.g., Twice daily, Every 8 hours" value="{{ old('frequency', $prescription->frequency) }}">
                         @error('frequency')<span class="text-danger">{{ $message }}</span>@enderror
                     </div>
 
                     <div class="form-group">
                         <label>Duration (Days) <span class="text-danger">*</span></label>
                         <input type="number" name="duration_days" class="form-control @error('duration_days') is-invalid @enderror" 
-                            min="1" value="{{ old('duration_days', $prescription->duration_days) }}" required>
+                            min="1" value="{{ old('duration_days', $prescription->duration_days) }}">
                         @error('duration_days')<span class="text-danger">{{ $message }}</span>@enderror
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Quantity</label>
+                    <label>Quantity <span class="text-danger">*</span></label>
                     <input type="number" name="quantity" class="form-control @error('quantity') is-invalid @enderror" 
-                        min="1" value="{{ old('quantity', $prescription->quantity ?? '') }}" placeholder="Optional">
+                        min="1" value="{{ old('quantity', $prescription->quantity ?? '') }}">
+                    <small class="form-text text-muted">Number of units to dispense</small>
                     @error('quantity')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
@@ -120,7 +121,7 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Update Prescription
                 </button>
-                <a href="{{ route('admin.prescriptions.pet', $prescription->pet->id) }}" class="btn btn-secondary">Cancel</a>
+                <a href="{{ route('admin.prescriptions.index') }}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>
@@ -288,7 +289,7 @@
 document.getElementById('inventory_item_id').addEventListener('change', function() {
     var selectedOption = this.options[this.selectedIndex];
     var medicationName = selectedOption.getAttribute('data-name');
-    var medicationInput = document.getElementById('medication');
+    var medicationInput = document.getElementById('medication_name');
     
     if (medicationName) {
         medicationInput.value = medicationName;

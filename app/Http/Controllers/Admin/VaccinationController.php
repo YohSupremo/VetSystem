@@ -15,7 +15,9 @@ class VaccinationController extends Controller
      */
     public function index()
     {
-        $pets = Pet::with('owner.user', 'vaccinations')
+        $pets = Pet::with(['owner.user', 'vaccinations' => function($query) {
+            $query->orderBy('administered_date', 'desc');
+        }])
             ->has('vaccinations')
             ->paginate(10);
 
@@ -28,10 +30,11 @@ class VaccinationController extends Controller
     public function create()
     {
         $pets = Pet::with('owner.user')->get();
+        $vaccines = \App\Models\Vaccine::where('is_active', true)->orderBy('vaccine_name')->get();
         $veterinarians = User::where('role', 'veterinarian')->orderBy('first_name')->get();
         $selectedPetId = request()->query('pet_id');
 
-        return view('admin.vaccinations.create', compact('pets', 'veterinarians', 'selectedPetId'));
+        return view('admin.vaccinations.create', compact('pets', 'vaccines', 'veterinarians', 'selectedPetId'));
     }
 
     /**
@@ -41,15 +44,17 @@ class VaccinationController extends Controller
     {
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
-            'vaccine_name' => 'required|string|max:255',
-            'vaccination_date' => 'required|date',
-            'veterinarian_id' => 'nullable|exists:users,id',
-            'next_due_date' => 'nullable|date',
+            'vaccine_id' => 'required|exists:vaccines,id',
+            'administered_date' => 'required|date',
+            'administered_by' => 'required|exists:users,id',
+            'next_due_date' => 'nullable|date|after_or_equal:administered_date',
             'batch_number' => 'nullable|string|max:255',
-            'route_of_administration' => 'nullable|in:intramuscular,subcutaneous,intranasal,oral',
-            'site_of_injection' => 'nullable|string|max:255',
-            'adverse_reactions' => 'nullable|string',
+            'dose_number' => 'nullable|integer|min:1',
+            'expiry_date' => 'nullable|date|after_or_equal:administered_date',
             'notes' => 'nullable|string',
+        ], [
+            'administered_by.required' => 'Please select who administered the vaccine.',
+            'administered_by.exists' => 'The selected veterinarian is invalid.',
         ]);
 
         Vaccination::create($validated);
@@ -63,7 +68,7 @@ class VaccinationController extends Controller
      */
     public function show($id)
     {
-        $vaccination = Vaccination::with(['pet.owner.user', 'veterinarian'])
+        $vaccination = Vaccination::with(['pet.owner.user', 'vaccine', 'administeredBy'])
             ->findOrFail($id);
 
         return view('admin.vaccinations.show', compact('vaccination'));
@@ -74,11 +79,12 @@ class VaccinationController extends Controller
      */
     public function edit($id)
     {
-        $vaccination = Vaccination::with(['pet.owner.user', 'veterinarian'])->findOrFail($id);
+        $vaccination = Vaccination::with(['pet.owner.user', 'vaccine', 'administeredBy'])->findOrFail($id);
         $pets = Pet::with('owner.user')->get();
+        $vaccines = \App\Models\Vaccine::where('is_active', true)->orderBy('vaccine_name')->get();
         $veterinarians = User::where('role', 'veterinarian')->orderBy('first_name')->get();
 
-        return view('admin.vaccinations.edit', compact('vaccination', 'pets', 'veterinarians'));
+        return view('admin.vaccinations.edit', compact('vaccination', 'pets', 'vaccines', 'veterinarians'));
     }
 
     /**
@@ -89,15 +95,17 @@ class VaccinationController extends Controller
         $vaccination = Vaccination::findOrFail($id);
 
         $validated = $request->validate([
-            'vaccine_name' => 'required|string|max:255',
-            'vaccination_date' => 'required|date',
-            'veterinarian_id' => 'nullable|exists:users,id',
-            'next_due_date' => 'nullable|date',
+            'vaccine_id' => 'required|exists:vaccines,id',
+            'administered_date' => 'required|date',
+            'administered_by' => 'required|exists:users,id',
+            'next_due_date' => 'nullable|date|after_or_equal:administered_date',
             'batch_number' => 'nullable|string|max:255',
-            'route_of_administration' => 'nullable|in:intramuscular,subcutaneous,intranasal,oral',
-            'site_of_injection' => 'nullable|string|max:255',
-            'adverse_reactions' => 'nullable|string',
+            'dose_number' => 'nullable|integer|min:1',
+            'expiry_date' => 'nullable|date|after_or_equal:administered_date',
             'notes' => 'nullable|string',
+        ], [
+            'administered_by.required' => 'Please select who administered the vaccine.',
+            'administered_by.exists' => 'The selected veterinarian is invalid.',
         ]);
 
         $vaccination->update($validated);
@@ -123,8 +131,12 @@ class VaccinationController extends Controller
      */
     public function byPet($petId)
     {
-        $pet = Pet::with('vaccinations.veterinarian')->findOrFail($petId);
-        $vaccinations = $pet->vaccinations()->orderBy('vaccination_date', 'desc')->paginate(10);
+        $pet = Pet::findOrFail($petId);
+        $vaccinations = $pet->vaccinations()
+            ->with(['vaccine', 'administeredBy'])
+            ->orderBy('administered_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(10);
 
         return view('admin.vaccinations.pet', compact('pet', 'vaccinations'));
     }

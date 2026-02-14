@@ -65,7 +65,7 @@
                         <a href="{{ route('admin.surgeries.edit', $surgery->id) }}" class="btn btn-secondary btn-sm">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <form action="{{ route('admin.surgeries.destroy', $surgery->id) }}" method="POST" style="display:inline;">
+                        <form action="{{ route('admin.surgeries.destroy', $surgery->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this surgery record? This action cannot be undone.');">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-secondary btn-sm" style="background:#ff6b6b; color:white;">
@@ -114,5 +114,22 @@
 .simple-table tbody td { padding: 14px 12px; vertical-align: middle; color: var(--dark-text); }
 .empty-state { text-align:center; padding: 40px 20px; color: var(--light-text); }
 .empty-state i { font-size:48px; color: var(--soft-gray); display:block; margin-bottom: 12px; }
+
+/* Status Badges */
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: white;
+    display: inline-block;
+}
+.bg-primary { background-color: #4e73df; } /* Blue for Scheduled */
+.bg-warning { background-color: #f6c23e; color: #333; } /* Yellow for In Progress */
+.bg-success { background-color: #1cc88a; } /* Green for Completed */
+.bg-danger { background-color: #e74a3b; } /* Red for Cancelled */
+.bg-secondary { background-color: #858796; } /* Default */
 </style>
 @endsection

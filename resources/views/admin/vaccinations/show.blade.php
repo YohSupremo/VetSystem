@@ -46,7 +46,7 @@
                 <div class="info-grid">
                     <div class="info-item">
                         <label>Vaccine Name</label>
-                        <p>{{ $vaccination->vaccine_name ?? 'N/A' }}</p>
+                        <p>{{ $vaccination->vaccine->vaccine_name ?? 'N/A' }}</p>
                     </div>
                     <div class="info-item">
                         <label>Vaccination Date</label>
@@ -70,7 +70,7 @@
                     </div>
                     <div class="info-item">
                         <label>Veterinarian</label>
-                        <p>{{ ($vaccination->veterinarian) ? 'Dr. ' . $vaccination->veterinarian->first_name . ' ' . $vaccination->veterinarian->last_name : 'N/A' }}</p>
+                        <p>{{ ($vaccination->administeredBy) ? 'Dr. ' . $vaccination->administeredBy->first_name . ' ' . $vaccination->administeredBy->last_name : 'N/A' }}</p>
                     </div>
                 </div>
             </div>

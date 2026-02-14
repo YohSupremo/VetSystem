@@ -51,21 +51,21 @@
                                             <p>{{ $record->complaint }}</p>
                                         </div>
 
-                                        @if($record->vital_signs && is_array($record->vital_signs))
+                                        @if($record->temperature || $record->heart_rate || $record->respiratory_rate || $record->blood_pressure)
                                             <div class="record-detail">
                                                 <strong>Vital Signs:</strong>
                                                 <div class="vitals-inline">
-                                                    @if(isset($record->vital_signs['temperature']) && $record->vital_signs['temperature'])
-                                                        <span><i class="fas fa-thermometer-half"></i> {{ $record->vital_signs['temperature'] }}°C</span>
+                                                    @if($record->temperature)
+                                                        <span><i class="fas fa-thermometer-half"></i> {{ $record->temperature }}°C</span>
                                                     @endif
-                                                    @if(isset($record->vital_signs['heart_rate']) && $record->vital_signs['heart_rate'])
-                                                        <span><i class="fas fa-heartbeat"></i> {{ $record->vital_signs['heart_rate'] }} bpm</span>
+                                                    @if($record->heart_rate)
+                                                        <span><i class="fas fa-heartbeat"></i> {{ $record->heart_rate }} bpm</span>
                                                     @endif
-                                                    @if(isset($record->vital_signs['respiratory_rate']) && $record->vital_signs['respiratory_rate'])
-                                                        <span><i class="fas fa-lungs"></i> {{ $record->vital_signs['respiratory_rate'] }} rpm</span>
+                                                    @if($record->respiratory_rate)
+                                                        <span><i class="fas fa-lungs"></i> {{ $record->respiratory_rate }} rpm</span>
                                                     @endif
-                                                    @if(isset($record->vital_signs['blood_pressure']) && $record->vital_signs['blood_pressure'])
-                                                        <span><i class="fas fa-tint"></i> {{ $record->vital_signs['blood_pressure'] }} mmHg</span>
+                                                    @if($record->blood_pressure)
+                                                        <span><i class="fas fa-tint"></i> {{ $record->blood_pressure }} mmHg</span>
                                                     @endif
                                                 </div>
                                             </div>

@@ -44,31 +44,51 @@
         padding: 1.5rem;
         border-left: 4px solid #FF8C42;
         transition: all 0.3s ease;
+        margin-bottom: 1rem;
     }
     .prescription-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 140, 66, 0.1);
+        box-shadow: 0 6px 20px rgba(255, 140, 66, 0.15);
     }
     .prescription-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
+        align-items: flex-start;
+        margin-bottom: 1.25rem;
         padding-bottom: 1rem;
-        border-bottom: 1px solid #e9ecef;
+        border-bottom: 2px solid #f1f3f5;
     }
     .prescription-title h3 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0 0 0.75rem 0;
+        color: #FF8C42;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .prescription-title h3::before {
+        content: "💊";
         font-size: 1.2rem;
-        font-weight: 600;
-        margin: 0;
-        color: #2c3e50;
     }
     .prescription-meta {
         display: flex;
+        flex-wrap: wrap;
         gap: 1rem;
-        font-size: 0.9rem;
+        font-size: 0.875rem;
         color: #6c757d;
-        margin-bottom: 1rem;
+        margin-top: 0.5rem;
+    }
+    .prescription-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.75rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+    .prescription-meta i {
+        color: #FF8C42;
     }
     .prescription-actions {
         display: flex;
@@ -77,23 +97,27 @@
     .btn {
         border: none;
         border-radius: 8px;
-        padding: 0.6rem 1.4rem;
-        font-weight: 500;
+        padding: 0.7rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
         display: inline-flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0.5rem;
         text-decoration: none;
         cursor: pointer;
         transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     .btn-primary {
         background: linear-gradient(135deg, #FF8C42 0%, #FF6B1B 100%);
         color: #fff;
         border: none;
+        box-shadow: 0 4px 12px rgba(255, 140, 66, 0.3);
     }
     .btn-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 140, 66, 0.3);
+        box-shadow: 0 6px 16px rgba(255, 140, 66, 0.4);
     }
     .btn-secondary {
         background: #6c757d;
@@ -134,8 +158,8 @@
     }
     .medication-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.25rem;
         margin-bottom: 1.5rem;
     }
     .medication-card {
@@ -148,55 +172,110 @@
     }
     .medication-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(78, 115, 223, 0.1);
+        box-shadow: 0 6px 20px rgba(78, 115, 223, 0.15);
     }
     .medication-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         margin-bottom: 1rem;
         padding-bottom: 1rem;
-        border-bottom: 1px solid #e9ecef;
+        border-bottom: 2px solid #f1f3f5;
     }
     .medication-title h4 {
-        font-size: 1.1rem;
-        font-weight: 600;
+        font-size: 1.2rem;
+        font-weight: 700;
         margin: 0;
         color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .medication-title h4::before {
+        content: "💊";
+        font-size: 1.1rem;
     }
     .medication-info {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.5rem;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
         font-size: 0.9rem;
-        color: #6c757d;
+        color: #495057;
     }
-    .medication-stock {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-top: 1rem;
-        border-left: 4px solid #28a745;
-    }
-    .stock-info {
+    .medication-info > div {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        padding: 0.5rem 0.75rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        transition: background 0.2s ease;
+    }
+    .medication-info > div:hover {
+        background: #e9ecef;
+    }
+    .medication-info strong {
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .prescription-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    .prescription-details > div {
+        padding: 0.65rem 0.85rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border-left: 3px solid #FF8C42;
+    }
+    .prescription-details strong {
+        display: block;
+        color: #6c757d;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+    .prescription-details span {
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    .medication-stock {
+        background: #d4edda;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        margin-top: 0;
+        border-left: 4px solid #28a745;
+        display: inline-block;
+    }
+    .stock-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
     }
     .stock-quantity {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
         font-weight: 700;
         color: #28a745;
+        line-height: 1;
     }
     .stock-status {
-        font-size: 0.9rem;
-        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        padding: 0.35rem 0.65rem;
         border-radius: 4px;
-        font-weight: 500;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     .status-available {
-        background: #d4edda;
-        color: #155724;
+        background: #28a745;
+        color: #fff;
     }
     .status-low {
         background: #fff3cd;
@@ -254,10 +333,10 @@
             @foreach($prescriptions as $prescription)
                 <div class="prescription-card">
                     <div class="prescription-header">
-                        <div>
+                        <div class="prescription-title">
                             <h3>{{ $prescription->medication_name }}</h3>
                             <div class="prescription-meta">
-                                <span><i class="fas fa-user"></i> {{ $prescription->getPrescribedByAttribute()?->first_name ?? 'N/A' }} {{ $prescription->getPrescribedByAttribute()?->last_name ?? '' }}</span>
+                                <span><i class="fas fa-user-md"></i> {{ $prescription->getPrescribedByAttribute()?->first_name ?? 'N/A' }} {{ $prescription->getPrescribedByAttribute()?->last_name ?? '' }}</span>
                                 <span><i class="fas fa-paw"></i> {{ $prescription->getPetAttribute()?->name ?? 'Unknown Pet' }}</span>
                                 <span><i class="fas fa-calendar"></i> {{ $prescription->created_at->format('M j, Y') }}</span>
                             </div>
@@ -271,12 +350,27 @@
                             </form>
                         </div>
                     </div>
-                    <div class="medication-info">
-                        <div><strong>Dosage:</strong> {{ $prescription->dosage }}</div>
-                        <div><strong>Frequency:</strong> {{ $prescription->frequency }}</div>
-                        <div><strong>Duration:</strong> {{ $prescription->duration_days }} days</div>
-                        <div><strong>Quantity:</strong> {{ $prescription->quantity }}</div>
-                        <div><strong>Instructions:</strong> {{ $prescription->instructions }}</div>
+                    <div class="prescription-details">
+                        <div>
+                            <strong>Dosage</strong>
+                            <span>{{ $prescription->dosage }}</span>
+                        </div>
+                        <div>
+                            <strong>Frequency</strong>
+                            <span>{{ $prescription->frequency }}</span>
+                        </div>
+                        <div>
+                            <strong>Duration</strong>
+                            <span>{{ $prescription->duration_days }} days</span>
+                        </div>
+                        <div>
+                            <strong>Quantity</strong>
+                            <span>{{ $prescription->quantity }}</span>
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <strong>Instructions</strong>
+                            <span>{{ $prescription->instructions }}</span>
+                        </div>
                     </div>
                 </div>
             @endforeach
@@ -284,7 +378,12 @@
     </div>
 
     <div class="medication-grid">
-        <h3 class="mb-3"><i class="fas fa-capsules"></i> Available Medications</h3>
+        <div style="grid-column: 1 / -1; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.5rem; font-weight: 700; color: #2c3e50; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                <i class="fas fa-capsules" style="color: #4e73df;"></i> Available Medications
+            </h3>
+            <p style="color: #6c757d; margin: 0.5rem 0 0 0; font-size: 0.9rem;">Medications currently in stock and ready to dispense</p>
+        </div>
         @if($medications->isEmpty())
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -301,7 +400,9 @@
             @foreach($medications as $medication)
                 <div class="medication-card">
                     <div class="medication-header">
-                        <h4>{{ $medication->name }}</h4>
+                        <div class="medication-title">
+                            <h4>{{ $medication->name }}</h4>
+                        </div>
                         <div class="medication-stock">
                             <div class="stock-info">
                                 <div class="stock-quantity">{{ $medication->inventoryStocks->sum('quantity') }}</div>
@@ -312,9 +413,9 @@
                         </div>
                     </div>
                     <div class="medication-info">
-                        <div><strong>SKU:</strong> {{ $medication->sku ?? 'N/A' }}</div>
-                        <div><strong>Price:</strong> ${{ number_format($medication->unit_price, 2) }}</div>
-                        <div><strong>Location:</strong> {{ $medication->inventoryStocks->first()->location ?? 'N/A' }}</div>
+                        <div><strong>SKU</strong> <span>{{ $medication->sku ?? 'N/A' }}</span></div>
+                        <div><strong>Price</strong> <span>${{ number_format($medication->unit_price, 2) }}</span></div>
+                        <div><strong>Location</strong> <span>{{ $medication->inventoryStocks->first()->location ?? 'N/A' }}</span></div>
                     </div>
                 </div>
             @endforeach

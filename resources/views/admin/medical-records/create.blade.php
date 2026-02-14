@@ -24,7 +24,7 @@
                 
                 <div class="form-group">
                     <label>Select Pet <span class="text-danger">*</span></label>
-                    <select name="pet_id" class="form-control" required>
+                    <select name="pet_id" class="form-control">
                         <option value="">Choose a pet...</option>
                         @forelse($pets as $pet)
                             <option value="{{ $pet->id }}" {{ (old('pet_id', $selectedPetId ?? null) == $pet->id) ? 'selected' : '' }}>
@@ -39,7 +39,7 @@
 
                 <div class="form-group">
                     <label>Veterinarian <span class="text-danger">*</span></label>
-                    <select name="veterinarian_id" class="form-control" required>
+                    <select name="veterinarian_id" class="form-control">
                         <option value="">Choose veterinarian...</option>
                         @forelse($veterinarians as $vet)
                             <option value="{{ $vet->id }}" {{ old('veterinarian_id') == $vet->id ? 'selected' : '' }}>
@@ -53,8 +53,72 @@
                 </div>
 
                 <div class="form-group">
+                    <label>Linked Appointment (Optional)</label>
+                    <select name="appointment_id" class="form-control">
+                        <option value="">Select an appointment...</option>
+                        @forelse($appointments as $app)
+                            <option value="{{ $app->id }}" data-pet-id="{{ $app->pet_id }}" {{ old('appointment_id') == $app->id ? 'selected' : '' }}>
+                                {{ $app->appointment_date->format('M d, Y h:i A') }} ({{ ucfirst($app->type) }})
+                            </option>
+                        @empty
+                            <option value="">No active appointments</option>
+                        @endforelse
+                    </select>
+                    @error('appointment_id')<span class="text-danger">{{ $message }}</span>@enderror
+                </div>
+                
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const petSelect = document.querySelector('select[name="pet_id"]');
+                        const appSelect = document.querySelector('select[name="appointment_id"]');
+                        
+                        if (!petSelect || !appSelect) return;
+
+                        // Store all original appointment options (skipping the first placeholder)
+                        const allAppOptions = Array.from(appSelect.options).slice(1);
+                        const placeholder = appSelect.options[0];
+
+                        function updateAppointments() {
+                            const selectedPetId = petSelect.value;
+                            const currentAppId = appSelect.value;
+                            
+                            // Clear dropdown
+                            appSelect.innerHTML = '';
+                            appSelect.appendChild(placeholder);
+                            
+                            if (selectedPetId) {
+                                // Add only matching appointments
+                                allAppOptions.forEach(option => {
+                                    if (option.dataset.petId == selectedPetId) {
+                                        appSelect.appendChild(option);
+                                    }
+                                });
+                            }
+                            
+                            // Try to restore selection if it's still in the list
+                            if (currentAppId && appSelect.querySelector(`option[value="${currentAppId}"]`)) {
+                                appSelect.value = currentAppId;
+                            } else {
+                                appSelect.value = "";
+                            }
+                        }
+
+                        petSelect.addEventListener('change', updateAppointments);
+                        
+                        // Initial run if pet is already selected (e.g. valid edit or pre-fill)
+                        if (petSelect.value) {
+                            updateAppointments();
+                        } else {
+                            // If no pet selected, clear appointments initially
+                            appSelect.innerHTML = '';
+                            appSelect.appendChild(placeholder);
+                        }
+                    });
+                </script>
+
+                <div class="form-group">
                     <label>Visit Date <span class="text-danger">*</span></label>
-                    <input type="date" name="visit_date" class="form-control" value="{{ old('visit_date') }}" required>
+                    <input type="date" name="visit_date" class="form-control" value="{{ old('visit_date') }}">
                     @error('visit_date')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
             </div>
@@ -64,7 +128,7 @@
                 
                 <div class="form-group">
                     <label>Chief Complaint <span class="text-danger">*</span></label>
-                    <textarea name="complaint" class="form-control" rows="3" required>{{ old('complaint') }}</textarea>
+                    <textarea name="complaint" class="form-control" rows="3">{{ old('complaint') }}</textarea>
                     @error('complaint')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
@@ -74,14 +138,17 @@
                         <div class="form-group">
                             <label>Temperature (°C)</label>
                             <input type="number" name="temperature" class="form-control" step="0.1" value="{{ old('temperature') }}" placeholder="38.5">
+                            @error('temperature')<span class="text-danger">{{ $message }}</span>@enderror
                         </div>
                         <div class="form-group">
                             <label>Heart Rate (bpm)</label>
                             <input type="number" name="heart_rate" class="form-control" value="{{ old('heart_rate') }}" placeholder="80">
+                            @error('heart_rate')<span class="text-danger">{{ $message }}</span>@enderror
                         </div>
                         <div class="form-group">
                             <label>Respiratory Rate (rpm)</label>
                             <input type="number" name="respiratory_rate" class="form-control" value="{{ old('respiratory_rate') }}" placeholder="20">
+                            @error('respiratory_rate')<span class="text-danger">{{ $message }}</span>@enderror
                         </div>
                     </div>
                     
@@ -89,26 +156,22 @@
                         <div class="form-group">
                             <label>Blood Pressure (Systolic)</label>
                             <input type="number" name="blood_pressure_systolic" class="form-control" value="{{ old('blood_pressure_systolic') }}" placeholder="120">
+                            @error('blood_pressure_systolic')<span class="text-danger">{{ $message }}</span>@enderror
                         </div>
                         <div class="form-group">
                             <label>Blood Pressure (Diastolic)</label>
                             <input type="number" name="blood_pressure_diastolic" class="form-control" value="{{ old('blood_pressure_diastolic') }}" placeholder="80">
-                        </div>
-                        <div class="form-group">
-                            <label>Weight (kg)</label>
-                            <input type="number" name="weight" class="form-control" step="0.1" value="{{ old('weight') }}" placeholder="25.5">
+                            @error('blood_pressure_diastolic')<span class="text-danger">{{ $message }}</span>@enderror
                         </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Other Vitals / Notes</label>
-                        <textarea name="other_vitals" class="form-control" rows="2" placeholder="Additional vital signs or observations...">{{ old('other_vitals') }}</textarea>
-                    </div>
+
                 </div>
 
                 <div class="form-group">
                     <label>Examination Notes</label>
                     <textarea name="examination_notes" class="form-control" rows="4" placeholder="Physical examination findings, observations, etc...">{{ old('examination_notes') }}</textarea>
+                    @error('examination_notes')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
             </div>
 
@@ -118,16 +181,19 @@
                 <div class="form-group">
                     <label>Diagnosis</label>
                     <textarea name="diagnosis" class="form-control" rows="3">{{ old('diagnosis') }}</textarea>
+                    @error('diagnosis')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-group">
                     <label>Treatment Plan</label>
                     <textarea name="treatment_plan" class="form-control" rows="4">{{ old('treatment_plan') }}</textarea>
+                    @error('treatment_plan')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-group">
                     <label>Follow-up Date</label>
                     <input type="date" name="follow_up_date" class="form-control" value="{{ old('follow_up_date') }}">
+                    @error('follow_up_date')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
             </div>
 

@@ -3,342 +3,196 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
-use Illuminate\Http\RedirectResponse;
+use App\Models\Appointment;
+use App\Models\Pet;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\View\View;
 
 class AppointmentController extends Controller
 {
     /**
-     * Available appointment types and statuses.
+     * Display a listing of appointments.
      */
-    protected array $types = [
-        'checkup',
-        'vaccination',
-        'surgery',
-        'dental',
-        'grooming',
-        'other',
-    ];
-
-    protected array $statuses = [
-        'pending',
-        'scheduled',
-        'in_progress',
-        'completed',
-        'cancelled',
-        'no_show',
-    ];
-
-    public function index(Request $request): View
+    public function index(Request $request)
     {
-        $hasAppointments = Schema::hasTable('appointments');
-        $appointments = collect();
-        $filters = [
-            'status' => $request->query('status'),
-            'type' => $request->query('type'),
-            'pet_id' => $request->query('pet_id'),
-        ];
-
-        if ($hasAppointments) {
-            $appointments = DB::table('appointments')
-                ->leftJoin('pets', 'appointments.pet_id', '=', 'pets.id')
-                ->leftJoin('pet_owners', 'pets.owner_id', '=', 'pet_owners.id')
-                ->leftJoin('users as owners', 'pet_owners.user_id', '=', 'owners.id')
-                ->leftJoin('users as vets', 'appointments.veterinarian_id', '=', 'vets.id')
-                ->when($filters['pet_id'], function ($query, $petId) {
-                    return $query->where('appointments.pet_id', $petId);
-                })
-                ->when($filters['status'], function ($query, $status) {
-                    return $query->where('appointments.status', $status);
-                })
-                ->when($filters['type'], function ($query, $type) {
-                    return $query->where('appointments.type', $type);
-                })
-                ->orderByDesc('appointments.appointment_date')
-                ->limit(100)
-                ->get([
-                    'appointments.id',
-                    'appointments.pet_id',
-                    'appointments.veterinarian_id',
-                    'appointments.appointment_date',
-                    'appointments.type',
-                    'appointments.status',
-                    'appointments.notes',
-                    'appointments.start_time',
-                    'pets.name as pet_name',
-                    DB::raw("COALESCE(pets.species, '') as pet_species"),
-                    DB::raw("TRIM(owners.first_name || ' ' || owners.last_name) as owner_name"),
-                    DB::raw("TRIM(vets.first_name || ' ' || vets.last_name) as veterinarian_name"),
-                ])
-                ->map(function ($appointment) {
-                    $appointment->formatted_date = $appointment->appointment_date
-                        ? Carbon::parse($appointment->appointment_date)->format('M d, Y')
-                        : 'TBD';
-                    
-                    if ($appointment->formatted_date !== 'TBD' && $appointment->start_time) {
-                        $appointment->formatted_date .= ' ' . Carbon::parse($appointment->start_time)->format('g:i A');
-                    }
-                    
-                    $appointment->type_label = $appointment->type
-                        ? ucfirst(str_replace('_', ' ', $appointment->type))
-                        : 'Unknown';
-                    $appointment->status_label = $appointment->status
-                        ? ucfirst(str_replace('_', ' ', $appointment->status))
-                        : 'Unknown';
-                    $appointment->status_badge = match ($appointment->status) {
-                        'completed' => 'success',
-                        'cancelled', 'no_show' => 'danger',
-                        default => 'warning',
-                    };
-
-                    return $appointment;
-                });
-        }
-
-        return view('admin.appointments.index', [
-            'appointments' => $appointments,
-            'hasAppointments' => $hasAppointments,
-            'types' => $this->types,
-            'statuses' => $this->statuses,
-            'filters' => $filters,
-        ]);
-    }
-
-    public function create(): View|RedirectResponse
-    {
-        if (!Schema::hasTable('appointments')) {
-            return redirect()->route('admin.appointments.index')
-                ->with('error', 'Appointments table is not available. Run migrations to enable scheduling.');
-        }
-
-        [$pets, $veterinarians] = $this->formSelections();
-
-        return view('admin.appointments.create', [
-            'pets' => $pets,
-            'veterinarians' => $veterinarians,
-            'types' => $this->types,
-            'statuses' => $this->statuses,
-        ]);
-    }
-
-    public function store(Request $request): RedirectResponse
-    {
-        if (!Schema::hasTable('appointments')) {
-            return redirect()->route('admin.appointments.index')
-                ->with('error', 'Appointments table is not available. Run migrations to enable scheduling.');
-        }
-
-        $validated = $request->validate([
-            'pet_id' => ['required', 'integer'],
-            'veterinarian_id' => ['required', 'integer'],
-            'appointment_date' => ['required', 'date'],
-            // Accept HH:MM or HH:MM:SS, then normalize to HH:MM:SS before saving
-            'start_time' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
-            'end_time' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
-            'type' => ['required', 'in:' . implode(',', $this->types)],
-            'status' => ['required', 'in:' . implode(',', $this->statuses)],
-            'notes' => ['nullable', 'string'],
-        ]);
-
-        $validated['start_time'] = strlen($validated['start_time']) === 5 ? ($validated['start_time'] . ':00') : $validated['start_time'];
-        $validated['end_time'] = strlen($validated['end_time']) === 5 ? ($validated['end_time'] . ':00') : $validated['end_time'];
-
-        DB::table('appointments')->insert([
-            'pet_id' => $validated['pet_id'],
-            'veterinarian_id' => $validated['veterinarian_id'],
-            'appointment_date' => $validated['appointment_date'],
-            'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
-            'type' => $validated['type'],
-            'status' => $validated['status'],
-            'notes' => $validated['notes'] ?? null,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return redirect()->route('admin.appointments.index')
-            ->with('success', 'Appointment created successfully.');
-    }
-
-    public function show(int $appointment): View
-    {
-        $this->ensureAppointmentsTable();
-
-        $record = $this->loadAppointment($appointment);
-
-        return view('admin.appointments.show', [
-            'appointment' => $record,
-        ]);
-    }
-
-    public function edit(int $appointment): View
-    {
-        $this->ensureAppointmentsTable();
-
-        $record = DB::table('appointments')->where('id', $appointment)->first();
-
-        abort_if(!$record, 404);
-
-        [$pets, $veterinarians] = $this->formSelections();
-
-        return view('admin.appointments.edit', [
-            'appointment' => $record,
-            'pets' => $pets,
-            'veterinarians' => $veterinarians,
-            'types' => $this->types,
-            'statuses' => $this->statuses,
-        ]);
-    }
-
-    public function update(Request $request, int $appointment): RedirectResponse
-    {
-        $this->ensureAppointmentsTable();
-
-        $record = DB::table('appointments')->where('id', $appointment)->first();
-
-        abort_if(!$record, 404);
-
-        $validated = $request->validate([
-            'pet_id' => ['required', 'integer'],
-            'veterinarian_id' => ['required', 'integer'],
-            'appointment_date' => ['required', 'date'],
-            // Accept HH:MM or HH:MM:SS, then normalize to HH:MM:SS before saving
-            'start_time' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
-            'end_time' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
-            'type' => ['required', 'in:' . implode(',', $this->types)],
-            'status' => ['required', 'in:' . implode(',', $this->statuses)],
-            'notes' => ['nullable', 'string'],
-        ]);
-
-        $validated['start_time'] = strlen($validated['start_time']) === 5 ? ($validated['start_time'] . ':00') : $validated['start_time'];
-        $validated['end_time'] = strlen($validated['end_time']) === 5 ? ($validated['end_time'] . ':00') : $validated['end_time'];
-
-        DB::table('appointments')->where('id', $appointment)->update([
-            'pet_id' => $validated['pet_id'],
-            'veterinarian_id' => $validated['veterinarian_id'],
-            'appointment_date' => $validated['appointment_date'],
-            'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
-            'type' => $validated['type'],
-            'status' => $validated['status'],
-            'notes' => $validated['notes'] ?? null,
-        ]);
-
-        return redirect()->route('admin.appointments.show', $appointment)
-            ->with('success', 'Appointment updated successfully.');
-    }
-
-    public function destroy(int $appointment): RedirectResponse
-    {
-        $this->ensureAppointmentsTable();
-
-        DB::table('appointments')->where('id', $appointment)->delete();
-
-        return redirect()->route('admin.appointments.index')
-            ->with('success', 'Appointment deleted successfully.');
-    }
-
-    /**
-     * Cancel an appointment (soft action - changes status to cancelled).
-     */
-    public function cancel(Request $request, int $appointment): RedirectResponse
-    {
-        $this->ensureAppointmentsTable();
-
-        $record = DB::table('appointments')->where('id', $appointment)->first();
-
-        abort_if(!$record, 404);
-
-        // Validate the cancellation reason
-        $validated = $request->validate([
-            'cancellation_reason' => ['nullable', 'string', 'max:500']
-        ]);
-
-        // Update appointment status to cancelled and append cancellation reason to notes
-        $notes = $record->notes ?? '';
-        if (!empty($validated['cancellation_reason'])) {
-            $notes .= ($notes ? "\n\n" : '') . "[CANCELLED by Admin on " . now()->format('Y-m-d H:i:s') . "]\n" . $validated['cancellation_reason'];
-        } else {
-            $notes .= ($notes ? "\n\n" : '') . "[CANCELLED by Admin on " . now()->format('Y-m-d H:i:s') . "]";
-        }
-
-        DB::table('appointments')->where('id', $appointment)->update([
-            'status' => 'cancelled',
-            'notes' => $notes,
-            'updated_at' => now(),
-        ]);
-
-        return redirect()->route('admin.appointments.show', $appointment)
-            ->with('success', 'Appointment has been cancelled successfully.');
-    }
-
-    /**
-     * Ensure appointments table exists.
-     */
-    protected function ensureAppointmentsTable(): void
-    {
-        abort_if(!Schema::hasTable('appointments'), 404, 'Appointments table not found.');
-    }
-
-    /**
-     * Load appointment with related names.
-     */
-    protected function loadAppointment(int $appointment): object
-    {
-        $record = DB::table('appointments')
-            ->leftJoin('pets', 'appointments.pet_id', '=', 'pets.id')
-            ->leftJoin('pet_owners', 'pets.owner_id', '=', 'pet_owners.id')
-            ->leftJoin('users as owners', 'pet_owners.user_id', '=', 'owners.id')
-            ->leftJoin('users as vets', 'appointments.veterinarian_id', '=', 'vets.id')
-            ->where('appointments.id', $appointment)
-            ->first([
-                'appointments.*',
-                'pets.name as pet_name',
-                DB::raw("COALESCE(pets.species, '') as pet_species"),
-                DB::raw("TRIM(owners.first_name || ' ' || owners.last_name) as owner_name"),
-                DB::raw("TRIM(vets.first_name || ' ' || vets.last_name) as veterinarian_name"),
-            ]);
-
-        abort_if(!$record, 404);
-
-        $record->formatted_date = $record->appointment_date
-            ? Carbon::parse($record->appointment_date)->format('M d, Y')
-            : 'TBD';
+        $query = Appointment::with(['pet.owner.user', 'veterinarian']);
         
-        if ($record->formatted_date !== 'TBD' && $record->start_time) {
-            $record->formatted_date .= ' ' . Carbon::parse($record->start_time)->format('g:i A');
+        // Apply filters
+        if ($request->filled('pet_id')) {
+            $query->where('pet_id', $request->pet_id);
         }
-        $record->type_label = $record->type
-            ? ucfirst(str_replace('_', ' ', $record->type))
-            : 'Unknown';
-        $record->status_label = $record->status
-            ? ucfirst(str_replace('_', ' ', $record->status))
-            : 'Unknown';
-
-        return $record;
+        
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        
+        if ($request->filled('date_from')) {
+            $query->whereDate('appointment_date', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->whereDate('appointment_date', '<=', $request->date_to);
+        }
+        
+        $appointments = $query->orderBy('appointment_date', 'desc')->paginate(20);
+        
+        // Add formatted properties for the view
+        $appointments->getCollection()->transform(function ($appointment) {
+            $appointment->formatted_date = $appointment->appointment_date 
+                ? $appointment->appointment_date->format('M d, Y g:i A')
+                : 'TBD';
+            
+            $appointment->pet_name = $appointment->pet->name ?? 'Unnamed Pet';
+            $appointment->pet_species = $appointment->pet->species ?? 'N/A';
+            
+            $appointment->owner_name = $appointment->pet && $appointment->pet->owner && $appointment->pet->owner->user
+                ? trim($appointment->pet->owner->user->first_name . ' ' . $appointment->pet->owner->user->last_name)
+                : 'N/A';
+            
+            $appointment->veterinarian_name = $appointment->veterinarian
+                ? 'Dr. ' . trim($appointment->veterinarian->first_name . ' ' . $appointment->veterinarian->last_name)
+                : 'Unassigned';
+            
+            $appointment->type_label = $appointment->type
+                ? ucfirst(str_replace('_', ' ', $appointment->type))
+                : 'Unknown';
+            
+            $appointment->status_label = $appointment->status
+                ? ucfirst(str_replace('_', ' ', $appointment->status))
+                : 'Unknown';
+            
+            $appointment->status_badge = match ($appointment->status) {
+                'completed' => 'success',
+                'cancelled', 'no_show' => 'danger',
+                default => 'warning',
+            };
+            
+            return $appointment;
+        });
+        
+        // Get all pets for filter dropdown
+        $pets = Pet::with('owner.user')->orderBy('name')->get();
+        
+        // Available types and statuses for filters
+        $types = ['consultation', 'vaccination', 'surgery', 'grooming', 'boarding', 'follow_up', 'emergency', 'other'];
+        $statuses = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'];
+        
+        // Filters for the view
+        $filters = [
+            'pet_id' => $request->pet_id,
+            'status' => $request->status,
+            'type' => $request->type,
+            'date_from' => $request->date_from,
+            'date_to' => $request->date_to,
+        ];
+        
+        $hasAppointments = true; // Table exists since we're using Eloquent
+        
+        return view('admin.appointments.index', compact('appointments', 'pets', 'types', 'statuses', 'filters', 'hasAppointments'));
     }
 
     /**
-     * Gather select options for forms.
+     * Show the form for creating a new appointment.
      */
-    protected function formSelections(): array
+    public function create()
     {
-        $pets = Schema::hasTable('pets')
-            ? DB::table('pets')->orderBy('name')->get(['id', 'name', 'species'])
-            : new Collection();
+        $pets = Pet::with('owner.user')->orderBy('name')->get();
+        $veterinarians = User::where('role', 'veterinarian')->where('is_active', 1)->get();
+        
+        $types = ['consultation', 'vaccination', 'surgery', 'grooming', 'boarding', 'follow_up', 'emergency', 'other'];
+        $statuses = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'];
+        
+        return view('admin.appointments.create', compact('pets', 'veterinarians', 'types', 'statuses'));
+    }
 
-        $veterinarians = Schema::hasTable('users')
-            ? DB::table('users')
-                ->where('role', 'veterinarian')
-                ->orderBy('first_name')
-                ->get(['id', 'first_name', 'last_name'])
-            : new Collection();
+    /**
+     * Store a newly created appointment.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'pet_id' => 'required|exists:pets,id',
+            'veterinarian_id' => 'nullable|exists:users,id',
+            'appointment_date' => 'required|date',
+            'type' => 'required|in:consultation,vaccination,surgery,grooming,boarding,follow_up,emergency,other',
+            'status' => 'required|in:pending,confirmed,in_progress,completed,cancelled,no_show',
+            'notes' => 'nullable|string',
+            'queue_priority' => 'nullable|integer|min:0',
+        ]);
 
-        return [$pets, $veterinarians];
+        Appointment::create($validated);
+
+        return redirect()->route('admin.appointments.index')
+            ->with('success', 'Appointment created successfully!');
+    }
+
+    /**
+     * Display the specified appointment.
+     */
+    public function show(Appointment $appointment)
+    {
+        $appointment->load(['pet.owner.user', 'veterinarian']);
+        return view('admin.appointments.show', compact('appointment'));
+    }
+
+    /**
+     * Show the form for editing the specified appointment.
+     */
+    public function edit(Appointment $appointment)
+    {
+        $pets = Pet::with('owner.user')->orderBy('name')->get();
+        $veterinarians = User::where('role', 'veterinarian')->where('is_active', 1)->get();
+        
+        $types = ['consultation', 'vaccination', 'surgery', 'grooming', 'boarding', 'follow_up', 'emergency', 'other'];
+        $statuses = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'];
+        
+        return view('admin.appointments.edit', compact('appointment', 'pets', 'veterinarians', 'types', 'statuses'));
+    }
+
+    /**
+     * Update the specified appointment.
+     */
+    public function update(Request $request, Appointment $appointment)
+    {
+        $validated = $request->validate([
+            'pet_id' => 'required|exists:pets,id',
+            'veterinarian_id' => 'nullable|exists:users,id',
+            'appointment_date' => 'required|date',
+            'type' => 'required|in:consultation,vaccination,surgery,grooming,boarding,follow_up,emergency,other',
+            'status' => 'required|in:pending,confirmed,in_progress,completed,cancelled,no_show',
+            'notes' => 'nullable|string',
+            'queue_priority' => 'nullable|integer|min:0',
+        ]);
+
+        $appointment->update($validated);
+
+        return redirect()->route('admin.appointments.show', $appointment)
+            ->with('success', 'Appointment updated successfully!');
+    }
+
+    /**
+     * Remove the specified appointment.
+     */
+    public function destroy(Appointment $appointment)
+    {
+        $appointment->delete();
+        
+        return redirect()->route('admin.appointments.index')
+            ->with('success', 'Appointment deleted successfully!');
+    }
+
+    /**
+     * Cancel an appointment (changes status to cancelled).
+     */
+    public function cancel(Appointment $appointment)
+    {
+        $appointment->update(['status' => 'cancelled']);
+        
+        return redirect()->route('admin.appointments.show', $appointment)
+            ->with('success', 'Appointment has been cancelled successfully!');
     }
 }

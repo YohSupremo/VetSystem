@@ -12,6 +12,13 @@
                 <a href="{{ route('admin.surgeries.edit', $surgery->id) }}" class="btn btn-primary">
                     <i class="fas fa-edit"></i> Edit
                 </a>
+                <form action="{{ route('admin.surgeries.destroy', $surgery->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this surgery record? This action cannot be undone.');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-secondary" style="background:#ff6b6b; color:white;">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </form>
                 <a href="{{ route('admin.surgeries.index') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back
                 </a>

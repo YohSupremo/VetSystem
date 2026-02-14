@@ -136,6 +136,15 @@
 
         <div class="filters">
             <form method="GET" action="{{ route('admin.appointments.index') }}" class="filters">
+                <select name="pet_id" class="filter-select" onchange="this.form.submit()">
+                    <option value="">All Pets</option>
+                    @foreach($pets as $pet)
+                        <option value="{{ $pet->id }}" {{ ($filters['pet_id'] ?? null) == $pet->id ? 'selected' : '' }}>
+                            {{ $pet->name }} - {{ ucfirst($pet->species ?? 'N/A') }}
+                        </option>
+                    @endforeach
+                </select>
+
                 <select name="status" class="filter-select" onchange="this.form.submit()">
                     <option value="">All Statuses</option>
                     @foreach($statuses as $status)

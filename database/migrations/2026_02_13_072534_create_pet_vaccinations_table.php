@@ -16,6 +16,7 @@ return new class extends Migration
             $table->integer('dose_number')->default(1);
             $table->date('administered_date');
             $table->date('next_due_date')->nullable();
+            $table->date('expiry_date')->nullable();
             $table->foreignId('administered_by')->constrained('users')->onDelete('restrict');
             $table->string('certificate_path')->nullable();
             $table->text('notes')->nullable();

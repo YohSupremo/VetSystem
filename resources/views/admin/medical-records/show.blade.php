@@ -12,6 +12,13 @@
                 <a href="{{ route('admin.medical-records.edit', $record->id) }}" class="btn btn-primary">
                     <i class="fas fa-edit"></i> Edit
                 </a>
+                <form action="{{ route('admin.medical-records.destroy', $record->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this medical record? This action cannot be undone.');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-secondary" style="background:#ff6b6b; color:white;">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </form>
                 <a href="{{ route('admin.medical-records.index') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back
                 </a>
@@ -52,80 +59,64 @@
                         <label>Veterinarian</label>
                         <p>{{ ($record->veterinarian) ? 'Dr. ' . $record->veterinarian->first_name . ' ' . $record->veterinarian->last_name : 'N/A' }}</p>
                     </div>
+                    <div class="info-item">
+                        <label>Linked Appointment</label>
+                        @if($record->appointment)
+                            <p>{{ $record->appointment->appointment_date->format('M d, Y h:i A') }} ({{ ucfirst($record->appointment->type) }})</p>
+                        @else
+                            <p class="text-muted">None</p>
+                        @endif
+                    </div>
                 </div>
             </div>
 
             <div class="record-section">
                 <h3>Chief Complaint</h3>
                 <div class="text-content">
-                    {{ $record->complaint ?? 'N/A' }}
-                </div>
-            </div>
-
-            <div class="record-section">
-                <h3>Examination Notes</h3>
-                <div class="text-content">
-                    {{ $record->examination_notes ?? 'N/A' }}
+                    {{ $record->complaint ?: 'N/A' }}
                 </div>
             </div>
 
             <div class="record-section">
                 <h3>Vital Signs</h3>
                 <div class="info-grid">
-                    @if($record->vital_signs && is_array($record->vital_signs))
-                        @if(isset($record->vital_signs['temperature']) && $record->vital_signs['temperature'])
-                            <div class="info-item">
-                                <label><i class="fas fa-thermometer-half"></i> Temperature</label>
-                                <p>{{ $record->vital_signs['temperature'] }}°C</p>
-                            </div>
-                        @endif
-                        @if(isset($record->vital_signs['heart_rate']) && $record->vital_signs['heart_rate'])
-                            <div class="info-item">
-                                <label><i class="fas fa-heartbeat"></i> Heart Rate</label>
-                                <p>{{ $record->vital_signs['heart_rate'] }} bpm</p>
-                            </div>
-                        @endif
-                        @if(isset($record->vital_signs['respiratory_rate']) && $record->vital_signs['respiratory_rate'])
-                            <div class="info-item">
-                                <label><i class="fas fa-lungs"></i> Respiratory Rate</label>
-                                <p>{{ $record->vital_signs['respiratory_rate'] }} rpm</p>
-                            </div>
-                        @endif
-                        @if(isset($record->vital_signs['blood_pressure']) && $record->vital_signs['blood_pressure'])
-                            <div class="info-item">
-                                <label><i class="fas fa-tint"></i> Blood Pressure</label>
-                                <p>{{ $record->vital_signs['blood_pressure'] }} mmHg</p>
-                            </div>
-                        @endif
-                        @if(isset($record->vital_signs['weight']) && $record->vital_signs['weight'])
-                            <div class="info-item">
-                                <label><i class="fas fa-weight"></i> Weight</label>
-                                <p>{{ $record->vital_signs['weight'] }} kg</p>
-                            </div>
-                        @endif
-                    @else
-                        <p class="text-muted">No vital signs recorded</p>
-                    @endif
-                </div>
-                @if($record->vital_signs && isset($record->vital_signs['other_vitals']) && $record->vital_signs['other_vitals'])
-                    <div class="text-content mt-3">
-                        <strong>Other Vitals / Notes:</strong><br>
-                        {{ $record->vital_signs['other_vitals'] }}
+                    <div class="info-item">
+                        <label><i class="fas fa-thermometer-half"></i> Temperature</label>
+                        <p>{{ $record->temperature ? $record->temperature . '°C' : 'N/A' }}</p>
                     </div>
-                @endif
+                    <div class="info-item">
+                        <label><i class="fas fa-heartbeat"></i> Heart Rate</label>
+                        <p>{{ $record->heart_rate ? $record->heart_rate . ' bpm' : 'N/A' }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="fas fa-lungs"></i> Respiratory Rate</label>
+                        <p>{{ $record->respiratory_rate ? $record->respiratory_rate . ' rpm' : 'N/A' }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="fas fa-tint"></i> Blood Pressure</label>
+                        <p>{{ $record->blood_pressure ? $record->blood_pressure . ' mmHg' : 'N/A' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="record-section">
+                <h3>Examination Notes</h3>
+                <div class="text-content">
+                    {{ $record->examination_notes ?: 'N/A' }}
+                </div>
             </div>
 
             <div class="record-section">
                 <h3>Diagnosis</h3>
                 <div class="text-content">
-                    {{ $record->diagnosis ?? 'N/A' }}
+                    {{ $record->diagnosis ?: 'N/A' }}
                 </div>
             </div>
 
             <div class="record-section">
                 <h3>Treatment Plan</h3>
                 <div class="text-content">
-                    {{ $record->treatment_plan ?? 'N/A' }}
+                    {{ $record->treatment_plan ?: 'N/A' }}
                 </div>
             </div>
 
@@ -194,6 +185,10 @@
     border-bottom: none;
     margin-bottom: 0;
     padding-bottom: 0;
+}
+
+.text-content {
+    white-space: pre-wrap;
 }
 
 .record-section h3 {

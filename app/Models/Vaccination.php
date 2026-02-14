@@ -7,24 +7,28 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Vaccination extends Model
 {
+    protected $table = 'pet_vaccinations';
+    
+    public $timestamps = false;
+
     protected $fillable = [
         'pet_id',
-        'vaccine_name',
-        'vaccination_date',
-        'next_due_date',
-        'veterinarian_id',
+        'vaccine_id',
         'batch_number',
-        'route_of_administration',
-        'site_of_injection',
-        'adverse_reactions',
+        'dose_number',
+        'administered_date',
+        'next_due_date',
+        'expiry_date',
+        'administered_by',
+        'certificate_path',
         'notes',
+        'reminder_sent',
     ];
 
     protected $casts = [
-        'vaccination_date' => 'date',
+        'administered_date' => 'date',
         'next_due_date' => 'date',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'expiry_date' => 'date',
     ];
 
     public function pet(): BelongsTo
@@ -32,13 +36,18 @@ class Vaccination extends Model
         return $this->belongsTo(Pet::class);
     }
 
+    public function vaccine(): BelongsTo
+    {
+        return $this->belongsTo(Vaccine::class);
+    }
+
     public function veterinarian(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'veterinarian_id');
+        return $this->belongsTo(User::class, 'administered_by');
     }
 
     public function administeredBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'veterinarian_id');
+        return $this->belongsTo(User::class, 'administered_by');
     }
 }

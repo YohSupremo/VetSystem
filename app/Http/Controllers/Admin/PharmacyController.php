@@ -313,11 +313,8 @@ class PharmacyController extends BaseController
      */
     public function dispenseForm()
     {
-        $prescriptions = Prescription::with(['pet', 'medicalRecord'])
+        $prescriptions = Prescription::with(['medicalRecord.pet', 'medicalRecord.veterinarian'])
             ->where('dispensed', false)
-            ->where(function($query) {
-                $query->whereRaw('quantity < COALESCE(duration_days, 0)');
-            })
             ->orderBy('created_at', 'desc')
             ->get();
             
@@ -325,6 +322,7 @@ class PharmacyController extends BaseController
             ->whereHas('inventoryStocks', function($query) {
                 $query->where('quantity', '>', 0);
             })
+            ->with('inventoryStocks') // Eager load stocks for sum calculation
             ->orderBy('name')
             ->get();
         

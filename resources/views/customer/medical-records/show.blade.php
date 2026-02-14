@@ -1,373 +1,132 @@
 @extends('layout.base')
 
-@php($bodyClass = 'customer-body')
-
-@section('title', 'Medical Record Details - PawCare')
-
-@push('styles')
-<style>
-.customer-container {
-    width: 100%;
-    min-height: 100vh;
-    position: relative;
-    z-index: 2;
-}
-
-.customer-header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(167, 139, 250, 0.2);
-    padding: 1.5rem 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    border-radius: 0 0 2rem 2rem;
-}
-
-.logo-section .paw-icon {
-    font-size: 2.5rem;
-    animation: bounce 2s infinite;
-}
-
-.logo-section h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.customer-main {
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.record-details {
-    background: white;
-    border-radius: 1rem;
-    padding: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    margin-bottom: 2rem;
-}
-
-.record-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid var(--soft-gray);
-}
-
-.record-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--dark-text);
-}
-
-.record-date {
-    font-size: 1rem;
-    color: var(--light-text);
-    background: var(--soft-gray);
-    padding: 0.5rem 1rem;
-    border-radius: 2rem;
-}
-
-.record-sections {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    margin-bottom: 2rem;
-}
-
-.record-section {
-    background: var(--soft-gray);
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-}
-
-.record-section h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--dark-text);
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.record-section h3 i {
-    color: var(--primary-purple);
-}
-
-.detail-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.detail-item:last-child {
-    border-bottom: none;
-}
-
-.detail-label {
-    font-size: 0.875rem;
-    color: var(--light-text);
-}
-
-.detail-value {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--dark-text);
-}
-
-.notes-section {
-    background: var(--soft-gray);
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    margin-top: 1rem;
-}
-
-.vital-signs {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-}
-
-.vital-card {
-    background: white;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    text-align: center;
-    border-left: 4px solid var(--primary-purple);
-}
-
-.vital-label {
-    font-size: 0.75rem;
-    color: var(--light-text);
-    margin-bottom: 0.5rem;
-}
-
-.vital-value {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--primary-purple);
-}
-
-.action-buttons {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-    flex-wrap: wrap;
-}
-
-.btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    color: white;
-}
-
-.btn-secondary {
-    background: var(--soft-gray);
-    color: var(--dark-text);
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-@media (max-width: 768px) {
-    .record-sections {
-        grid-template-columns: 1fr;
-    }
-    
-    .vital-signs {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-    }
-}
-</style>
-@endpush
-
 @section('content')
-<div class="customer-container">
-    <header class="customer-header">
-        <div class="logo-section">
-            <a href="{{ route('customer.dashboard') }}" class="d-flex align-items-center text-decoration-none">
-                <i class="fas fa-paw paw-icon text-primary"></i>
-                <h1 class="ms-3 mb-0">PawCare</h1>
-            </a>
-        </div>
-        <div class="user-section">
-            <span class="text-muted">Welcome, {{ $user->first_name }}</span>
-        </div>
-    </header>
-
-    <main class="customer-main">
-        <div class="record-details">
-            <div class="record-header">
-                <div>
-                    <h2 class="record-title">Medical Record Details</h2>
-                    <p>Record ID: #{{ $record->id }}</p>
-                </div>
-                <div class="record-date">
-                    {{ \Carbon\Carbon::parse($record->visit_date)->format('M d, Y') }}
-                </div>
-            </div>
-
-            <div class="record-sections">
-                <!-- Pet Information -->
-                <div class="record-section">
-                    <h3><i class="fas fa-paw"></i> Pet Information</h3>
-                    <div class="detail-item">
-                        <span class="detail-label">Pet Name</span>
-                        <span class="detail-value">{{ $record->pet->name }}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Species</span>
-                        <span class="detail-value">{{ ucfirst($record->pet->species) }}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Breed</span>
-                        <span class="detail-value">{{ $record->pet->breed ?? 'Not specified' }}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Registration Number</span>
-                        <span class="detail-value">{{ $record->pet->registration_number ?? 'N/A' }}</span>
-                    </div>
-                </div>
-
-                <!-- Visit Information -->
-                <div class="record-section">
-                    <h3><i class="fas fa-calendar"></i> Visit Information</h3>
-                    <div class="detail-item">
-                        <span class="detail-label">Visit Date</span>
-                        <span class="detail-value">{{ \Carbon\Carbon::parse($record->visit_date)->format('M d, Y') }}</span>
-                    </div>
-                    @if($record->veterinarian)
-                    <div class="detail-item">
-                        <span class="detail-label">Veterinarian</span>
-                        <span class="detail-value">Dr. {{ $record->veterinarian->first_name }} {{ $record->veterinarian->last_name }}</span>
-                    </div>
-                    @endif
-                    @if($record->appointment)
-                    <div class="detail-item">
-                        <span class="detail-label">Appointment Type</span>
-                        <span class="detail-value">{{ ucfirst($record->appointment->type) }}</span>
-                    </div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Examination Details -->
-            <div class="record-section">
-                <h3><i class="fas fa-stethoscope"></i> Examination Details</h3>
-                @if($record->complaint)
-                <div class="notes-section">
-                    <h4>Chief Complaint</h4>
-                    <p>{{ $record->complaint }}</p>
-                </div>
-                @endif
-                @if($record->examination_notes)
-                <div class="notes-section">
-                    <h4>Examination Notes</h4>
-                    <p>{{ $record->examination_notes }}</p>
-                </div>
-                @endif
-            </div>
-
-            <!-- Vital Signs -->
-            <div class="record-section">
-                <h3><i class="fas fa-heartbeat"></i> Vital Signs</h3>
-                <div class="vital-signs">
-                    @if($record->temperature)
-                    <div class="vital-card">
-                        <div class="vital-label">Temperature</div>
-                        <div class="vital-value">{{ $record->temperature }}°F</div>
-                    </div>
-                    @endif
-                    @if($record->heart_rate)
-                    <div class="vital-card">
-                        <div class="vital-label">Heart Rate</div>
-                        <div class="vital-value">{{ $record->heart_rate }} bpm</div>
-                    </div>
-                    @endif
-                    @if($record->respiratory_rate)
-                    <div class="vital-card">
-                        <div class="vital-label">Respiratory Rate</div>
-                        <div class="vital-value">{{ $record->respiratory_rate }} bpm</div>
-                    </div>
-                    @endif
-                    @if($record->blood_pressure)
-                    <div class="vital-card">
-                        <div class="vital-label">Blood Pressure</div>
-                        <div class="vital-value">{{ $record->blood_pressure }}</div>
-                    </div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Diagnosis & Treatment -->
-            <div class="record-sections">
-                <div class="record-section">
-                    <h3><i class="fas fa-notes-medical"></i> Diagnosis</h3>
-                    @if($record->diagnosis)
-                    <div class="notes-section">
-                        <p>{{ $record->diagnosis }}</p>
-                    </div>
-                    @else
-                    <p style="color: var(--light-text); font-style: italic;">No diagnosis recorded</p>
-                    @endif
-                </div>
-
-                <div class="record-section">
-                    <h3><i class="fas fa-clipboard-list"></i> Treatment Plan</h3>
-                    @if($record->treatment_plan)
-                    <div class="notes-section">
-                        <p>{{ $record->treatment_plan }}</p>
-                    </div>
-                    @else
-                    <p style="color: var(--light-text); font-style: italic;">No treatment plan recorded</p>
-                    @endif
-                    @if($record->follow_up_date)
-                    <div class="detail-item" style="margin-top: 1rem;">
-                        <span class="detail-label">Follow-up Date</span>
-                        <span class="detail-value">{{ \Carbon\Carbon::parse($record->follow_up_date)->format('M d, Y') }}</span>
-                    </div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <a href="{{ route('customer.medical-records.pet', $record->pet_id) }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Pet Records
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            <div class="d-flex align-items-center mb-4">
+                <a href="{{ route('customer.medical-records.pet', $pet->id) }}" class="text-decoration-none text-muted me-3">
+                    <i class="fas fa-arrow-left"></i>
                 </a>
-                <a href="{{ route('customer.medical-records.edit', [$record->pet_id, $record->id]) }}" class="btn btn-primary">
-                    <i class="fas fa-edit"></i> Edit Record
-                </a>
+                <h1 class="h3 mb-0">Visit Details</h1>
+            </div>
+
+            <div class="card border-0 shadow-sm print-section">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4 d-flex justify-content-between">
+                    <div>
+                        <h2 class="h4 fw-bold mb-1">{{ $medicalRecord->diagnosis ?: 'Medical Consultation' }}</h2>
+                        <p class="text-muted mb-0">{{ date('l, F d, Y', strtotime($medicalRecord->visit_date)) }}</p>
+                    </div>
+                    <div class="text-end">
+                        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm d-print-none">
+                            <i class="fas fa-print me-1"></i> Print
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- Pet & Vet Info -->
+                    <div class="row mb-4 pb-4 border-bottom">
+                        <div class="col-md-6 border-end">
+                            <h6 class="text-uppercase text-muted small fw-bold mb-3">Patient</h6>
+                            <div class="d-flex align-items-center">
+                                @if($pet->photo_path)
+                                    <img src="{{ asset($pet->photo_path) }}" class="rounded-circle me-3" width="50" height="50" style="object-fit: cover;">
+                                @endif
+                                <div>
+                                    <h5 class="mb-1">{{ $pet->name }}</h5>
+                                    <div class="small text-muted">{{ $pet->species }} • {{ $pet->breed }}</div>
+                                    @if($medicalRecord->weight)
+                                        <div class="badge bg-light text-dark mt-1">Weight: {{ $medicalRecord->weight }} kg</div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 ps-md-4 mt-3 mt-md-0">
+                            <h6 class="text-uppercase text-muted small fw-bold mb-3">Veterinarian</h6>
+                            @if($medicalRecord->veterinarian)
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">Dr</div>
+                                    <div>
+                                        <h5 class="mb-1">Dr. {{ $medicalRecord->veterinarian->first_name }} {{ $medicalRecord->veterinarian->last_name }}</h5>
+                                        <div class="small text-muted">Licensed Veterinarian</div>
+                                    </div>
+                                </div>
+                            @else
+                                <p class="text-muted">Not specified</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Symptoms & Diagnosis -->
+                    <div class="mb-4">
+                        <h5 class="text-primary mb-3"><i class="fas fa-stethoscope me-2"></i>Symptoms & Diagnosis</h5>
+                        <div class="bg-light p-3 rounded-3">
+                            <div class="mb-3">
+                                <span class="fw-bold d-block mb-1">Symptoms Reported:</span>
+                                <p class="mb-0">{{ $medicalRecord->symptoms ?: 'None reported' }}</p>
+                            </div>
+                            <div>
+                                <span class="fw-bold d-block mb-1">Diagnosis:</span>
+                                <p class="mb-0">{{ $medicalRecord->diagnosis ?: 'Routine Checkup' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Treatment -->
+                    <div class="mb-4">
+                        <h5 class="text-primary mb-3"><i class="fas fa-briefcase-medical me-2"></i>Treatment Plan</h5>
+                        <div class="bg-light p-3 rounded-3">
+                            <p class="mb-0" style="white-space: pre-line;">{{ $medicalRecord->treatment ?: 'No specific treatment recorded.' }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Prescriptions -->
+                    @if($medicalRecord->prescriptions->isNotEmpty())
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3"><i class="fas fa-pills me-2"></i>Prescribed Medications</h5>
+                            <div class="table-responsive">
+                                <table class="table table-bordered mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Medication</th>
+                                            <th>Dosage</th>
+                                            <th>Frequency</th>
+                                            <th>Duration</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($medicalRecord->prescriptions as $presc)
+                                            <tr>
+                                                <td class="fw-bold">{{ $presc->medication_name }}</td>
+                                                <td>{{ $presc->dosage }}</td>
+                                                <td>{{ $presc->frequency }}</td>
+                                                <td>{{ $presc->duration }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Follow-up -->
+                    @if($medicalRecord->follow_up_date)
+                        <div class="alert alert-info d-flex align-items-center mt-4">
+                            <i class="fas fa-calendar-check fa-2x me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1">Follow-up Required</h6>
+                                <p class="mb-0">Please schedule a follow-up visit on or around <strong>{{ date('F d, Y', strtotime($medicalRecord->follow_up_date)) }}</strong>.</p>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+                
+                <div class="card-footer bg-light p-4 text-center text-muted small">
+                    This is an official medical record generated by VetSystem.
+                </div>
             </div>
         </div>
-    </main>
+    </div>
 </div>
 @endsection

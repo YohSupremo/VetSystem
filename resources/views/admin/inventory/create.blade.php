@@ -187,7 +187,7 @@
                 <div class="form-group">
                     <label for="unit_price" class="form-label">Unit Price *</label>
                     <div class="input-group">
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">₱</span>
                         <input type="number" class="form-control @error('unit_price') is-invalid @enderror"
                                id="unit_price" name="unit_price" value="{{ old('unit_price') }}"
                                step="0.01" min="0" required>
@@ -308,6 +308,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     const categorySelect = document.getElementById('category');
     const expiryDateInput = document.getElementById('expiry_date');
+    const quantityInput = document.getElementById('quantity');
+    const maxStockInput = document.getElementById('max_stock');
+    const form = quantityInput?.closest('form');
 
     if (categorySelect && expiryDateInput) {
         categorySelect.addEventListener('change', () => {
@@ -315,6 +318,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 expiryDateInput.value = '';
             }
         });
+    }
+
+    // Validate quantity against max_stock
+    function validateQuantity() {
+        if (!quantityInput || !maxStockInput) return true;
+        
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const maxStock = parseFloat(maxStockInput.value) || 0;
+        
+        // Remove any existing error message
+        const existingError = quantityInput.parentElement.querySelector('.stock-validation-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        quantityInput.classList.remove('is-invalid');
+        
+        // Only validate if max_stock has a value
+        if (maxStock > 0 && quantity > maxStock) {
+            quantityInput.classList.add('is-invalid');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback stock-validation-error';
+            errorDiv.textContent = `Quantity cannot exceed maximum stock (${maxStock})`;
+            quantityInput.parentElement.appendChild(errorDiv);
+            return false;
+        }
+        
+        return true;
+    }
+
+    if (quantityInput && maxStockInput) {
+        quantityInput.addEventListener('input', validateQuantity);
+        maxStockInput.addEventListener('input', validateQuantity);
+        
+        // Prevent form submission if validation fails
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!validateQuantity()) {
+                    e.preventDefault();
+                    quantityInput.focus();
+                    return false;
+                }
+            });
+        }
     }
 });
 </script>

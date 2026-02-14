@@ -42,7 +42,7 @@ class ProductController extends Controller
 
         view()->share('user', $user);
 
-        $products = InventoryItem::query()
+        $products = InventoryItem::with('inventoryStocks')
             ->whereHas('inventoryStocks', function($query) {
                 $query->where('quantity', '>', 0);
             })

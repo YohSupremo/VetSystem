@@ -147,11 +147,10 @@ class BoardingController extends BaseController
             'end_date'   => 'required|date|after_or_equal:start_date',
             'check_in_time'       => 'nullable|date_format:H:i',
             'check_out_time'      => 'nullable|date_format:H:i',
-            'morning_feed_time'   => 'nullable|date_format:H:i',
-            'afternoon_feed_time' => 'nullable|date_format:H:i',
-            'evening_feed_time'   => 'nullable|date_format:H:i',
-            'feeding_notes'       => 'nullable|string',
-            'medication_notes'    => 'nullable|string',
+            'feeding_schedule'    => 'nullable|string',
+            'feeding_times'       => 'nullable|string',
+            'special_diet_notes'  => 'nullable|string',
+            'medication_instructions' => 'nullable|string',
             'medication_times'    => 'nullable|string',
             'daily_rate'          => 'nullable|numeric|min:0',
             'notes'               => 'nullable|string',
@@ -160,7 +159,7 @@ class BoardingController extends BaseController
         $cage = Cage::find($info['cage_id']);
 
         if ($cage->status !== 'available') {
-            return back()->withErrors(['cage_id' => 'This cage is not available.']);
+            return back()->withInput()->withErrors(['cage_id' => 'This cage is not available.']);
         }
 
         // Check if pet is already assigned to another cage in overlapping dates
@@ -176,33 +175,24 @@ class BoardingController extends BaseController
             ->exists();
 
         if ($overlapping) {
-            return back()->withErrors(['pet_id' => 'This pet is already assigned to a cage during the selected dates.']);
+            return back()->withInput()->withErrors(['pet_id' => 'This pet is already assigned to a cage during the selected dates.']);
         }
 
         $cage->status = 'occupied';
         $cage->save();
 
+        // Create cage assignment with all fields directly from form
         $boarding = CageAssignment::create([
             'cage_id' => $cage->id,
             'pet_id'  => $info['pet_id'],
             'start_date' => $info['start_date'],
             'end_date'   => $info['end_date'],
             'check_in_time' => $this->combineDateAndTime($info['start_date'], $info['check_in_time'] ?? null),
-            'check_out_time' => $this->combineDateAndTime($info['end_date'], $info['check_out_time'] ?? null),
-        ]);
-
-        // Store feeding schedule
-        $feeding_times = array_filter([
-            $info['morning_feed_time'] ?? null,
-            $info['afternoon_feed_time'] ?? null,
-            $info['evening_feed_time'] ?? null,
-        ]);
-
-        $boarding->update([
-            'feeding_schedule' => !empty($feeding_times) ? 'timed' : 'as_needed',
-            'feeding_times' => !empty($feeding_times) ? implode(',', $feeding_times) : null,
-            'special_diet_notes' => $info['feeding_notes'] ?? null,
-            'medication_instructions' => $info['medication_notes'] ?? null,
+            'check_out_time' => null, // Will be set when pet checks out
+            'feeding_schedule' => $info['feeding_schedule'] ?? null,
+            'feeding_times' => $info['feeding_times'] ?? null,
+            'special_diet_notes' => $info['special_diet_notes'] ?? null,
+            'medication_instructions' => $info['medication_instructions'] ?? null,
             'medication_times' => $info['medication_times'] ?? null,
             'daily_rate' => $info['daily_rate'] ?? null,
             'notes' => $info['notes'] ?? null,
@@ -242,15 +232,14 @@ class BoardingController extends BaseController
         
         $info = $request->validate([
             'cage_id'  => 'required|exists:cages,id',
-            'start_date' => 'required|date',
-            'end_date'   => 'required|date|after_or_equal:start_date',
+            'start_date' => 'nullable|date',
+            'end_date'   => 'nullable|date|after_or_equal:start_date',
             'check_in_time'       => 'nullable|date_format:H:i',
             'check_out_time'      => 'nullable|date_format:H:i',
-            'morning_feed_time'   => 'nullable|date_format:H:i',
-            'afternoon_feed_time' => 'nullable|date_format:H:i',
-            'evening_feed_time'   => 'nullable|date_format:H:i',
-            'feeding_notes'       => 'nullable|string',
-            'medication_notes'    => 'nullable|string',
+            'feeding_schedule'    => 'nullable|string',
+            'feeding_times'       => 'nullable|string',
+            'special_diet_notes'  => 'nullable|string',
+            'medication_instructions' => 'nullable|string',
             'medication_times'    => 'nullable|string',
             'daily_rate'          => 'nullable|numeric|min:0',
             'notes'               => 'nullable|string',
@@ -271,32 +260,36 @@ class BoardingController extends BaseController
             }
         }
 
-        // Update cage assignment (including medication notes if any)
-        $updateData = [
-            'cage_id' => $info['cage_id'],
-            'start_date' => $info['start_date'],
-            'end_date'   => $info['end_date'],
-            'check_in_time' => $this->combineDateAndTime($info['start_date'], $info['check_in_time'] ?? null),
-            'check_out_time' => $this->combineDateAndTime($info['end_date'], $info['check_out_time'] ?? null),
-        ];
-        $boarding->update($updateData);
+        // Determine dates: if provided, use new; otherwise keep existing
+        $startDate = $info['start_date'] ?? $boarding->start_date;
+        $endDate = $info['end_date'] ?? $boarding->end_date;
 
-        // Update feeding schedule
-        $feeding_times = array_filter([
-            $info['morning_feed_time'] ?? null,
-            $info['afternoon_feed_time'] ?? null,
-            $info['evening_feed_time'] ?? null,
-        ]);
+        // Determine check_in_time: if provided, combine with start_date; otherwise keep existing
+        $checkInTime = isset($info['check_in_time']) 
+            ? $this->combineDateAndTime($startDate, $info['check_in_time'])
+            : $boarding->check_in_time;
 
+        // Determine check_out_time: if provided, combine with end_date; otherwise keep existing
+        $checkOutTime = isset($info['check_out_time']) 
+            ? $this->combineDateAndTime($endDate, $info['check_out_time'])
+            : $boarding->check_out_time;
+
+        // Update cage assignment with all fields directly from form
         $boarding->update([
-            'feeding_schedule' => !empty($feeding_times) ? 'timed' : 'as_needed',
-            'feeding_times' => !empty($feeding_times) ? implode(',', $feeding_times) : null,
-            'special_diet_notes' => $info['feeding_notes'] ?? null,
-            'medication_instructions' => $info['medication_notes'] ?? null,
+            'cage_id' => $info['cage_id'],
+            'start_date' => $startDate,
+            'end_date'   => $endDate,
+            'check_in_time' => $checkInTime,
+            'check_out_time' => $checkOutTime,
+            'feeding_schedule' => $info['feeding_schedule'] ?? null,
+            'feeding_times' => $info['feeding_times'] ?? null,
+            'special_diet_notes' => $info['special_diet_notes'] ?? null,
+            'medication_instructions' => $info['medication_instructions'] ?? null,
             'medication_times' => $info['medication_times'] ?? null,
             'daily_rate' => $info['daily_rate'] ?? null,
             'notes' => $info['notes'] ?? null,
         ]);
+        
         return redirect()->route('admin.boarding.index')->with('success', 'Boarding updated successfully.');
     }
 
@@ -327,11 +320,15 @@ class BoardingController extends BaseController
         return redirect()->route('admin.boarding.index')->with('success', 'Boarding deleted successfully.');
     }
 
-    private function combineDateAndTime(string $date, ?string $time)
+    private function combineDateAndTime($date, ?string $time)
     {
         if (!$time) {
             return null;
         }
+
+        // Ensure date is just Y-m-d (take first 10 chars)
+        // This handles cases where $date is a full datetime string (e.g. from DB)
+        $date = substr((string)$date, 0, 10);
 
         return \Carbon\Carbon::parse($date . ' ' . $time);
     }

@@ -12,26 +12,37 @@ use Illuminate\Support\Facades\DB;
 class PharmacyController extends BaseController
 {
     /**
-     * Display a listing of pharmacy items (medicines).
+     * Display a listing of pharmacy items (medicines, vaccines, food, supplies).
      */
-    public function index()
+    public function index(Request $request)
     {
-        $medications = InventoryItem::where('category', 'medicine')
+        $query = InventoryItem::whereIn('category', ['medicine', 'vaccine', 'food', 'supply'])
             ->with('inventoryStocks')
-            ->orderBy('name')
-            ->get();
+            ->orderBy('name');
+        
+        // Apply category filter if provided
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+        
+        $medications = $query->get();
         
         $totalMedications = $medications->count();
         $lowStockCount = $medications->filter(fn($item) => $item->isLowStock())->count();
         $expiredCount = $medications->filter(fn($item) => $item->isExpired())->count();
         $expiringSoonCount = $medications->filter(fn($item) => $item->isExpiringSoon())->count();
         
+        $categories = ['medicine', 'vaccine', 'food', 'supply'];
+        $selectedCategory = $request->category;
+        
         return view('admin.pharmacy.index', compact(
             'medications', 
             'totalMedications', 
             'lowStockCount',
             'expiredCount',
-            'expiringSoonCount'
+            'expiringSoonCount',
+            'categories',
+            'selectedCategory'
         ));
     }
 
@@ -40,7 +51,8 @@ class PharmacyController extends BaseController
      */
     public function create()
     {
-        return view('admin.pharmacy.create');
+        $categories = ['medicine', 'vaccine', 'food', 'supply'];
+        return view('admin.pharmacy.create', compact('categories'));
     }
 
     /**
@@ -50,17 +62,21 @@ class PharmacyController extends BaseController
     {
         $data = $request->validate([
             'name' => 'required|string|max:150|unique:inventory_items,name,' . ($request->id ?? 'NULL'),
+            'category' => 'required|in:medicine,vaccine,food,supply',
             'description' => 'nullable|string|max:1000',
             'sku' => 'nullable|string|max:50|unique:inventory_items,sku,' . ($request->id ?? 'NULL'),
             'unit_price' => 'required|numeric|min:0.01|max:99999.99',
             'quantity' => 'required|integer|min:1|max:999999',
             'min_stock' => 'required|integer|min:0|max:999999',
+            'max_stock' => 'nullable|integer|min:0|gte:min_stock',
             'expiry_date' => 'nullable|date|after:today',
             'location' => 'nullable|string|max:100',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048|dimensions:min_width=100,min_height=100',
         ], [
             'name.unique' => 'A medication with this name already exists.',
             'name.required' => 'Medication name is required.',
+            'category.required' => 'Category is required.',
+            'category.in' => 'Invalid category selected.',
             'sku.unique' => 'This SKU is already in use.',
             'unit_price.min' => 'Unit price must be at least 0.01.',
             'unit_price.numeric' => 'Unit price must be a valid number.',
@@ -68,11 +84,17 @@ class PharmacyController extends BaseController
             'quantity.max' => 'Quantity cannot exceed 999,999.',
             'quantity.integer' => 'Quantity must be a whole number.',
             'min_stock.min' => 'Minimum stock cannot be negative.',
+            'max_stock.gte' => 'Maximum stock must be greater than or equal to minimum stock.',
             'expiry_date.after' => 'Expiry date must be in the future.',
             'image.mimes' => 'Image must be a valid image file (JPEG, PNG, GIF).',
             'image.max' => 'Image size cannot exceed 2MB.',
             'image.dimensions' => 'Image must be at least 100x100 pixels.',
         ]);
+
+        // Additional validation: quantity must not exceed max_stock if max_stock is set
+        if (!empty($data['max_stock']) && $data['quantity'] > $data['max_stock']) {
+            return back()->withErrors(['quantity' => 'Quantity cannot exceed maximum stock (' . $data['max_stock'] . ')'])->withInput();
+        }
 
         DB::beginTransaction();
         
@@ -91,7 +113,7 @@ class PharmacyController extends BaseController
             // Create inventory item
             $medication = InventoryItem::create([
                 'name' => $data['name'],
-                'category' => 'medicine',
+                'category' => $data['category'],
                 'description' => $data['description'] ?? null,
                 'sku' => $data['sku'] ?? null,
                 'unit_price' => $data['unit_price'],
@@ -104,6 +126,7 @@ class PharmacyController extends BaseController
                 'item_id' => $medication->id,
                 'quantity' => $data['quantity'],
                 'min_stock' => $data['min_stock'],
+                'max_stock' => $data['max_stock'] ?? null,
                 'expiry_date' => $data['expiry_date'] ?? null,
                 'location' => $data['location'] ?? null,
             ]);
@@ -163,11 +186,12 @@ class PharmacyController extends BaseController
      */
     public function edit($id)
     {
-        $medication = InventoryItem::where('category', 'medicine')
+        $medication = InventoryItem::whereIn('category', ['medicine', 'vaccine', 'food', 'supply'])
             ->with('inventoryStocks')
             ->findOrFail($id);
         
-        return view('admin.pharmacy.edit', compact('medication'));
+        $categories = ['medicine', 'vaccine', 'food', 'supply'];
+        return view('admin.pharmacy.edit', compact('medication', 'categories'));
     }
 
     /**
@@ -175,23 +199,27 @@ class PharmacyController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $medication = InventoryItem::where('category', 'medicine')
+        $medication = InventoryItem::whereIn('category', ['medicine', 'vaccine', 'food', 'supply'])
             ->with('inventoryStocks')
             ->findOrFail($id);
 
         $data = $request->validate([
             'name' => 'required|string|max:150|unique:inventory_items,name,' . $id,
+            'category' => 'required|in:medicine,vaccine,food,supply',
             'description' => 'nullable|string|max:1000',
             'sku' => 'nullable|string|max:50|unique:inventory_items,sku,' . $id,
             'unit_price' => 'required|numeric|min:0.01|max:99999.99',
             'quantity' => 'required|integer|min:0|max:999999',
             'min_stock' => 'required|integer|min:0|max:999999',
+            'max_stock' => 'nullable|integer|min:0|gte:min_stock',
             'expiry_date' => 'nullable|date|after:today',
             'location' => 'nullable|string|max:100',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048|dimensions:min_width=100,min_height=100',
         ], [
             'name.unique' => 'A medication with this name already exists.',
             'name.required' => 'Medication name is required.',
+            'category.required' => 'Category is required.',
+            'category.in' => 'Invalid category selected.',
             'sku.unique' => 'This SKU is already in use.',
             'unit_price.min' => 'Unit price must be at least 0.01.',
             'unit_price.numeric' => 'Unit price must be a valid number.',
@@ -199,11 +227,17 @@ class PharmacyController extends BaseController
             'quantity.max' => 'Quantity cannot exceed 999,999.',
             'quantity.integer' => 'Quantity must be a whole number.',
             'min_stock.min' => 'Minimum stock cannot be negative.',
+            'max_stock.gte' => 'Maximum stock must be greater than or equal to minimum stock.',
             'expiry_date.after' => 'Expiry date must be in the future.',
             'image.mimes' => 'Image must be a valid image file (JPEG, PNG, GIF).',
             'image.max' => 'Image size cannot exceed 2MB.',
             'image.dimensions' => 'Image must be at least 100x100 pixels.',
         ]);
+
+        // Additional validation: quantity must not exceed max_stock if max_stock is set
+        if (!empty($data['max_stock']) && $data['quantity'] > $data['max_stock']) {
+            return back()->withErrors(['quantity' => 'Quantity cannot exceed maximum stock (' . $data['max_stock'] . ')'])->withInput();
+        }
 
         DB::beginTransaction();
         
@@ -228,6 +262,7 @@ class PharmacyController extends BaseController
             // Update inventory item
             $medication->update([
                 'name' => $data['name'],
+                'category' => $data['category'],
                 'description' => $data['description'] ?? null,
                 'sku' => $data['sku'] ?? null,
                 'unit_price' => $data['unit_price'],
@@ -244,6 +279,7 @@ class PharmacyController extends BaseController
                 $stock->update([
                     'quantity' => $data['quantity'],
                     'min_stock' => $data['min_stock'],
+                    'max_stock' => $data['max_stock'] ?? null,
                     'expiry_date' => $data['expiry_date'] ?? null,
                     'location' => $data['location'] ?? null,
                 ]);
@@ -252,6 +288,7 @@ class PharmacyController extends BaseController
                     'item_id' => $medication->id,
                     'quantity' => $data['quantity'],
                     'min_stock' => $data['min_stock'],
+                    'max_stock' => $data['max_stock'] ?? null,
                     'expiry_date' => $data['expiry_date'] ?? null,
                     'location' => $data['location'] ?? null,
                 ]);

@@ -1,292 +1,185 @@
 @extends('layout.base')
 
-@php($bodyClass = 'customer-body')
-
-@section('title', 'Book Appointment - PawCare')
-
-@push('styles')
-<style>
-.customer-container {
-    width: 100%;
-    min-height: 100vh;
-    position: relative;
-    z-index: 2;
-}
-
-.customer-header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(167, 139, 250, 0.2);
-    padding: 1.5rem 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    border-radius: 0 0 2rem 2rem;
-}
-
-.logo-section .paw-icon {
-    font-size: 2.5rem;
-    animation: bounce 2s infinite;
-}
-
-.logo-section h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.customer-main {
-    padding: 2rem;
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-.form-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 2rem;
-    padding: 3rem;
-    border: 1px solid rgba(167, 139, 250, 0.2);
-    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.1);
-}
-
-.form-header {
-    text-align: center;
-    margin-bottom: 2.5rem;
-}
-
-.form-header h2 {
-    font-size: 2rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.5rem;
-}
-
-.form-label {
-    font-weight: 600;
-    color: var(--primary-purple);
-    margin-bottom: 0.5rem;
-    font-size: 0.95rem;
-}
-
-.form-control, .form-select {
-    border-radius: 1rem;
-    border: 2px solid var(--light-purple);
-    padding: 0.75rem 1.25rem;
-    transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.8);
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: var(--secondary-purple);
-    box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.1);
-    background: white;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    border: none;
-    border-radius: 1rem;
-    padding: 0.85rem 2rem;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3);
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(147, 51, 234, 0.4);
-    color: white;
-}
-
-.btn-secondary {
-    background: white;
-    border: 2px solid var(--light-purple);
-    border-radius: 1rem;
-    padding: 0.85rem 2rem;
-    font-weight: 600;
-    color: var(--primary-purple);
-    transition: all 0.3s ease;
-}
-
-.btn-secondary:hover {
-    background: var(--light-purple);
-    border-color: var(--secondary-purple);
-    color: var(--primary-purple);
-    transform: translateY(-2px);
-}
-
-.alert {
-    border-radius: 1rem;
-    padding: 1rem 1.5rem;
-    border: none;
-    font-weight: 500;
-    margin-bottom: 2rem;
-}
-
-.alert-success {
-    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-    color: #065f46;
-}
-
-.alert-danger {
-    background: linear-gradient(135deg, #fee2e2, #fecaca);
-    color: #991b1b;
-}
-
-.alert-info {
-    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-    color: #1e40af;
-}
-</style>
-@endpush
-
 @section('content')
 @include('layout.customer-navbar')
-<div class="floating-shapes">
-    <div class="shape"></div>
-    <div class="shape"></div>
-    <div class="shape"></div>
-</div>
-
-<div class="customer-container">
-    <!-- Main Content -->
-    <main class="customer-main">
-        <div class="form-card">
-            <div class="form-header">
-                <h2>Book an Appointment</h2>
-                <p>Schedule a visit for your pet</p>
-            </div>
-
-            @if(session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                    <div class="d-flex align-items-center">
+                        <a href="{{ route('customer.appointments.index') }}" class="text-decoration-none text-muted me-3">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        <h1 class="h3 mb-0">Book Appointment</h1>
+                    </div>
                 </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            @if(session('info'))
-                <div class="alert alert-info">
-                    {{ session('info') }}
-                </div>
-            @endif
-
-            <form action="{{ route('customer.appointments.store') }}" method="POST">
-                @csrf
                 
-                <div class="row g-3">
-                    <!-- Select Pet -->
-                    <div class="col-12">
-                        <label class="form-label" for="pet_id">Select Pet *</label>
-                        <select
-                            id="pet_id"
-                            name="pet_id"
-                            class="form-select @error('pet_id') is-invalid @enderror"
-                            required
-                        >
-                            <option value="">Choose your pet</option>
-                            @foreach($pets as $pet)
-                                <option value="{{ $pet->id }}" {{ old('pet_id') == $pet->id ? 'selected' : '' }}>
-                                    {{ $pet->name }} ({{ $pet->species }})
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('pet_id')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
-                    </div>
+                <div class="card-body p-4">
+                    @if($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-                    <!-- Appointment Type -->
-                    <div class="col-12">
-                        <label class="form-label" for="type">Appointment Type *</label>
-                        <select
-                            id="type"
-                            name="type"
-                            class="form-select @error('type') is-invalid @enderror"
-                            required
-                        >
-                            <option value="">Select appointment type</option>
-                            <option value="checkup" {{ old('type') == 'checkup' ? 'selected' : '' }}>General Checkup</option>
-                            <option value="vaccination" {{ old('type') == 'vaccination' ? 'selected' : '' }}>Vaccination</option>
-                            <option value="surgery" {{ old('type') == 'surgery' ? 'selected' : '' }}>Surgery</option>
-                            <option value="dental" {{ old('type') == 'dental' ? 'selected' : '' }}>Dental Care</option>
-                            <option value="grooming" {{ old('type') == 'grooming' ? 'selected' : '' }}>Grooming</option>
-                            <option value="other" {{ old('type') == 'other' ? 'selected' : '' }}>Other</option>
-                        </select>
-                        @error('type')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
-                    </div>
+                    <form action="{{ route('customer.appointments.store') }}" method="POST" id="appointmentForm">
+                        @csrf
+                        
+                        <!-- Pet Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Select Pet</label>
+                            <div class="row g-3">
+                                @foreach($pets as $pet)
+                                    <div class="col-6 col-md-4">
+                                        <input type="radio" class="btn-check" name="pet_id" id="pet_{{ $pet->id }}" value="{{ $pet->id }}" {{ old('pet_id') == $pet->id ? 'checked' : '' }} required>
+                                        <label class="btn btn-outline-light text-dark w-100 p-3 border text-start h-100 d-flex flex-column align-items-center justify-content-center" for="pet_{{ $pet->id }}">
+                                            @if($pet->photo_path)
+                                                <img src="{{ asset($pet->photo_path) }}" alt="{{ $pet->name }}" class="rounded-circle mb-2" width="60" height="60" style="object-fit: cover;">
+                                            @else
+                                                <div class="bg-light rounded-circle mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                                    <i class="fas fa-paw fa-2x text-muted"></i>
+                                                </div>
+                                            @endif
+                                            <span class="fw-bold d-block text-truncate w-100 text-center">{{ $pet->name }}</span>
+                                            <small class="text-muted">{{ $pet->species }}</small>
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                            @error('pet_id')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
 
-                    <!-- Appointment Date -->
-                    <div class="col-md-6">
-                        <label class="form-label" for="appointment_date">Date *</label>
-                        <input
-                            id="appointment_date"
-                            type="date"
-                            name="appointment_date"
-                            class="form-control @error('appointment_date') is-invalid @enderror"
-                            value="{{ old('appointment_date') }}"
-                            min="{{ now()->format('Y-m-d') }}"
-                            required
-                        >
-                        @error('appointment_date')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
-                    </div>
+                        <!-- Appointment Type -->
+                        <div class="mb-4">
+                            <label for="type" class="form-label fw-bold">Appointment Type</label>
+                            <select name="type" id="type" class="form-select form-select-lg" required>
+                                <option value="">Select reason for visit...</option>
+                                @foreach($appointmentTypes as $value => $label)
+                                    <option value="{{ $value }}" {{ old('type') == $value ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <!-- Appointment Time -->
-                    <div class="col-md-6">
-                        <label class="form-label" for="start_time">Time *</label>
-                        <input
-                            id="start_time"
-                            type="time"
-                            name="start_time"
-                            class="form-control @error('start_time') is-invalid @enderror"
-                            value="{{ old('start_time', '09:00') }}"
-                            required
-                        >
-                        @error('start_time')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
-                    </div>
+                        <!-- Date Selection -->
+                        <div class="mb-4">
+                            <label for="appointment_date" class="form-label fw-bold">Preferred Date</label>
+                            <select name="appointment_date" id="appointment_date" class="form-select" required>
+                                <option value="">Select a date...</option>
+                                @foreach($availableSlots as $date => $data)
+                                    <option value="{{ $date }}" {{ old('appointment_date') == $date ? 'selected' : '' }} data-slots='{{ json_encode($data['slots']) }}'>
+                                        {{ $data['date'] }} ({{ $data['day_name'] }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <!-- Notes -->
-                    <div class="col-12">
-                        <label class="form-label" for="notes">Additional Notes</label>
-                        <textarea
-                            id="notes"
-                            name="notes"
-                            class="form-control @error('notes') is-invalid @enderror"
-                            rows="4"
-                            placeholder="Any specific concerns or information we should know?"
-                        >{{ old('notes') }}</textarea>
-                        @error('notes')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
-                    </div>
+                        <!-- Time Slot Selection -->
+                        <div class="mb-4" id="timeSlotContainer" style="display: none;">
+                            <label class="form-label fw-bold">Available Time Slots</label>
+                            <div class="row g-2" id="timeSlots">
+                                <!-- Slots injected via JS -->
+                            </div>
+                            <input type="hidden" name="start_time" id="start_time" required>
+                            <div class="form-text text-muted mt-2">
+                                <i class="fas fa-info-circle me-1"></i> Appointments are typically 30 minutes long.
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-4">
+                            <label for="notes" class="form-label fw-bold">Additional Notes (Optional)</label>
+                            <textarea name="notes" id="notes" rows="3" class="form-control" placeholder="Describe symptoms or specific concerns...">{{ old('notes') }}</textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Confirm Booking
+                            </button>
+                            <a href="{{ route('customer.appointments.index') }}" class="btn btn-light">Cancel</a>
+                        </div>
+                    </form>
                 </div>
-
-                <!-- Form Actions -->
-                <div class="d-flex gap-3 justify-content-end mt-4">
-                    <a href="{{ route('customer.appointments.index') }}" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Book Appointment</button>
-                </div>
-            </form>
+            </div>
         </div>
-    </main>
+    </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateSelect = document.getElementById('appointment_date');
+    const timeContainer = document.getElementById('timeSlotContainer');
+    const timeSlotsDiv = document.getElementById('timeSlots');
+    const timeInput = document.getElementById('start_time');
+    
+    // Function to render time slots
+    function renderTimeSlots(slots) {
+        timeSlotsDiv.innerHTML = '';
+        
+        if (slots.length === 0) {
+            timeSlotsDiv.innerHTML = '<div class="col-12 text-muted text-center py-2">No slots available for this date.</div>';
+            return;
+        }
+
+        slots.forEach(slot => {
+            const col = document.createElement('div');
+            col.className = 'col-4 col-sm-3';
+            
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `btn w-100 ${slot.available ? 'btn-outline-primary' : 'btn-light text-muted'}`;
+            btn.textContent = slot.time;
+            btn.disabled = !slot.available;
+            
+            if (slot.available) {
+                btn.onclick = function() {
+                    // Remove active class from all buttons
+                    document.querySelectorAll('#timeSlots button').forEach(b => {
+                        b.classList.remove('active', 'btn-primary');
+                        b.classList.add('btn-outline-primary');
+                    });
+                    
+                    // Add active class to clicked button
+                    this.classList.remove('btn-outline-primary');
+                    this.classList.add('active', 'btn-primary');
+                    
+                    // Set input value
+                    timeInput.value = slot.time;
+                };
+            }
+            
+            col.appendChild(btn);
+            timeSlotsDiv.appendChild(col);
+        });
+        
+        timeContainer.style.display = 'block';
+    }
+    
+    // Handle date change
+    dateSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            const slots = JSON.parse(selectedOption.dataset.slots);
+            renderTimeSlots(slots);
+            timeInput.value = ''; // Reset time
+        } else {
+            timeContainer.style.display = 'none';
+        }
+    });
+    
+    // Pre-select if old value exists
+    if (dateSelect.value) {
+        dateSelect.dispatchEvent(new Event('change'));
+    }
+});
+</script>
+@endpush
 @endsection

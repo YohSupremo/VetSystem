@@ -269,8 +269,6 @@
         </div>
     </div>
 
-  
-
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ session('error') }}
@@ -278,11 +276,36 @@
         </div>
     @endif
 
+    <!-- Category Filter -->
+    <div class="mb-4">
+        <form method="GET" action="{{ route('admin.pharmacy.index') }}" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="category" class="form-label fw-semibold">Filter by Category</label>
+                <select name="category" id="category" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category }}" {{ $selectedCategory == $category ? 'selected' : '' }}>
+                            {{ ucfirst($category) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            @if($selectedCategory)
+                <div class="col-md-2">
+                    <a href="{{ route('admin.pharmacy.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Clear Filter
+                    </a>
+                </div>
+            @endif
+        </form>
+    </div>
+
     <div class="table-responsive mt-4">
         <table class="data-table">
             <thead>
                 <tr>
                     <th>Medication</th>
+                    <th>Category</th>
                     <th>Stock</th>
                     <th>Min Stock</th>
                     <th>Price</th>
@@ -321,6 +344,18 @@
                                 </div>
                             </div>
                         </td>
+                        <td>
+                            @php
+                                $categoryColors = [
+                                    'medicine' => 'bg-primary',
+                                    'vaccine' => 'bg-success',
+                                    'food' => 'bg-warning',
+                                    'supply' => 'bg-info'
+                                ];
+                                $badgeColor = $categoryColors[$medication->category] ?? 'bg-secondary';
+                            @endphp
+                            <span class="badge {{ $badgeColor }} text-white">{{ ucfirst($medication->category) }}</span>
+                        </td>
                         <td class="stock-info">
                             @if($totalStock == 0)
                                 <span class="stock-quantity stock-out">0</span>
@@ -331,7 +366,7 @@
                             @endif
                         </td>
                         <td class="text-center">{{ $minStock }}</td>
-                        <td class="price">${{ number_format($medication->unit_price, 2) }}</td>
+                        <td class="price">₱{{ number_format($medication->unit_price, 2) }}</td>
                         <td class="expiry-info">
                             @if($earliestExpiry)
                                 @if($isExpired)
@@ -374,7 +409,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
+                        <td colspan="8" class="text-center text-muted py-4">
                             <i class="fas fa-inbox fa-2x mb-2"></i>
                             <div class="h5 mb-0">No medications found</div>
                             <p class="text-muted">Get started by adding your first medication to the inventory.</p>

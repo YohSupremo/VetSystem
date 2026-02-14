@@ -180,44 +180,34 @@
         </div>
 
         <div class="form-group">
-            <label for="results">Results (optional)</label>
-            <textarea id="results" name="results" rows="4" class="form-control">{{ old('results', $labRequisition->results) }}</textarea>
+            <label for="results">Result Summary (Report) <span class="text-danger">*</span></label>
+            <textarea id="results" name="results" rows="4" class="form-control @error('results') is-invalid @enderror"
+                      placeholder="Enter a brief summary of the report or initial findings here...">{{ old('results', $labRequisition->results) }}</textarea>
+            @error('results')
+                <div class="text-danger" style="margin-top: 0.25rem; font-size: 0.875em;">{{ $message }}</div>
+            @enderror
         </div>
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Update
+        <div class="form-actions d-flex justify-content-between align-items-center">
+            <div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Update
+                </button>
+                <a href="{{ route('admin.laboratory.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-list"></i> Back to Dashboard
+                </a>
+            </div>
+            
+            <button type="button" class="btn btn-danger" onclick="if(confirm('Delete this lab requisition?')) document.getElementById('delete-form').submit();">
+                <i class="fas fa-trash"></i> Delete
             </button>
-            <a href="{{ route('admin.laboratory.index') }}" class="btn btn-secondary">
-                <i class="fas fa-list"></i> Back to Dashboard
-            </a>
         </div>
     </form>
 
-    <div class="form-actions" style="margin-top: .75rem;">
-        <form method="POST" action="{{ route('admin.laboratory.requisitions.destroy', $labRequisition->id) }}" class="delete-form">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="btn btn-danger">
-                <i class="fas fa-trash"></i> Delete
-            </button>
-        </form>
-    </div>
+    <form id="delete-form" method="POST" action="{{ route('admin.laboratory.requisitions.destroy', $labRequisition->id) }}" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
 </div>
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var form = document.querySelector('.delete-form');
-    if (form) {
-        form.addEventListener('submit', function (e) {
-            if (!confirm('Delete this lab requisition?')) {
-                e.preventDefault();
-            }
-        });
-    }
-});
-</script>
-@endpush
 @endsection
 

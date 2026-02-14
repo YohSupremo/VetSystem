@@ -184,7 +184,7 @@ class LaboratoryController extends Controller
             'sample_collected' => 'nullable|boolean',
             'sample_collection_date' => 'nullable|date',
             'status' => 'required|in:pending,collected,sent_to_lab,completed,cancelled',
-            'results' => 'nullable|string',
+            'results' => 'required|string',
             'notes' => 'nullable|string',
         ]);
 
@@ -196,6 +196,13 @@ class LaboratoryController extends Controller
 
         if (!$data['sample_collected']) {
             $data['sample_collection_date'] = null;
+        }
+
+        // Auto-set result_date if results are entered and date is missing
+        if (!empty($data['results']) && is_null($labRequisition->result_date)) {
+            $data['result_date'] = now();
+            // Optional: reset notification if results are updated
+            $data['result_notification_sent'] = false; 
         }
 
         $labRequisition->update($data);

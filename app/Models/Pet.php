@@ -65,6 +65,11 @@ class Pet extends Model
         return $this->hasMany(PetVaccination::class);
     }
 
+    public function prescriptions()
+    {
+        return $this->hasManyThrough(Prescription::class, MedicalRecord::class);
+    }
+
     public function vaccinations()
     {
         return $this->petVaccinations();

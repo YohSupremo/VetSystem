@@ -1,400 +1,139 @@
 @extends('layout.base')
 
-@php($bodyClass = 'customer-body')
-
-@section('title', 'Invoice Details - PawCare')
-
-@push('styles')
-<style>
-.customer-container {
-    width: 100%;
-    min-height: 100vh;
-    position: relative;
-    z-index: 2;
-}
-
-.customer-header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(167, 139, 250, 0.2);
-    padding: 1.5rem 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    border-radius: 0 0 2rem 2rem;
-}
-
-.logo-section .paw-icon {
-    font-size: 2.5rem;
-    animation: bounce 2s infinite;
-}
-
-.logo-section h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.customer-main {
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.invoice-details {
-    background: white;
-    border-radius: 1rem;
-    padding: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    margin-bottom: 2rem;
-}
-
-.invoice-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid var(--soft-gray);
-}
-
-.invoice-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--dark-text);
-}
-
-.invoice-number {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--primary-purple);
-}
-
-.status-badge {
-    padding: 0.5rem 1rem;
-    border-radius: 2rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.status-pending {
-    background: rgba(255, 193, 7, 0.1);
-    color: #f59e0b;
-}
-
-.status-partial {
-    background: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
-}
-
-.status-paid {
-    background: rgba(34, 197, 94, 0.1);
-    color: #22c55e;
-}
-
-.status-overdue {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-}
-
-.status-cancelled {
-    background: rgba(107, 114, 128, 0.1);
-    color: #6b7280;
-}
-
-.invoice-sections {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin-bottom: 2rem;
-}
-
-.invoice-section {
-    background: var(--soft-gray);
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-}
-
-.invoice-section h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--dark-text);
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.invoice-section h3 i {
-    color: var(--primary-purple);
-}
-
-.detail-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.detail-item:last-child {
-    border-bottom: none;
-}
-
-.detail-label {
-    font-size: 0.875rem;
-    color: var(--light-text);
-}
-
-.detail-value {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--dark-text);
-}
-
-.items-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 2rem;
-}
-
-.items-table th {
-    background: var(--primary-purple);
-    color: white;
-    padding: 1rem;
-    text-align: left;
-    font-weight: 600;
-}
-
-.items-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--soft-gray);
-}
-
-.items-table tr:last-child td {
-    border-bottom: none;
-}
-
-.total-section {
-    background: var(--soft-gray);
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    margin-top: 1rem;
-}
-
-.total-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-}
-
-.total-row.total {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--primary-purple);
-    border-top: 2px solid var(--primary-purple);
-    padding-top: 1rem;
-    margin-top: 0.5rem;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-    flex-wrap: wrap;
-}
-
-.btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    color: white;
-}
-
-.btn-secondary {
-    background: var(--soft-gray);
-    color: var(--dark-text);
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-@media (max-width: 768px) {
-    .invoice-sections {
-        grid-template-columns: 1fr;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-    }
-}
-</style>
-@endpush
-
 @section('content')
-<div class="customer-container">
-    <header class="customer-header">
-        <div class="logo-section">
-            <a href="{{ route('customer.dashboard') }}" class="d-flex align-items-center text-decoration-none">
-                <i class="fas fa-paw paw-icon text-primary"></i>
-                <h1 class="ms-3 mb-0">PawCare</h1>
-            </a>
-        </div>
-        <div class="user-section">
-            <span class="text-muted">Welcome, {{ $user->first_name }}</span>
-        </div>
-    </header>
-
-    <main class="customer-main">
-        <div class="invoice-details">
-            <div class="invoice-header">
-                <div>
-                    <h2 class="invoice-title">Invoice Details</h2>
-                    <div class="invoice-number">{{ $invoice->invoice_number }}</div>
-                </div>
-                <span class="status-badge status-{{ $invoice->status }}">
-                    {{ ucfirst($invoice->status) }}
-                </span>
-            </div>
-
-            <div class="invoice-sections">
-                <!-- Invoice Information -->
-                <div class="invoice-section">
-                    <h3><i class="fas fa-file-invoice"></i> Invoice Information</h3>
-                    <div class="detail-item">
-                        <span class="detail-label">Issue Date</span>
-                        <span class="detail-value">{{ \Carbon\Carbon::parse($invoice->issue_date)->format('M d, Y') }}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Due Date</span>
-                        <span class="detail-value">{{ \Carbon\Carbon::parse($invoice->due_date)->format('M d, Y') }}</span>
-                    </div>
-                    @if($invoice->tax_rate > 0)
-                    <div class="detail-item">
-                        <span class="detail-label">Tax Rate</span>
-                        <span class="detail-value">{{ $invoice->tax_rate }}%</span>
-                    </div>
-                    @endif
-                    @if($invoice->discount_amount > 0)
-                    <div class="detail-item">
-                        <span class="detail-label">Discount</span>
-                        <span class="detail-value">${{ number_format($invoice->discount_amount, 2) }}</span>
-                    </div>
-                    @endif
-                </div>
-
-                <!-- Related Information -->
-                <div class="invoice-section">
-                    <h3><i class="fas fa-link"></i> Related Information</h3>
-                    @if($invoice->appointment)
-                    <div class="detail-item">
-                        <span class="detail-label">Appointment</span>
-                        <span class="detail-value">{{ \Carbon\Carbon::parse($invoice->appointment->appointment_date)->format('M d, Y h:i A') }}</span>
-                    </div>
-                    @endif
-                    @if($invoice->pet)
-                    <div class="detail-item">
-                        <span class="detail-label">Pet</span>
-                        <span class="detail-value">{{ $invoice->pet->name }}</span>
-                    </div>
-                    @endif
-                    @if($invoice->order)
-                    <div class="detail-item">
-                        <span class="detail-label">Order</span>
-                        <span class="detail-value">#{{ $invoice->order->id }}</span>
-                    </div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Invoice Items -->
-            @if($invoice->items->count() > 0)
-            <h3 style="margin-bottom: 1rem;"><i class="fas fa-list"></i> Invoice Items</h3>
-            <table class="items-table">
-                <thead>
-                    <tr>
-                        <th>Description</th>
-                        <th>Quantity</th>
-                        <th>Unit Price</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($invoice->items as $item)
-                    <tr>
-                        <td>{{ $item->description }}</td>
-                        <td>{{ $item->quantity }}</td>
-                        <td>${{ number_format($item->unit_price, 2) }}</td>
-                        <td>${{ number_format($item->quantity * $item->unit_price, 2) }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            @endif
-
-            <!-- Totals -->
-            <div class="total-section">
-                <div class="total-row">
-                    <span>Subtotal</span>
-                    <span>${{ number_format($invoice->items->sum(function($item) { return $item->quantity * $item->unit_price; }), 2) }}</span>
-                </div>
-                @if($invoice->tax_rate > 0)
-                <div class="total-row">
-                    <span>Tax ({{ $invoice->tax_rate }}%)</span>
-                    <span>${{ number_format($invoice->items->sum(function($item) { return $item->quantity * $item->unit_price; }) * ($invoice->tax_rate / 100), 2) }}</span>
-                </div>
-                @endif
-                @if($invoice->discount_amount > 0)
-                <div class="total-row">
-                    <span>Discount</span>
-                    <span>-${{ number_format($invoice->discount_amount, 2) }}</span>
-                </div>
-                @endif
-                <div class="total-row total">
-                    <span>Total</span>
-                    <span>${{ number_format($invoice->items->sum(function($item) { return $item->quantity * $item->unit_price; }) + ($invoice->items->sum(function($item) { return $item->quantity * $item->unit_price; }) * ($invoice->tax_rate / 100)) - $invoice->discount_amount, 2) }}</span>
-                </div>
-            </div>
-
-            <!-- Notes -->
-            @if($invoice->notes)
-            <div class="invoice-section" style="margin-top: 2rem;">
-                <h3><i class="fas fa-notes-medical"></i> Notes</h3>
-                <p>{{ $invoice->notes }}</p>
-            </div>
-            @endif
-
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <a href="{{ route('customer.billing.index') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Billing
+@include('layout.customer-navbar')
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex align-items-center mb-4">
+                <a href="{{ route('customer.billing.index') }}" class="text-decoration-none text-muted me-3">
+                    <i class="fas fa-arrow-left"></i>
                 </a>
-                
-                @if(in_array($invoice->status, ['pending', 'partial']))
-                <a href="{{ route('customer.billing.pay', $invoice->id) }}" class="btn btn-primary">
-                    <i class="fas fa-credit-card"></i> Pay Invoice
-                </a>
-                @endif
+                <h1 class="h3 mb-0">Invoice Details</h1>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5">
+                    <!-- Invoice Header -->
+                    <div class="d-flex justify-content-between mb-5">
+                        <div>
+                            <h2 class="fw-bold text-primary">INVOICE</h2>
+                            <p class="text-muted mb-0">#{{ $invoice->invoice_number ?: str_pad($invoice->id, 6, '0', STR_PAD_LEFT) }}</p>
+                            <div class="mt-2">
+                                @if($invoice->status === 'paid')
+                                    <span class="badge bg-success fs-6">PAID</span>
+                                @elseif($invoice->status === 'cancelled')
+                                    <span class="badge bg-secondary fs-6">CANCELLED</span>
+                                @else
+                                    <span class="badge bg-warning text-dark fs-6">PENDING</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <h5 class="fw-bold">PawCare Veterinary Clinic</h5>
+                            <p class="text-muted small mb-0">123 Vet Street, Animal City</p>
+                            <p class="text-muted small mb-0">Phone: (123) 456-7890</p>
+                            <p class="text-muted small">Date: {{ date('M d, Y', strtotime($invoice->issue_date)) }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Client Info -->
+                    <div class="row mb-5">
+                        <div class="col-md-6">
+                            <h6 class="text-uppercase text-muted small fw-bold">Bill To:</h6>
+                            <h5 class="fw-bold mb-1">{{ $user->first_name }} {{ $user->last_name }}</h5>
+                            <p class="text-muted mb-0">{{ $user->email }}</p>
+                            @if($invoice->pet)
+                                <p class="text-muted mt-2">
+                                    <small class="text-uppercase fw-bold">Patient:</small> {{ $invoice->pet->name }} ({{ $invoice->pet->species }})
+                                </p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Invoice Items -->
+                    <div class="table-responsive mb-5">
+                        <table class="table table-borderless">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="py-3 ps-4">Description</th>
+                                    <th class="py-3 text-end">Quantity</th>
+                                    <th class="py-3 text-end">Unit Price</th>
+                                    <th class="py-3 text-end pe-4">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($invoice->items as $item)
+                                    <tr class="border-bottom">
+                                        <td class="py-3 ps-4">{{ $item->description }}</td>
+                                        <td class="py-3 text-end">{{ $item->quantity }}</td>
+                                        <td class="py-3 text-end">₱{{ number_format($item->unit_price, 2) }}</td>
+                                        <td class="py-3 text-end pe-4">₱{{ number_format($item->total_price, 2) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot class="border-top">
+                                <tr>
+                                    <td colspan="3" class="text-end pt-3 fw-bold">Subtotal</td>
+                                    <td class="text-end pt-3 pe-4">₱{{ number_format($invoice->subtotal, 2) }}</td>
+                                </tr>
+                                @if($invoice->tax > 0)
+                                    <tr>
+                                        <td colspan="3" class="text-end fw-bold">Tax</td>
+                                        <td class="text-end pe-4">₱{{ number_format($invoice->tax, 2) }}</td>
+                                    </tr>
+                                @endif
+                                <tr>
+                                    <td colspan="3" class="text-end pt-3 fw-bold fs-5">Total Amount</td>
+                                    <td class="text-end pt-3 pe-4 fw-bold fs-5 text-primary">₱{{ number_format($invoice->total_amount, 2) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- Payment History (if any) -->
+                    @if($invoice->payments->count() > 0)
+                        <div class="mb-5">
+                            <h6 class="fw-bold mb-3">Payment History</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Method</th>
+                                            <th>Reference</th>
+                                            <th class="text-end">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($invoice->payments as $payment)
+                                            <tr>
+                                                <td>{{ date('M d, Y', strtotime($payment->payment_date)) }}</td>
+                                                <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}</td>
+                                                <td>{{ $payment->reference_number ?: '-' }}</td>
+                                                <td class="text-end">₱{{ number_format($payment->amount, 2) }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-end gap-3 d-print-none">
+                        <button onclick="window.print()" class="btn btn-outline-secondary">
+                            <i class="fas fa-print me-2"></i>Print Invoice
+                        </button>
+                        @if($invoice->status === 'pending' || $invoice->status === 'partial')
+                            <a href="{{ route('customer.billing.pay', $invoice->id) }}" class="btn btn-primary px-4">
+                                <i class="fas fa-credit-card me-2"></i>Pay Now
+                            </a>
+                        @endif
+                    </div>
+                </div>
             </div>
         </div>
-    </main>
+    </div>
 </div>
 @endsection

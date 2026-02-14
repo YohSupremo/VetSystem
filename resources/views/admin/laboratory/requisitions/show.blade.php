@@ -96,7 +96,7 @@
             <a href="{{ route('admin.laboratory.requisitions.edit', $labRequisition->id) }}" class="btn btn-primary">
                 <i class="fas fa-edit"></i> Edit
             </a>
-            <form method="POST" action="{{ route('admin.laboratory.requisitions.destroy', $labRequisition->id) }}" class="delete-form">
+            <form method="POST" action="{{ route('admin.laboratory.requisitions.destroy', $labRequisition->id) }}" onsubmit="return confirm('Delete this lab requisition?');">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn btn-danger">
@@ -179,19 +179,5 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var form = document.querySelector('.delete-form');
-    if (form) {
-        form.addEventListener('submit', function (e) {
-            if (!confirm('Delete this lab requisition?')) {
-                e.preventDefault();
-            }
-        });
-    }
-});
-</script>
-@endpush
 @endsection
 

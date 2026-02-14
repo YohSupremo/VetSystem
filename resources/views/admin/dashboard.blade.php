@@ -7,6 +7,7 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Styles -->
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
@@ -746,6 +747,10 @@
                     <a href="{{ route('admin.boarding.index') }}" class="nav-item {{ request()->routeIs('admin.boarding.*') ? 'active' : '' }}">
                         <i class="fas fa-hotel"></i>
                         <span>Boarding</span>
+                    </a>
+                    <a href="{{ route('admin.cages.index') }}" class="nav-item {{ request()->routeIs('admin.cages.*') ? 'active' : '' }}">
+                        <i class="fas fa-border-all"></i>
+                        <span>Cages</span>
                     </a>
                     <a href="{{ route('admin.grooming.index') }}" class="nav-item {{ request()->routeIs('admin.grooming.*') ? 'active' : '' }}">
                         <i class="fas fa-cut"></i>

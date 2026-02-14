@@ -154,6 +154,41 @@
         background: #f8fafc;
     }
 
+    /* Gradient highlighting for status rows with pleasing texture */
+    .table tbody tr.row-expired td {
+        background: linear-gradient(to right, rgba(220, 38, 38, 0.15), rgba(220, 38, 38, 0.10), rgba(220, 38, 38, 0.15));
+        transition: all 0.2s ease;
+    }
+
+    .table tbody tr.row-expired td:first-child {
+        background: linear-gradient(to right, rgba(220, 38, 38, 0.18), rgba(220, 38, 38, 0.12));
+    }
+
+    .table tbody tr.row-expired td:last-child {
+        background: linear-gradient(to left, rgba(220, 38, 38, 0.18), rgba(220, 38, 38, 0.12));
+    }
+
+    .table tbody tr.row-expired:hover td {
+        background: linear-gradient(to right, rgba(220, 38, 38, 0.22), rgba(220, 38, 38, 0.16), rgba(220, 38, 38, 0.22));
+    }
+
+    .table tbody tr.row-expiring td {
+        background: linear-gradient(to right, rgba(234, 88, 12, 0.15), rgba(234, 88, 12, 0.10), rgba(234, 88, 12, 0.15));
+        transition: all 0.2s ease;
+    }
+
+    .table tbody tr.row-expiring td:first-child {
+        background: linear-gradient(to right, rgba(234, 88, 12, 0.18), rgba(234, 88, 12, 0.12));
+    }
+
+    .table tbody tr.row-expiring td:last-child {
+        background: linear-gradient(to left, rgba(234, 88, 12, 0.18), rgba(234, 88, 12, 0.12));
+    }
+
+    .table tbody tr.row-expiring:hover td {
+        background: linear-gradient(to right, rgba(234, 88, 12, 0.22), rgba(234, 88, 12, 0.16), rgba(234, 88, 12, 0.22));
+    }
+
     .category-badge {
         padding: 0.4rem 0.7rem;
         border-radius: 999px;
@@ -163,11 +198,15 @@
     }
 
     .status-badge {
-        padding: 0.35rem 0.65rem;
+        padding: 0.4rem 0.75rem;
         border-radius: 999px;
         font-weight: 600;
-        font-size: 0.75rem;
-        letter-spacing: 0.02em;
+        font-size: 0.72rem;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
     }
 
     .badge-low-stock {
@@ -389,7 +428,15 @@
                 </thead>
                 <tbody>
                     @foreach($inventoryItems as $item)
-                        <tr>
+                        @php
+                            $rowClass = '';
+                            if($item->isExpired()) {
+                                $rowClass = 'row-expired';
+                            } elseif($item->isExpiringSoon()) {
+                                $rowClass = 'row-expiring';
+                            }
+                        @endphp
+                        <tr class="{{ $rowClass }}">
                             <td>
                                 <div class="d-flex align-items-center gap-3 justify-content-center">
                                     @if($item->image_path)
@@ -431,39 +478,28 @@
                                 @endif
                             </td>
                             <td>{{ $stock->min_stock ?? 0 }}</td>
-                            <td>${{ number_format($item->unit_price, 2) }}</td>
+                            <td>₱{{ number_format($item->unit_price, 2) }}</td>
                             <td>
                                 @if($stock && $stock->expiry_date)
                                     <div class="expiry-meta">
                                         <span class="expiry-date">{{ $stock->expiry_date->format('M d, Y') }}</span>
-                                        @if($item->isExpired())
-                                            <span class="status-badge bg-danger text-white">Expired</span>
-                                        @elseif($item->isExpiringSoon())
-                                            <span class="status-badge bg-warning text-dark">Expiring Soon</span>
-                                        @else
-                                            <span class="status-badge bg-success text-white">Valid</span>
-                                        @endif
                                     </div>
                                 @else
                                     <span class="text-muted">N/A</span>
                                 @endif
                             </td>
                             <td>
-                                @php
-                                    $stockStatus = 'good';
-                                    if ($item->isLowStock()) $stockStatus = 'low';
-                                    if ($item->total_stock == 0) $stockStatus = 'critical';
-                                    $statusLabel = $stockStatus == 'good' ? 'In Stock' : ($stockStatus == 'low' ? 'Low Stock' : 'Out of Stock');
-                                    $statusClass = $stockStatus == 'good' ? 'text-success' : ($stockStatus == 'low' ? 'text-warning' : 'text-danger');
-                                @endphp
                                 @if($item->isExpired())
-                                    <span class="status-badge bg-danger text-white">Expired</span>
+                                    <span class="status-badge badge-low-stock"><i class="fas fa-ban"></i> Expired</span>
                                 @elseif($item->isExpiringSoon())
-                                    <span class="status-badge bg-warning text-dark">Expiring Soon</span>
+                                    <span class="status-badge badge-expiring"><i class="fas fa-hourglass-half"></i> Expiring Soon</span>
+                                @elseif($item->isLowStock())
+                                    <span class="status-badge" style="background:#f59e0b;color:white;"><i class="fas fa-exclamation-triangle"></i> Low Stock</span>
+                                @elseif($item->total_stock == 0)
+                                    <span class="status-badge badge-low-stock"><i class="fas fa-times-circle"></i> Out of Stock</span>
                                 @else
-                                    <span class="status-badge bg-success text-white">Valid</span>
+                                    <span class="status-badge" style="background:#22c55e;color:white;"><i class="fas fa-check-circle"></i> In Stock</span>
                                 @endif
-                                <div class="small {{ $statusClass }}">{{ $statusLabel }}</div>
                             </td>
                             <td>
                                 <div class="btn-group action-group" role="group">

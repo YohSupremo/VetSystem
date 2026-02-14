@@ -101,6 +101,11 @@ class InventoryController extends BaseController
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
         ]);
 
+        // Additional validation: quantity must not exceed max_stock if max_stock is set
+        if (!empty($validated['max_stock']) && $validated['quantity'] > $validated['max_stock']) {
+            return back()->withErrors(['quantity' => 'Quantity cannot exceed maximum stock (' . $validated['max_stock'] . ')'])->withInput();
+        }
+
         if ($request->hasFile('image')) {
             $file = $request->file('image');
             $directory = public_path('uploads/inventory-items');
@@ -172,6 +177,11 @@ class InventoryController extends BaseController
             'location' => 'nullable|string|max:100',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
         ]);
+
+        // Additional validation: quantity must not exceed max_stock if max_stock is set
+        if (!empty($validated['max_stock']) && $validated['quantity'] > $validated['max_stock']) {
+            return back()->withErrors(['quantity' => 'Quantity cannot exceed maximum stock (' . $validated['max_stock'] . ')'])->withInput();
+        }
 
         if ($request->hasFile('image')) {
             if ($item->image_path) {

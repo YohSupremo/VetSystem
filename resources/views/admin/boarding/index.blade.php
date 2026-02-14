@@ -280,7 +280,7 @@
                         <a href="{{ route('admin.boarding.edit', $boarding->id) }}" class="btn-icon" title="Edit">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id) }}" class="delete-form">
+                        <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id) }}" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this boarding record?');">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn-icon text-danger" title="Delete">
@@ -299,21 +299,7 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var forms = document.querySelectorAll('.delete-form');
-    forms.forEach(function (form) {
-        form.addEventListener('submit', function (e) {
-            var ok = confirm('Are you sure you want to delete this boarding record? This action cannot be undone.');
-            if (!ok) {
-                e.preventDefault();
-            }
-        });
-    });
-});
-</script>
-@endpush
+
 
 <style>
 .table-responsive {

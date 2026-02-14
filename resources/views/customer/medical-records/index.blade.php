@@ -1,221 +1,55 @@
 @extends('layout.base')
 
-@php($bodyClass = 'customer-body')
-
-@section('title', 'Medical Records - PawCare')
-
-@push('styles')
-<style>
-.customer-container {
-    width: 100%;
-    min-height: 100vh;
-    position: relative;
-    z-index: 2;
-}
-
-.customer-header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(167, 139, 250, 0.2);
-    padding: 1.5rem 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    border-radius: 0 0 2rem 2rem;
-}
-
-.logo-section .paw-icon {
-    font-size: 2.5rem;
-    animation: bounce 2s infinite;
-}
-
-.logo-section h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.customer-main {
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.page-header {
-    text-align: center;
-    margin-bottom: 2.5rem;
-}
-
-.page-header h2 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.5rem;
-}
-
-.pet-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 1.5rem;
-    padding: 1.5rem;
-    border: 1px solid rgba(167, 139, 250, 0.2);
-    margin-bottom: 1.5rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.1);
-    display: flex;
-    gap: 1.5rem;
-    align-items: start;
-}
-
-.pet-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(147, 51, 234, 0.15);
-}
-
-.pet-photo {
-    width: 100px;
-    height: 100px;
-    border-radius: 1rem;
-    object-fit: cover;
-    border: 3px solid rgba(167, 139, 250, 0.3);
-}
-
-.pet-info {
-    flex: 1;
-}
-
-.pet-info h3 {
-    color: var(--primary-purple);
-    font-weight: 700;
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.pet-details {
-    display: flex;
-    gap: 1.5rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-}
-
-.detail-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(236, 72, 153, 0.1));
-    border-radius: 0.75rem;
-    font-size: 0.9rem;
-}
-
-.records-count {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-    border-radius: 0.75rem;
-    color: #1e40af;
-    font-weight: 600;
-}
-
-.btn-view {
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    border: none;
-    border-radius: 1rem;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    color: white;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-view:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(147, 51, 234, 0.4);
-    color: white;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 2rem;
-}
-
-.empty-state-icon {
-    font-size: 5rem;
-    margin-bottom: 1rem;
-}
-</style>
-@endpush
-
 @section('content')
 @include('layout.customer-navbar')
-<div class="floating-shapes">
-    <div class="shape"></div>
-    <div class="shape"></div>
-    <div class="shape"></div>
-</div>
-
-<div class="customer-container">
-    <!-- Main Content -->
-    <main class="customer-main">
-        <div class="page-header">
-            <h2>📋 Medical Records</h2>
-            <p>View your pets' complete medical history</p>
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Medical Records</h1>
+            <p class="text-muted">View medical history for your pets</p>
         </div>
+    </div>
 
-        @if($pets->count() > 0)
+    @if($pets->isEmpty())
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="fas fa-notes-medical fa-3x text-muted"></i>
+            </div>
+            <h5>No pets registered</h5>
+            <p class="text-muted">Register your pets to view their medical history.</p>
+            <a href="{{ route('customer.pets.create') }}" class="btn btn-outline-primary mt-2">
+                Register a Pet
+            </a>
+        </div>
+    @else
+        <div class="row g-4">
             @foreach($pets as $pet)
-                <div class="pet-card">
-                    <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" class="pet-photo">
-                    
-                    <div class="pet-info">
-                        <h3>{{ $pet->name }}</h3>
-                        
-                        <div class="pet-details">
-                            <span class="detail-badge">
-                                <strong>Species:</strong> {{ ucfirst($pet->species) }}
-                            </span>
-                            <span class="detail-badge">
-                                <strong>Breed:</strong> {{ $pet->breed ?? 'Mixed' }}
-                            </span>
-                            <span class="detail-badge">
-                                <strong>Age:</strong> {{ $pet->age }}
-                            </span>
-                        </div>
-                        
-                        <div class="d-flex gap-2 align-items-center">
-                            <span class="records-count">
-                                📄 {{ $pet->medicalRecords->count() }} Medical Records
-                            </span>
-                            <a href="{{ route('customer.medical-records.pet', $pet->id) }}" class="btn-view">
-                                <span>👁️</span> View Records
-                            </a>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm hover-card">
+                        <div class="card-body p-4 text-center">
+                            <div class="mb-3 position-relative d-inline-block">
+                                @if($pet->photo_path)
+                                    <img src="{{ asset($pet->photo_path) }}" alt="{{ $pet->name }}" class="rounded-circle shadow-sm" width="120" height="120" style="object-fit: cover;">
+                                @else
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center shadow-sm mx-auto" style="width: 120px; height: 120px;">
+                                        <i class="fas fa-paw fa-3x text-muted"></i>
+                                    </div>
+                                @endif
+                            </div>
+                            
+                            <h3 class="h4 fw-bold mb-1">{{ $pet->name }}</h3>
+                            <p class="text-muted mb-3">{{ $pet->species }} • {{ $pet->breed }}</p>
+                            
+                            <div class="d-grid">
+                                <a href="{{ route('customer.medical-records.pet', $pet->id) }}" class="btn btn-primary">
+                                    <i class="fas fa-file-medical me-2"></i>View Records
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             @endforeach
-        @else
-            <div class="empty-state">
-                <div class="empty-state-icon">🐾</div>
-                <h3>No Pets Registered</h3>
-                <p>Please register a pet first to view medical records</p>
-                <a href="{{ route('customer.pets.create') }}" class="btn-view mt-3">
-                    <span>➕</span> Add Your First Pet
-                </a>
-            </div>
-        @endif
-    </main>
+        </div>
+    @endif
 </div>
 @endsection

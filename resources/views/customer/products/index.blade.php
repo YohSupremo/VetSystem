@@ -1,329 +1,102 @@
 @extends('layout.base')
 
-@php($bodyClass = 'customer-body')
-
-@section('title', 'Shop Products - PawCare')
-
-@push('styles')
-<style>
-.shop-container {
-    width: 100%;
-    min-height: 100vh;
-    position: relative;
-    z-index: 2;
-    padding: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-.shop-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-}
-
-.shop-header h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.product-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 1.5rem;
-    padding: 1.5rem;
-    border: 1px solid rgba(167, 139, 250, 0.2);
-    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.1);
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    transition: all 0.3s ease;
-}
-
-.product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(147, 51, 234, 0.15);
-}
-
-.product-image {
-    width: 100%;
-    height: 200px;
-    border-radius: 1rem;
-    overflow: hidden;
-    background: linear-gradient(135deg, var(--light-purple), var(--secondary-purple));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-    position: relative;
-}
-
-.product-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.product-image:hover img {
-    transform: scale(1.05);
-}
-
-.product-badge {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: linear-gradient(135deg, #10b981, #34d399);
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.product-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.product-name {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--primary-purple);
-    margin-bottom: 0.5rem;
-    line-height: 1.3;
-}
-
-.product-meta {
-    font-size: 0.85rem;
-    color: #6B7280;
-    margin-bottom: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.product-category {
-    background: rgba(167, 139, 250, 0.1);
-    color: var(--primary-purple);
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.5rem;
-    font-weight: 500;
-    font-size: 0.8rem;
-    width: fit-content;
-}
-
-.product-price {
-    font-weight: 700;
-    font-size: 1.5rem;
-    color: var(--primary-purple);
-    margin-bottom: 0.5rem;
-}
-
-.product-stock {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.stock-indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #10b981;
-}
-
-.stock-low {
-    background: #f59e0b;
-}
-
-.stock-out {
-    background: #dc2626;
-}
-
-.product-actions {
-    margin-top: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.quantity-input-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.quantity-input {
-    width: 80px;
-    text-align: center;
-    border: 2px solid var(--light-purple);
-    border-radius: 0.5rem;
-    padding: 0.5rem;
-    font-weight: 500;
-}
-
-.btn-add-to-cart {
-    background: linear-gradient(135deg, #10b981, #34d399);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.75rem;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-    width: 100%;
-}
-
-.btn-add-to-cart:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
-}
-
-.btn-add-to-cart:disabled {
-    background: linear-gradient(135deg, #9ca3af, #6b7280);
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-@media (max-width: 768px) {
-    .shop-container {
-        padding: 1rem;
-    }
-}
-</style>
-@endpush
-
 @section('content')
-<div class="floating-shapes">
-    <div class="shape"></div>
-    <div class="shape"></div>
-    <div class="shape"></div>
-</div>
-
-<div class="shop-container">
-    <div class="shop-header">
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1>🛍️ Pet Care Shop</h1>
-            <p class="text-muted mb-0">Browse available products and add items to your cart.</p>
+            <h1 class="h2 mb-1">Pet Care Shop</h1>
+            <p class="text-muted">Browse quality products for your pets</p>
         </div>
-        <div class="d-flex align-items-center gap-3">
-            <a href="{{ route('customer.cart.index') }}" class="btn-view position-relative">
-                🛒 Cart
-                @if($cartItemCount > 0)
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
-                        {{ $cartItemCount }}
-                    </span>
-                @endif
-            </a>
-            <a href="{{ route('customer.dashboard') }}" class="btn-view">
-                ← Dashboard
-            </a>
-        </div>
+        <a href="{{ route('customer.cart.index') }}" class="btn btn-outline-primary position-relative">
+            <i class="fas fa-shopping-cart me-2"></i>My Cart
+            @if($cartItemCount > 0)
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {{ $cartItemCount }}
+                    <span class="visually-hidden">items in cart</span>
+                </span>
+            @endif
+        </a>
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
     @if(session('error'))
-        <div class="alert alert-danger">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
-    @if($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+    @if($products->isEmpty())
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="fas fa-box-open fa-3x text-muted"></i>
+            </div>
+            <h5>No products available</h5>
+            <p class="text-muted">Please check back later for new stock.</p>
         </div>
-    @endif
-
-    @if($products->count())
-        <div class="row g-3">
+    @else
+        <div class="row g-4">
             @foreach($products as $product)
-                <div class="col-md-6 col-lg-4">
-                    <div class="product-card">
-                        <div class="product-image">
+                <div class="col-md-6 col-lg-4 col-xl-3">
+                    <div class="card h-100 border-0 shadow-sm hover-card">
+                        <!-- Product Image -->
+                        <div class="position-relative">
                             @if($product->image_path)
-                                <img src="{{ asset($product->image_path) }}" alt="{{ $product->name }}">
+                                <img src="{{ asset($product->image_path) }}" class="card-img-top" alt="{{ $product->name }}" style="height: 200px; object-fit: cover;">
                             @else
-                                <div style="font-size: 3rem; color: rgba(255,255,255,0.7);">🛍️</div>
+                                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="fas fa-paw fa-3x text-muted"></i>
+                                </div>
                             @endif
                             
-                            @if($product->quantity <= 5)
-                                <div class="product-badge">Low Stock</div>
-                            @elseif($product->quantity <= 0)
-                                <div class="product-badge stock-out">Out of Stock</div>
+                            @if($product->quantity <= 0)
+                                <span class="position-absolute top-0 end-0 badge bg-danger m-2">Out of Stock</span>
+                            @elseif($product->quantity <= 5)
+                                <span class="position-absolute top-0 end-0 badge bg-warning text-dark m-2">Low Stock</span>
                             @endif
                         </div>
-                        
-                        <div class="product-content">
-                            <div class="product-name">{{ $product->name }}</div>
+
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title text-truncate" title="{{ $product->name }}">{{ $product->name }}</h5>
                             
-                            <div class="product-meta">
-                                @if($product->category)
-                                    <div class="product-category">{{ ucfirst($product->category) }}</div>
-                                @endif
-                                
-                                @if($product->description)
-                                    <div>{{ \Illuminate\Support\Str::limit($product->description, 100) }}</div>
-                                @endif
-                                
-                                @if($product->sku)
-                                    <div><strong>SKU:</strong> {{ $product->sku }}</div>
-                                @endif
+                            <div class="mb-2">
+                                <span class="badge bg-light text-dark border">{{ $product->category }}</span>
                             </div>
                             
-                            <div class="product-price">₱{{ number_format($product->unit_price, 2) }}</div>
+                            <p class="card-text text-muted small flex-grow-1">
+                                {{ Str::limit($product->description, 60) }}
+                            </p>
                             
-                            <div class="product-stock">
-                                <div class="stock-indicator {{ $product->quantity <= 5 ? 'stock-low' : ($product->quantity <= 0 ? 'stock-out' : '') }}"></div>
-                                <span>{{ $product->quantity }} units available</span>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="h5 mb-0 text-primary">₱{{ number_format($product->unit_price, 2) }}</span>
+                                <small class="text-muted">{{ $product->quantity }} available</small>
                             </div>
                         </div>
-                        
-                        <div class="product-actions">
-                            @if(!$product->requires_prescription && $product->quantity > 0)
-                                <form action="{{ route('customer.products.add-to-cart', $product->id) }}" method="POST" class="quantity-input-group" enctype="multipart/form-data">
+
+                        <div class="card-footer bg-white border-top-0 p-3 pt-0">
+                            @if($product->quantity > 0)
+                                <form action="{{ route('customer.products.add-to-cart', $product->id) }}" method="POST">
                                     @csrf
-                                    <input type="number" name="quantity" min="1" max="{{ $product->quantity }}" value="1" class="quantity-input">
-                                    <button type="submit" class="btn-add-to-cart">
-                                        🛒 Add to Cart
-                                    </button>
+                                    <div class="input-group">
+                                        <input type="number" name="quantity" class="form-control" value="1" min="1" max="{{ $product->quantity }}">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-cart-plus"></i> Add
+                                        </button>
+                                    </div>
                                 </form>
                             @else
-                                <button class="btn-add-to-cart" disabled>
-                                    {{ $product->requires_prescription ? '📋 Prescription Required' : '🚫 Out of Stock' }}
-                                </button>
+                                <button class="btn btn-secondary w-100" disabled>Unavailable</button>
                             @endif
                         </div>
                     </div>
                 </div>
             @endforeach
         </div>
-    @else
-        <div class="empty-state">
-            <div class="empty-icon">�️</div>
-            <h3>No products available</h3>
-            <p>Please check back later for available pet care products.</p>
-        </div>
     @endif
 </div>
 @endsection
-

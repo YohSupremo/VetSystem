@@ -216,6 +216,13 @@
                             <a href="{{ route('admin.laboratory.requisitions.edit', $req->id) }}" class="btn-icon" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            <form action="{{ route('admin.laboratory.requisitions.destroy', $req->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this requisition?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn-icon" title="Delete" style="color: #dc3545;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 @empty

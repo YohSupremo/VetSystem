@@ -162,7 +162,7 @@
             @endif
             <div class="info-row">
                 <span class="info-label">Unit Price:</span>
-                <span class="info-value">${{ number_format($item->unit_price, 2) }}</span>
+                <span class="info-value">₱{{ number_format($item->unit_price, 2) }}</span>
             </div>
             @php $stock = $item->inventoryStocks->first(); @endphp
         </div>

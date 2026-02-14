@@ -342,6 +342,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/pet/{pet}', [SurgeryController::class, 'byPet'])->name('pet');
     });
 
+    // Cages
+    Route::resource('cages', \App\Http\Controllers\Admin\CageController::class);
+    Route::get('/cages/scan/{code}', [\App\Http\Controllers\Admin\CageController::class, 'scan'])->name('cages.scan');
+
 // Customer Routes
     Route::get('prescriptions/pet/{petId}', [PrescriptionController::class, 'byPet'])->name('prescriptions.pet');
 

@@ -1,277 +1,85 @@
 @extends('layout.base')
 
-@php($bodyClass = 'customer-body')
-
-@section('title', 'My Pets - PawCare')
-
-@push('styles')
-<style>
-.customer-container {
-    width: 100%;
-    min-height: 100vh;
-    position: relative;
-    z-index: 2;
-}
-
-.customer-header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(167, 139, 250, 0.2);
-    padding: 1.5rem 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    border-radius: 0 0 2rem 2rem;
-}
-
-.logo-section .paw-icon {
-    font-size: 2.5rem;
-    animation: bounce 2s infinite;
-}
-
-.logo-section h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.customer-main {
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.page-header {
-    text-align: center;
-    margin-bottom: 2.5rem;
-}
-
-.page-header h2 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.5rem;
-}
-
-.page-header p {
-    color: #6B7280;
-    font-size: 1.1rem;
-}
-
-.pets-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 2rem;
-    margin-top: 2rem;
-}
-
-.pet-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 1.5rem;
-    overflow: hidden;
-    border: 1px solid rgba(167, 139, 250, 0.2);
-    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.1);
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.pet-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.2);
-}
-
-.pet-photo {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    background: linear-gradient(135deg, var(--light-purple), rgba(236, 72, 153, 0.1));
-}
-
-.pet-info {
-    padding: 1.5rem;
-}
-
-.pet-name {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--primary-purple);
-    margin-bottom: 0.5rem;
-}
-
-.pet-details {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.pet-detail-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #6B7280;
-    font-size: 0.95rem;
-}
-
-.pet-detail-item strong {
-    color: var(--primary-purple);
-}
-
-.btn-add-pet {
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    border: none;
-    border-radius: 1rem;
-    padding: 0.85rem 2rem;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3);
-    color: white;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-add-pet:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(147, 51, 234, 0.4);
-    color: white;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-}
-
-.empty-state-icon {
-    font-size: 5rem;
-    margin-bottom: 1rem;
-}
-
-.empty-state h3 {
-    font-size: 1.5rem;
-    color: var(--primary-purple);
-    margin-bottom: 1rem;
-}
-
-.empty-state p {
-    color: #6B7280;
-    margin-bottom: 2rem;
-}
-
-.alert {
-    border-radius: 1rem;
-    padding: 1rem 1.5rem;
-    border: none;
-    font-weight: 500;
-    margin-bottom: 2rem;
-}
-
-.alert-success {
-    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-    color: #065f46;
-}
-
-@media (max-width: 768px) {
-    .pets-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .customer-main {
-        padding: 1rem;
-    }
-}
-</style>
-@endpush
-
 @section('content')
 @include('layout.customer-navbar')
-<div class="floating-shapes">
-    <div class="shape"></div>
-    <div class="shape"></div>
-    <div class="shape"></div>
-</div>
-
-<div class="customer-container">
-    <!-- Main Content -->
-    <main class="customer-main">
-        <div class="page-header">
-            <h2>My Pets</h2>
-            <p>Manage your beloved companions</p>
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">My Pets</h1>
+            <p class="text-muted">Manage your pet profiles</p>
         </div>
+        <a href="{{ route('customer.pets.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Add New Pet
+        </a>
+    </div>
 
-        @if(session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if($pets->isEmpty())
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="fas fa-paw fa-3x text-muted"></i>
             </div>
-        @endif
-
-        <div class="d-flex justify-content-end mb-4">
-            <a href="{{ route('customer.pets.create') }}" class="btn-add-pet">
-                <span>➕</span> Add New Pet
+            <h5>No pets registered yet</h5>
+            <p class="text-muted">Add your beloved pets to manage their health records and appointments.</p>
+            <a href="{{ route('customer.pets.create') }}" class="btn btn-outline-primary mt-2">
+                Register a Pet
             </a>
         </div>
-
-        @if($pets->count() > 0)
-            <div class="pets-grid">
-                @foreach($pets as $pet)
-                    <div class="pet-card" onclick="window.location='{{ route('customer.pets.show', $pet->id) }}'">
-                            <div class="pet-avatar">
-                                <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" class="pet-photo">
+    @else
+        <div class="row g-4">
+            @foreach($pets as $pet)
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm hover-card">
+                        <div class="card-body p-4 text-center">
+                            <div class="mb-3 position-relative d-inline-block">
+                                @if($pet->photo_path)
+                                    <img src="{{ asset($pet->photo_path) }}" alt="{{ $pet->name }}" class="rounded-circle shadow-sm" width="120" height="120" style="object-fit: cover;">
+                                @else
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center shadow-sm mx-auto" style="width: 120px; height: 120px;">
+                                        <i class="fas fa-paw fa-3x text-muted"></i>
+                                    </div>
+                                @endif
                             </div>
-                        
-                        <div class="pet-info">
-                            <h3 class="pet-name">{{ $pet->name }}</h3>
                             
-                            <div class="pet-details">
-                                <div class="pet-detail-item">
-                                    <strong>Species:</strong> {{ $pet->species }}
+                            <h3 class="h4 fw-bold mb-1">{{ $pet->name }}</h3>
+                            <p class="text-muted mb-3">{{ $pet->species }} • {{ $pet->breed }}</p>
+                            
+                            <div class="d-flex justify-content-center gap-3 mb-4">
+                                <div class="text-center px-2">
+                                    <div class="fw-bold">{{ $pet->age }}</div>
+                                    <div class="small text-muted">Age</div>
                                 </div>
-                                
-                                @if($pet->breed)
-                                    <div class="pet-detail-item">
-                                        <strong>Breed:</strong> {{ $pet->breed }}
-                                    </div>
-                                @endif
-                                
-                                <div class="pet-detail-item">
-                                    <strong>Gender:</strong> {{ ucfirst($pet->gender) }}
+                                <div class="vr"></div>
+                                <div class="text-center px-2">
+                                    <div class="fw-bold">{{ $pet->gender }}</div>
+                                    <div class="small text-muted">Gender</div>
                                 </div>
-                                
-                                @if($pet->birth_date)
-                                    <div class="pet-detail-item">
-                                        <strong>Age:</strong> {{ \Carbon\Carbon::parse($pet->birth_date)->age }} years old
-                                    </div>
-                                @endif
-                                
-                                @if($pet->weight)
-                                    <div class="pet-detail-item">
-                                        <strong>Weight:</strong> {{ $pet->weight }} kg
-                                    </div>
-                                @endif
+                                <div class="vr"></div>
+                                <div class="text-center px-2">
+                                    <div class="fw-bold">{{ $pet->weight }} kg</div>
+                                    <div class="small text-muted">Weight</div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex gap-2 justify-content-center">
+                                <a href="{{ route('customer.pets.show', $pet->id) }}" class="btn btn-outline-primary btn-sm flex-grow-1">
+                                    <i class="fas fa-notes-medical me-1"></i> Profile
+                                </a>
+                                <a href="{{ route('customer.pets.edit', $pet->id) }}" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
                             </div>
                         </div>
                     </div>
-                @endforeach
-            </div>
-        @else
-            <div class="empty-state">
-                <div class="empty-state-icon">🐾</div>
-                <h3>No Pets Yet</h3>
-                <p>Start by adding your first furry friend to our family!</p>
-                <a href="{{ route('customer.pets.create') }}" class="btn-add-pet">
-                    <span>➕</span> Add Your First Pet
-                </a>
-            </div>
-        @endif
-    </main>
+                </div>
+            @endforeach
+        </div>
+    @endif
 </div>
 @endsection

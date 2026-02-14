@@ -80,6 +80,15 @@ class InventoryItem extends Model
      */
     public function getTotalStockAttribute()
     {
-        return $this->inventoryStocks()->sum('quantity');
+        return $this->inventoryStocks->sum('quantity');
+    }
+
+    /**
+     * Get quantity attribute as alias for total stock
+     * This fixes the issue where views access $product->quantity
+     */
+    public function getQuantityAttribute()
+    {
+        return $this->inventoryStocks->sum('quantity');
     }
 }

@@ -75,7 +75,7 @@ class MedicalRecordController extends Controller
         
         // Get vaccinations separately
         $vaccinations = $pet->vaccinations()
-            ->with(['administeredBy'])
+            ->with(['administeredBy', 'vaccine'])
             ->orderBy('administered_date', 'desc')
             ->get();
         

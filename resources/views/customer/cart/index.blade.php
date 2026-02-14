@@ -1,6 +1,7 @@
 @extends('layout.base')
 
 @section('content')
+@include('layout.customer-navbar')
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h2 mb-0">Shopping Cart</h1>

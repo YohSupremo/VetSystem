@@ -119,7 +119,6 @@ class CartController extends Controller
             'inventory_item_id' => $product->id,
             'quantity' => $validated['quantity'],
             'unit_price' => $product->unit_price,
-            'total' => $product->unit_price * $validated['quantity'],
         ]);
 
         return back()->with('success', 'Item added to cart!');
@@ -227,7 +226,7 @@ class CartController extends Controller
             'pet_id' => null,
             'owner_id' => $petOwner->id,
             'created_by' => $user->id,
-            'order_type' => 'product',
+            'order_type' => 'online',
             'status' => 'confirmed',
             'order_date' => now(),
             'notes' => $validated['notes'] ?? null,
@@ -237,19 +236,27 @@ class CartController extends Controller
         foreach ($cart->cartItems as $cartItem) {
             OrderItem::create([
                 'order_id' => $order->id,
-                'item_type' => 'inventory',
-                'reference_id' => $cartItem->inventory_item_id,
+                'inventory_item_id' => $cartItem->inventory_item_id,
                 'description' => $cartItem->inventoryItem->name,
                 'quantity' => $cartItem->quantity,
                 'unit_price' => $cartItem->unit_price,
-                'total' => $cartItem->total,
             ]);
 
-            // Update inventory stock
-            $cartItem->inventoryItem->decrement('quantity', $cartItem->quantity);
+            // Update inventory stock using the model helper
+            $cartItem->inventoryItem->decrementStock($cartItem->quantity);
 
-            // Find corresponding inventory stock record and create transaction
-            $inventoryStock = \App\Models\InventoryStock::where('item_id', $cartItem->inventory_item_id)->first();
+            // Create transaction record for audit (linking to the first available stock for reference, or generic)
+            // Ideally transactions should be created per stock deduction in the decrementStock method, 
+            // but for now we log a generic transaction for the order.
+            $inventoryStock = \App\Models\InventoryStock::where('item_id', $cartItem->inventory_item_id)
+                ->where('quantity', '>', 0)
+                ->first();
+            
+            // Fallback to any stock if none has quantity (just for logging)
+            if (!$inventoryStock) {
+                $inventoryStock = \App\Models\InventoryStock::where('item_id', $cartItem->inventory_item_id)->first();
+            }
+
             if ($inventoryStock) {
                 \App\Models\InventoryTransaction::create([
                     'stock_id' => $inventoryStock->id,

@@ -130,22 +130,28 @@
 
             <div class="info-row">
                 <div class="info-label">Scheduled for</div>
-                <div class="info-value">{{ $appointment->formatted_date }}</div>
+                <div class="info-value">{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y g:i A') }}</div>
             </div>
 
             <div class="info-row">
                 <div class="info-label">Pet</div>
                 <div class="info-value">
-                    {{ $appointment->pet_name ?? 'Unnamed Pet' }}
+                    {{ $appointment->pet->name ?? 'Unnamed Pet' }}
                     <span style="font-size: 12px; color: var(--light-text); margin-left: 6px;">
-                        {{ ucfirst($appointment->pet_species ?? 'N/A') }}
+                        {{ ucfirst($appointment->pet->species ?? 'N/A') }}
                     </span>
                 </div>
             </div>
 
             <div class="info-row">
                 <div class="info-label">Owner</div>
-                <div class="info-value">{{ $appointment->owner_name ?? 'N/A' }}</div>
+                <div class="info-value">
+                    @if($appointment->pet && $appointment->pet->owner && $appointment->pet->owner->user)
+                        {{ $appointment->pet->owner->user->first_name }} {{ $appointment->pet->owner->user->last_name }}
+                    @else
+                        N/A
+                    @endif
+                </div>
             </div>
 
             <div class="info-row">
@@ -153,7 +159,7 @@
                 <div class="info-value">
                     <span class="badge-status warning">
                         <i class="fas fa-tag"></i>
-                        {{ $appointment->type_label }}
+                        {{ ucfirst(str_replace('_', ' ', $appointment->type)) }}
                     </span>
                 </div>
             </div>
@@ -170,14 +176,20 @@
                     @endphp
                     <span class="badge-status {{ $badge }}">
                         <i class="fas fa-info-circle"></i>
-                        {{ $appointment->status_label }}
+                        {{ ucfirst(str_replace('_', ' ', $appointment->status)) }}
                     </span>
                 </div>
             </div>
 
             <div class="info-row">
                 <div class="info-label">Assigned Veterinarian</div>
-                <div class="info-value">{{ $appointment->veterinarian_name ?? 'Unassigned' }}</div>
+                <div class="info-value">
+                    @if($appointment->veterinarian)
+                        Dr. {{ $appointment->veterinarian->first_name }} {{ $appointment->veterinarian->last_name }}
+                    @else
+                        Unassigned
+                    @endif
+                </div>
             </div>
 
             <div class="info-row">
@@ -228,7 +240,11 @@
                 <div class="history-item">
                     <strong>Owner Contact</strong>
                     <p style="margin-top: 6px; color: var(--light-text);">
-                        {{ $appointment->owner_name ?? 'N/A' }}
+                        @if($appointment->pet && $appointment->pet->owner && $appointment->pet->owner->user)
+                            {{ $appointment->pet->owner->user->first_name }} {{ $appointment->pet->owner->user->last_name }}
+                        @else
+                            N/A
+                        @endif
                     </p>
                 </div>
                 <div class="history-item">
@@ -241,6 +257,9 @@
                     <strong>Veterinarian ID</strong>
                     <p style="margin-top: 6px; color: var(--light-text);">
                         {{ $appointment->veterinarian_id ?? 'Not assigned' }}
+                        @if($appointment->veterinarian)
+                             <br>Dr. {{ $appointment->veterinarian->first_name }} {{ $appointment->veterinarian->last_name }}
+                        @endif
                     </p>
                 </div>
             </div>

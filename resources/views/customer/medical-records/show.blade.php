@@ -1,6 +1,7 @@
 @extends('layout.base')
 
 @section('content')
+@include('layout.customer-navbar')
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-9">

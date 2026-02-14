@@ -43,5 +43,12 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    public function getTotalAmountAttribute()
+    {
+        return $this->items->sum(function($item) {
+            return $item->quantity * $item->unit_price;
+        });
+    }
 }
 

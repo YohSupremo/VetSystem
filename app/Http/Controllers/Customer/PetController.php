@@ -71,7 +71,16 @@ class PetController extends Controller
         }
 
         $request->validate([
+            'name' => 'required|string|max:255',
+            'species' => 'required|in:Dog,Cat,Bird,Reptile,Other',
+            'breed' => 'nullable|string|max:255',
+            'gender' => 'required|in:Male,Female',
+            'dob' => 'nullable|date|before_or_equal:today',
+            'weight' => 'required|numeric|min:0.01|max:999.99',
+            'color' => 'nullable|string|max:255',
             'registration_number' => 'nullable|string|max:255|unique:pets,registration_number',
+            'photo' => 'nullable|image|max:2048', // 2MB max
+            'medical_history' => 'nullable|string',
         ]);
         
         $petOwner = PetOwner::where('user_id', $user->id)->first();
@@ -151,6 +160,19 @@ class PetController extends Controller
         $petOwner = PetOwner::where('user_id', $user->id)->first();
         $pet = $petOwner->pets()->findOrFail($id);
         
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'species' => 'required|in:Dog,Cat,Bird,Reptile,Other',
+            'breed' => 'nullable|string|max:255',
+            'gender' => 'required|in:Male,Female',
+            'dob' => 'nullable|date|before_or_equal:today',
+            'weight' => 'required|numeric|min:0.01|max:999.99',
+            'color' => 'nullable|string|max:255',
+            'registration_number' => 'nullable|string|max:255|unique:pets,registration_number,' . $pet->id,
+            'photo' => 'nullable|image|max:2048',
+            'medical_history' => 'nullable|string',
+        ]);
+
         $petData = $request->except('photo');
         
         // Handle photo upload

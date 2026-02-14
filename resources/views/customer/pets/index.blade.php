@@ -5,6 +5,15 @@
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
+            <style>
+                .hover-card {
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                }
+                .hover-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+                }
+            </style>
             <h1 class="h2 mb-1">My Pets</h1>
             <p class="text-muted">Manage your pet profiles</p>
         </div>
@@ -67,13 +76,26 @@
                                 </div>
                             </div>
                             
-                            <div class="d-flex gap-2 justify-content-center">
-                                <a href="{{ route('customer.pets.show', $pet->id) }}" class="btn btn-outline-primary btn-sm flex-grow-1">
-                                    <i class="fas fa-notes-medical me-1"></i> Profile
+                            <div class="d-grid gap-2">
+                                <a href="{{ route('customer.pets.show', $pet->id) }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-paw me-1"></i> Profile
                                 </a>
-                                <a href="{{ route('customer.pets.edit', $pet->id) }}" class="btn btn-outline-secondary btn-sm">
-                                    <i class="fas fa-edit"></i>
-                                </a>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <a href="{{ route('customer.pets.edit', $pet->id) }}" class="btn btn-outline-secondary w-100" title="Edit Pet">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <form action="{{ route('customer.pets.destroy', $pet->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove {{ $pet->name }}? This action cannot be undone.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-outline-danger w-100" title="Remove Pet">
+                                                <i class="fas fa-trash-alt"></i> Remove
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

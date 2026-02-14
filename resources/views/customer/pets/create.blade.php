@@ -16,15 +16,7 @@
                 </div>
                 
                 <div class="card-body p-4">
-                    @if($errors->any())
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                @foreach($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
+                  
 
                     <form action="{{ route('customer.pets.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
@@ -86,12 +78,18 @@
 
                             <div class="col-md-6">
                                 <label for="weight" class="form-label fw-bold">Weight (kg) *</label>
-                                <input type="number" step="0.1" class="form-control" name="weight" id="weight" value="{{ old('weight') }}" required>
+                                <input type="number" step="0.1" class="form-control @error('weight') is-invalid @enderror" name="weight" id="weight" value="{{ old('weight') }}" required>
+                                @error('weight')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="col-md-6">
                                 <label for="registration_number" class="form-label fw-bold">Microchip/Reg #</label>
-                                <input type="text" class="form-control" name="registration_number" id="registration_number" value="{{ old('registration_number') }}">
+                                <input type="text" class="form-control @error('registration_number') is-invalid @enderror" name="registration_number" id="registration_number" value="{{ old('registration_number') }}">
+                                @error('registration_number')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="col-12">

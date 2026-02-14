@@ -87,12 +87,18 @@
 
                             <div class="col-md-6">
                                 <label for="weight" class="form-label fw-bold">Weight (kg) *</label>
-                                <input type="number" step="0.1" class="form-control" name="weight" id="weight" value="{{ old('weight', $pet->weight) }}" required>
+                                <input type="number" step="0.1" class="form-control @error('weight') is-invalid @enderror" name="weight" id="weight" value="{{ old('weight', $pet->weight) }}" required>
+                                @error('weight')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="col-md-6">
                                 <label for="registration_number" class="form-label fw-bold">Microchip/Reg #</label>
-                                <input type="text" class="form-control" name="registration_number" id="registration_number" value="{{ old('registration_number', $pet->registration_number) }}">
+                                <input type="text" class="form-control @error('registration_number') is-invalid @enderror" name="registration_number" id="registration_number" value="{{ old('registration_number', $pet->registration_number) }}">
+                                @error('registration_number')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="col-12">

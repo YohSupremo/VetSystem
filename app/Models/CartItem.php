@@ -29,4 +29,38 @@ class CartItem extends Model
     {
         return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
     }
+
+    /**
+     * Check if the item is available for purchase
+     */
+    public function isAvailable()
+    {
+        return $this->inventoryItem && 
+               $this->inventoryItem->is_active && 
+               $this->inventoryItem->quantity > 0;
+    }
+
+    /**
+     * Check if the requested quantity can be updated
+     */
+    public function canUpdateQuantity($quantity)
+    {
+        if ($quantity <= 0) {
+            return false;
+        }
+
+        if (!$this->isAvailable()) {
+            return false;
+        }
+
+        return $quantity <= $this->inventoryItem->quantity;
+    }
+
+    /**
+     * Get the total price for this item
+     */
+    public function getTotalAttribute()
+    {
+        return $this->quantity * $this->unit_price;
+    }
 }

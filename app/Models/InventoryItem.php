@@ -91,4 +91,38 @@ class InventoryItem extends Model
     {
         return $this->inventoryStocks->sum('quantity');
     }
+
+    /**
+     * Decrement stock from available inventory batches
+     * Uses FIFO (First In First Out) approach based on expiry date or created_at
+     */
+    public function decrementStock($amount)
+    {
+        if ($amount <= 0) {
+            return;
+        }
+
+        $remainingToDeduct = $amount;
+        
+        // Get stocks ordered by expiry (nulls last) then created_at
+        // This ensures we use oldest stock first
+        $stocks = $this->inventoryStocks()
+            ->where('quantity', '>', 0)
+            ->orderByRaw('ISNULL(expiry_date), expiry_date ASC')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        foreach ($stocks as $stock) {
+            if ($remainingToDeduct <= 0) break;
+
+            if ($stock->quantity >= $remainingToDeduct) {
+                $stock->decrement('quantity', $remainingToDeduct);
+                $remainingToDeduct = 0;
+            } else {
+                $deducted = $stock->quantity;
+                $stock->update(['quantity' => 0]);
+                $remainingToDeduct -= $deducted;
+            }
+        }
+    }
 }

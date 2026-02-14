@@ -390,14 +390,14 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="check_in_time">Check-in Time</label>
-                        <input type="time" name="check_in_time" id="check_in_time" 
+                           <input type="time" name="check_in_time" id="check_in_time" 
                                value="{{ old('check_in_time', '09:00') }}">
                         <span class="form-hint">Preferred check-in time</span>
                     </div>
 
                     <div class="form-group">
                         <label for="check_out_time">Check-out Time</label>
-                        <input type="time" name="check_out_time" id="check_out_time" 
+                           <input type="time" name="check_out_time" id="check_out_time" 
                                value="{{ old('check_out_time', '17:00') }}">
                         <span class="form-hint">Preferred check-out time</span>
                     </div>
@@ -449,6 +449,17 @@
                     @enderror
                     <span class="form-hint">Enter any medication instructions or notes for this pet</span>
                 </div>
+
+                <div class="form-group">
+                    <label for="medication_times">Medication Times</label>
+                    <input type="text" name="medication_times" id="medication_times"
+                           value="{{ old('medication_times') }}"
+                           placeholder="e.g. 08:00, 13:00, 18:00"
+                           class="@error('medication_times') is-invalid @enderror">
+                    @error('medication_times')
+                        <span class="form-hint" style="color: #dc3545;">{{ $message }}</span>
+                    @enderror
+                </div>
             </div>
 
             <!-- Feeding Schedule Section -->
@@ -490,6 +501,25 @@
                         <span class="form-hint" style="color: #dc3545;">{{ $message }}</span>
                     @enderror
                     <span class="form-hint">Use this field for additional feeding details, meal portions, frequency notes, or special feeding requirements</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="daily_rate">Daily Rate</label>
+                    <input type="number" name="daily_rate" id="daily_rate" min="0" step="0.01"
+                           value="{{ old('daily_rate') }}"
+                           class="@error('daily_rate') is-invalid @enderror">
+                    @error('daily_rate')
+                        <span class="form-hint" style="color: #dc3545;">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Boarding Notes</label>
+                    <textarea name="notes" id="notes" class="@error('notes') is-invalid @enderror"
+                              style="min-height: 90px;">{{ old('notes') }}</textarea>
+                    @error('notes')
+                        <span class="form-hint" style="color: #dc3545;">{{ $message }}</span>
+                    @enderror
                 </div>
             </div>
 

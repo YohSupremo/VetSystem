@@ -65,6 +65,17 @@
     </div>
 </div>
 
+@if($errors->any())
+    <div class="alert alert-danger">
+        <h5>There were some problems with your input:</h5>
+        <ul class="mb-0">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <form action="{{ route('admin.billing.store') }}" method="POST">
     @csrf
 
@@ -106,8 +117,8 @@
                 @error('due_date')<div class="text-danger small">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-2 mb-3">
-                <label for="tax_amount" class="form-label">Tax</label>
-                <input type="number" class="form-control" id="tax_amount" name="tax_amount" value="{{ old('tax_amount', 0) }}" min="0" step="0.01">
+                <label for="tax_rate" class="form-label">Tax Rate (%)</label>
+                <input type="number" class="form-control" id="tax_rate" name="tax_rate" value="{{ old('tax_rate', 0) }}" min="0" max="100" step="0.01">
             </div>
             <div class="col-md-2 mb-3">
                 <label for="discount_amount" class="form-label">Discount</label>
@@ -143,12 +154,14 @@
                     <tr>
                         <td>
                             <select name="items[0][item_type]" class="form-select" required>
+                                <option value="service">Service</option>
                                 <option value="consultation">Consultation</option>
                                 <option value="vaccination">Vaccination</option>
                                 <option value="surgery">Surgery</option>
                                 <option value="grooming">Grooming</option>
-                                <option value="laboratory">Laboratory</option>
-                                <option value="medication">Medication</option>
+                                <option value="boarding">Boarding</option>
+                                <option value="lab_test">Lab Test</option>
+                                <option value="product">Product</option>
                                 <option value="other">Other</option>
                             </select>
                         </td>
@@ -178,12 +191,14 @@
         row.innerHTML = `
             <td>
                 <select name="items[${index}][item_type]" class="form-select" required>
+                    <option value="service">Service</option>
                     <option value="consultation">Consultation</option>
                     <option value="vaccination">Vaccination</option>
                     <option value="surgery">Surgery</option>
                     <option value="grooming">Grooming</option>
-                    <option value="laboratory">Laboratory</option>
-                    <option value="medication">Medication</option>
+                    <option value="boarding">Boarding</option>
+                    <option value="lab_test">Lab Test</option>
+                    <option value="product">Product</option>
                     <option value="other">Other</option>
                 </select>
             </td>

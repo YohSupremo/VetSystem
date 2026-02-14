@@ -90,9 +90,11 @@
                                 <option value="">Select a role</option>
                                 <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                                 <option value="veterinarian" {{ old('role') == 'veterinarian' ? 'selected' : '' }}>Veterinarian</option>
-                                <option value="receptionist" {{ old('role') == 'receptionist' ? 'selected' : '' }}>Receptionist</option>
-                                <option value="pharmacist" {{ old('role') == 'pharmacist' ? 'selected' : '' }}>Pharmacist</option>
+                                <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>Staff</option>
+                                <option value="reception" {{ old('role') == 'reception' ? 'selected' : '' }}>Reception</option>
+                                <option value="pharmacy" {{ old('role') == 'pharmacy' ? 'selected' : '' }}>Pharmacy</option>
                                 <option value="groomer" {{ old('role') == 'groomer' ? 'selected' : '' }}>Groomer</option>
+                                <option value="boarding" {{ old('role') == 'boarding' ? 'selected' : '' }}>Boarding</option>
                                 
                             </select>
                         </div>

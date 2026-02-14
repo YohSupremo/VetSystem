@@ -59,11 +59,11 @@
     <form class="row g-3 align-items-end" method="GET">
         <div class="col-md-4">
             <label class="form-label">Start Date</label>
-            <input type="date" name="start_date" class="form-control" value="{{ request('start_date') ?? now()->subMonth()->toDateString() }}">
+            <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
         </div>
         <div class="col-md-4">
             <label class="form-label">End Date</label>
-            <input type="date" name="end_date" class="form-control" value="{{ request('end_date') ?? now()->toDateString() }}">
+            <input type="date" name="end_date" class="form-control" value="{{ $endDate }}">
         </div>
         <div class="col-md-2">
             <label class="form-label">View</label>
@@ -118,7 +118,7 @@
                     <tbody>
                         @forelse($lowStockList as $item)
                             <tr>
-                                <td>{{ $item->name }}</td>
+                                <td>{{ $item->inventoryItem?->name ?? 'Unknown' }}</td>
                                 <td class="text-end">{{ $item->quantity }}</td>
                             </tr>
                         @empty
@@ -143,7 +143,7 @@
                     <tbody>
                         @forelse($expiredList as $item)
                             <tr>
-                                <td>{{ $item->name }}</td>
+                                <td>{{ $item->inventoryItem?->name ?? 'Unknown' }}</td>
                                 <td class="text-end">{{ $item->expiry_date?->format('M d, Y') }}</td>
                             </tr>
                         @empty
@@ -168,7 +168,7 @@
                     <tbody>
                         @forelse($expiringSoonList as $item)
                             <tr>
-                                <td>{{ $item->name }}</td>
+                                <td>{{ $item->inventoryItem?->name ?? 'Unknown' }}</td>
                                 <td class="text-end">{{ $item->expiry_date?->format('M d, Y') }}</td>
                             </tr>
                         @empty
@@ -184,25 +184,25 @@
 <div class="row">
     <div class="col-lg-6">
         <div class="report-card">
-            <h5 class="mb-3">Dispensing Trends (30 days)</h5>
+            <h5 class="mb-3">Stock Movements</h5>
             <div class="table-responsive">
                 <table class="table table-sm">
                     <thead>
                         <tr>
                             <th>Date</th>
                             <th class="text-end">Count</th>
-                            <th class="text-end">Total</th>
+                            <th class="text-end">Quantity</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($dispensingTrends as $trend)
+                        @forelse($movementTrends as $trend)
                             <tr>
                                 <td>{{ $trend->date }}</td>
                                 <td class="text-end">{{ $trend->count }}</td>
-                                <td class="text-end">PHP {{ number_format($trend->total ?? 0, 2) }}</td>
+                                <td class="text-end">{{ $trend->total_quantity }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="3" class="text-muted">No dispensing data.</td></tr>
+                            <tr><td colspan="3" class="text-muted">No stock movement data.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -211,25 +211,25 @@
     </div>
     <div class="col-lg-6">
         <div class="report-card">
-            <h5 class="mb-3">Top Dispensed Medications</h5>
+            <h5 class="mb-3">Top Moved Items</h5>
             <div class="table-responsive">
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Medication</th>
-                            <th class="text-end">Dispenses</th>
+                            <th>Item</th>
+                            <th class="text-end">Movements</th>
                             <th class="text-end">Quantity</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($topMedications as $med)
+                        @forelse($topMovedItems as $item)
                             <tr>
-                                <td>{{ $med->inventoryItem?->name ?? 'Unknown' }}</td>
-                                <td class="text-end">{{ $med->count }}</td>
-                                <td class="text-end">{{ $med->total_quantity }}</td>
+                                <td>{{ $item->name }}</td>
+                                <td class="text-end">{{ $item->count }}</td>
+                                <td class="text-end">{{ $item->total_quantity }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="3" class="text-muted">No dispensing data.</td></tr>
+                            <tr><td colspan="3" class="text-muted">No stock movement data.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

@@ -66,18 +66,12 @@ class GroomingController extends BaseController
             'notes' => 'nullable|string',
         ]);
 
-        $service = GroomingService::findOrFail($data['service_id']);
-        $durationMinutes = $service->duration_minutes ?? 60;
-
         $appointment = Appointment::create([
             'pet_id' => $data['pet_id'],
             'veterinarian_id' => null,
             'appointment_date' => $data['appointment_date'],
-            'start_time' => '09:00:00',
-            'end_time' => Carbon::parse('09:00:00')->addMinutes($durationMinutes)->format('H:i:s'),
-            'status' => 'scheduled',
+            'status' => 'confirmed',
             'type' => 'grooming',
-            'reason' => 'Grooming',
             'notes' => $data['notes'] ?? null,
         ]);
 
@@ -143,7 +137,7 @@ class GroomingController extends BaseController
 
         $appointment->update([
             'appointment_date' => $data['appointment_date'],
-            'status' => $data['status'],
+            'status' => $this->mapAppointmentStatus($data['status']),
             'notes' => $data['notes'] ?? null,
         ]);
 
@@ -171,6 +165,17 @@ class GroomingController extends BaseController
 
         return redirect()->route('admin.grooming.index')
             ->with('success', 'Grooming appointment deleted successfully.');
+    }
+
+    private function mapAppointmentStatus(string $groomingStatus): string
+    {
+        return match ($groomingStatus) {
+            'scheduled' => 'confirmed',
+            'in_progress' => 'in_progress',
+            'completed' => 'completed',
+            'cancelled' => 'cancelled',
+            default => 'pending',
+        };
     }
 
     /**

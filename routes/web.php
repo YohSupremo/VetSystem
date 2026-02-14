@@ -368,7 +368,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 
     // Reports
-    Route::resource('reports', ReportController::class);
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/financial', [ReportController::class, 'financialReport'])->name('financial');
         Route::get('/medical', [ReportController::class, 'medicalReport'])->name('medical');

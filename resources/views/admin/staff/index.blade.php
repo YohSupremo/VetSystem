@@ -23,8 +23,9 @@
                         <option value="">All Positions</option>
                         <option value="admin" {{ request('position') == 'admin' ? 'selected' : '' }}>Admin</option>
                         <option value="veterinarian" {{ request('position') == 'veterinarian' ? 'selected' : '' }}>Veterinarian</option>
-                        <option value="receptionist" {{ request('position') == 'receptionist' ? 'selected' : '' }}>Receptionist</option>
-                        <option value="pharmacist" {{ request('position') == 'pharmacist' ? 'selected' : '' }}>Pharmacist</option>
+                        <option value="staff" {{ request('position') == 'staff' ? 'selected' : '' }}>Staff</option>
+                        <option value="reception" {{ request('position') == 'reception' ? 'selected' : '' }}>Reception</option>
+                        <option value="pharmacy" {{ request('position') == 'pharmacy' ? 'selected' : '' }}>Pharmacy</option>
                         <option value="groomer" {{ request('position') == 'groomer' ? 'selected' : '' }}>Groomer</option>
                         <option value="boarding" {{ request('position') == 'boarding' ? 'selected' : '' }}>Boarding</option>
                         <option value="pet_owner" {{ request('position') == 'pet_owner' ? 'selected' : '' }}>Pet Owner</option>
@@ -72,8 +73,9 @@
                                 $roleStyles = [
                                     'admin' => ['bg' => '#dc3545', 'text' => '#ffffff'],           // Red
                                     'veterinarian' => ['bg' => '#0d6efd', 'text' => '#ffffff'],    // Blue
-                                    'receptionist' => ['bg' => '#0dcaf0', 'text' => '#000000'],    // Cyan
-                                    'pharmacist' => ['bg' => '#198754', 'text' => '#ffffff'],      // Green
+                                    'staff' => ['bg' => '#0dcaf0', 'text' => '#000000'],           // Cyan
+                                    'reception' => ['bg' => '#17a2b8', 'text' => '#ffffff'],       // Teal
+                                    'pharmacy' => ['bg' => '#198754', 'text' => '#ffffff'],        // Green
                                     'pet_owner' => ['bg' => '#6c757d', 'text' => '#ffffff'],       // Gray
                                     'boarding' => ['bg' => '#ffc107', 'text' => '#000000'],        // Yellow
                                     'groomer' => ['bg' => '#6f42c1', 'text' => '#ffffff']          // Purple

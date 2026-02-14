@@ -381,19 +381,19 @@
                     <label for="pet_id">
                         Pet
                     </label>
-                    <input type="text" class="form-control" disabled value="{{ $boarding->petAssigned->name ?? 'N/A' }}">
+                    <input type="text" class="form-control" disabled value="{{ $boarding->pet?->name ?? 'N/A' }}">
                     <span class="form-hint">Pet information cannot be changed. Create a new boarding for a different pet.</span>
                 </div>
 
                 <!-- Pet Preview -->
                 <div class="pet-preview">
                     <div class="pet-preview-item">
-                        @php $pet = $boarding->petAssigned; @endphp
+                        @php $pet = $boarding->pet; @endphp
                         <img src="{{ $pet ? $pet->photo_url : 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect fill=\"#f0f0f0\" width=\"200\" height=\"200\"/><text x=\"50%\" y=\"50%\" font-size=\"80\" text-anchor=\"middle\" dominant-baseline=\"middle\" fill=\"#ccc\">🐾</text></svg>') }}" alt="Pet" class="pet-preview-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3QgZmlsbD0iI2YwZjBmMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iI2NjYyI+8J+QrjwvdGV4dD48L3N2Zz4='">
                         <div class="pet-preview-info">
-                            <h4>{{ $boarding->petAssigned->name ?? 'N/A' }}</h4>
-                            <p><strong>Breed:</strong> {{ $boarding->petAssigned->breed ?? 'N/A' }}</p>
-                            <p><strong>Owner:</strong> {{ $boarding->petAssigned->owner->user->first_name ?? 'N/A' }} {{ $boarding->petAssigned->owner->user->last_name ?? '' }}</p>
+                            <h4>{{ $pet?->name ?? 'N/A' }}</h4>
+                            <p><strong>Breed:</strong> {{ $pet?->breed ?? 'N/A' }}</p>
+                            <p><strong>Owner:</strong> {{ $pet?->owner?->user?->first_name ?? 'N/A' }} {{ $pet?->owner?->user?->last_name ?? '' }}</p>
                         </div>
                     </div>
                 </div>
@@ -436,15 +436,15 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="check_in_time">Check-in Time</label>
-                        <input type="time" name="check_in_time" id="check_in_time" 
-                               value="{{ old('check_in_time', '09:00') }}">
+                           <input type="time" name="check_in_time" id="check_in_time" 
+                               value="{{ old('check_in_time', $boarding->check_in_time ? \Carbon\Carbon::parse($boarding->check_in_time)->format('H:i') : '09:00') }}">
                         <span class="form-hint">Preferred check-in time (for reference only)</span>
                     </div>
 
                     <div class="form-group">
                         <label for="check_out_time">Check-out Time</label>
-                        <input type="time" name="check_out_time" id="check_out_time" 
-                               value="{{ old('check_out_time', '17:00') }}">
+                           <input type="time" name="check_out_time" id="check_out_time" 
+                               value="{{ old('check_out_time', $boarding->check_out_time ? \Carbon\Carbon::parse($boarding->check_out_time)->format('H:i') : '17:00') }}">
                         <span class="form-hint">Preferred check-out time (for reference only)</span>
                     </div>
                 </div>
@@ -500,15 +500,15 @@
                 <div class="cage-info">
                     <div class="cage-stat">
                         <label>Current Cage Code</label>
-                        <div class="stat-value">{{ $boarding->cageAssigned->cage_code ?? 'N/A' }}</div>
+                        <div class="stat-value">{{ $boarding->cage?->cage_code ?? 'N/A' }}</div>
                     </div>
                     <div class="cage-stat">
                         <label>Location</label>
-                        <div class="stat-value">{{ $boarding->cageAssigned->location ?? 'N/A' }}</div>
+                        <div class="stat-value">{{ $boarding->cage?->location ?? 'N/A' }}</div>
                     </div>
                     <div class="cage-stat">
                         <label>Status</label>
-                        <div class="stat-value">{{ ucfirst($boarding->cageAssigned->status ?? 'N/A') }}</div>
+                        <div class="stat-value">{{ $boarding->cage?->status ? ucfirst($boarding->cage->status) : 'N/A' }}</div>
                     </div>
                 </div>
             </div>
@@ -523,11 +523,22 @@
                     <label for="medication_notes">Medication Instructions</label>
                     <textarea name="medication_notes" id="medication_notes" 
                               placeholder="Enter medication instructions, dosage, frequency, etc."
-                              class="@error('medication_notes') is-invalid @enderror">{{ old('medication_notes', $boarding->medicationInstruction->instructions ?? '') }}</textarea>
+                              class="@error('medication_notes') is-invalid @enderror">{{ old('medication_notes', $boarding->medication_instructions ?? '') }}</textarea>
                     @error('medication_notes')
                         <span class="form-hint" style="color: #dc3545;">{{ $message }}</span>
                     @enderror
                     <span class="form-hint">Enter any medication instructions or notes for this pet</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="medication_times">Medication Times</label>
+                    <input type="text" name="medication_times" id="medication_times" 
+                           value="{{ old('medication_times', $boarding->medication_times ?? '') }}"
+                           placeholder="e.g. 08:00, 13:00, 18:00"
+                           class="@error('medication_times') is-invalid @enderror">
+                    @error('medication_times')
+                        <span class="form-hint" style="color: #dc3545;">{{ $message }}</span>
+                    @enderror
                 </div>
             </div>
 
@@ -541,8 +552,7 @@
                     <div class="form-group">
                         <label for="morning_feed_time">Morning Feed Time</label>
                         @php
-                            $schedule = $boarding->feedingSchedule->schedule ?? '';
-                            $times = $schedule && $schedule !== 'As_Needed' ? explode(',', $schedule) : [];
+                            $times = $boarding->feeding_times ? explode(',', $boarding->feeding_times) : [];
                             $morningTime = $times[0] ?? '';
                         @endphp
                         <input type="time" name="morning_feed_time" id="morning_feed_time" 
@@ -576,11 +586,30 @@
                     <textarea name="feeding_notes" id="feeding_notes" 
                               placeholder="For more than 3 feeding times per day, as-needed feeding, or any special feeding instructions..."
                               class="@error('feeding_notes') is-invalid @enderror"
-                              style="min-height: 100px;">{{ old('feeding_notes', $boarding->feedingSchedule->notes ?? '') }}</textarea>
+                              style="min-height: 100px;">{{ old('feeding_notes', $boarding->special_diet_notes ?? '') }}</textarea>
                     @error('feeding_notes')
                         <span class="form-hint" style="color: #dc3545;">{{ $message }}</span>
                     @enderror
                     <span class="form-hint">Use this field for additional feeding details, meal portions, frequency notes, or special feeding requirements</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="daily_rate">Daily Rate</label>
+                    <input type="number" name="daily_rate" id="daily_rate" min="0" step="0.01"
+                           value="{{ old('daily_rate', $boarding->daily_rate ?? '') }}"
+                           class="@error('daily_rate') is-invalid @enderror">
+                    @error('daily_rate')
+                        <span class="form-hint" style="color: #dc3545;">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Boarding Notes</label>
+                    <textarea name="notes" id="notes" class="@error('notes') is-invalid @enderror"
+                              style="min-height: 90px;">{{ old('notes', $boarding->notes ?? '') }}</textarea>
+                    @error('notes')
+                        <span class="form-hint" style="color: #dc3545;">{{ $message }}</span>
+                    @enderror
                 </div>
             </div>
 

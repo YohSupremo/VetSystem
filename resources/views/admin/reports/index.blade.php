@@ -121,11 +121,23 @@
 <div class="content-header reports-hero">
     <div class="header-title">
         <h1><i class="fas fa-chart-bar"></i> Reports</h1>
-        <p>View and generate clinic reports and analytics</p>
+        <p>View clinic analytics based on live data</p>
     </div>
     <div class="header-actions">
-        <a href="{{ route('admin.reports.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Generate Report
+        <a href="{{ route('admin.reports.financial') }}" class="btn btn-outline-primary">
+            <i class="fas fa-coins"></i> Financial
+        </a>
+        <a href="{{ route('admin.reports.medical') }}" class="btn btn-outline-primary">
+            <i class="fas fa-heartbeat"></i> Medical
+        </a>
+        <a href="{{ route('admin.reports.inventory') }}" class="btn btn-outline-primary">
+            <i class="fas fa-warehouse"></i> Inventory
+        </a>
+        <a href="{{ route('admin.reports.client') }}" class="btn btn-outline-primary">
+            <i class="fas fa-users"></i> Customer
+        </a>
+        <a href="{{ route('admin.reports.appointment') }}" class="btn btn-outline-primary">
+            <i class="fas fa-calendar-check"></i> Operational
         </a>
     </div>
 </div>
@@ -135,10 +147,10 @@
         <div class="stats-card">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <h3>{{ $totalReports }}</h3>
-                    <p>Total Reports</p>
+                    <h3>{{ $totalInvoices }}</h3>
+                    <p>Total Invoices</p>
                 </div>
-                <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+                <div class="stat-icon"><i class="fas fa-file-invoice-dollar"></i></div>
             </div>
         </div>
     </div>
@@ -146,10 +158,10 @@
         <div class="stats-card" style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <h3>{{ $financialReports }}</h3>
-                    <p>Financial</p>
+                    <h3>{{ $totalAppointments }}</h3>
+                    <p>Appointments</p>
                 </div>
-                <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
             </div>
         </div>
     </div>
@@ -157,8 +169,8 @@
         <div class="stats-card" style="background: linear-gradient(135deg, #ecfdf3 0%, #dcfce7 100%);">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <h3>{{ $medicalReports }}</h3>
-                    <p>Medical</p>
+                    <h3>{{ $totalMedicalRecords }}</h3>
+                    <p>Medical Records</p>
                 </div>
                 <div class="stat-icon" style="color:#15803d;background:rgba(34,197,94,0.12);"><i class="fas fa-heartbeat"></i></div>
             </div>
@@ -168,8 +180,8 @@
         <div class="stats-card" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <h3>{{ $inventoryReports }}</h3>
-                    <p>Inventory</p>
+                    <h3>{{ $totalInventoryItems }}</h3>
+                    <p>Inventory Items</p>
                 </div>
                 <div class="stat-icon" style="color:#c2410c;background:rgba(234,88,12,0.12);"><i class="fas fa-warehouse"></i></div>
             </div>
@@ -180,79 +192,28 @@
 <div class="table-card">
     <div class="table-card-header">
         <div>
-            <h5 class="mb-0">Generated Reports</h5>
-            <small class="text-muted">Showing {{ $reports->count() }} of {{ $reports->total() }}</small>
+            <h5 class="mb-0">Available Reports</h5>
+            <small class="text-muted">Reports are generated on demand from live data.</small>
         </div>
     </div>
-    @if($reports->isEmpty())
-        <div class="empty-state">
-            <i class="fas fa-chart-pie"></i>
-            <h3>No reports yet</h3>
-            <p>Generate a report to track clinic performance.</p>
+    <div class="p-4">
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ route('admin.reports.financial') }}" class="btn btn-outline-primary">
+                <i class="fas fa-coins"></i> Financial Report
+            </a>
+            <a href="{{ route('admin.reports.medical') }}" class="btn btn-outline-primary">
+                <i class="fas fa-heartbeat"></i> Medical Report
+            </a>
+            <a href="{{ route('admin.reports.inventory') }}" class="btn btn-outline-primary">
+                <i class="fas fa-warehouse"></i> Inventory Report
+            </a>
+            <a href="{{ route('admin.reports.client') }}" class="btn btn-outline-primary">
+                <i class="fas fa-users"></i> Customer Report
+            </a>
+            <a href="{{ route('admin.reports.appointment') }}" class="btn btn-outline-primary">
+                <i class="fas fa-calendar-check"></i> Operational Report
+            </a>
         </div>
-    @else
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <colgroup>
-                    <col class="title-col">
-                    <col class="type-col">
-                    <col class="range-col">
-                    <col class="user-col">
-                    <col class="status-col">
-                    <col class="actions-col">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Type</th>
-                        <th>Date Range</th>
-                        <th>Generated By</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($reports as $report)
-                        @php
-                            $statusClass = $report->status === 'ready' ? 'bg-success text-white' : 'bg-secondary text-white';
-                        @endphp
-                        <tr>
-                            <td>
-                                <strong>{{ $report->title }}</strong>
-                                <div class="text-muted small">{{ $report->created_at?->format('M d, Y') }}</div>
-                            </td>
-                            <td>{{ $reportTypeLabels[$report->report_type] ?? ucfirst($report->report_type) }}</td>
-                            <td>{{ $report->start_date?->format('M d, Y') }} - {{ $report->end_date?->format('M d, Y') }}</td>
-                            <td>{{ $report->generatedBy?->first_name ?? 'System' }}</td>
-                            <td><span class="status-badge {{ $statusClass }}">{{ ucfirst($report->status) }}</span></td>
-                            <td>
-                                <div class="action-group">
-                                    <a href="{{ route('admin.reports.show', $report->id) }}" class="btn btn-sm btn-outline-primary" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.reports.edit', $report->id) }}" class="btn btn-sm btn-outline-secondary" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="{{ route('admin.reports.' . $report->report_type, ['start_date' => $report->start_date, 'end_date' => $report->end_date]) }}" class="btn btn-sm btn-outline-success" title="Open">
-                                        <i class="fas fa-external-link-alt"></i>
-                                    </a>
-                                    <form action="{{ route('admin.reports.destroy', $report->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this report?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        <div class="p-3">
-            {{ $reports->links() }}
-        </div>
-    @endif
+    </div>
 </div>
 @endsection

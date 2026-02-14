@@ -92,9 +92,11 @@
                                 <option value="">Select a role</option>
                                 <option value="admin" {{ old('role', $staff->role ?? '') == 'admin' ? 'selected' : '' }}>Admin</option>
                                 <option value="veterinarian" {{ old('role', $staff->role ?? '') == 'veterinarian' ? 'selected' : '' }}>Veterinarian</option>
-                                <option value="receptionist" {{ old('role', $staff->role ?? '') == 'receptionist' ? 'selected' : '' }}>Receptionist</option>
-                                <option value="pharmacist" {{ old('role', $staff->role ?? '') == 'pharmacist' ? 'selected' : '' }}>Pharmacist</option>
-                                <option value="groomer" {{ old('role', $staff->role ?? '') == 'groomer' ? 'selected' : '' }}>Grommer</option>
+                                <option value="staff" {{ old('role', $staff->role ?? '') == 'staff' ? 'selected' : '' }}>Staff</option>
+                                <option value="reception" {{ old('role', $staff->role ?? '') == 'reception' ? 'selected' : '' }}>Reception</option>
+                                <option value="pharmacy" {{ old('role', $staff->role ?? '') == 'pharmacy' ? 'selected' : '' }}>Pharmacy</option>
+                                <option value="groomer" {{ old('role', $staff->role ?? '') == 'groomer' ? 'selected' : '' }}>Groomer</option>
+                                <option value="boarding" {{ old('role', $staff->role ?? '') == 'boarding' ? 'selected' : '' }}>Boarding</option>
                             
                             </select>
                         </div>

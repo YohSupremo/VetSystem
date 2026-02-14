@@ -13,8 +13,8 @@ use App\Models\MedicalRecord;
 use App\Models\Prescription;
 use App\Models\PetVaccination;
 use App\Models\Surgery;
-use App\Models\GroomingAppointment;
-use Carbon\Carbon;
+use App\Models\InventoryStock;
+use App\Models\InventoryTransaction;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends BaseController
@@ -24,137 +24,17 @@ class ReportController extends BaseController
      */
     public function index()
     {
-        $reports = Report::with('generatedBy')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-
-        $reportTypeLabels = $this->reportTypeLabels();
-
-        $totalReports = Report::count();
-        $financialReports = Report::where('report_type', 'financial')->count();
-        $medicalReports = Report::where('report_type', 'medical')->count();
-        $inventoryReports = Report::where('report_type', 'inventory')->count();
+        $totalInvoices = BillingInvoice::count();
+        $totalAppointments = Appointment::count();
+        $totalMedicalRecords = MedicalRecord::count();
+        $totalInventoryItems = InventoryItem::count();
 
         return view('admin.reports.index', compact(
-            'reports',
-            'totalReports',
-            'financialReports',
-            'medicalReports',
-            'inventoryReports',
-            'reportTypeLabels'
+            'totalInvoices',
+            'totalAppointments',
+            'totalMedicalRecords',
+            'totalInventoryItems'
         ));
-    }
-
-    /**
-     * Show the form for creating a new report.
-     */
-    public function create()
-    {
-        $reportTypeLabels = $this->reportTypeLabels();
-        $reportTypes = array_keys($reportTypeLabels);
-        return view('admin.reports.create', compact('reportTypes', 'reportTypeLabels'));
-    }
-
-    /**
-     * Store a newly created report in storage.
-     */
-    public function store(Request $request)
-    {
-        $reportTypes = array_keys($this->reportTypeLabels());
-
-        $data = $request->validate([
-            'report_type' => 'required|in:' . implode(',', $reportTypes),
-            'title' => 'required|string|max:150',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'notes' => 'nullable|string',
-        ]);
-
-        $report = Report::create([
-            'report_type' => $data['report_type'],
-            'title' => $data['title'],
-            'start_date' => $data['start_date'],
-            'end_date' => $data['end_date'],
-            'status' => 'ready',
-            'notes' => $data['notes'] ?? null,
-            'generated_by' => auth()->id(),
-        ]);
-
-        return redirect()->route('admin.reports.show', $report->id)
-            ->with('success', 'Report created successfully.');
-    }
-
-    /**
-     * Display the specified report.
-     */
-    public function show($id)
-    {
-        $report = Report::with('generatedBy')->findOrFail($id);
-        $reportTypeLabels = $this->reportTypeLabels();
-        return view('admin.reports.show', compact('report', 'reportTypeLabels'));
-    }
-
-    /**
-     * Show the form for editing the specified report.
-     */
-    public function edit($id)
-    {
-        $report = Report::findOrFail($id);
-        $reportTypeLabels = $this->reportTypeLabels();
-        $reportTypes = array_keys($reportTypeLabels);
-
-        return view('admin.reports.edit', compact('report', 'reportTypes', 'reportTypeLabels'));
-    }
-
-    /**
-     * Update the specified report in storage.
-     */
-    public function update(Request $request, $id)
-    {
-        $report = Report::findOrFail($id);
-        $reportTypes = array_keys($this->reportTypeLabels());
-
-        $data = $request->validate([
-            'report_type' => 'required|in:' . implode(',', $reportTypes),
-            'title' => 'required|string|max:150',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'notes' => 'nullable|string',
-        ]);
-
-        $report->update([
-            'report_type' => $data['report_type'],
-            'title' => $data['title'],
-            'start_date' => $data['start_date'],
-            'end_date' => $data['end_date'],
-            'notes' => $data['notes'] ?? null,
-        ]);
-
-        return redirect()->route('admin.reports.show', $report->id)
-            ->with('success', 'Report updated successfully.');
-    }
-
-    /**
-     * Remove the specified report from storage.
-     */
-    public function destroy($id)
-    {
-        $report = Report::findOrFail($id);
-        $report->delete();
-
-        return redirect()->route('admin.reports.index')
-            ->with('success', 'Report deleted successfully.');
-    }
-
-    private function reportTypeLabels(): array
-    {
-        return [
-            'financial' => 'Financial',
-            'medical' => 'Medical',
-            'inventory' => 'Inventory',
-            'client' => 'Customer',
-            'appointment' => 'Operational',
-        ];
     }
     
     /**
@@ -293,60 +173,72 @@ class ReportController extends BaseController
      */
     public function inventoryReport(Request $request)
     {
+        $startDate = $request->input('start_date', now()->subMonth()->toDateString());
+        $endDate = $request->input('end_date', now()->toDateString());
         $reportType = $request->input('report_type', 'summary');
-        
+
         // Current inventory status
         $totalItems = InventoryItem::count();
-        $lowStockItems = InventoryItem::whereColumn('quantity', '<=', 'min_stock')->count();
-        $expiredItems = InventoryItem::where('expiry_date', '<', now())->count();
-        $expiringSoonItems = InventoryItem::where('expiry_date', '>', now())
-            ->where('expiry_date', '<=', now()->addDays(30))
+        $lowStockItems = InventoryStock::whereColumn('quantity', '<=', 'min_stock')->count();
+        $expiredItems = InventoryStock::whereNotNull('expiry_date')
+            ->where('expiry_date', '<', now())
             ->count();
-        
+        $expiringSoonItems = InventoryStock::whereNotNull('expiry_date')
+            ->whereBetween('expiry_date', [now(), now()->addDays(30)])
+            ->count();
+
         // Inventory value
-        $totalValue = InventoryItem::selectRaw('SUM(quantity * unit_price) as total_value')
-            ->first()
-            ->total_value ?? 0;
-        
+        $totalValue = InventoryStock::join('inventory_items', 'inventory_stock.item_id', '=', 'inventory_items.id')
+            ->selectRaw('SUM(inventory_stock.quantity * inventory_items.unit_price) as total_value')
+            ->value('total_value') ?? 0;
+
         // Low stock items
-        $lowStockList = InventoryItem::with('supplier')
+        $lowStockList = InventoryStock::with('inventoryItem')
             ->whereColumn('quantity', '<=', 'min_stock')
             ->orderBy('quantity')
             ->limit(20)
             ->get();
-        
+
         // Expired items
-        $expiredList = InventoryItem::with('supplier')
+        $expiredList = InventoryStock::with('inventoryItem')
+            ->whereNotNull('expiry_date')
             ->where('expiry_date', '<', now())
             ->orderBy('expiry_date')
             ->limit(20)
             ->get();
-        
+
         // Expiring soon items
-        $expiringSoonList = InventoryItem::with('supplier')
-            ->where('expiry_date', '>', now())
-            ->where('expiry_date', '<=', now()->addDays(30))
+        $expiringSoonList = InventoryStock::with('inventoryItem')
+            ->whereNotNull('expiry_date')
+            ->whereBetween('expiry_date', [now(), now()->addDays(30)])
             ->orderBy('expiry_date')
             ->limit(20)
             ->get();
-        
-        // Medication dispensing trends (last 30 days)
-        $dispensingTrends = MedicationDispensing::selectRaw('DATE(dispensed_at) as date, COUNT(*) as count, SUM(total_price) as total')
-            ->where('dispensed_at', '>=', now()->subDays(30))
+
+        // Stock movement trends
+        $movementTrends = InventoryTransaction::selectRaw('DATE(transaction_date) as date, COUNT(*) as count, SUM(ABS(quantity)) as total_quantity')
+            ->whereBetween('transaction_date', [$startDate, $endDate])
             ->groupBy('date')
             ->orderBy('date')
             ->get();
-        
-        // Top dispensed medications
-        $topMedications = MedicationDispensing::select('inventory_item_id', DB::raw('COUNT(*) as count, SUM(quantity_dispensed) as total_quantity'))
-            ->with('inventoryItem:name')
-            ->where('dispensed_at', '>=', now()->subDays(30))
-            ->groupBy('inventory_item_id')
-            ->orderBy('count', 'desc')
+
+        // Top moved items
+        $topMovedItems = InventoryTransaction::join('inventory_stock', 'inventory_transactions.stock_id', '=', 'inventory_stock.id')
+            ->join('inventory_items', 'inventory_stock.item_id', '=', 'inventory_items.id')
+            ->whereBetween('inventory_transactions.transaction_date', [$startDate, $endDate])
+            ->select(
+                'inventory_items.name',
+                DB::raw('COUNT(*) as count'),
+                DB::raw('SUM(ABS(inventory_transactions.quantity)) as total_quantity')
+            )
+            ->groupBy('inventory_items.name')
+            ->orderByDesc('total_quantity')
             ->limit(10)
             ->get();
-        
+
         return view('admin.reports.inventory', compact(
+            'startDate',
+            'endDate',
             'reportType',
             'totalItems',
             'lowStockItems',
@@ -356,8 +248,8 @@ class ReportController extends BaseController
             'lowStockList',
             'expiredList',
             'expiringSoonList',
-            'dispensingTrends',
-            'topMedications'
+            'movementTrends',
+            'topMovedItems'
         ));
     }
     
@@ -380,15 +272,16 @@ class ReportController extends BaseController
         // Top clients by revenue
         $topClients = DB::table('pet_owners')
             ->join('users', 'pet_owners.user_id', '=', 'users.id')
+            ->join('invoices', 'pet_owners.id', '=', 'invoices.owner_id')
+            ->join('invoice_items', 'invoices.id', '=', 'invoice_items.invoice_id')
             ->select(
                 'pet_owners.id',
                 'users.first_name',
                 'users.last_name',
                 'users.email',
-                DB::raw('SUM(billing_invoices.total_amount) as total_revenue')
+                DB::raw('SUM(invoice_items.quantity * invoice_items.unit_price) as total_revenue')
             )
-            ->join('billing_invoices', 'pet_owners.id', '=', 'billing_invoices.pet_owner_id')
-            ->whereBetween('billing_invoices.invoice_date', [$startDate, $endDate])
+            ->whereBetween('invoices.issue_date', [$startDate, $endDate])
             ->groupBy('pet_owners.id', 'users.first_name', 'users.last_name', 'users.email')
             ->orderBy('total_revenue', 'desc')
             ->limit(20)
@@ -460,7 +353,7 @@ class ReportController extends BaseController
             ->get();
         
         // Peak hours
-        $peakHours = Appointment::selectRaw('HOUR(start_time) as hour, COUNT(*) as count')
+        $peakHours = Appointment::selectRaw('HOUR(appointment_date) as hour, COUNT(*) as count')
             ->whereBetween('appointment_date', [$startDate, $endDate])
             ->groupBy('hour')
             ->orderBy('count', 'desc')
@@ -496,9 +389,9 @@ class ReportController extends BaseController
                     ->map(function ($invoice) {
                         return [
                             'Invoice Number' => $invoice->invoice_number,
-                            'Date' => $invoice->invoice_date,
-                            'Pet Owner' => $invoice->petOwner->name,
-                            'Pet' => $invoice->pet->name,
+                            'Date' => $invoice->issue_date?->format('Y-m-d'),
+                            'Pet Owner' => $invoice->petOwner?->full_name ?? '',
+                            'Pet' => $invoice->pet?->name ?? '',
                             'Total Amount' => $invoice->total_amount,
                             'Paid Amount' => $invoice->paid_amount,
                             'Balance' => $invoice->balance,
@@ -509,14 +402,14 @@ class ReportController extends BaseController
                 break;
                 
             case 'medical':
-                $data = MedicalRecord::with(['pet', 'pet.petOwner'])
+                $data = MedicalRecord::with(['pet', 'pet.owner'])
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->get()
                     ->map(function ($record) {
                         return [
                             'Date' => $record->created_at->format('Y-m-d'),
-                            'Pet Owner' => $record->pet->owner->name ?? '',
-                            'Pet' => $record->pet->name,
+                            'Pet Owner' => $record->pet?->owner?->name ?? '',
+                            'Pet' => $record->pet?->name ?? '',
                             'Diagnosis' => $record->diagnosis,
                             'Treatment' => $record->treatment_plan ?? '',
                             'Veterinarian' => $record->veterinarian ? $record->veterinarian->full_name : 'N/A',

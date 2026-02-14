@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use App\Models\InventoryItem;
-use App\Models\Supplier;
+use App\Models\InventoryStock;
 use Illuminate\Support\Facades\File;
 
 class InventoryController extends BaseController
@@ -14,7 +14,7 @@ class InventoryController extends BaseController
      */
     public function index(Request $request)
     {
-        $query = InventoryItem::with('supplier');
+        $query = InventoryItem::with('inventoryStocks');
 
         // Filter by category
         if ($request->filled('category')) {
@@ -25,34 +25,44 @@ class InventoryController extends BaseController
 
         // Filter by status dropdown (fallback to old checkbox params)
         if ($status === 'low_stock' || $request->boolean('low_stock')) {
-            $query->whereRaw('quantity <= min_stock AND quantity IS NOT NULL AND min_stock IS NOT NULL');
+            $query->whereHas('inventoryStocks', function ($stockQuery) {
+                $stockQuery->whereColumn('quantity', '<=', 'min_stock');
+            });
         }
 
         if ($status === 'expiring_soon' || $request->boolean('expiring_soon')) {
-            $query->where('expiry_date', '<=', now()->addDays(10))
-                ->where('expiry_date', '>=', now())
-                ->whereNotNull('expiry_date');
+            $query->whereHas('inventoryStocks', function ($stockQuery) {
+                $stockQuery->whereNotNull('expiry_date')
+                    ->where('expiry_date', '>=', now())
+                    ->where('expiry_date', '<=', now()->addDays(10));
+            });
         }
 
         if ($status === 'expired' || $request->boolean('expired')) {
-            $query->where('expiry_date', '<', now())
-                ->whereNotNull('expiry_date');
+            $query->whereHas('inventoryStocks', function ($stockQuery) {
+                $stockQuery->whereNotNull('expiry_date')
+                    ->where('expiry_date', '<', now());
+            });
         }
 
         $inventoryItems = $query->paginate(15);
 
         // Get summary statistics
         $totalItems = InventoryItem::count();
-        $lowStockItems = InventoryItem::whereRaw('quantity <= min_stock AND quantity IS NOT NULL AND min_stock IS NOT NULL')->count();
-        $expiringSoonItems = InventoryItem::where('expiry_date', '<=', now()->addDays(10))
-            ->where('expiry_date', '>=', now())
-            ->whereNotNull('expiry_date')
-            ->count();
-        $expiredItems = InventoryItem::where('expiry_date', '<', now())
-            ->whereNotNull('expiry_date')
-            ->count();
+        $lowStockItems = InventoryItem::whereHas('inventoryStocks', function ($stockQuery) {
+            $stockQuery->whereColumn('quantity', '<=', 'min_stock');
+        })->count();
+        $expiringSoonItems = InventoryItem::whereHas('inventoryStocks', function ($stockQuery) {
+            $stockQuery->whereNotNull('expiry_date')
+                ->where('expiry_date', '>=', now())
+                ->where('expiry_date', '<=', now()->addDays(10));
+        })->count();
+        $expiredItems = InventoryItem::whereHas('inventoryStocks', function ($stockQuery) {
+            $stockQuery->whereNotNull('expiry_date')
+                ->where('expiry_date', '<', now());
+        })->count();
 
-        $categories = ['medicine', 'vaccine', 'supply', 'food', 'other'];
+        $categories = ['medicine', 'vaccine', 'supply', 'food', 'toy', 'accessory', 'other'];
 
         return view('admin.inventory.index', compact(
             'inventoryItems',
@@ -69,8 +79,7 @@ class InventoryController extends BaseController
      */
     public function create()
     {
-        $suppliers = Supplier::orderBy('supplier_name')->get();
-        return view('admin.inventory.create', compact('suppliers'));
+        return view('admin.inventory.create');
     }
 
     /**
@@ -78,33 +87,19 @@ class InventoryController extends BaseController
      */
     public function store(Request $request)
     {
-        $category = $request->category;
-        $requiresExpiry = in_array($category, ['medicine', 'vaccine', 'food']);
-
         $validated = $request->validate([
             'name' => 'required|string|max:150',
             'description' => 'nullable|string',
-            'category' => 'required|in:medicine,vaccine,supply,food,other',
-            'sku' => 'nullable|string|max:50|unique:inventory_items,sku',
-            'manufacturer' => 'nullable|string|max:150',
-            'batch_number' => 'nullable|string|max:100',
-            'dosage_form' => 'nullable|string|max:100',
-            'strength' => 'nullable|string|max:100',
+            'category' => 'required|in:medicine,vaccine,supply,food,toy,accessory,other',
+            'sku' => 'required|string|max:50|unique:inventory_items,sku',
             'unit_price' => 'required|numeric|min:0',
-            'requires_prescription' => 'boolean',
-            'controlled_substance' => 'boolean',
-            'storage_instructions' => 'nullable|string',
-            'supplier_id' => 'nullable|exists:suppliers,id',
             'quantity' => 'required|integer|min:0',
             'min_stock' => 'required|integer|min:0',
-            'expiry_date' => $requiresExpiry ? 'nullable|date|after:today' : 'nullable',
+            'max_stock' => 'nullable|integer|min:0|gte:min_stock',
+            'expiry_date' => 'nullable|date',
+            'location' => 'nullable|string|max:100',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
         ]);
-
-        // Remove expiry_date if not required for this category
-        if (!$requiresExpiry) {
-            $validated['expiry_date'] = null;
-        }
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
@@ -117,7 +112,24 @@ class InventoryController extends BaseController
             $validated['image_path'] = 'uploads/inventory-items/' . $filename;
         }
 
-        InventoryItem::create($validated);
+        $item = InventoryItem::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'category' => $validated['category'],
+            'sku' => $validated['sku'],
+            'unit_price' => $validated['unit_price'],
+            'image_path' => $validated['image_path'] ?? null,
+            'is_active' => true,
+        ]);
+
+        InventoryStock::create([
+            'item_id' => $item->id,
+            'quantity' => $validated['quantity'],
+            'min_stock' => $validated['min_stock'],
+            'max_stock' => $validated['max_stock'] ?? null,
+            'expiry_date' => $validated['expiry_date'] ?? null,
+            'location' => $validated['location'] ?? null,
+        ]);
 
         return redirect()->route('admin.inventory.index')
             ->with('success', 'Inventory item created successfully.');
@@ -128,7 +140,7 @@ class InventoryController extends BaseController
      */
     public function show($id)
     {
-        $item = InventoryItem::with('supplier')->findOrFail($id);
+        $item = InventoryItem::with('inventoryStocks')->findOrFail($id);
         return view('admin.inventory.show', compact('item'));
     }
 
@@ -137,9 +149,8 @@ class InventoryController extends BaseController
      */
     public function edit($id)
     {
-        $item = InventoryItem::with('supplier')->findOrFail($id);
-        $suppliers = Supplier::orderBy('supplier_name')->get();
-        return view('admin.inventory.edit', compact('item', 'suppliers'));
+        $item = InventoryItem::with('inventoryStocks')->findOrFail($id);
+        return view('admin.inventory.edit', compact('item'));
     }
 
     /**
@@ -148,33 +159,19 @@ class InventoryController extends BaseController
     public function update(Request $request, $id)
     {
         $item = InventoryItem::findOrFail($id);
-        $category = $request->category;
-        $requiresExpiry = in_array($category, ['medicine', 'vaccine', 'food']);
-
         $validated = $request->validate([
             'name' => 'required|string|max:150',
             'description' => 'nullable|string',
-            'category' => 'required|in:medicine,vaccine,supply,food,other',
-            'sku' => 'nullable|string|max:50|unique:inventory_items,sku,' . $id,
-            'manufacturer' => 'nullable|string|max:150',
-            'batch_number' => 'nullable|string|max:100',
-            'dosage_form' => 'nullable|string|max:100',
-            'strength' => 'nullable|string|max:100',
+            'category' => 'required|in:medicine,vaccine,supply,food,toy,accessory,other',
+            'sku' => 'required|string|max:50|unique:inventory_items,sku,' . $id,
             'unit_price' => 'required|numeric|min:0',
-            'requires_prescription' => 'boolean',
-            'controlled_substance' => 'boolean',
-            'storage_instructions' => 'nullable|string',
-            'supplier_id' => 'nullable|exists:suppliers,id',
             'quantity' => 'required|integer|min:0',
             'min_stock' => 'required|integer|min:0',
-            'expiry_date' => $requiresExpiry ? 'nullable|date|after:today' : 'nullable',
+            'max_stock' => 'nullable|integer|min:0|gte:min_stock',
+            'expiry_date' => 'nullable|date',
+            'location' => 'nullable|string|max:100',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
         ]);
-
-        // Remove expiry_date if not required for this category
-        if (!$requiresExpiry) {
-            $validated['expiry_date'] = null;
-        }
 
         if ($request->hasFile('image')) {
             if ($item->image_path) {
@@ -190,7 +187,34 @@ class InventoryController extends BaseController
             $validated['image_path'] = 'uploads/inventory-items/' . $filename;
         }
 
-        $item->update($validated);
+        $item->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'category' => $validated['category'],
+            'sku' => $validated['sku'],
+            'unit_price' => $validated['unit_price'],
+            'image_path' => $validated['image_path'] ?? $item->image_path,
+        ]);
+
+        $stock = $item->inventoryStocks()->first();
+        if ($stock) {
+            $stock->update([
+                'quantity' => $validated['quantity'],
+                'min_stock' => $validated['min_stock'],
+                'max_stock' => $validated['max_stock'] ?? null,
+                'expiry_date' => $validated['expiry_date'] ?? null,
+                'location' => $validated['location'] ?? null,
+            ]);
+        } else {
+            InventoryStock::create([
+                'item_id' => $item->id,
+                'quantity' => $validated['quantity'],
+                'min_stock' => $validated['min_stock'],
+                'max_stock' => $validated['max_stock'] ?? null,
+                'expiry_date' => $validated['expiry_date'] ?? null,
+                'location' => $validated['location'] ?? null,
+            ]);
+        }
 
         return redirect()->route('admin.inventory.index')
             ->with('success', 'Inventory item updated successfully.');

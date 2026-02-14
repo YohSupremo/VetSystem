@@ -75,9 +75,22 @@ class BillingController extends BaseController
         DB::beginTransaction();
 
         try {
-            $tempNumber = 'INV-' . date('YmdHis') . '-' . substr(uniqid(), -4);
+            // Generate invoice number and sequence
+            $prefix = 'INV';
+            $issueDate = $data['invoice_date'];
+            $year = date('Y', strtotime($issueDate));
+            
+            $lastSequence = BillingInvoice::where('invoice_prefix', $prefix)
+                ->whereYear('issue_date', $year)
+                ->max('invoice_sequence');
+            
+            $nextSequence = $lastSequence ? $lastSequence + 1 : 1;
+            $invoiceNumber = sprintf('%s-%s-%06d', $prefix, $year, $nextSequence);
+            
             $invoice = BillingInvoice::create([
-                'invoice_number' => $tempNumber,
+                'invoice_number' => $invoiceNumber,
+                'invoice_prefix' => $prefix,
+                'invoice_sequence' => $nextSequence,
                 'pet_id' => $data['pet_id'] ?? null,
                 'owner_id' => $data['pet_owner_id'],
                 'issue_date' => $data['invoice_date'],
@@ -87,8 +100,6 @@ class BillingController extends BaseController
                 'discount_amount' => $data['discount_amount'] ?? 0,
                 'notes' => $data['notes'] ?? null,
             ]);
-            $invoice->invoice_number = $invoice->generateInvoiceNumber();
-            $invoice->save();
 
             foreach ($data['items'] as $item) {
                 BillingInvoiceItem::create([
@@ -102,12 +113,12 @@ class BillingController extends BaseController
 
             DB::commit();
             
-            return redirect()->route('admin.billing.show', $invoice->id)
+            return redirect()->route('admin.billing.index')
                 ->with('success', 'Invoice created successfully.');
                 
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->withErrors(['error' => 'Failed to create invoice: ' . $e->getMessage()]);
+            return back()->withInput()->withErrors(['error' => 'Failed to create invoice: ' . $e->getMessage()]);
         }
     }
 

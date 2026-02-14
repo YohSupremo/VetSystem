@@ -13,7 +13,7 @@ class StaffController extends BaseController
     public function index()
     {
 
-        $staff = User::whereIn('role', ['admin', 'veterinarian', 'receptionist', 'pharmacist', 'groomer'])->get();
+        $staff = User::whereIn('role', ['admin', 'veterinarian', 'staff', 'reception', 'pharmacy', 'groomer', 'boarding'])->get();
 
         return view('admin.staff.index', compact('staff'));
     }
@@ -48,7 +48,7 @@ class StaffController extends BaseController
         $staff_create = User::create($staff);
 
         
-        return view('admin.staff.index')->with('success', 'Staff member created successfully.');;
+        return redirect()->route('admin.staff.index')->with('success', 'Staff member created successfully.');
     }
 
     

@@ -164,12 +164,7 @@
                 <span class="info-label">Unit Price:</span>
                 <span class="info-value">${{ number_format($item->unit_price, 2) }}</span>
             </div>
-            @if($item->supplier)
-            <div class="info-row">
-                <span class="info-label">Supplier:</span>
-                <span class="info-value">{{ $item->supplier->supplier_name }}</span>
-            </div>
-            @endif
+            @php $stock = $item->inventoryStocks->first(); @endphp
         </div>
     </div>
 
@@ -180,7 +175,7 @@
             <div class="info-row">
                 <span class="info-label">Current Quantity:</span>
                 <span class="info-value">
-                    <strong>{{ $item->quantity }}</strong>
+                    <strong>{{ $item->total_stock }}</strong>
                     @if($item->isLowStock())
                         <span class="badge badge-low-stock ms-2">Low Stock</span>
                     @endif
@@ -188,13 +183,17 @@
             </div>
             <div class="info-row">
                 <span class="info-label">Minimum Stock:</span>
-                <span class="info-value">{{ $item->min_stock }}</span>
+                <span class="info-value">{{ $stock->min_stock ?? 0 }}</span>
             </div>
-            @if($item->requiresExpiryDate() && $item->expiry_date)
+            <div class="info-row">
+                <span class="info-label">Maximum Stock:</span>
+                <span class="info-value">{{ $stock && $stock->max_stock !== null ? $stock->max_stock : 'N/A' }}</span>
+            </div>
+            @if($stock && $stock->expiry_date)
             <div class="info-row">
                 <span class="info-label">Expiry Date:</span>
                 <span class="info-value">
-                    {{ $item->expiry_date->format('M d, Y') }}
+                    {{ $stock->expiry_date->format('M d, Y') }}
                     @if($item->isExpired())
                         <span class="badge bg-danger ms-2">Expired</span>
                     @elseif($item->isExpiringSoon())
@@ -204,12 +203,16 @@
             </div>
             @endif
             <div class="info-row">
+                <span class="info-label">Location:</span>
+                <span class="info-value">{{ $stock->location ?? 'N/A' }}</span>
+            </div>
+            <div class="info-row">
                 <span class="info-label">Status:</span>
                 <span class="info-value">
                     @php
                         $stockStatus = 'good';
                         if ($item->isLowStock()) $stockStatus = 'low';
-                        if ($item->quantity == 0) $stockStatus = 'critical';
+                        if ($item->total_stock == 0) $stockStatus = 'critical';
                     @endphp
                     <span class="stock-indicator stock-{{ $stockStatus }}"></span>
                     @if($stockStatus == 'good')

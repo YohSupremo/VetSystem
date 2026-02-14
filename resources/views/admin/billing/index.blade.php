@@ -224,7 +224,8 @@
                                 'paid' => 'bg-success text-white',
                                 'overdue' => 'bg-danger text-white',
                                 'partial' => 'bg-warning text-dark',
-                                'sent' => 'bg-info text-dark',
+                                'pending' => 'bg-info text-dark',
+                                'cancelled' => 'bg-secondary text-white',
                                 default => 'bg-secondary text-white',
                             };
                         @endphp

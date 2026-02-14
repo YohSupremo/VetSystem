@@ -8,7 +8,7 @@ class InvoiceItem extends Model
 {
     protected $table = 'invoice_items';
 
-    public $timestamps = false;
+    const UPDATED_AT = null;
 
     protected $fillable = [
         'invoice_id',

@@ -1,7 +1,7 @@
 @extends('admin.dashboard')
 
 @section('page-title', 'Inventory Management')
-@section('page-description', 'Manage clinic inventory, stock levels, and suppliers')
+@section('page-description', 'Manage clinic inventory and stock levels')
 
 @push('styles')
 <style>
@@ -261,7 +261,7 @@
     <div class="header-title">
         <span class="hero-pill"><i class="fas fa-warehouse"></i> Stock Overview</span>
         <h1 class="mt-2"><i class="fas fa-boxes"></i> Inventory Management</h1>
-        <p>Track stock levels, manage suppliers, and monitor inventory</p>
+        <p>Track stock levels and monitor inventory</p>
     </div>
     <div class="header-actions">
         <a href="{{ route('admin.inventory.create') }}" class="btn btn-primary">
@@ -402,9 +402,7 @@
                                     @if($item->sku)
                                         <br><small class="text-muted">SKU: {{ $item->sku }}</small>
                                     @endif
-                                    @if($item->manufacturer)
-                                        <br><small class="text-muted">{{ $item->manufacturer }}</small>
-                                    @endif
+                                    @php $stock = $item->inventoryStocks->first(); @endphp
                                     </div>
                                 </div>
                             </td>
@@ -416,6 +414,8 @@
                                         'vaccine' => 'bg-info text-dark',
                                         'supply' => 'bg-secondary text-white',
                                         'food' => 'bg-warning text-dark',
+                                        'toy' => 'bg-light text-dark',
+                                        'accessory' => 'bg-light text-dark',
                                         'other' => 'bg-light text-dark'
                                     ];
                                     $categoryClass = $categoryStyles[$categoryKey] ?? 'bg-light text-dark';
@@ -424,18 +424,18 @@
                             </td>
                             <td>
                                 <div>
-                                    <strong>{{ $item->quantity }}</strong>
+                                    <strong>{{ $item->total_stock }}</strong>
                                 </div>
                                 @if($item->isLowStock())
                                     <div class="text-danger small">Low Stock</div>
                                 @endif
                             </td>
-                            <td>{{ $item->min_stock }}</td>
+                            <td>{{ $stock->min_stock ?? 0 }}</td>
                             <td>${{ number_format($item->unit_price, 2) }}</td>
                             <td>
-                                @if($item->expiry_date)
+                                @if($stock && $stock->expiry_date)
                                     <div class="expiry-meta">
-                                        <span class="expiry-date">{{ $item->expiry_date->format('M d, Y') }}</span>
+                                        <span class="expiry-date">{{ $stock->expiry_date->format('M d, Y') }}</span>
                                         @if($item->isExpired())
                                             <span class="status-badge bg-danger text-white">Expired</span>
                                         @elseif($item->isExpiringSoon())
@@ -452,7 +452,7 @@
                                 @php
                                     $stockStatus = 'good';
                                     if ($item->isLowStock()) $stockStatus = 'low';
-                                    if ($item->quantity == 0) $stockStatus = 'critical';
+                                    if ($item->total_stock == 0) $stockStatus = 'critical';
                                     $statusLabel = $stockStatus == 'good' ? 'In Stock' : ($stockStatus == 'low' ? 'Low Stock' : 'Out of Stock');
                                     $statusClass = $stockStatus == 'good' ? 'text-success' : ($stockStatus == 'low' ? 'text-warning' : 'text-danger');
                                 @endphp

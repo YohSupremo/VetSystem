@@ -80,7 +80,7 @@
                 <select name="pet_owner_id" id="pet_owner_id" class="form-select" required>
                     <option value="">Select owner</option>
                     @foreach($petOwners as $owner)
-                        <option value="{{ $owner->id }}" {{ old('pet_owner_id', $invoice->pet_owner_id) == $owner->id ? 'selected' : '' }}>
+                        <option value="{{ $owner->id }}" {{ old('pet_owner_id', $invoice->owner_id) == $owner->id ? 'selected' : '' }}>
                             {{ $owner->full_name ?? ('Owner #' . $owner->id) }}
                         </option>
                     @endforeach
@@ -109,10 +109,10 @@
                 <input type="date" class="form-control" id="due_date" name="due_date" value="{{ old('due_date', $invoice->due_date?->toDateString()) }}" required>
                 @error('due_date')<div class="text-danger small">{{ $message }}</div>@enderror
             </div>
-            <div class="col-md-2 mb-3">
-                <label for="tax_amount" class="form-label">Tax</label>
-                <input type="number" class="form-control" id="tax_amount" name="tax_amount" value="{{ old('tax_amount', $invoice->tax_amount) }}" min="0" step="0.01">
-            </div>
+                <div class="col-md-2 mb-3">
+                    <label for="tax_rate" class="form-label">Tax Rate (%)</label>
+                    <input type="number" class="form-control" id="tax_rate" name="tax_rate" value="{{ old('tax_rate', $invoice->tax_rate) }}" min="0" max="100" step="0.01">
+                </div>
             <div class="col-md-2 mb-3">
                 <label for="discount_amount" class="form-label">Discount</label>
                 <input type="number" class="form-control" id="discount_amount" name="discount_amount" value="{{ old('discount_amount', $invoice->discount_amount) }}" min="0" step="0.01">
@@ -148,9 +148,9 @@
                         <tr>
                             <td>
                                 <select name="items[{{ $index }}][item_type]" class="form-select" required>
-                                    @foreach(['consultation','vaccination','surgery','grooming','laboratory','medication','other'] as $type)
+                                    @foreach(['service','consultation','vaccination','surgery','grooming','boarding','lab_test','product','other'] as $type)
                                         <option value="{{ $type }}" {{ $item->item_type === $type ? 'selected' : '' }}>
-                                            {{ ucfirst($type) }}
+                                            {{ ucfirst(str_replace('_', ' ', $type)) }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -182,12 +182,14 @@
         row.innerHTML = `
             <td>
                 <select name="items[${index}][item_type]" class="form-select" required>
+                    <option value="service">Service</option>
                     <option value="consultation">Consultation</option>
                     <option value="vaccination">Vaccination</option>
                     <option value="surgery">Surgery</option>
                     <option value="grooming">Grooming</option>
-                    <option value="laboratory">Laboratory</option>
-                    <option value="medication">Medication</option>
+                    <option value="boarding">Boarding</option>
+                    <option value="lab_test">Lab Test</option>
+                    <option value="product">Product</option>
                     <option value="other">Other</option>
                 </select>
             </td>

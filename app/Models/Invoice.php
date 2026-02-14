@@ -13,6 +13,8 @@ class Invoice extends Model
         'appointment_id',
         'pet_id',
         'owner_id',
+        'invoice_prefix',
+        'invoice_sequence',
         'invoice_number',
         'issue_date',
         'due_date',
@@ -53,12 +55,12 @@ class Invoice extends Model
 
     public function invoiceItems()
     {
-        return $this->hasMany(InvoiceItem::class);
+        return $this->hasMany(InvoiceItem::class, 'invoice_id');
     }
 
     public function payments()
     {
-        return $this->hasMany(Payment::class);
+        return $this->hasMany(Payment::class, 'invoice_id');
     }
 
     public function petOwner()
@@ -105,8 +107,15 @@ class Invoice extends Model
 
     public function generateInvoiceNumber()
     {
-        $datePart = now()->format('Ymd');
-        $suffix = str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);
-        return 'INV-' . $datePart . '-' . $suffix;
+        $prefix = $this->invoice_prefix ?: 'INV';
+        $year = ($this->issue_date ?? now())->format('Y');
+        $lastSequence = self::where('invoice_prefix', $prefix)
+            ->whereYear('issue_date', $year)
+            ->max('invoice_sequence');
+
+        $nextSequence = $lastSequence ? $lastSequence + 1 : 1;
+        $this->invoice_sequence = $nextSequence;
+
+        return sprintf('%s-%s-%06d', $prefix, $year, $nextSequence);
     }
 }

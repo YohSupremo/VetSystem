@@ -163,7 +163,6 @@
     }
 </style>
 @endpush
-
 @section('content')
 <div class="content-header">
     <div class="header-title">
@@ -243,18 +242,18 @@
                 <tr>
                     <td>
                         <div class="pet-info">
-                            @php $pet = $boarding->petAssigned; @endphp
+                            @php $pet = $boarding->pet; @endphp
                             <img src="{{ $pet ? $pet->photo_url : 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect fill=\"#f0f0f0\" width=\"200\" height=\"200\"/><text x=\"50%\" y=\"50%\" font-size=\"80\" text-anchor=\"middle\" dominant-baseline=\"middle\" fill=\"#ccc\">🐾</text></svg>') }}" alt="{{ $pet->name ?? 'Pet' }}" class="pet-avatar" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3QgZmlsbD0iI2YwZjBmMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iI2NjYyI+8J+QrjwvdGV4dD48L3N2Zz4='">
                             <div>
-                                <strong>{{ $boarding->petAssigned?->name ?? 'N/A' }}</strong>
-                                <span class="text-muted">{{ $boarding->petAssigned?->breed ?? 'N/A' }}</span>
+                                <strong>{{ $pet?->name ?? 'N/A' }}</strong>
+                                <span class="text-muted">{{ $pet?->breed ?? 'N/A' }}</span>
                             </div>
                         </div>
                     </td>
-                    <td>{{ ($boarding->petAssigned && $boarding->petAssigned->owner && $boarding->petAssigned->owner->user) ? $boarding->petAssigned->owner->user->first_name . ' ' . $boarding->petAssigned->owner->user->last_name : 'Unknown Owner' }}</td>
+                    <td>{{ ($pet && $pet->owner && $pet->owner->user) ? $pet->owner->user->first_name . ' ' . $pet->owner->user->last_name : 'Unknown Owner' }}</td>
                     <td>
                         <span class="badge badge-cage">
-                            {{ $boarding->cageAssigned?->cage_code ?? 'N/A' }}
+                            {{ $boarding->cage?->cage_code ?? 'N/A' }}
                         </span>
                     </td>
                     <td>{{ \Carbon\Carbon::parse($boarding->start_date)->format('M d, Y') }}</td>

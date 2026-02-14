@@ -151,6 +151,8 @@
                         <option value="vaccine" {{ old('category') == 'vaccine' ? 'selected' : '' }}>Vaccine</option>
                         <option value="supply" {{ old('category') == 'supply' ? 'selected' : '' }}>Supply</option>
                         <option value="food" {{ old('category') == 'food' ? 'selected' : '' }}>Food</option>
+                        <option value="toy" {{ old('category') == 'toy' ? 'selected' : '' }}>Toy</option>
+                        <option value="accessory" {{ old('category') == 'accessory' ? 'selected' : '' }}>Accessory</option>
                         <option value="other" {{ old('category') == 'other' ? 'selected' : '' }}>Other</option>
                     </select>
                     @error('category')
@@ -172,9 +174,9 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="form-group">
-                    <label for="sku" class="form-label">SKU</label>
+                    <label for="sku" class="form-label">SKU *</label>
                     <input type="text" class="form-control @error('sku') is-invalid @enderror"
-                           id="sku" name="sku" value="{{ old('sku') }}">
+                           id="sku" name="sku" value="{{ old('sku') }}" required>
                     @error('sku')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -197,25 +199,6 @@
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="supplier_id" class="form-label">Supplier</label>
-                    <select class="form-select @error('supplier_id') is-invalid @enderror"
-                            id="supplier_id" name="supplier_id">
-                        <option value="">Select Supplier</option>
-                        @foreach($suppliers as $supplier)
-                            <option value="{{ $supplier->id }}" {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
-                                {{ $supplier->supplier_name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('supplier_id')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Stock Information -->
@@ -255,13 +238,34 @@
 
             <div class="col-md-4">
                 <div class="form-group">
+                    <label for="max_stock" class="form-label">Maximum Stock</label>
+                    <input type="number" class="form-control @error('max_stock') is-invalid @enderror"
+                           id="max_stock" name="max_stock" value="{{ old('max_stock') }}"
+                           min="0">
+                    @error('max_stock')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
                     <label for="expiry_date" class="form-label">Expiry Date</label>
                     <input type="date" class="form-control @error('expiry_date') is-invalid @enderror"
                            id="expiry_date" name="expiry_date" value="{{ old('expiry_date') }}">
-                    <small class="form-text text-muted" id="expiry_date_help">
-                        Only applicable for Medicine, Vaccine, and Food
-                    </small>
                     @error('expiry_date')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="location" class="form-label">Location</label>
+                    <input type="text" class="form-control @error('location') is-invalid @enderror"
+                           id="location" name="location" value="{{ old('location') }}">
+                    @error('location')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
@@ -304,24 +308,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     const categorySelect = document.getElementById('category');
     const expiryDateInput = document.getElementById('expiry_date');
-    const expiryDateHelp = document.getElementById('expiry_date_help');
-    
-    function toggleExpiryDate() {
-        const category = categorySelect.value;
-        const requiresExpiry = ['medicine', 'vaccine', 'food'].includes(category);
-        
-        if (requiresExpiry) {
-            expiryDateInput.removeAttribute('disabled');
-            expiryDateHelp.textContent = 'Required for Medicine, Vaccine, and Food';
-        } else {
-            expiryDateInput.setAttribute('disabled', 'disabled');
-            expiryDateInput.value = '';
-            expiryDateHelp.textContent = 'Not applicable for this category';
-        }
+
+    if (categorySelect && expiryDateInput) {
+        categorySelect.addEventListener('change', () => {
+            if (!categorySelect.value) {
+                expiryDateInput.value = '';
+            }
+        });
     }
-    
-    categorySelect.addEventListener('change', toggleExpiryDate);
-    toggleExpiryDate(); // Run on page load
 });
 </script>
 @endpush

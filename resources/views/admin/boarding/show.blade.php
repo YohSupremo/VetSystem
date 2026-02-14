@@ -285,14 +285,14 @@
 
         <div class="pet-preview">
             <div class="pet-preview-item">
-                @php $pet = $boarding->petAssigned; @endphp
+                @php $pet = $boarding->pet; @endphp
                 <img src="{{ $pet && $pet->photo_path ? $pet->photo_url : asset('images/default-pet.jpg') }}" alt="Pet" class="pet-preview-image">
                 <div class="pet-preview-info">
-                    <h3>{{ $boarding->petAssigned->name ?? 'N/A' }}</h3>
-                    <p><strong>Breed:</strong> {{ $boarding->petAssigned->breed ?? 'N/A' }}</p>
-                    <p><strong>Species:</strong> {{ ucfirst($boarding->petAssigned->species ?? 'N/A') }}</p>
+                    <h3>{{ $pet?->name ?? 'N/A' }}</h3>
+                    <p><strong>Breed:</strong> {{ $pet?->breed ?? 'N/A' }}</p>
+                    <p><strong>Species:</strong> {{ $pet?->species ? ucfirst($pet->species) : 'N/A' }}</p>
                     @php
-                        $ownerUser = optional(optional($boarding->petAssigned)->owner)->user;
+                        $ownerUser = optional(optional($pet)->owner)->user;
                     @endphp
                     <p><strong>Owner:</strong>
                         @if($ownerUser)
@@ -335,11 +335,15 @@
             </div>
             <div class="detail-group">
                 <span class="detail-label">Check-in Time</span>
-                <span class="detail-value text">Not tracked (date-based only)</span>
+                <span class="detail-value">
+                    {{ $boarding->check_in_time ? \Carbon\Carbon::parse($boarding->check_in_time)->format('g:i A') : 'Not set' }}
+                </span>
             </div>
             <div class="detail-group">
                 <span class="detail-label">Check-out Time</span>
-                <span class="detail-value text">Not tracked (date-based only)</span>
+                <span class="detail-value">
+                    {{ $boarding->check_out_time ? \Carbon\Carbon::parse($boarding->check_out_time)->format('g:i A') : 'Not set' }}
+                </span>
             </div>
         </div>
 
@@ -371,6 +375,17 @@
                 </div>
             </div>
         </div>
+
+        <div class="detail-row">
+            <div class="detail-group">
+                <span class="detail-label">Daily Rate</span>
+                <span class="detail-value">{{ $boarding->daily_rate !== null ? number_format($boarding->daily_rate, 2) : 'N/A' }}</span>
+            </div>
+            <div class="detail-group">
+                <span class="detail-label">Notes</span>
+                <span class="detail-value text">{{ $boarding->notes ?? 'N/A' }}</span>
+            </div>
+        </div>
     </div>
 
     <!-- Cage Assignment Card -->
@@ -382,15 +397,15 @@
         <div class="detail-row">
             <div class="detail-group">
                 <span class="detail-label">Cage Code</span>
-                <span class="detail-value">{{ $boarding->cageAssigned->cage_code ?? 'N/A' }}</span>
+                <span class="detail-value">{{ $boarding->cage?->cage_code ?? 'N/A' }}</span>
             </div>
             <div class="detail-group">
                 <span class="detail-label">Location</span>
-                <span class="detail-value">{{ $boarding->cageAssigned->location ?? 'N/A' }}</span>
+                <span class="detail-value">{{ $boarding->cage?->location ?? 'N/A' }}</span>
             </div>
             <div class="detail-group">
                 <span class="detail-label">Status</span>
-                <span class="detail-value">{{ ucfirst($boarding->cageAssigned->status ?? 'N/A') }}</span>
+                <span class="detail-value">{{ $boarding->cage?->status ? ucfirst($boarding->cage->status) : 'N/A' }}</span>
             </div>
         </div>
     </div>
@@ -403,13 +418,18 @@
 
         <div class="detail-group">
             <span class="detail-label">Medication Instructions</span>
-            @if($boarding->medicationInstruction && $boarding->medicationInstruction->instructions)
-                <span class="detail-value text">{{ $boarding->medicationInstruction->instructions }}</span>
+            @if($boarding->medication_instructions)
+                <span class="detail-value text">{{ $boarding->medication_instructions }}</span>
             @else
                 <div class="empty-state">
                     <i class="fas fa-info-circle"></i> No medication instructions provided
                 </div>
             @endif
+        </div>
+
+        <div class="detail-group" style="margin-top: 1rem;">
+            <span class="detail-label">Medication Times</span>
+            <span class="detail-value text">{{ $boarding->medication_times ?? 'N/A' }}</span>
         </div>
     </div>
 
@@ -420,8 +440,7 @@
         </div>
 
         @php
-            $schedule = $boarding->feedingSchedule->schedule ?? '';
-            $times = $schedule && $schedule !== 'As_Needed' ? explode(',', $schedule) : [];
+            $times = $boarding->feeding_times ? explode(',', $boarding->feeding_times) : [];
             $morningTime = $times[0] ?? null;
             $afternoonTime = $times[1] ?? null;
             $eveningTime = $times[2] ?? null;
@@ -441,12 +460,10 @@
             </div>
         </div>
 
-        @if($boarding->feedingSchedule && $boarding->feedingSchedule->notes)
-            <div class="detail-group">
-                <span class="detail-label">Feeding Notes</span>
-                <span class="detail-value text">{{ $boarding->feedingSchedule->notes }}</span>
-            </div>
-        @endif
+        <div class="detail-group">
+            <span class="detail-label">Feeding Notes</span>
+            <span class="detail-value text">{{ $boarding->special_diet_notes ?? 'No notes provided.' }}</span>
+        </div>
     </div>
 
     <!-- Action Buttons -->

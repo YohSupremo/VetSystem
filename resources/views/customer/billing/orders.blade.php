@@ -58,6 +58,8 @@
                                 <td>
                                     @if($order->status === 'completed' || $order->status === 'fulfilled')
                                         <span class="badge bg-success">Completed</span>
+                                    @elseif($order->status === 'shipped')
+                                        <span class="badge bg-info text-dark">Shipped</span>
                                     @elseif($order->status === 'cancelled')
                                         <span class="badge bg-danger">Cancelled</span>
                                     @else

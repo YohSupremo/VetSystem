@@ -13,6 +13,8 @@
                 <div class="ms-auto">
                     @if($order->status === 'completed' || $order->status === 'fulfilled')
                         <span class="badge bg-success fs-6">Completed</span>
+                    @elseif($order->status === 'shipped')
+                        <span class="badge bg-info text-dark fs-6">Shipped</span>
                     @elseif($order->status === 'cancelled')
                         <span class="badge bg-danger fs-6">Cancelled</span>
                     @else
@@ -87,7 +89,7 @@
                         @endif
                     </div>
 
-                    @if($order->status !== 'cancelled' && $order->status !== 'fulfilled' && $order->status !== 'completed')
+                    @if(!in_array($order->status, ['cancelled', 'shipped', 'fulfilled', 'completed'], true))
                         <hr class="my-4">
                         <div class="d-flex justify-content-end">
                             <form action="{{ route('customer.billing.cancel-order', $order->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this order?')">

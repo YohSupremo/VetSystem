@@ -485,7 +485,7 @@ CREATE TABLE orders (
     owner_id BIGINT UNSIGNED NOT NULL,
     created_by BIGINT UNSIGNED NOT NULL,
     order_type ENUM('walk_in','appointment','online','pharmacy') DEFAULT 'walk_in',
-    status ENUM('draft','confirmed','fulfilled','cancelled') DEFAULT 'draft',
+    status ENUM('draft','confirmed','shipped','fulfilled','cancelled') DEFAULT 'draft',
     order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

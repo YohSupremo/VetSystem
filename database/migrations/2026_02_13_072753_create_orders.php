@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('owner_id')->constrained('pet_owners')->onDelete('cascade');
             $table->foreignId('created_by')->constrained('users')->onDelete('restrict');
             $table->enum('order_type', ['walk_in', 'appointment', 'online', 'pharmacy'])->default('walk_in');
-            $table->enum('status', ['draft', 'confirmed', 'fulfilled', 'cancelled'])->default('draft');
+            $table->enum('status', ['draft', 'confirmed', 'shipped', 'fulfilled', 'cancelled'])->default('draft');
             $table->dateTime('order_date')->useCurrent();
             $table->text('notes')->nullable();
             $table->timestamps();

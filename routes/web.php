@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\LaboratoryController;
 use App\Http\Controllers\Admin\SurgeryController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\BillingController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingController;
@@ -192,6 +193,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
     
     // Inventory Management
     Route::resource('inventory', InventoryController::class);
+
+    // Orders
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{orderId}', [OrderController::class, 'show'])->name('orders.show');
+    Route::post('/orders/{orderId}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     
     // Queue Management
     Route::prefix('queue')->name('queue.')->group(function () {

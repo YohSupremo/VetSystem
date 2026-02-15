@@ -776,6 +776,10 @@
                         <i class="fas fa-file-invoice-dollar"></i>
                         <span>Billing</span>
                     </a>
+                    <a href="{{ route('admin.orders.index') }}" class="nav-item {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>Orders</span>
+                    </a>
                     <a href="{{ route('admin.staff.index') }}" class="nav-item {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
                         <i class="fas fa-user-md"></i>
                         <span>Staff</span>

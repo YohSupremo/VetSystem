@@ -256,37 +256,49 @@
                             {{ $boarding->cage?->cage_code ?? 'N/A' }}
                         </span>
                     </td>
-                    <td>{{ \Carbon\Carbon::parse($boarding->start_date)->format('M d, Y') }}</td>
-                    <td>{{ \Carbon\Carbon::parse($boarding->end_date)->format('M d, Y') }}</td>
+                    <td>{{ $boarding->start_date ? \Carbon\Carbon::parse($boarding->start_date)->format('M d, Y') : 'N/A' }}</td>
+                    <td>{{ $boarding->end_date ? \Carbon\Carbon::parse($boarding->end_date)->format('M d, Y') : 'N/A' }}</td>
                     <td>
                         @php
-                            $isActive = $boarding->isActive();
-                            $statusText = $isActive ? 'Active' : (now()->toDateString() > $boarding->end_date ? 'Completed' : 'Upcoming');
-                            $statusClass = match ($statusText) {
-                                'Active' => 'success',
-                                'Upcoming' => 'warning',
-                                'Completed' => 'secondary',
-                                default => 'secondary',
-                            };
+                            $derivedStatus = $boarding->getAttribute('derived_status');
+                            if ($derivedStatus) {
+                                $statusText = $derivedStatus;
+                                $statusClass = $boarding->getAttribute('derived_status_class') ?? 'secondary';
+                            } else {
+                                $isActive = $boarding->isActive();
+                                $statusText = $isActive ? 'Active' : (now()->toDateString() > $boarding->end_date ? 'Completed' : 'Upcoming');
+                                $statusClass = match ($statusText) {
+                                    'Active' => 'success',
+                                    'Upcoming' => 'warning',
+                                    'Completed' => 'secondary',
+                                    default => 'secondary',
+                                };
+                            }
                         @endphp
                         <span class="badge badge-{{ $statusClass }}">
                             {{ $statusText }}
                         </span>
                     </td>
                     <td class="actions">
-                        <a href="{{ route('admin.boarding.show', $boarding->id) }}" class="btn-icon" title="View">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <a href="{{ route('admin.boarding.edit', $boarding->id) }}" class="btn-icon" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id) }}" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this boarding record?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn-icon text-danger" title="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
+                        @if($boarding->id)
+                            <a href="{{ route('admin.boarding.show', $boarding->id) }}" class="btn-icon" title="View">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ route('admin.boarding.edit', $boarding->id) }}" class="btn-icon" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id) }}" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this boarding record?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn-icon text-danger" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        @elseif($boarding->appointment)
+                            <a href="{{ route('admin.appointments.show', $boarding->appointment->id) }}" class="btn-icon" title="View Appointment">
+                                <i class="fas fa-calendar-check"></i>
+                            </a>
+                        @endif
                     </td>
                 </tr>
                 @empty
@@ -356,6 +368,10 @@
 
 .badge-cage {
     background: #4A90E2;
+}
+
+.badge-danger {
+    background: #dc3545;
 }
 
 .badge-success { background-color: var(--accent-green); }

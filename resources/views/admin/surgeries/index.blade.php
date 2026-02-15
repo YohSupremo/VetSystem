@@ -26,8 +26,9 @@
                         <p><i class="fas fa-phone me-2"></i> {{ $pet->owner->user->contact_number ?? 'N/A' }}</p>
                         <p><i class="fas fa-paw me-2"></i> {{ $pet->species }} @if($pet->breed) • {{ $pet->breed }} @endif</p>
                         <p><i class="fas fa-scalpel me-2"></i> 
-                            @if($pet->surgeries->count() > 0)
-                                {{ $pet->surgeries->count() }} Surgery Record(s)
+                            @php $surgeryCount = $pet->surgery_total_count ?? $pet->surgeries->count(); @endphp
+                            @if($surgeryCount > 0)
+                                {{ $surgeryCount }} Surgery Record(s)
                             @else
                                 No Surgeries
                             @endif

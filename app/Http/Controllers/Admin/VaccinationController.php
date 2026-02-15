@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use App\Models\Pet;
 use App\Models\Vaccination;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class VaccinationController extends Controller
 {
@@ -15,11 +17,29 @@ class VaccinationController extends Controller
      */
     public function index()
     {
-        $pets = Pet::with(['owner.user', 'vaccinations' => function($query) {
-            $query->orderBy('administered_date', 'desc');
-        }])
-            ->has('vaccinations')
+        $pets = Pet::with([
+            'owner.user',
+            'vaccinations' => function($query) {
+                $query->orderBy('administered_date', 'desc');
+            },
+            'appointments' => function ($query) {
+                $query->where('type', 'vaccination');
+            },
+        ])
+            ->where(function ($query) {
+                $query->has('vaccinations')
+                    ->orWhereHas('appointments', function ($appointmentQuery) {
+                        $appointmentQuery->where('type', 'vaccination');
+                    });
+            })
             ->paginate(10);
+
+        $pets->getCollection()->transform(function ($pet) {
+            $appointmentCount = $pet->appointments ? $pet->appointments->count() : 0;
+            $pet->vaccination_appointment_count = $appointmentCount;
+            $pet->vaccination_total_count = $pet->vaccinations->count() + $appointmentCount;
+            return $pet;
+        });
 
         return view('admin.vaccinations.index', compact('pets'));
     }
@@ -136,7 +156,42 @@ class VaccinationController extends Controller
             ->with(['vaccine', 'administeredBy'])
             ->orderBy('administered_date', 'desc')
             ->orderBy('id', 'desc')
-            ->paginate(10);
+            ->get();
+
+        $appointmentVaccinations = $pet->appointments()
+            ->where('type', 'vaccination')
+            ->orderBy('appointment_date', 'desc')
+            ->get();
+
+        $virtualVaccinations = $appointmentVaccinations->map(function ($appointment) {
+            $vaccination = new Vaccination();
+            $vaccination->setRelation('pet', $appointment->pet);
+            $vaccination->setRelation('appointment', $appointment);
+            $vaccination->setAttribute('administered_date', $appointment->appointment_date);
+            $vaccination->setAttribute('next_due_date', null);
+            $vaccination->setAttribute('is_virtual', true);
+            $vaccination->setAttribute('status', $appointment->status);
+            return $vaccination;
+        });
+
+        $allVaccinations = $vaccinations
+            ->concat($virtualVaccinations)
+            ->sortByDesc(function ($item) {
+                $date = $item->administered_date ?? optional($item->appointment)->appointment_date;
+                return $date ? $date->timestamp : 0;
+            })
+            ->values();
+
+        $perPage = 10;
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $pageItems = $allVaccinations->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        $vaccinations = new LengthAwarePaginator(
+            $pageItems,
+            $allVaccinations->count(),
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
 
         return view('admin.vaccinations.pet', compact('pet', 'vaccinations'));
     }

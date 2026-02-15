@@ -253,6 +253,7 @@
             <tbody>
                 @forelse($groomingAppointments as $groomingAppointment)
                     @php $appointment = $groomingAppointment->appointment; @endphp
+                    @php $isVirtual = (bool) $groomingAppointment->getAttribute('is_virtual'); @endphp
                     <tr>
                         <td>
                             {{ $appointment && $appointment->appointment_date ? \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y') : 'N/A' }}
@@ -294,19 +295,25 @@
                             </span>
                         </td>
                         <td class="actions">
-                            <a href="{{ route('admin.grooming.show', $groomingAppointment->id) }}" class="btn-icon" title="View">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="{{ route('admin.grooming.edit', $groomingAppointment->id) }}" class="btn-icon" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form method="POST" action="{{ route('admin.grooming.destroy', $groomingAppointment->id) }}" class="delete-form">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-icon text-danger" title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            @if(!$isVirtual)
+                                <a href="{{ route('admin.grooming.show', $groomingAppointment->id) }}" class="btn-icon" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ route('admin.grooming.edit', $groomingAppointment->id) }}" class="btn-icon" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST" action="{{ route('admin.grooming.destroy', $groomingAppointment->id) }}" class="delete-form">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-icon text-danger" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @elseif($appointment)
+                                <a href="{{ route('admin.appointments.show', $appointment->id) }}" class="btn-icon" title="View Appointment">
+                                    <i class="fas fa-calendar-check"></i>
+                                </a>
+                            @endif
                         </td>
                     </tr>
                 @empty

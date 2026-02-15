@@ -31,7 +31,7 @@
                             <div><strong>Owner:</strong> {{ $pet->owner->user->first_name ?? '' }} {{ $pet->owner->user->last_name ?? 'No Owner' }}</div>
                             <div><strong>Contact:</strong> {{ $pet->owner->user->contact_number ?? 'N/A' }}</div>
                             <div><strong>Species:</strong> {{ ucfirst($pet->species ?? 'N/A') }} @if($pet->breed) • {{ $pet->breed }} @endif</div>
-                            <div><strong>Vaccinations:</strong> {{ $pet->vaccinations->count() }}</div>
+                            <div><strong>Vaccinations:</strong> {{ $pet->vaccination_total_count ?? $pet->vaccinations->count() }}</div>
                         </div>
                         <div class="pet-actions">
                             <a href="{{ route('admin.vaccinations.pet', $pet->id) }}" class="btn btn-secondary btn-sm">

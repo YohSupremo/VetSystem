@@ -36,14 +36,21 @@
             </thead>
             <tbody>
                 @foreach($surgeries as $surgery)
+                @php $isVirtual = (bool) $surgery->getAttribute('is_virtual'); @endphp
                 <tr>
                     <td>
-                        <strong>{{ $surgery->procedure_name }}</strong>
-                        @if($surgery->anesthesia_type)
+                        <strong>{{ $surgery->procedure_name ?? 'Appointment (Surgery)' }}</strong>
+                        @if(!$isVirtual && $surgery->anesthesia_type)
                         <br><small class="text-muted">Anesthesia: {{ $surgery->anesthesia_type }}</small>
                         @endif
                     </td>
-                    <td>{{ $surgery->surgeon ? 'Dr. ' . $surgery->surgeon->first_name . ' ' . $surgery->surgeon->last_name : 'N/A' }}</td>
+                    <td>
+                        @if($isVirtual && $surgery->appointment && $surgery->appointment->veterinarian)
+                            Dr. {{ $surgery->appointment->veterinarian->first_name }} {{ $surgery->appointment->veterinarian->last_name }}
+                        @else
+                            {{ $surgery->surgeon ? 'Dr. ' . $surgery->surgeon->first_name . ' ' . $surgery->surgeon->last_name : 'N/A' }}
+                        @endif
+                    </td>
                     <td>{{ $surgery->scheduled_date ? \Carbon\Carbon::parse($surgery->scheduled_date)->format('M d, Y H:i A') : 'N/A' }}</td>
                     <td>
                         @php
@@ -59,19 +66,25 @@
                         </span>
                     </td>
                     <td style="text-align:right;">
-                        <a href="{{ route('admin.surgeries.show', $surgery->id) }}" class="btn btn-secondary btn-sm">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <a href="{{ route('admin.surgeries.edit', $surgery->id) }}" class="btn btn-secondary btn-sm">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <form action="{{ route('admin.surgeries.destroy', $surgery->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this surgery record? This action cannot be undone.');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-secondary btn-sm" style="background:#ff6b6b; color:white;">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
+                        @if(!$isVirtual)
+                            <a href="{{ route('admin.surgeries.show', $surgery->id) }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ route('admin.surgeries.edit', $surgery->id) }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ route('admin.surgeries.destroy', $surgery->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this surgery record? This action cannot be undone.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-secondary btn-sm" style="background:#ff6b6b; color:white;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        @elseif($surgery->appointment)
+                            <a href="{{ route('admin.appointments.show', $surgery->appointment->id) }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-calendar-check"></i>
+                            </a>
+                        @endif
                     </td>
                 </tr>
                 @endforeach

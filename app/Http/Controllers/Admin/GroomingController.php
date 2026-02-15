@@ -26,12 +26,43 @@ class GroomingController extends BaseController
             ->orderByDesc('created_at')
             ->get();
 
-        $todayAppointments = GroomingAppointment::whereHas('appointment', function($q) {
-            $q->where('type', 'grooming')
-              ->whereDate('appointment_date', Carbon::today());
-        })->count();
+        $linkedAppointmentIds = $groomingAppointments
+            ->pluck('appointment_id')
+            ->filter()
+            ->all();
 
-        $completedAppointments = GroomingAppointment::where('status', 'completed')->count();
+        $appointmentGroomings = Appointment::with(['pet.owner.user'])
+            ->where('type', 'grooming')
+            ->whereIn('status', ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'])
+            ->when(!empty($linkedAppointmentIds), function ($query) use ($linkedAppointmentIds) {
+                $query->whereNotIn('id', $linkedAppointmentIds);
+            })
+            ->orderByDesc('appointment_date')
+            ->get();
+
+        $virtualGroomings = $appointmentGroomings->map(function ($appointment) {
+            $groomingAppointment = new GroomingAppointment();
+            $groomingAppointment->setRelation('appointment', $appointment);
+            $groomingAppointment->setAttribute('status', $this->mapGroomingStatusFromAppointment($appointment->status));
+            $groomingAppointment->setAttribute('is_virtual', true);
+            return $groomingAppointment;
+        });
+
+        $groomingAppointments = $groomingAppointments
+            ->concat($virtualGroomings)
+            ->sortByDesc(function ($item) {
+                $date = optional($item->appointment)->appointment_date;
+                return $date ? $date->timestamp : 0;
+            })
+            ->values();
+
+        $todayAppointments = Appointment::where('type', 'grooming')
+            ->whereDate('appointment_date', Carbon::today())
+            ->count();
+
+        $completedAppointments = Appointment::where('type', 'grooming')
+            ->where('status', 'completed')
+            ->count();
         $servicesCount = GroomingService::count();
 
         return view('admin.grooming.index', compact('groomingAppointments', 'todayAppointments', 'completedAppointments', 'servicesCount'));
@@ -175,6 +206,17 @@ class GroomingController extends BaseController
             'completed' => 'completed',
             'cancelled' => 'cancelled',
             default => 'pending',
+        };
+    }
+
+    private function mapGroomingStatusFromAppointment(string $appointmentStatus): string
+    {
+        return match ($appointmentStatus) {
+            'pending', 'confirmed' => 'scheduled',
+            'in_progress' => 'in_progress',
+            'completed' => 'completed',
+            'cancelled', 'no_show' => 'cancelled',
+            default => 'scheduled',
         };
     }
 

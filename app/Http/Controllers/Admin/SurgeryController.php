@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
+use App\Models\Appointment;
 use App\Models\Pet;
 use App\Models\Surgery;
 use App\Models\User;
 use App\Models\MedicalRecord;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class SurgeryController extends BaseController
 {
@@ -15,9 +17,27 @@ class SurgeryController extends BaseController
      */
     public function index()
     {
-        $pets = Pet::with('owner', 'surgeries')
-            ->has('surgeries')
+        $pets = Pet::with([
+            'owner',
+            'surgeries',
+            'appointments' => function ($query) {
+                $query->where('type', 'surgery');
+            },
+        ])
+            ->where(function ($query) {
+                $query->has('surgeries')
+                    ->orWhereHas('appointments', function ($appointmentQuery) {
+                        $appointmentQuery->where('type', 'surgery');
+                    });
+            })
             ->paginate(10);
+
+        $pets->getCollection()->transform(function ($pet) {
+            $appointmentCount = $pet->appointments ? $pet->appointments->count() : 0;
+            $pet->surgery_appointment_count = $appointmentCount;
+            $pet->surgery_total_count = $pet->surgeries->count() + $appointmentCount;
+            return $pet;
+        });
 
         return view('admin.surgeries.index', compact('pets'));
     }
@@ -132,8 +152,57 @@ class SurgeryController extends BaseController
     public function byPet($petId)
     {
         $pet = Pet::with('surgeries.surgeon')->findOrFail($petId);
-        $surgeries = $pet->surgeries()->orderBy('scheduled_date', 'desc')->paginate(10);
+        $surgeries = $pet->surgeries()
+            ->with('surgeon')
+            ->orderBy('scheduled_date', 'desc')
+            ->get();
+
+        $appointmentSurgeries = $pet->appointments()
+            ->where('type', 'surgery')
+            ->orderBy('appointment_date', 'desc')
+            ->get();
+
+        $virtualSurgeries = $appointmentSurgeries->map(function ($appointment) {
+            $surgery = new Surgery();
+            $surgery->setRelation('pet', $appointment->pet);
+            $surgery->setRelation('appointment', $appointment);
+            $surgery->setAttribute('procedure_name', 'Appointment (Surgery)');
+            $surgery->setAttribute('scheduled_date', $appointment->appointment_date);
+            $surgery->setAttribute('status', $this->mapSurgeryStatusFromAppointment($appointment->status));
+            $surgery->setAttribute('is_virtual', true);
+            return $surgery;
+        });
+
+        $allSurgeries = $surgeries
+            ->concat($virtualSurgeries)
+            ->sortByDesc(function ($item) {
+                $date = $item->scheduled_date ?? optional($item->appointment)->appointment_date;
+                return $date ? $date->timestamp : 0;
+            })
+            ->values();
+
+        $perPage = 10;
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $pageItems = $allSurgeries->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        $surgeries = new LengthAwarePaginator(
+            $pageItems,
+            $allSurgeries->count(),
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
 
         return view('admin.surgeries.pet', compact('pet', 'surgeries'));
+    }
+
+    private function mapSurgeryStatusFromAppointment(string $appointmentStatus): string
+    {
+        return match ($appointmentStatus) {
+            'in_progress' => 'in_progress',
+            'completed' => 'completed',
+            'cancelled', 'no_show' => 'cancelled',
+            'pending', 'confirmed' => 'scheduled',
+            default => 'scheduled',
+        };
     }
 }

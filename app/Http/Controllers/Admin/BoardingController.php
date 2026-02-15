@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\CageAssignment;
+use App\Models\Appointment;
 use App\Models\Pet;
 use Illuminate\Http\Request;
 use App\Models\Cage;
@@ -27,10 +28,45 @@ class BoardingController extends BaseController
         }
         
         $boardings = $query->orderBy('start_date', 'desc')->get();
+
+        $appointmentBoardings = Appointment::with(['pet.owner.user'])
+            ->where('type', 'boarding')
+            ->whereIn('status', ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'])
+            ->orderByDesc('appointment_date')
+            ->get();
+
+        $virtualBoardings = $appointmentBoardings->map(function ($appointment) {
+            $boarding = new CageAssignment();
+            $boarding->setRelation('pet', $appointment->pet);
+            $boarding->setRelation('cage', null);
+            $boarding->setRelation('appointment', $appointment);
+            $boarding->setAttribute('start_date', optional($appointment->appointment_date)->toDateString());
+            $boarding->setAttribute('end_date', optional($appointment->appointment_date)->toDateString());
+            $boarding->setAttribute('check_in_time', $appointment->appointment_date);
+
+            $mapped = $this->mapBoardingStatusFromAppointment($appointment->status);
+            $boarding->setAttribute('derived_status', $mapped['text']);
+            $boarding->setAttribute('derived_status_class', $mapped['class']);
+            $boarding->setAttribute('is_virtual', true);
+
+            return $boarding;
+        });
+
+        $boardings = $boardings
+            ->concat($virtualBoardings)
+            ->sortByDesc(function ($item) {
+                $date = $item->start_date ?? optional($item->appointment)->appointment_date;
+                return $date ? strtotime((string) $date) : 0;
+            })
+            ->values();
         
         // Calculate dashboard stats
         $currentBoardings = CageAssignment::whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
+            ->count();
+
+        $currentBoardings += Appointment::where('type', 'boarding')
+            ->where('status', 'in_progress')
             ->count();
         
         $availableCages = Cage::where('status', 'available')->count();
@@ -41,6 +77,17 @@ class BoardingController extends BaseController
         $cages = Cage::where('status', 'available')->get();
         
         return view('admin.boarding.index', compact('pets', 'boardings', 'currentBoardings', 'availableCages', 'upcomingCheckouts', 'cages'));
+    }
+
+    private function mapBoardingStatusFromAppointment(string $appointmentStatus): array
+    {
+        return match ($appointmentStatus) {
+            'completed' => ['text' => 'Completed', 'class' => 'secondary'],
+            'cancelled', 'no_show' => ['text' => 'Cancelled', 'class' => 'danger'],
+            'in_progress' => ['text' => 'Active', 'class' => 'success'],
+            'pending', 'confirmed' => ['text' => 'Upcoming', 'class' => 'warning'],
+            default => ['text' => 'Upcoming', 'class' => 'warning'],
+        };
     }
 
    

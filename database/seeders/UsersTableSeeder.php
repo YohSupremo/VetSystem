@@ -29,18 +29,6 @@ class UsersTableSeeder extends Seeder
                 ['Ivy','Torres','09171234575','131 Main St, Manila'],
                 ['Jack','Mendoza','09171234576','132 Main St, Manila'],
             ],
-            'veterinarian' => [
-                ['John','Smith','09181234567','45 Health Ave, Quezon City'],
-                ['Lisa','Tan','09181234568','46 Health Ave, Quezon City'],
-                ['Mark','Reyes','09181234569','47 Health Ave, Quezon City'],
-                ['Nina','Lopez','09181234570','48 Health Ave, Quezon City'],
-                ['Oscar','Cruz','09181234571','49 Health Ave, Quezon City'],
-                ['Paula','Lim','09181234572','50 Health Ave, Quezon City'],
-                ['Quinn','Torres','09181234573','51 Health Ave, Quezon City'],
-                ['Rico','Mendoza','09181234574','52 Health Ave, Quezon City'],
-                ['Sophia','Garcia','09181234575','53 Health Ave, Quezon City'],
-                ['Tom','Martinez','09181234576','54 Health Ave, Quezon City'],
-            ],
             'receptionist' => [
                 ['Maria','Lopez','09211234567','55 Sunrise St, Manila'],
                 ['Lara','Santos','09211234568','56 Sunrise St, Manila'],

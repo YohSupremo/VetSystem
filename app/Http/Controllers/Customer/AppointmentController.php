@@ -45,10 +45,24 @@ class AppointmentController extends Controller
         }
         $petIds = $petOwner->pets()->pluck('id');
         
+        $selectedStatus = request('status', 'all');
+        $statusOptions = [
+            'all' => 'All',
+            'pending' => 'Pending',
+            'confirmed' => 'Confirmed',
+            'scheduled' => 'Scheduled',
+            'in_progress' => 'In Progress',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled'
+        ];
+
         // Get upcoming appointments (including today and cancelled ones)
         $upcomingAppointments = Appointment::whereIn('pet_id', $petIds)
             ->where('appointment_date', '>=', now()->toDateString())
-            ->whereIn('status', ['pending', 'scheduled', 'in_progress', 'cancelled'])
+            ->whereIn('status', ['pending', 'confirmed', 'scheduled', 'in_progress', 'cancelled'])
+            ->when($selectedStatus !== 'all', function ($query) use ($selectedStatus) {
+                $query->where('status', $selectedStatus);
+            })
             ->orderBy('appointment_date', 'asc')
             ->get();
         
@@ -56,10 +70,18 @@ class AppointmentController extends Controller
         $pastAppointments = Appointment::whereIn('pet_id', $petIds)
             ->where('appointment_date', '<=', now())
             ->whereIn('status', ['completed', 'cancelled'])
+            ->when($selectedStatus !== 'all', function ($query) use ($selectedStatus) {
+                $query->where('status', $selectedStatus);
+            })
             ->orderBy('appointment_date', 'desc')
             ->get();
         
-        return view('customer.appointments.index', compact('upcomingAppointments', 'pastAppointments'));
+        return view('customer.appointments.index', compact(
+            'upcomingAppointments',
+            'pastAppointments',
+            'selectedStatus',
+            'statusOptions'
+        ));
     }
     
     public function create()
@@ -122,12 +144,13 @@ class AppointmentController extends Controller
         $petOwner = PetOwner::where('user_id', $user->id)->first();
         $pet = $petOwner->pets()->findOrFail($request->pet_id);
         
+        // Combine date and time into a single datetime
+        $appointmentDateTime = Carbon::parse($validated['appointment_date'] . ' ' . $validated['start_time']);
+        
         $appointment = Appointment::create([
             'pet_id' => $pet->id,
             'veterinarian_id' => null, // Will be assigned by admin
-            'appointment_date' => $validated['appointment_date'],
-            'start_time' => $validated['start_time'] . ':00',
-            'end_time' => null,
+            'appointment_date' => $appointmentDateTime,
             'type' => $validated['type'],
             'status' => 'pending',
             'notes' => $validated['notes'] ?? null
@@ -259,7 +282,7 @@ class AppointmentController extends Controller
         $petIds = $petOwner->pets()->pluck('id');
         
         $appointment = Appointment::whereIn('pet_id', $petIds)
-            ->whereIn('status', ['pending', 'confirmed'])
+            ->whereIn('status', ['pending', 'scheduled'])
             ->findOrFail($id);
         
         $appointment->update(['status' => 'cancelled']);

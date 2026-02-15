@@ -102,6 +102,25 @@
     </div>
 </div>
 
+<div class="report-card border-danger" style="border-left: 4px solid #dc3545;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Cancelled Invoices</h5>
+        <a href="{{ route('admin.reports.cancelled-invoices', ['start_date' => $startDate, 'end_date' => $endDate]) }}" class="btn btn-sm btn-outline-danger">
+            <i class="fas fa-list"></i> View Details
+        </a>
+    </div>
+    <div class="stat-grid">
+        <div class="stat-card" style="background: #fff5f5;">
+            <div class="text-muted small">Cancelled Invoices</div>
+            <div class="h4 mb-0 text-danger">{{ $cancelledCount }}</div>
+        </div>
+        <div class="stat-card" style="background: #fff5f5;">
+            <div class="text-muted small">Amount Cancelled</div>
+            <div class="h4 mb-0 text-danger">PHP {{ number_format($cancelledAmount ?? 0, 2) }}</div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-lg-6">
         <div class="report-card">
@@ -205,7 +224,7 @@
                                 <td class="text-end">PHP {{ number_format($invoice->balance ?? 0, 2) }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="3" class="text-muted">No overdue invoices.</td></tr>
+                            <tr><td colspan="3" class="text-muted">No outstanding invoices.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

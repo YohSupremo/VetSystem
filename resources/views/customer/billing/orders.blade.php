@@ -70,6 +70,14 @@
                                     <a href="{{ route('customer.billing.order-details', $order->id) }}" class="btn btn-sm btn-outline-primary">
                                         Details
                                     </a>
+                                    @if(!in_array($order->status, ['cancelled', 'fulfilled', 'shipped', 'completed']))
+                                        <form action="{{ route('customer.billing.cancel-order', $order->id) }}" method="POST" class="d-inline ms-1" onsubmit="return confirm('Are you sure you want to cancel this order? Any payments will be reversed.')">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                Cancel
+                                            </button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

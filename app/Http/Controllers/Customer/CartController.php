@@ -198,6 +198,11 @@ class CartController extends Controller
 
         $validated = $request->validate([
             'notes' => 'nullable|string|max:1000',
+            'payment_method' => 'required|in:cash,credit_card,debit_card,bank_transfer,mobile_payment',
+        ], [
+            'payment_method.required' => 'Please select a payment method.',
+            'payment_method.in' => 'Please select a valid payment method.',
+            'notes.max' => 'Order notes cannot exceed 1000 characters.',
         ]);
 
         $cart = $this->getUserCart($user);
@@ -220,6 +225,9 @@ class CartController extends Controller
             ['notes' => null]
         );
 
+        // Determine if this is online payment (not cash)
+        $isOnlinePayment = $validated['payment_method'] !== 'cash';
+
         // Create order
         $order = Order::create([
             'appointment_id' => null,
@@ -229,8 +237,10 @@ class CartController extends Controller
             'order_type' => 'online',
             'status' => 'confirmed',
             'order_date' => now(),
-            'notes' => $validated['notes'] ?? null,
+            'notes' => ($validated['notes'] ? $validated['notes'] . "\n" : '') . 'Payment Method: ' . ucfirst(str_replace('_', ' ', $validated['payment_method'])),
         ]);
+
+        $totalAmount = 0;
 
         // Add order items and update stock
         foreach ($cart->cartItems as $cartItem) {
@@ -241,6 +251,8 @@ class CartController extends Controller
                 'quantity' => $cartItem->quantity,
                 'unit_price' => $cartItem->unit_price,
             ]);
+
+            $totalAmount += $cartItem->quantity * $cartItem->unit_price;
 
             // Update inventory stock using the model helper
             $cartItem->inventoryItem->decrementStock($cartItem->quantity);
@@ -268,10 +280,65 @@ class CartController extends Controller
             }
         }
 
+        // Generate invoice number
+        $year = date('Y');
+        $lastInvoice = \App\Models\Invoice::where('invoice_prefix', 'INV')
+            ->whereYear('created_at', $year)
+            ->orderBy('invoice_sequence', 'desc')
+            ->first();
+        $sequence = $lastInvoice ? $lastInvoice->invoice_sequence + 1 : 1;
+        $invoiceNumber = sprintf('INV-%s-%06d', $year, $sequence);
+
+        // Create invoice
+        $invoice = \App\Models\Invoice::create([
+            'order_id' => $order->id,
+            'owner_id' => $petOwner->id,
+            'invoice_prefix' => 'INV',
+            'invoice_sequence' => $sequence,
+            'invoice_number' => $invoiceNumber,
+            'issue_date' => now()->toDateString(),
+            'due_date' => now()->addDays(7)->toDateString(),
+            'tax_rate' => 0,
+            'discount_amount' => 0,
+            'status' => $isOnlinePayment ? 'paid' : 'pending',
+            'notes' => 'Order #' . $order->id . ' - Payment Method: ' . ucfirst(str_replace('_', ' ', $validated['payment_method'])),
+        ]);
+
+        // Create invoice items
+        foreach ($cart->cartItems as $cartItem) {
+            \App\Models\InvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'item_type' => 'product',
+                'description' => $cartItem->inventoryItem->name,
+                'quantity' => $cartItem->quantity,
+                'unit_price' => $cartItem->unit_price,
+            ]);
+        }
+
+        // If online payment, create payment record (auto-record as income)
+        if ($isOnlinePayment) {
+            \App\Models\Payment::create([
+                'invoice_id' => $invoice->id,
+                'payment_date' => now(),
+                'amount' => $totalAmount,
+                'payment_method' => $validated['payment_method'],
+                'reference_number' => 'ONLINE-' . $order->id . '-' . time(),
+                'received_by' => null, // System generated
+                'notes' => 'Online payment for Order #' . $order->id,
+            ]);
+        }
+
         // Clear cart after successful checkout
         $cart->cartItems()->delete();
 
-        return redirect()->route('customer.products.index')
-            ->with('success', 'Order placed successfully! Your items have been reserved and stock updated.');
+        $successMessage = 'Order placed successfully!';
+        if ($isOnlinePayment) {
+            $successMessage .= ' Payment of ₱' . number_format($totalAmount, 2) . ' has been recorded.';
+        } else {
+            $successMessage .= ' Please pay ₱' . number_format($totalAmount, 2) . ' upon pickup.';
+        }
+
+        return redirect()->route('customer.billing.orders')
+            ->with('success', $successMessage);
     }
 }

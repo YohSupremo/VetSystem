@@ -92,7 +92,7 @@
                     @if(!in_array($order->status, ['cancelled', 'shipped', 'fulfilled', 'completed'], true))
                         <hr class="my-4">
                         <div class="d-flex justify-content-end">
-                            <form action="{{ route('customer.billing.cancel-order', $order->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this order?')">
+                            <form action="{{ route('customer.billing.cancel-order', $order->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this order? Any payments will be reversed.')">
                                 @csrf
                                 <button type="submit" class="btn btn-outline-danger">Cancel Order</button>
                             </form>

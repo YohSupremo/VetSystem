@@ -63,12 +63,12 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($invoice->items as $item)
+                                @foreach($invoice->invoiceItems as $item)
                                     <tr class="border-bottom">
                                         <td class="py-3 ps-4">{{ $item->description }}</td>
                                         <td class="py-3 text-end">{{ $item->quantity }}</td>
                                         <td class="py-3 text-end">₱{{ number_format($item->unit_price, 2) }}</td>
-                                        <td class="py-3 text-end pe-4">₱{{ number_format($item->total_price, 2) }}</td>
+                                        <td class="py-3 text-end pe-4">₱{{ number_format($item->total, 2) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

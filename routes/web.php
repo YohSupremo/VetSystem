@@ -104,7 +104,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
     // Shopping Cart
     Route::get('/cart', [App\Http\Controllers\Customer\CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/update/{itemId}', [App\Http\Controllers\Customer\CartController::class, 'update'])->name('cart.update');
-    Route::post('/cart/remove/{itemId}', [App\Http\Controllers\Customer\CartController::class, 'remove'])->name('cart.remove');
+    Route::delete('/cart/remove/{itemId}', [App\Http\Controllers\Customer\CartController::class, 'remove'])->name('cart.remove');
     Route::post('/cart/clear', [App\Http\Controllers\Customer\CartController::class, 'clear'])->name('cart.clear');
     Route::post('/cart/checkout', [App\Http\Controllers\Customer\CartController::class, 'checkout'])->name('cart.checkout');
     
@@ -381,6 +381,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/financial', [ReportController::class, 'financialReport'])->name('financial');
+        Route::get('/cancelled-invoices', [ReportController::class, 'cancelledInvoices'])->name('cancelled-invoices');
         Route::get('/medical', [ReportController::class, 'medicalReport'])->name('medical');
         Route::get('/inventory', [ReportController::class, 'inventoryReport'])->name('inventory');
         Route::get('/client', [ReportController::class, 'clientReport'])->name('client');

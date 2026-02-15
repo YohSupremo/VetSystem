@@ -31,7 +31,25 @@ class Appointment extends Model
         'reminder_sent' => 'boolean',
         'queue_priority' => 'integer',
         'estimated_wait_time' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get formatted created_at timestamp with proper timezone
+     */
+    public function getCreatedAtFormattedAttribute()
+    {
+        return $this->created_at->timezone(config('app.timezone'))->format('M d, Y g:i A');
+    }
+
+    /**
+     * Get formatted updated_at timestamp with proper timezone
+     */
+    public function getUpdatedAtFormattedAttribute()
+    {
+        return $this->updated_at->timezone(config('app.timezone'))->format('M d, Y g:i A');
+    }
 
     /**
      * Get the pet that owns the appointment.

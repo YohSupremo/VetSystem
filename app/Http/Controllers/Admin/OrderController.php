@@ -61,7 +61,35 @@ class OrderController extends BaseController
             'status' => 'required|in:draft,confirmed,shipped,fulfilled,cancelled',
         ]);
 
-        $order = Order::findOrFail($orderId);
+        $order = Order::with('items')->findOrFail($orderId);
+        
+        // If transitioning to fulfilled and payment method is cash, create payment record
+        if ($data['status'] === 'fulfilled' && strpos($order->notes, 'Payment Method: Cash') !== false) {
+            // Find the associated invoice
+            $invoice = \App\Models\Invoice::where('order_id', $order->id)->first();
+            
+            if ($invoice && $invoice->status !== 'paid') {
+                // Calculate total amount
+                $totalAmount = $order->items->sum(function($item) {
+                    return $item->quantity * $item->unit_price;
+                });
+                
+                // Create payment record
+                \App\Models\Payment::create([
+                    'invoice_id' => $invoice->id,
+                    'payment_date' => now(),
+                    'amount' => $totalAmount,
+                    'payment_method' => 'cash',
+                    'reference_number' => 'CASH-' . $order->id . '-' . time(),
+                    'received_by' => auth()->id(),
+                    'notes' => 'Cash payment received for Order #' . $order->id,
+                ]);
+                
+                // Mark invoice as paid
+                $invoice->update(['status' => 'paid']);
+            }
+        }
+        
         $order->update([
             'status' => $data['status'],
         ]);

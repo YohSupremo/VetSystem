@@ -20,10 +20,11 @@ class BillingController extends BaseController
     public function index()
     {
         $invoices = BillingInvoice::with(['pet', 'petOwner', 'invoiceItems', 'payments'])
+            ->where('status', '!=', 'cancelled')
             ->orderBy('issue_date', 'desc')
             ->paginate(20);
 
-        $totalInvoices = BillingInvoice::count();
+        $totalInvoices = BillingInvoice::where('status', '!=', 'cancelled')->count();
         $paidInvoices = BillingInvoice::where('status', 'paid')->count();
         $overdueInvoices = BillingInvoice::where('status', 'overdue')->count();
         $totalRevenue = \App\Models\Payment::sum('amount');
@@ -130,7 +131,6 @@ class BillingController extends BaseController
         $invoice = BillingInvoice::with([
             'pet', 
             'petOwner', 
-            'createdBy',
             'invoiceItems',
             'payments' => function($query) {
                 $query->orderBy('payment_date', 'desc');
@@ -361,7 +361,7 @@ class BillingController extends BaseController
     {
         $invoice = BillingInvoice::findOrFail($id);
         
-        if (!$invoice->is_paid && $invoice->due_date->isPast()) {
+        if (!$invoice->is_paid && \Carbon\Carbon::parse($invoice->due_date)->isPast()) {
             $invoice->status = 'overdue';
             $invoice->save();
         }

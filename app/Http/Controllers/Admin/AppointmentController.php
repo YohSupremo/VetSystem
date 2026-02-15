@@ -117,12 +117,15 @@ class AppointmentController extends Controller
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
             'veterinarian_id' => 'nullable|exists:users,id',
-            'appointment_date' => 'required|date',
+            'appointment_date' => 'required|date_format:Y-m-d\TH:i',
             'type' => 'required|in:consultation,vaccination,surgery,grooming,boarding,follow_up,emergency,other',
             'status' => 'required|in:pending,confirmed,in_progress,completed,cancelled,no_show',
             'notes' => 'nullable|string',
             'queue_priority' => 'nullable|integer|min:0',
         ]);
+
+        // Parse the datetime-local format to proper DateTime
+        $validated['appointment_date'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['appointment_date']);
 
         Appointment::create($validated);
 
@@ -161,12 +164,15 @@ class AppointmentController extends Controller
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
             'veterinarian_id' => 'nullable|exists:users,id',
-            'appointment_date' => 'required|date',
+            'appointment_date' => 'required|date_format:Y-m-d\TH:i',
             'type' => 'required|in:consultation,vaccination,surgery,grooming,boarding,follow_up,emergency,other',
             'status' => 'required|in:pending,confirmed,in_progress,completed,cancelled,no_show',
             'notes' => 'nullable|string',
             'queue_priority' => 'nullable|integer|min:0',
         ]);
+
+        // Parse the datetime-local format to proper DateTime
+        $validated['appointment_date'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['appointment_date']);
 
         $appointment->update($validated);
 

@@ -127,6 +127,9 @@
         <a href="{{ route('admin.reports.financial') }}" class="btn btn-outline-primary">
             <i class="fas fa-coins"></i> Financial
         </a>
+        <a href="{{ route('admin.reports.cancelled-invoices') }}" class="btn btn-outline-danger">
+            <i class="fas fa-ban"></i> Cancelled
+        </a>
         <a href="{{ route('admin.reports.medical') }}" class="btn btn-outline-primary">
             <i class="fas fa-heartbeat"></i> Medical
         </a>

@@ -46,14 +46,13 @@
                         </div>
 
                         <!-- Date Selection -->
-                        <div class="mb-4">
-                            <label for="appointment_date" class="form-label fw-bold">New Date</label>
-                            <input type="date" name="appointment_date" id="appointment_date" class="form-control" 
-                                   min="{{ echo date('Y-m-d', strtotime('+1 day')); }}" 
-                                   value="{{ old('appointment_date', date('Y-m-d', strtotime($appointment->appointment_date))) }}" required>
-                        </div>
-
-                        <!-- Time Selection -->
+                      <div class="mb-4">
+                        <label for="appointment_date" class="form-label fw-bold">New Date</label>
+                        <input type="date" name="appointment_date" id="appointment_date" class="form-control" 
+                            min="{{ date('Y-m-d', strtotime('+1 day')) }}" 
+                            value="{{ old('appointment_date', date('Y-m-d', strtotime($appointment->appointment_date))) }}" required>
+                    </div>
+                                            <!-- Time Selection -->
                         <div class="mb-4">
                             <label for="appointment_time" class="form-label fw-bold">New Time</label>
                             <select name="appointment_time" id="appointment_time" class="form-select" required>

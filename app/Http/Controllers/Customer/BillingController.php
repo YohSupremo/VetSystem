@@ -30,7 +30,7 @@ class BillingController extends Controller
         return $user;
     }
     
-    public function index()
+    public function index(Request $request)
     {
         $user = $this->authenticateUser();
         if ($user instanceof \Illuminate\Http\RedirectResponse) {
@@ -46,26 +46,51 @@ class BillingController extends Controller
                 'notes' => null
             ]);
         }
-        $petIds = $petOwner->pets()->pluck('id');
         
-        // Get invoices for customer's pets
-        $invoices = Invoice::whereIn('pet_id', $petIds)
+        // Get invoices for customer (using owner_id) with filtering
+        $query = Invoice::where('owner_id', $petOwner->id)
             ->with(['pet', 'payments'])
-            ->orderBy('issue_date', 'desc')
-            ->get();
+            ->orderBy('issue_date', 'desc');
         
-        // Calculate summary
-        $totalAmount = $invoices->sum('total_amount');
-        $paidAmount = $invoices->sum('paid_amount');
-        $outstandingAmount = $totalAmount - $paidAmount;
+        // Filter by status
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        // Filter by date range
+        if ($request->filled('start_date')) {
+            $query->whereDate('issue_date', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('issue_date', '<=', $request->end_date);
+        }
+        
+        $invoices = $query->get();
+        
+        // Calculate summary (show all stats regardless of filters)
+        $allInvoices = Invoice::where('owner_id', $petOwner->id)->get();
+        
+        // Outstanding: unpaid invoices (pending, partial) - NOT cancelled
+        $outstandingInvoices = $allInvoices->whereIn('status', ['pending', 'partial', 'overdue']);
+        $outstandingAmount = $outstandingInvoices->sum(function ($invoice) {
+            return $invoice->total_amount - $invoice->paid_amount;
+        });
+        
+        // Cancelled invoices
+        $cancelledInvoices = $allInvoices->where('status', 'cancelled');
+        $cancelledAmount = $cancelledInvoices->sum('total_amount');
+        
+        // Paid amount from all non-cancelled invoices
+        $paidAmount = $allInvoices->whereNotIn('status', ['cancelled'])->sum('paid_amount');
         
         $invoiceStats = [
-            'total_invoices' => $invoices->count(),
-            'total_amount' => $totalAmount,
-            'paid_amount' => $paidAmount,
+            'total_invoices' => $allInvoices->count(),
             'outstanding_amount' => $outstandingAmount,
-            'pending_invoices' => $invoices->where('status', 'pending')->count(),
-            'paid_invoices' => $invoices->where('status', 'paid')->count()
+            'paid_amount' => $paidAmount,
+            'cancelled_amount' => $cancelledAmount,
+            'cancelled_count' => $cancelledInvoices->count(),
+            'pending_invoices' => $allInvoices->whereIn('status', ['pending', 'partial'])->count(),
+            'paid_invoices' => $allInvoices->where('status', 'paid')->count()
         ];
         
         return view('customer.billing.index', compact('invoices', 'invoiceStats'));
@@ -87,10 +112,9 @@ class BillingController extends Controller
                 'notes' => null
             ]);
         }
-        $petIds = $petOwner->pets()->pluck('id');
         
-        $invoice = Invoice::whereIn('pet_id', $petIds)
-            ->with(['pet', 'appointment', 'items', 'payments'])
+        $invoice = Invoice::where('owner_id', $petOwner->id)
+            ->with(['pet', 'appointment', 'invoiceItems', 'payments'])
             ->findOrFail($id);
         
         return view('customer.billing.show', compact('invoice'));
@@ -112,9 +136,8 @@ class BillingController extends Controller
                 'notes' => null
             ]);
         }
-        $petIds = $petOwner->pets()->pluck('id');
         
-        $invoice = Invoice::whereIn('pet_id', $petIds)
+        $invoice = Invoice::where('owner_id', $petOwner->id)
             ->whereIn('status', ['pending', 'partial'])
             ->findOrFail($id);
         
@@ -145,9 +168,8 @@ class BillingController extends Controller
                 'notes' => null
             ]);
         }
-        $petIds = $petOwner->pets()->pluck('id');
         
-        $invoice = Invoice::whereIn('pet_id', $petIds)
+        $invoice = Invoice::where('owner_id', $petOwner->id)
             ->whereIn('status', ['pending', 'partial'])
             ->findOrFail($id);
         
@@ -192,11 +214,10 @@ class BillingController extends Controller
                 'notes' => null
             ]);
         }
-        $petIds = $petOwner->pets()->pluck('id');
         
-        $payment = Payment::whereHas('invoice', function($query) use ($petIds) {
-            $query->whereIn('pet_id', $petIds);
-        })->with(['invoice.pet', 'invoice.items'])->findOrFail($paymentId);
+        $payment = Payment::whereHas('invoice', function($query) use ($petOwner) {
+            $query->where('owner_id', $petOwner->id);
+        })->with(['invoice.pet', 'invoice.invoiceItems'])->findOrFail($paymentId);
         
         return view('customer.billing.receipt', compact('payment'));
     }
@@ -268,6 +289,7 @@ class BillingController extends Controller
         
         $order = Order::where('owner_id', $petOwner->id)
             ->where('id', $orderId)
+            ->with('items.inventoryItem')
             ->firstOrFail();
             
         // Check if order can be cancelled
@@ -275,24 +297,25 @@ class BillingController extends Controller
             return back()->with('error', 'Order is already cancelled.');
         }
         
-        if ($order->status === 'fulfilled') {
-            return back()->with('error', 'Cannot cancel fulfilled order.');
+        if ($order->status === 'fulfilled' || $order->status === 'shipped') {
+            return back()->with('error', 'Cannot cancel order that is already shipped or fulfilled.');
         }
         
-        // For product orders, restore stock if items were deducted
-        if ($order->order_type === 'product' && $order->status === 'confirmed') {
+        // For online/product orders, restore stock
+        if (in_array($order->order_type, ['online', 'product']) && $order->status === 'confirmed') {
             foreach ($order->items as $item) {
-                if ($item->item_type === 'inventory' && $item->inventoryItem) {
-                    $item->inventoryItem->increment('quantity', $item->quantity);
-                    
-                    // Create inventory transaction for stock restoration
-                    $inventoryStock = \App\Models\InventoryStock::where('item_id', $item->reference_id)->first();
+                if ($item->inventoryItem) {
+                    // Restore stock to inventory_stock table
+                    $inventoryStock = \App\Models\InventoryStock::where('item_id', $item->inventory_item_id)->first();
                     if ($inventoryStock) {
+                        $inventoryStock->increment('quantity', $item->quantity);
+                        
                         \App\Models\InventoryTransaction::create([
                             'stock_id' => $inventoryStock->id,
                             'type' => 'in',
                             'quantity' => $item->quantity,
                             'reference' => 'Cancelled Order #' . $order->id,
+                            'performed_by' => $user->id,
                             'notes' => 'Stock restored from cancelled order',
                         ]);
                     }
@@ -300,12 +323,36 @@ class BillingController extends Controller
             }
         }
         
+        // Find and handle associated invoice
+        $invoice = \App\Models\Invoice::where('order_id', $order->id)->with('payments')->first();
+        $refundedAmount = 0;
+        
+        if ($invoice) {
+            // Get payments to be refunded
+            $refundedAmount = $invoice->payments->sum('amount');
+            
+            // Delete all payments (revert income)
+            \App\Models\Payment::where('invoice_id', $invoice->id)->delete();
+            
+            // Cancel the invoice
+            $invoice->update([
+                'status' => 'cancelled',
+                'notes' => ($invoice->notes ?? '') . "\n\nCancelled due to order cancellation on " . now()->format('Y-m-d H:i:s'),
+            ]);
+        }
+        
+        // Cancel the order
         $order->update([
             'status' => 'cancelled',
             'notes' => ($order->notes ?? '') . "\n\nCancelled by customer on " . now()->format('Y-m-d H:i:s')
         ]);
         
+        $message = 'Order cancelled successfully.';
+        if ($refundedAmount > 0) {
+            $message .= ' Payment of ₱' . number_format($refundedAmount, 2) . ' has been reversed.';
+        }
+        
         return redirect()->route('customer.billing.orders')
-            ->with('success', 'Order cancelled successfully.');
+            ->with('success', $message);
     }
 }

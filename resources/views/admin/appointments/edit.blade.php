@@ -94,7 +94,7 @@
     <div class="info-card">
         <p>
             <strong>Appointment ID:</strong> #{{ $appointment->id }} •
-            <strong>Created:</strong> {{ \Carbon\Carbon::parse($appointment->created_at)->format('M d, Y g:i A') }}
+            <strong>Created:</strong> {{ $appointment->created_at_formatted }}
         </p>
     </div>
 

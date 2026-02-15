@@ -1,0 +1,776 @@
+-- =============================
+-- VETERINARY CLINIC MANAGEMENT SYSTEM
+-- COMPLETE SCHEMA WITH REGISTRATION NUMBERS
+-- Fully Normalized (2NF & 3NF Compliant)
+-- Date: February 13, 2026
+-- Version: 4.1 ENHANCED (Registration Numbers Only)
+-- =============================
+
+-- CHANGES FROM v4.0:
+-- ✅ Added registration_number to pets table
+-- ✅ Added invoice_prefix and invoice_sequence to invoices table
+
+CREATE DATABASE IF NOT EXISTS vet_clinic_final;
+USE vet_clinic_final;
+
+-- =============================
+-- USERS & AUTHENTICATION
+-- =============================
+CREATE TABLE users (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('admin','veterinarian','staff','reception','pharmacy','groomer','boarding','pet_owner') NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    contact_number VARCHAR(20),
+    address TEXT,
+    is_active TINYINT(1) DEFAULT 1,
+    email_verified TINYINT(1) DEFAULT 0,
+    phone_verified TINYINT(1) DEFAULT 0,
+    last_login DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_role (role),
+    INDEX idx_email (email),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB;
+
+-- =============================
+-- PET OWNERS
+-- =============================
+CREATE TABLE pet_owners (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    notes TEXT,
+    preferred_contact_method ENUM('email','sms') DEFAULT 'email',
+    emergency_contact_name VARCHAR(150),
+    emergency_contact_phone VARCHAR(20),
+    emergency_contact_relationship VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user (user_id)
+) ENGINE=InnoDB;
+
+-- =============================
+-- PETS (UPDATED - WITH REGISTRATION NUMBER)
+-- =============================
+CREATE TABLE pets (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    
+    -- ✅ NEW: Auto-generated registration number (user-facing ID)
+    registration_number VARCHAR(20) UNIQUE NOT NULL COMMENT 'User-facing unique identifier (e.g., 2026-000001)',
+    
+    owner_id BIGINT UNSIGNED NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    species VARCHAR(50) NOT NULL,
+    breed VARCHAR(100),
+    birth_date DATE,
+    gender ENUM('male','female','unknown') DEFAULT 'unknown',
+    color VARCHAR(100),
+    weight DECIMAL(5,2),
+    microchip_number VARCHAR(50) UNIQUE,
+    photo_path VARCHAR(255),
+    qr_code_path VARCHAR(255),
+    is_active TINYINT(1) DEFAULT 1,
+    deceased_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (owner_id) REFERENCES pet_owners(id) ON DELETE CASCADE,
+    
+    INDEX idx_owner (owner_id),
+    INDEX idx_species (species),
+    INDEX idx_microchip (microchip_number),
+    INDEX idx_active (is_active),
+    INDEX idx_pet_registration (registration_number),
+    
+    CONSTRAINT chk_weight CHECK (weight IS NULL OR (weight > 0 AND weight <= 500))
+) ENGINE=InnoDB;
+
+-- =============================
+-- CHRONIC CONDITIONS
+-- =============================
+CREATE TABLE chronic_conditions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    pet_id BIGINT UNSIGNED NOT NULL,
+    condition_name VARCHAR(150) NOT NULL,
+    diagnosed_date DATE,
+    ongoing_treatment TEXT,
+    notes TEXT,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE CASCADE,
+    INDEX idx_pet (pet_id),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB;
+
+-- =============================
+-- PET ALLERGIES
+-- =============================
+CREATE TABLE pet_allergies (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    pet_id BIGINT UNSIGNED NOT NULL,
+    allergen VARCHAR(150) NOT NULL,
+    reaction_type VARCHAR(100),
+    severity ENUM('mild','moderate','severe') DEFAULT 'mild',
+    diagnosed_date DATE,
+    notes TEXT,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE CASCADE,
+    INDEX idx_pet (pet_id),
+    INDEX idx_severity (severity),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB;
+
+-- =============================
+-- APPOINTMENTS
+-- =============================
+CREATE TABLE appointments (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    pet_id BIGINT UNSIGNED NOT NULL,
+    veterinarian_id BIGINT UNSIGNED,
+    appointment_date DATETIME NOT NULL,
+    type ENUM('consultation','vaccination','surgery','grooming','boarding','follow_up','emergency','other') DEFAULT 'consultation',
+    status ENUM('pending','confirmed','in_progress','completed','cancelled','no_show') DEFAULT 'pending',
+    notes TEXT,
+    arrival_time DATETIME,
+    queue_status ENUM('waiting','being_served','completed'),
+    queue_priority INT DEFAULT 0,
+    estimated_wait_time INT,
+    reminder_sent TINYINT(1) DEFAULT 0,
+    reminder_sent_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE CASCADE,
+    FOREIGN KEY (veterinarian_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_pet (pet_id),
+    INDEX idx_vet (veterinarian_id),
+    INDEX idx_date (appointment_date),
+    INDEX idx_status (status),
+    INDEX idx_queue (queue_status, queue_priority),
+    INDEX idx_appointment_search (appointment_date, status, veterinarian_id)
+) ENGINE=InnoDB;
+
+-- =============================
+-- MEDICAL RECORDS
+-- =============================
+CREATE TABLE medical_records (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    pet_id BIGINT UNSIGNED NOT NULL,
+    veterinarian_id BIGINT UNSIGNED NOT NULL,
+    appointment_id BIGINT UNSIGNED,
+    visit_date DATE NOT NULL,
+    complaint TEXT,
+    examination_notes TEXT,
+    temperature DECIMAL(4,1),
+    heart_rate INT,
+    respiratory_rate INT,
+    blood_pressure VARCHAR(20),
+    diagnosis TEXT,
+    treatment_plan TEXT,
+    follow_up_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE CASCADE,
+    FOREIGN KEY (veterinarian_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
+    INDEX idx_pet (pet_id),
+    INDEX idx_vet (veterinarian_id),
+    INDEX idx_visit_date (visit_date),
+    INDEX idx_medical_search (pet_id, visit_date DESC),
+    INDEX idx_follow_up (follow_up_date)
+) ENGINE=InnoDB;
+
+-- =============================
+-- PRESCRIPTIONS
+-- =============================
+CREATE TABLE prescriptions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    medical_record_id BIGINT UNSIGNED NOT NULL,
+    medication_name VARCHAR(150) NOT NULL,
+    dosage VARCHAR(100) NOT NULL,
+    frequency VARCHAR(100) NOT NULL,
+    duration_days INT NOT NULL,
+    quantity INT NOT NULL,
+    instructions TEXT,
+    dispensed TINYINT(1) DEFAULT 0,
+    dispensed_at DATETIME,
+    dispensed_by BIGINT UNSIGNED,
+    refill_reminder_sent TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (medical_record_id) REFERENCES medical_records(id) ON DELETE CASCADE,
+    FOREIGN KEY (dispensed_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_medical_record (medical_record_id),
+    INDEX idx_dispensed (dispensed),
+    CONSTRAINT chk_duration CHECK (duration_days > 0 AND duration_days <= 365),
+    CONSTRAINT chk_quantity CHECK (quantity > 0)
+) ENGINE=InnoDB;
+
+-- =============================
+-- SURGERIES
+-- =============================
+CREATE TABLE surgeries (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    pet_id BIGINT UNSIGNED NOT NULL,
+    medical_record_id BIGINT UNSIGNED,
+    surgeon_id BIGINT UNSIGNED NOT NULL,
+    scheduled_date DATETIME NOT NULL,
+    procedure_name VARCHAR(255) NOT NULL,
+    anesthesia_type VARCHAR(100),
+    status ENUM('scheduled','in_progress','completed','cancelled') DEFAULT 'scheduled',
+    pre_op_notes TEXT,
+    surgery_notes TEXT,
+    post_op_instructions TEXT,
+    outcome TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE CASCADE,
+    FOREIGN KEY (medical_record_id) REFERENCES medical_records(id) ON DELETE SET NULL,
+    FOREIGN KEY (surgeon_id) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_pet (pet_id),
+    INDEX idx_surgeon (surgeon_id),
+    INDEX idx_scheduled_date (scheduled_date),
+    INDEX idx_status (status)
+) ENGINE=InnoDB;
+
+-- =============================
+-- VACCINES
+-- =============================
+CREATE TABLE vaccines (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vaccine_name VARCHAR(150) NOT NULL UNIQUE,
+    manufacturer VARCHAR(100),
+    description TEXT,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_name (vaccine_name),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB;
+
+-- =============================
+-- PET VACCINATIONS
+-- =============================
+CREATE TABLE pet_vaccinations (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    pet_id BIGINT UNSIGNED NOT NULL,
+    vaccine_id BIGINT UNSIGNED NOT NULL,
+    batch_number VARCHAR(50),
+    dose_number INT DEFAULT 1 COMMENT '1=First dose, 2=Second dose, 3=Booster, etc.',
+    administered_date DATE NOT NULL,
+    next_due_date DATE,
+    expiry_date DATE COMMENT 'Expiration date of the vaccine batch',
+    administered_by BIGINT UNSIGNED NOT NULL,
+    certificate_path VARCHAR(255),
+    notes TEXT,
+    reminder_sent TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE CASCADE,
+    FOREIGN KEY (vaccine_id) REFERENCES vaccines(id) ON DELETE RESTRICT,
+    FOREIGN KEY (administered_by) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_pet (pet_id),
+    INDEX idx_vaccine (vaccine_id),
+    INDEX idx_next_due (next_due_date),
+    INDEX idx_expiry (expiry_date),
+    INDEX idx_vaccination_search (pet_id, next_due_date)
+) ENGINE=InnoDB;
+
+-- =============================
+-- LABORATORY
+-- =============================
+CREATE TABLE lab_tests (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    test_name VARCHAR(150) NOT NULL,
+    category ENUM('blood','urine','fecal','biopsy','cytology','imaging','other') DEFAULT 'other',
+    description TEXT,
+    standard_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_category (category),
+    INDEX idx_active (is_active),
+    CONSTRAINT chk_price CHECK (standard_price >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE lab_requisitions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    medical_record_id BIGINT UNSIGNED NOT NULL,
+    test_id BIGINT UNSIGNED NOT NULL,
+    requested_by BIGINT UNSIGNED NOT NULL,
+    requested_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    sample_collected TINYINT(1) DEFAULT 0,
+    sample_collection_date DATETIME,
+    status ENUM('pending','collected','sent_to_lab','completed','cancelled') DEFAULT 'pending',
+    results TEXT,
+    result_date DATETIME,
+    notes TEXT,
+    result_notification_sent TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (medical_record_id) REFERENCES medical_records(id) ON DELETE CASCADE,
+    FOREIGN KEY (test_id) REFERENCES lab_tests(id) ON DELETE RESTRICT,
+    FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_medical_record (medical_record_id),
+    INDEX idx_test (test_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB;
+
+-- =============================
+-- BOARDING
+-- =============================
+CREATE TABLE cages (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    cage_code VARCHAR(20) UNIQUE NOT NULL,
+    location VARCHAR(100),
+    size ENUM('small','medium','large','extra_large') DEFAULT 'medium',
+    status ENUM('available','occupied','maintenance','out_of_service') DEFAULT 'available',
+    qr_code_path VARCHAR(255),
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_status (status),
+    INDEX idx_size (size),
+    INDEX idx_cage_code (cage_code)
+) ENGINE=InnoDB;
+
+CREATE TABLE cage_assignments (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    cage_id BIGINT UNSIGNED NOT NULL,
+    pet_id BIGINT UNSIGNED NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    check_in_time DATETIME,
+    check_out_time DATETIME,
+    feeding_schedule TEXT,
+    feeding_times VARCHAR(255),
+    special_diet_notes TEXT,
+    medication_instructions TEXT,
+    medication_times VARCHAR(255),
+    notes TEXT,
+    daily_rate DECIMAL(10,2),
+    checkout_reminder_sent TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (cage_id) REFERENCES cages(id) ON DELETE RESTRICT,
+    FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE CASCADE,
+    INDEX idx_cage (cage_id),
+    INDEX idx_pet (pet_id),
+    INDEX idx_dates (start_date, end_date),
+    INDEX idx_boarding_search (pet_id, start_date, end_date),
+    CONSTRAINT chk_dates CHECK (end_date >= start_date),
+    CONSTRAINT chk_daily_rate CHECK (daily_rate IS NULL OR daily_rate >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE qr_scan_logs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    scan_type ENUM('cage','pet') NOT NULL,
+    cage_id BIGINT UNSIGNED,
+    pet_id BIGINT UNSIGNED,
+    scanned_by BIGINT UNSIGNED NOT NULL,
+    scan_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    location VARCHAR(100),
+    notes TEXT,
+    FOREIGN KEY (cage_id) REFERENCES cages(id) ON DELETE SET NULL,
+    FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE SET NULL,
+    FOREIGN KEY (scanned_by) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_cage (cage_id),
+    INDEX idx_pet (pet_id),
+    INDEX idx_scanned_by (scanned_by),
+    INDEX idx_timestamp (scan_timestamp),
+    INDEX idx_scan_type (scan_type)
+) ENGINE=InnoDB;
+
+-- =============================
+-- INVENTORY
+-- =============================
+CREATE TABLE inventory_items (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    category ENUM('medicine','vaccine','supply','food','toy','accessory','other') DEFAULT 'other',
+    sku VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    unit_price DECIMAL(10,2) NOT NULL,
+    image_path VARCHAR(255),
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_category (category),
+    INDEX idx_sku (sku),
+    INDEX idx_active (is_active),
+    CONSTRAINT chk_unit_price CHECK (unit_price >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE inventory_stock (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    item_id BIGINT UNSIGNED NOT NULL,
+    quantity INT NOT NULL DEFAULT 0,
+    min_stock INT DEFAULT 10,
+    max_stock INT,
+    expiry_date DATE,
+    location VARCHAR(100),
+    low_stock_alert_sent TINYINT(1) DEFAULT 0,
+    expiry_alert_sent TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE CASCADE,
+    INDEX idx_item (item_id),
+    INDEX idx_quantity (quantity),
+    INDEX idx_expiry (expiry_date),
+    INDEX idx_inventory_search (item_id, quantity, expiry_date),
+    CONSTRAINT chk_quantity CHECK (quantity >= 0),
+    CONSTRAINT chk_min_stock CHECK (min_stock >= 0),
+    CONSTRAINT chk_max_stock CHECK (max_stock IS NULL OR max_stock >= min_stock)
+) ENGINE=InnoDB;
+
+CREATE TABLE inventory_transactions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    stock_id BIGINT UNSIGNED NOT NULL,
+    type ENUM('in','out','adjustment','expired','damaged') DEFAULT 'out',
+    quantity INT NOT NULL,
+    reference VARCHAR(100),
+    performed_by BIGINT UNSIGNED,
+    notes TEXT,
+    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (stock_id) REFERENCES inventory_stock(id) ON DELETE CASCADE,
+    FOREIGN KEY (performed_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_stock (stock_id),
+    INDEX idx_type (type),
+    INDEX idx_date (transaction_date),
+    CONSTRAINT chk_transaction_qty CHECK (quantity != 0)
+) ENGINE=InnoDB;
+
+-- =============================
+-- SHOPPING CART
+-- =============================
+CREATE TABLE shopping_carts (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_cart (user_id),
+    INDEX idx_user (user_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE cart_items (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    cart_id BIGINT UNSIGNED NOT NULL,
+    inventory_item_id BIGINT UNSIGNED NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    unit_price DECIMAL(10,2) NOT NULL COMMENT 'Price at time of adding to cart',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (cart_id) REFERENCES shopping_carts(id) ON DELETE CASCADE,
+    FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE CASCADE,
+    INDEX idx_cart (cart_id),
+    INDEX idx_item (inventory_item_id),
+    CONSTRAINT chk_cart_quantity CHECK (quantity > 0),
+    CONSTRAINT chk_cart_price CHECK (unit_price >= 0)
+) ENGINE=InnoDB;
+
+-- =============================
+-- ORDERS
+-- =============================
+CREATE TABLE orders (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    appointment_id BIGINT UNSIGNED,
+    pet_id BIGINT UNSIGNED,
+    owner_id BIGINT UNSIGNED NOT NULL,
+    created_by BIGINT UNSIGNED NOT NULL,
+    order_type ENUM('walk_in','appointment','online','pharmacy') DEFAULT 'walk_in',
+    status ENUM('draft','confirmed','shipped','fulfilled','cancelled') DEFAULT 'draft',
+    order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
+    FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE SET NULL,
+    FOREIGN KEY (owner_id) REFERENCES pet_owners(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_owner (owner_id),
+    INDEX idx_pet (pet_id),
+    INDEX idx_status (status),
+    INDEX idx_date (order_date)
+) ENGINE=InnoDB;
+
+CREATE TABLE order_items (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT UNSIGNED NOT NULL,
+    inventory_item_id BIGINT UNSIGNED NOT NULL,
+    description VARCHAR(255),
+    quantity INT NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL COMMENT 'Price at time of order',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE RESTRICT,
+    INDEX idx_order (order_id),
+    INDEX idx_item (inventory_item_id),
+    CONSTRAINT chk_order_item_qty CHECK (quantity > 0),
+    CONSTRAINT chk_order_item_price CHECK (unit_price >= 0)
+) ENGINE=InnoDB;
+
+-- =============================
+-- GROOMING SERVICES
+-- =============================
+CREATE TABLE grooming_services (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    service_name VARCHAR(150) NOT NULL,
+    description TEXT,
+    duration_minutes INT DEFAULT 60,
+    price DECIMAL(10,2) NOT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_active (is_active),
+    CONSTRAINT chk_grooming_duration CHECK (duration_minutes > 0),
+    CONSTRAINT chk_grooming_price CHECK (price >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE grooming_appointments (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    appointment_id BIGINT UNSIGNED NOT NULL,
+    service_id BIGINT UNSIGNED NOT NULL,
+    groomer_id BIGINT UNSIGNED,
+    special_instructions TEXT,
+    status ENUM('scheduled','in_progress','completed','cancelled') DEFAULT 'scheduled',
+    actual_duration_minutes INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE,
+    FOREIGN KEY (service_id) REFERENCES grooming_services(id) ON DELETE RESTRICT,
+    FOREIGN KEY (groomer_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_appointment (appointment_id),
+    INDEX idx_groomer (groomer_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB;
+
+-- =============================
+-- INVOICING (UPDATED - WITH AUTO-GENERATION)
+-- =============================
+CREATE TABLE invoices (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT UNSIGNED,
+    appointment_id BIGINT UNSIGNED,
+    pet_id BIGINT UNSIGNED,
+    owner_id BIGINT UNSIGNED NOT NULL,
+    
+    -- ✅ NEW: Invoice auto-generation fields
+    invoice_prefix VARCHAR(10) DEFAULT 'INV' COMMENT 'Invoice prefix (e.g., INV, NYC-INV for multi-location)',
+    invoice_sequence INT UNSIGNED COMMENT 'Sequential number within year/prefix',
+    
+    invoice_number VARCHAR(50) UNIQUE NOT NULL COMMENT 'Auto-generated: [prefix]-YYYY-NNNNNN (e.g., INV-2026-000001)',
+    issue_date DATE NOT NULL,
+    due_date DATE NOT NULL,
+    tax_rate DECIMAL(5,2) DEFAULT 0.00 COMMENT 'Tax percentage to apply',
+    discount_amount DECIMAL(12,2) DEFAULT 0.00 COMMENT 'Manual discount amount',
+    discount_reason VARCHAR(255) COMMENT 'Reason for discount',
+    status ENUM('pending','partial','paid','overdue','cancelled') DEFAULT 'pending',
+    notes TEXT,
+    overdue_reminder_sent TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
+    FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE SET NULL,
+    FOREIGN KEY (owner_id) REFERENCES pet_owners(id) ON DELETE CASCADE,
+    INDEX idx_owner (owner_id),
+    INDEX idx_invoice_number (invoice_number),
+    INDEX idx_status (status),
+    INDEX idx_dates (issue_date, due_date),
+    INDEX idx_invoice_search (owner_id, status, due_date),
+    INDEX idx_invoice_generation (invoice_prefix, invoice_sequence),
+    CONSTRAINT chk_invoice_amounts CHECK (
+        tax_rate >= 0 AND 
+        tax_rate <= 100 AND
+        discount_amount >= 0
+    ),
+    CONSTRAINT chk_invoice_dates CHECK (due_date >= issue_date)
+) ENGINE=InnoDB;
+
+CREATE TABLE invoice_items (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    invoice_id BIGINT UNSIGNED NOT NULL,
+    item_type ENUM('service','consultation','grooming','boarding','surgery','lab_test','vaccination','product','other') DEFAULT 'service',
+    description VARCHAR(255) NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    unit_price DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
+    INDEX idx_invoice (invoice_id),
+    INDEX idx_type (item_type),
+    CONSTRAINT chk_invoice_item_qty CHECK (quantity > 0),
+    CONSTRAINT chk_invoice_item_price CHECK (unit_price >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE payments (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    invoice_id BIGINT UNSIGNED NOT NULL,
+    payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    amount DECIMAL(12,2) NOT NULL,
+    payment_method ENUM('cash','credit_card','debit_card','bank_transfer','check','mobile_payment','other') DEFAULT 'cash',
+    reference_number VARCHAR(100),
+    received_by BIGINT UNSIGNED,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
+    FOREIGN KEY (received_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_invoice (invoice_id),
+    INDEX idx_date (payment_date),
+    INDEX idx_method (payment_method),
+    CONSTRAINT chk_payment_amount CHECK (amount > 0)
+) ENGINE=InnoDB;
+
+-- =============================
+-- STAFF MANAGEMENT
+-- =============================
+CREATE TABLE staff_schedules (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    schedule_date DATE NOT NULL,
+    shift_start TIME NOT NULL,
+    shift_end TIME NOT NULL,
+    break_duration_minutes INT DEFAULT 0,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user (user_id),
+    INDEX idx_date (schedule_date),
+    INDEX idx_schedule_search (user_id, schedule_date),
+    CONSTRAINT chk_break_duration CHECK (break_duration_minutes >= 0),
+    CONSTRAINT chk_shift_times CHECK (shift_end > shift_start)
+) ENGINE=InnoDB;
+
+-- =============================
+-- NOTIFICATION SYSTEM
+-- =============================
+CREATE TABLE notifications (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    type ENUM(
+        'appointment_reminder',
+        'vaccination_due',
+        'payment_due',
+        'payment_overdue',
+        'lab_result',
+        'prescription_refill',
+        'boarding_checkout',
+        'low_stock',
+        'item_expiry'
+    ) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    method ENUM('email','sms','both') DEFAULT 'email',
+    status ENUM('pending','sent','failed','read') DEFAULT 'pending',
+    scheduled_for DATETIME NOT NULL,
+    sent_at DATETIME,
+    read_at DATETIME,
+    reference_type ENUM('appointment','pet','invoice','prescription','vaccination','lab_test','cage_assignment','inventory') NULL,
+    reference_id BIGINT UNSIGNED NULL,
+    error_message TEXT,
+    retry_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user (user_id),
+    INDEX idx_type (type),
+    INDEX idx_status (status),
+    INDEX idx_scheduled (scheduled_for),
+    INDEX idx_notification_queue (status, scheduled_for),
+    INDEX idx_reference (reference_type, reference_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE notification_settings (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    notifications_enabled TINYINT(1) DEFAULT 1,
+    email_enabled TINYINT(1) DEFAULT 1,
+    sms_enabled TINYINT(1) DEFAULT 0,
+    appointment_reminder_enabled TINYINT(1) DEFAULT 1,
+    vaccination_due_enabled TINYINT(1) DEFAULT 1,
+    payment_due_enabled TINYINT(1) DEFAULT 1,
+    payment_overdue_enabled TINYINT(1) DEFAULT 1,
+    lab_result_enabled TINYINT(1) DEFAULT 1,
+    prescription_refill_enabled TINYINT(1) DEFAULT 1,
+    boarding_checkout_enabled TINYINT(1) DEFAULT 1,
+    low_stock_enabled TINYINT(1) DEFAULT 1,
+    item_expiry_enabled TINYINT(1) DEFAULT 1,
+    default_advance_hours INT DEFAULT 24,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_settings (user_id),
+    INDEX idx_user (user_id)
+) ENGINE=InnoDB;
+
+-- =============================
+-- INCIDENT MONITORING
+-- =============================
+CREATE TABLE incidents (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    incident_number VARCHAR(50) UNIQUE NOT NULL,
+    incident_date DATETIME NOT NULL,
+    incident_type ENUM(
+        'pet_injury',
+        'pet_illness',
+        'pet_escape',
+        'pet_aggression',
+        'staff_injury',
+        'visitor_injury',
+        'medication_error',
+        'equipment_failure',
+        'facility_damage',
+        'other'
+    ) NOT NULL,
+    severity ENUM('minor', 'moderate', 'severe', 'critical') NOT NULL,
+    pet_id BIGINT UNSIGNED COMMENT 'Pet involved if applicable',
+    affected_user_id BIGINT UNSIGNED COMMENT 'Staff/visitor affected if applicable',
+    location VARCHAR(150) NOT NULL,
+    cage_id BIGINT UNSIGNED,
+    description TEXT NOT NULL,
+    immediate_action_taken TEXT,
+    root_cause TEXT,
+    corrective_action TEXT,
+    status ENUM('open', 'investigating', 'resolved', 'closed') DEFAULT 'open',
+    resolved_date DATETIME,
+    reported_by BIGINT UNSIGNED NOT NULL,
+    reported_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE SET NULL,
+    FOREIGN KEY (affected_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (cage_id) REFERENCES cages(id) ON DELETE SET NULL,
+    FOREIGN KEY (reported_by) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_incident_number (incident_number),
+    INDEX idx_date (incident_date),
+    INDEX idx_type (incident_type),
+    INDEX idx_severity (severity),
+    INDEX idx_status (status),
+    INDEX idx_pet (pet_id),
+    INDEX idx_user (affected_user_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE incident_notes (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    incident_id BIGINT UNSIGNED NOT NULL,
+    note TEXT NOT NULL,
+    added_by BIGINT UNSIGNED NOT NULL,
+    added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (incident_id) REFERENCES incidents(id) ON DELETE CASCADE,
+    FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_incident (incident_id),
+    INDEX idx_date (added_at)
+) ENGINE=InnoDB;
+
+-- =============================
+-- END OF SCHEMA
+-- Total Tables: 33 -> no insurance
+-- Enhanced Tables: 2 (pets, invoices)
+-- =============================

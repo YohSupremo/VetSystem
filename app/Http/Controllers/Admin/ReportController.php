@@ -24,7 +24,7 @@ class ReportController extends BaseController
      */
     public function index()
     {
-        $totalInvoices = BillingInvoice::count();
+        $totalInvoices = BillingInvoice::where('status', '!=', 'cancelled')->count();
         $totalAppointments = Appointment::count();
         $totalMedicalRecords = MedicalRecord::count();
         $totalInventoryItems = InventoryItem::count();
@@ -48,24 +48,36 @@ class ReportController extends BaseController
         
         $invoices = BillingInvoice::with(['invoiceItems', 'payments'])
             ->whereBetween('issue_date', [$startDate, $endDate])
+            ->where('status', '!=', 'cancelled')
             ->get();
         $totalInvoices = $invoices->count();
-        $totalRevenue = $invoices->sum('total_amount');
-        $paidAmount = $invoices->sum('paid_amount');
+        $totalRevenue = $invoices->sum(function ($invoice) {
+            return $invoice->subtotal + ($invoice->subtotal * ($invoice->tax_rate / 100)) - $invoice->discount_amount;
+        });
+        $paidAmount = $invoices->sum(function ($invoice) {
+            return $invoice->payments->sum('amount');
+        });
         $outstandingAmount = $totalRevenue - $paidAmount;
 
         $revenueByMonth = BillingInvoice::with('invoiceItems')
             ->whereBetween('issue_date', [$startDate, $endDate])
+            ->where('status', '!=', 'cancelled')
             ->get()
             ->groupBy(function ($inv) { return $inv->issue_date->format('Y-m'); })
             ->map(function ($group) {
-                return (object)['month' => $group->first()->issue_date->format('Y-m'), 'revenue' => $group->sum('total_amount')];
+                return (object)[
+                    'month' => $group->first()->issue_date->format('Y-m'),
+                    'revenue' => $group->sum(function ($invoice) {
+                        return $invoice->subtotal + ($invoice->subtotal * ($invoice->tax_rate / 100)) - $invoice->discount_amount;
+                    })
+                ];
             })->values();
 
         $topServices = DB::table('invoice_items')
             ->select('item_type', DB::raw('COUNT(*) as count, SUM(quantity * unit_price) as total'))
             ->join('invoices', 'invoice_items.invoice_id', '=', 'invoices.id')
             ->whereBetween('invoices.issue_date', [$startDate, $endDate])
+            ->where('invoices.status', '!=', 'cancelled')
             ->groupBy('item_type')
             ->orderByDesc('total')
             ->limit(10)
@@ -74,16 +86,25 @@ class ReportController extends BaseController
         $paymentMethods = DB::table('payments')
             ->select('payment_method', DB::raw('COUNT(*) as count, SUM(amount) as total'))
             ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
-            ->whereBetween('payments.payment_date', [$startDate, $endDate])
+            ->whereDate('payments.payment_date', '>=', $startDate)
+            ->whereDate('payments.payment_date', '<=', $endDate)
+            ->where('invoices.status', '!=', 'cancelled')
             ->groupBy('payment_method')
             ->get();
 
         $outstandingInvoices = BillingInvoice::with(['pet', 'petOwner'])
-            ->where('status', '!=', 'paid')
-            ->where('due_date', '<', now())
-            ->orderBy('due_date')
+            ->whereIn('status', ['pending', 'partial', 'overdue'])
+            ->orderBy('due_date', 'asc')
             ->limit(20)
             ->get();
+
+        // Get cancelled invoices separately
+        $cancelledInvoices = BillingInvoice::with(['invoiceItems', 'payments'])
+            ->whereBetween('issue_date', [$startDate, $endDate])
+            ->where('status', 'cancelled')
+            ->get();
+        $cancelledCount = $cancelledInvoices->count();
+        $cancelledAmount = $cancelledInvoices->sum('total_amount');
         
         return view('admin.reports.financial', compact(
             'startDate',
@@ -93,10 +114,58 @@ class ReportController extends BaseController
             'totalRevenue',
             'paidAmount',
             'outstandingAmount',
+            'cancelledCount',
+            'cancelledAmount',
             'revenueByMonth',
             'topServices',
             'paymentMethods',
             'outstandingInvoices'
+        ));
+    }
+
+    /**
+     * Display all cancelled invoices with filters.
+     */
+    public function cancelledInvoices(Request $request)
+    {
+        $startDate = $request->input('start_date', now()->subMonth()->toDateString());
+        $endDate = $request->input('end_date', now()->toDateString());
+        $sortBy = $request->input('sort_by', 'issue_date');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        $query = BillingInvoice::with(['pet', 'petOwner', 'invoiceItems', 'payments', 'order'])
+            ->where('status', 'cancelled')
+            ->whereBetween('issue_date', [$startDate, $endDate]);
+
+        // Apply sorting (only sort by columns that exist in invoices table)
+        $validSortColumns = ['issue_date', 'invoice_number'];
+        if (in_array($sortBy, $validSortColumns)) {
+            $query->orderBy($sortBy, $sortOrder === 'asc' ? 'asc' : 'desc');
+        } else {
+            $query->orderBy('issue_date', 'desc');
+        }
+
+        $invoices = $query->paginate(20);
+        
+        // Get all cancelled invoices for summary (with items to calculate total)
+        $allCancelledInvoices = BillingInvoice::with('invoiceItems')
+            ->where('status', 'cancelled')
+            ->whereBetween('issue_date', [$startDate, $endDate])
+            ->get();
+        
+        $totalCancelled = $allCancelledInvoices->count();
+        $totalCancelledAmount = $allCancelledInvoices->sum(function ($invoice) {
+            return $invoice->subtotal + ($invoice->subtotal * ($invoice->tax_rate / 100)) - $invoice->discount_amount;
+        });
+
+        return view('admin.reports.cancelled-invoices', compact(
+            'invoices',
+            'startDate',
+            'endDate',
+            'sortBy',
+            'sortOrder',
+            'totalCancelled',
+            'totalCancelledAmount'
         ));
     }
     

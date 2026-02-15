@@ -51,15 +51,50 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="text-muted small text-uppercase fw-bold mb-1">Pending Invoices</div>
-                            <h2 class="mb-0 text-warning">{{ $invoiceStats['pending_invoices'] }}</h2>
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Cancelled Invoices</div>
+                            <h2 class="mb-1 text-danger">₱{{ number_format($invoiceStats['cancelled_amount'], 2) }}</h2>
+                            <small class="text-muted">({{ $invoiceStats['cancelled_count'] }} invoices)</small>
                         </div>
-                        <div class="bg-warning bg-opacity-10 text-warning rounded p-2">
-                            <i class="fas fa-clock fa-lg"></i>
+                        <div class="bg-danger bg-opacity-10 text-danger rounded p-2">
+                            <i class="fas fa-times-circle fa-lg"></i>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="GET" action="{{ route('customer.billing.index') }}" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="all" {{ request('status') === 'all' || !request('status') ? 'selected' : '' }}>All Statuses</option>
+                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="partial" {{ request('status') === 'partial' ? 'selected' : '' }}>Partial</option>
+                        <option value="paid" {{ request('status') === 'paid' ? 'selected' : '' }}>Paid</option>
+                        <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Start Date</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">End Date</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i>Filter
+                    </button>
+                    <a href="{{ route('customer.billing.index') }}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 

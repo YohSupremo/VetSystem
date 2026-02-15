@@ -41,8 +41,8 @@
                                         <th class="ps-4 py-3">Product</th>
                                         <th class="py-3">Price</th>
                                         <th class="py-3" style="width: 150px;">Quantity</th>
-                                        <th class="text-end pe-4 py-3">Total</th>
-                                        <th></th>
+                                        <th class="text-end py-3">Total</th>
+                                        <th class="text-center py-3" style="width: 80px;">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -71,13 +71,13 @@
                                                     <button type="submit" class="btn btn-sm btn-outline-secondary d-none"><i class="fas fa-sync"></i></button>
                                                 </form>
                                             </td>
-                                            <td class="text-end pe-4 fw-bold">₱{{ number_format($item->total, 2) }}</td>
-                                            <td class="text-end pe-3">
-                                                <form action="{{ route('customer.cart.remove', $item->id) }}" method="POST">
+                                            <td class="text-end fw-bold">₱{{ number_format($item->total, 2) }}</td>
+                                            <td class="text-center">
+                                                <form action="{{ route('customer.cart.remove', $item->id) }}" method="POST" onsubmit="return confirm('Remove this item from cart?')">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-link text-danger p-0" title="Remove">
-                                                        <i class="fas fa-trash"></i>
+                                                    <button type="submit" class="btn btn-sm btn-danger" title="Remove item">
+                                                        Remove
                                                     </button>
                                                 </form>
                                             </td>
@@ -115,8 +115,27 @@
                         <form action="{{ route('customer.cart.checkout') }}" method="POST">
                             @csrf
                             <div class="mb-3">
+                                <label for="payment_method" class="form-label small fw-bold">Payment Method</label>
+                                <select name="payment_method" id="payment_method" class="form-select @error('payment_method') is-invalid @enderror">
+                                    <option value="">Select Payment Method</option>
+                                    <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>Cash (Pay on Pickup)</option>
+                                    <option value="credit_card" {{ old('payment_method') == 'credit_card' ? 'selected' : '' }}>Credit Card</option>
+                                    <option value="debit_card" {{ old('payment_method') == 'debit_card' ? 'selected' : '' }}>Debit Card</option>
+                                    <option value="bank_transfer" {{ old('payment_method') == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                    <option value="mobile_payment" {{ old('payment_method') == 'mobile_payment' ? 'selected' : '' }}>Mobile Payment (GCash/Maya)</option>
+                                </select>
+                                @error('payment_method')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="text-muted">Online payments will be recorded as paid immediately.</small>
+                            </div>
+                            
+                            <div class="mb-3">
                                 <label for="notes" class="form-label small fw-bold">Order Notes (Optional)</label>
-                                <textarea name="notes" id="notes" rows="2" class="form-control" placeholder="Special instructions..."></textarea>
+                                <textarea name="notes" id="notes" rows="2" class="form-control @error('notes') is-invalid @enderror" placeholder="Special instructions...">{{ old('notes') }}</textarea>
+                                @error('notes')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                             
                             <button type="submit" class="btn btn-primary w-100 btn-lg shadow-sm" onclick="return confirm('Place order now?')">

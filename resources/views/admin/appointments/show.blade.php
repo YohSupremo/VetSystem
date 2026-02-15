@@ -194,12 +194,12 @@
 
             <div class="info-row">
                 <div class="info-label">Created on</div>
-                <div class="info-value">{{ \Carbon\Carbon::parse($appointment->created_at)->format('M d, Y g:i A') }}</div>
+                <div class="info-value">{{ $appointment->created_at_formatted }}</div>
             </div>
 
             <div class="info-row">
                 <div class="info-label">Last updated</div>
-                <div class="info-value">{{ \Carbon\Carbon::parse($appointment->updated_at)->format('M d, Y g:i A') }}</div>
+                <div class="info-value">{{ $appointment->updated_at_formatted }}</div>
             </div>
 
             <div>

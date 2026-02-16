@@ -24,11 +24,9 @@
                         <option value="admin" {{ request('position') == 'admin' ? 'selected' : '' }}>Admin</option>
                         <option value="veterinarian" {{ request('position') == 'veterinarian' ? 'selected' : '' }}>Veterinarian</option>
                         <option value="staff" {{ request('position') == 'staff' ? 'selected' : '' }}>Staff</option>
-                        <option value="reception" {{ request('position') == 'reception' ? 'selected' : '' }}>Reception</option>
-                        <option value="pharmacy" {{ request('position') == 'pharmacy' ? 'selected' : '' }}>Pharmacy</option>
-                        <option value="groomer" {{ request('position') == 'groomer' ? 'selected' : '' }}>Groomer</option>
-                        <option value="boarding" {{ request('position') == 'boarding' ? 'selected' : '' }}>Boarding</option>
-                        <option value="pet_owner" {{ request('position') == 'pet_owner' ? 'selected' : '' }}>Pet Owner</option>
+                        <option value="reception" {{ request('position') == 'reception' ? 'selected' : '' }}>Receptionist</option>
+                        <option value="pharmacy" {{ request('position') == 'pharmacy' ? 'selected' : '' }}>Pharmacist</option>
+
                     </select>
                     <button class="btn btn-outline-secondary" type="submit" >
                         <i class="fas fa-filter"></i> Filter

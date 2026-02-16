@@ -15,6 +15,12 @@ class BoardingController extends BaseController
      */
     public function index()
     {
+        // Sync all cage statuses to ensure accuracy
+        $allCages = Cage::all();
+        foreach ($allCages as $cage) {
+            $cage->syncStatus();
+        }
+        
         $query = CageAssignment::with(['pet.owner.user', 'cage']);
         
         // Search functionality
@@ -178,6 +184,9 @@ class BoardingController extends BaseController
             'notes' => $info['notes'] ?? null,
         ]);
 
+        // Sync cage status in case it was previously available
+        $cage->syncStatus();
+
         return redirect()->route('admin.boarding.index')->with('success', 'Pet successfully assigned to cage and boarding created.');
     }
 
@@ -245,6 +254,9 @@ class BoardingController extends BaseController
             'notes' => $info['notes'] ?? null,
         ]);
 
+        // Sync cage status to ensure accuracy
+        $cage->syncStatus();
+
         return redirect()->route('admin.boarding.index')->with('success', 'Pet successfully assigned to cage and boarding created.');
     }
 
@@ -296,12 +308,12 @@ class BoardingController extends BaseController
         if ($boarding->cage_id != $info['cage_id']) {
             $oldCage = Cage::find($boarding->cage_id);
             if ($oldCage) {
-                $oldCage->status = 'available';
-                $oldCage->save();
+                // Sync old cage status (may become available if no other active assignments)
+                $oldCage->syncStatus();
             }
 
             $newCage = Cage::find($info['cage_id']);
-            if ($newCage && $newCage->status !== 'occupied') {
+            if ($newCage) {
                 $newCage->status = 'occupied';
                 $newCage->save();
             }
@@ -337,6 +349,12 @@ class BoardingController extends BaseController
             'notes' => $info['notes'] ?? null,
         ]);
         
+        // Sync cage status to ensure accuracy (important if dates changed)
+        $cage = Cage::find($info['cage_id']);
+        if ($cage) {
+            $cage->syncStatus();
+        }
+        
         return redirect()->route('admin.boarding.index')->with('success', 'Boarding updated successfully.');
     }
 
@@ -347,22 +365,15 @@ class BoardingController extends BaseController
     {
         $boarding = CageAssignment::findOrFail($id);
         
-        // Release the cage - check if there are other active assignments first
+        // Release the cage by syncing its status
         $cage = Cage::find($boarding->cage_id);
-        if ($cage) {
-            $hasOtherAssignments = CageAssignment::where('cage_id', $cage->id)
-                ->where('id', '!=', $boarding->id)
-                ->whereDate('start_date', '<=', now())
-                ->whereDate('end_date', '>=', now())
-                ->exists();
-            
-            if (!$hasOtherAssignments) {
-                $cage->status = 'available';
-                $cage->save();
-            }
-        }
-
+        
         $boarding->delete();
+        
+        // Sync cage status after deletion (it may now be available)
+        if ($cage) {
+            $cage->syncStatus();
+        }
 
         return redirect()->route('admin.boarding.index')->with('success', 'Boarding deleted successfully.');
     }

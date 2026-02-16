@@ -14,6 +14,12 @@ class CageController extends Controller
      */
     public function index()
     {
+        // Sync all cages to ensure their status matches actual assignments
+        $allCages = Cage::all();
+        foreach ($allCages as $cage) {
+            $cage->syncStatus();
+        }
+        
         $cages = Cage::orderBy('cage_code')->paginate(10);
         return view('admin.cages.index', compact('cages'));
     }
@@ -25,12 +31,13 @@ class CageController extends Controller
     {
         $cage = Cage::findOrFail($id);
         
+        // Sync cage status based on active assignments
+        $cage->syncStatus();
+        
         // Find current assignment if any
         $assignment = CageAssignment::where('cage_id', $cage->id)
-            ->where(function($query) {
-                $query->whereNull('end_date')
-                      ->orWhere('end_date', '>=', now());
-            })
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
             ->with(['pet.owner', 'pet.medicalRecords'])
             ->latest()
             ->first();
@@ -49,14 +56,14 @@ class CageController extends Controller
     {
         $cage = Cage::where('cage_code', $code)->firstOrFail();
 
-        // Find active assignment
-        // Logic: End date is null OR end date is in future
+        // Sync cage status based on active assignments
+        $cage->syncStatus();
+
+        // Find active assignment (only if currently active)
+        // Logic: start_date <= today AND end_date >= today
         $assignment = CageAssignment::where('cage_id', $cage->id)
-            ->where('start_date', '<=', now())
-            ->where(function($query) {
-                $query->whereNull('end_date')
-                      ->orWhere('end_date', '>=', now());
-            })
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
             ->with(['pet.owner', 'pet.medicalRecords' => function($query) {
                 $query->latest()->limit(5);
             }])

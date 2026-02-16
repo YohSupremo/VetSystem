@@ -13,7 +13,7 @@ class StaffController extends BaseController
     public function index()
     {
 
-        $staff = User::whereIn('role', ['admin', 'veterinarian', 'staff', 'reception', 'pharmacy', 'groomer', 'boarding'])->get();
+        $staff = User::whereIn('role', ['admin', 'veterinarian', 'staff', 'reception', 'pharmacy'])->get();
 
         return view('admin.staff.index', compact('staff'));
     }

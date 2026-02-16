@@ -47,4 +47,21 @@ class CageAssignment extends Model
         $today = now()->toDateString();
         return $today >= $this->start_date && $today <= $this->end_date;
     }
+
+    /**
+     * Scope: Get only active assignments (current or future)
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereDate('start_date', '<=', now())
+                     ->whereDate('end_date', '>=', now());
+    }
+
+    /**
+     * Scope: Get only expired assignments (past end_date)
+     */
+    public function scopeExpired($query)
+    {
+        return $query->whereDate('end_date', '<', now());
+    }
 }

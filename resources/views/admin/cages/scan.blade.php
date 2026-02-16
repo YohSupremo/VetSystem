@@ -795,11 +795,20 @@
                                 {{ $assignment->check_in_time ? \Carbon\Carbon::parse($assignment->check_in_time)->format('M d, Y h:i A') : 'Not recorded' }}
                                 <br>
                                 <strong>Expected Check-out:</strong> 
-                                {{ $assignment->end_date ? \Carbon\Carbon::parse($assignment->end_date)->format('M d, Y') : 'Not set' }}
+                                @if($assignment->end_date)
+                                    {{ \Carbon\Carbon::parse($assignment->end_date)->format('M d, Y') }}
+                                    @if($assignment->check_out_time)
+                                        {{ \Carbon\Carbon::parse($assignment->check_out_time)->format('h:i A') }}
+                                    @else
+                                        <span style="color: #6B7280; font-size: 0.875rem;">(Time: TBD)</span>
+                                    @endif
+                                @else
+                                    Not set
+                                @endif
                                 @if($assignment->check_out_time)
-                                <br>
-                                <strong>Actual Check-out:</strong> 
-                                {{ \Carbon\Carbon::parse($assignment->check_out_time)->format('M d, Y h:i A') }}
+                                    <br>
+                                    <strong>Actual Check-out:</strong> 
+                                    {{ \Carbon\Carbon::parse($assignment->check_out_time)->format('M d, Y h:i A') }}
                                 @endif
                                 @if($assignment->daily_rate)
                                 <br><br>

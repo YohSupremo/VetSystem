@@ -40,24 +40,18 @@ class UserController extends Controller
     $user = User::where('username', $username)->first();
 
     if ($user && Hash::check($credentials['password'], $user->password)) {
-        // Store username in session
+        // Log the user in using Laravel's Auth
+        \Illuminate\Support\Facades\Auth::login($user);
+        
+        // Also store username in session for backward compatibility
         session(['username' => $username]);
         
         // Redirect based on user role
-        if($user->role == 'admin') {
+        $adminRoles = ['admin', 'veterinarian', 'pharmacy', 'reception', 'boarding', 'groomer', 'staff'];
+        if (in_array($user->role, $adminRoles)) {
             return redirect('/admin/dashboard');
         } elseif($user->role == 'pet_owner' || $user->role == 'registered_user') {
             return redirect('/customer/dashboard');
-        } elseif($user->role == 'veterinarian') {
-            return redirect('/veterinarian/dashboard');
-        } elseif($user->role == 'receptionist') {
-            return redirect('/receptionist/dashboard');
-        } elseif($user->role == 'pharmacist') {
-            return redirect('/pharmacy/dashboard');
-        } elseif($user->role == 'groomer') {
-            return redirect('/grooming/dashboard');
-        } elseif($user->role == 'boarding') {
-            return redirect('/boarding/dashboard');
         } else{
             return redirect('/dashboard');
         }

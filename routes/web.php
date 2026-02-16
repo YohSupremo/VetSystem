@@ -61,6 +61,7 @@ Route::get('/dashboard', function(){
 });
 
 Route::get('/logout', function() {
+    \Illuminate\Support\Facades\Auth::logout();
     session()->forget('username');
     return redirect('/login');
 });
@@ -164,7 +165,7 @@ Route::prefix('veterinarian')->name('veterinarian.')->group(function () {
 });
 
 // Admin Routes
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

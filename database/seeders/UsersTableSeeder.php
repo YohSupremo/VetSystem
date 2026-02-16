@@ -29,7 +29,7 @@ class UsersTableSeeder extends Seeder
                 ['Ivy','Torres','09171234575','131 Main St, Manila'],
                 ['Jack','Mendoza','09171234576','132 Main St, Manila'],
             ],
-            'receptionist' => [
+            'reception' => [
                 ['Maria','Lopez','09211234567','55 Sunrise St, Manila'],
                 ['Lara','Santos','09211234568','56 Sunrise St, Manila'],
                 ['Nina','Torres','09211234569','57 Sunrise St, Manila'],
@@ -41,7 +41,7 @@ class UsersTableSeeder extends Seeder
                 ['Tom','Cruz','09211234575','63 Sunrise St, Manila'],
                 ['Ula','Reyes','09211234576','64 Sunrise St, Manila'],
             ],
-            'pharmacist' => [
+            'pharmacy' => [
                 ['Kevin','Chua','09221234567','77 Health Blvd, Makati'],
                 ['Lena','Santos','09221234568','78 Health Blvd, Makati'],
                 ['Milo','Tan','09221234569','79 Health Blvd, Makati'],
@@ -88,6 +88,13 @@ class UsersTableSeeder extends Seeder
                 ['Ethan','Mendoza','09261234574','28 Groom St, Manila'],
                 ['Chloe','Torres','09261234575','29 Groom St, Manila'],
                 ['Ryan','Santos','09261234576','30 Groom St, Manila'],
+            ],
+            'staff' => [
+                ['General','Staff','09271234567','15 General St, Manila'],
+                ['Support','Worker','09271234568','16 General St, Manila'],
+                ['Operations','Manager','09271234569','17 General St, Manila'],
+                ['Assistant','Admin','09271234570','18 General St, Manila'],
+                ['Office','Helper','09271234571','19 General St, Manila'],
             ],
         ];
 

@@ -697,37 +697,51 @@
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
                     </a>
-                   <a href="{{ route('admin.appointments.index') }}" class="nav-item {{ request()->routeIs('admin.appointments.*') ? 'active' : '' }}"> 
+                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian', 'reception', 'staff']))
+                    <a href="{{ route('admin.appointments.index') }}" class="nav-item {{ request()->routeIs('admin.appointments.*') ? 'active' : '' }}"> 
                         <i class="fas fa-calendar-check"></i>
                         <span>Appointments</span>
                         @if(isset($pendingAppointments) && $pendingAppointments > 0)
                             <span class="badge">{{ $pendingAppointments }}</span>
                         @endif
                     </a>
+                    @endif
+                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian', 'reception', 'staff', 'groomer', 'boarding']))
                     <a href="{{ route('admin.pets.index') }}" class="nav-item {{ request()->routeIs('admin.pets.*') ? 'active' : '' }}">
                         <i class="fas fa-paw"></i>
                         <span>Pets Registry</span>
                     </a>
-                    <a href="{{ route('admin.users.index') }}" class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                        <i class="fas fa-user"></i>
-                        <span>Users</span>
-                    </a>
+                    @endif
+                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian', 'reception', 'staff', 'groomer', 'boarding']))
                     <a href="{{ route('admin.pet-owners.index') }}" class="nav-item {{ request()->routeIs('admin.pet-owners.*') ? 'active' : '' }}">
                         <i class="fas fa-users"></i>
                         <span>Pet Owners</span>
                     </a>
+                    @endif
+                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian', 'reception', 'staff', 'groomer', 'boarding']))
                     <a href="{{ route('admin.queue.index') }}" class="nav-item {{ request()->routeIs('admin.queue.*') ? 'active' : '' }}">
                         <i class="fas fa-list-ul"></i>
                         <span>Queue Management</span>
                     </a>
+                    @endif
+                    @if(auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.users.index') }}" class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <i class="fas fa-user"></i>
+                        <span>Users</span>
+                    </a>
+                    @endif
                 </div>
 
+                @if(in_array(auth()->user()->role, ['admin', 'veterinarian']))
                 <div class="nav-section">
                     <div class="nav-section-title">Medical</div>
+                    @if(auth()->user()->role === 'admin')
                     <a href="{{ route('admin.medical-records.index') }}" class="nav-item {{ request()->routeIs('admin.medical-records.*') ? 'active' : '' }}">
                         <i class="fas fa-file-medical"></i>
                         <span>Medical Records</span>
                     </a>
+                    @endif
+                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian']))
                     <a href="{{ route('admin.vaccinations.index') }}" class="nav-item {{ request()->routeIs('admin.vaccinations.*') ? 'active' : '' }}">
                         <i class="fas fa-syringe"></i>
                         <span>Vaccinations</span>
@@ -740,46 +754,69 @@
                         <i class="fas fa-procedures"></i>
                         <span>Surgeries</span>
                     </a>
-                </div>
-
-                <div class="nav-section">
-                    <div class="nav-section-title">Services</div>
-                    <a href="{{ route('admin.boarding.index') }}" class="nav-item {{ request()->routeIs('admin.boarding.*') ? 'active' : '' }}">
-                        <i class="fas fa-hotel"></i>
-                        <span>Boarding</span>
-                    </a>
-                    <a href="{{ route('admin.cages.index') }}" class="nav-item {{ request()->routeIs('admin.cages.*') ? 'active' : '' }}">
-                        <i class="fas fa-border-all"></i>
-                        <span>Cages</span>
-                    </a>
-                    <a href="{{ route('admin.grooming.index') }}" class="nav-item {{ request()->routeIs('admin.grooming.*') ? 'active' : '' }}">
-                        <i class="fas fa-cut"></i>
-                        <span>Grooming</span>
-                    </a>
-                    <a href="{{ route('admin.pharmacy.index') }}" class="nav-item {{ request()->routeIs('admin.pharmacy.*') ? 'active' : '' }}">
-                        <i class="fas fa-capsules"></i>
-                        <span>Pharmacy</span>
-                    </a>
                     <a href="{{ route('admin.laboratory.index') }}" class="nav-item {{ request()->routeIs('admin.laboratory.*') ? 'active' : '' }}">
                         <i class="fas fa-flask"></i>
                         <span>Laboratory</span>
                     </a>
+                    @endif
+                </div>
+                @endif
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Services</div>
+                    @if(in_array(auth()->user()->role, ['admin', 'staff', 'boarding']))
+                    <a href="{{ route('admin.boarding.index') }}" class="nav-item {{ request()->routeIs('admin.boarding.*') ? 'active' : '' }}">
+                        <i class="fas fa-hotel"></i>
+                        <span>Boarding</span>
+                    </a>
+                    @endif
+                    @if(in_array(auth()->user()->role, ['admin', 'staff', 'boarding']))
+                    <a href="{{ route('admin.cages.index') }}" class="nav-item {{ request()->routeIs('admin.cages.*') ? 'active' : '' }}">
+                        <i class="fas fa-border-all"></i>
+                        <span>Cages</span>
+                    </a>
+                    @endif
+                    @if(in_array(auth()->user()->role, ['admin', 'staff', 'groomer']))
+                    <a href="{{ route('admin.grooming.index') }}" class="nav-item {{ request()->routeIs('admin.grooming.*') ? 'active' : '' }}">
+                        <i class="fas fa-cut"></i>
+                        <span>Grooming</span>
+                    </a>
+                    @endif
+                    @if(in_array(auth()->user()->role, ['admin', 'pharmacy']))
+                    <a href="{{ route('admin.pharmacy.index') }}" class="nav-item {{ request()->routeIs('admin.pharmacy.*') ? 'active' : '' }}">
+                        <i class="fas fa-capsules"></i>
+                        <span>Pharmacy</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.laboratory.index') }}" class="nav-item {{ request()->routeIs('admin.laboratory.*') ? 'active' : '' }}">
+                        <i class="fas fa-flask"></i>
+                        <span>Laboratory</span>
+                    </a>
+                    @endif
                 </div>
 
                 <div class="nav-section">
                     <div class="nav-section-title">Management</div>
+                    @if(in_array(auth()->user()->role, ['admin', 'pharmacy']))
                     <a href="{{ route('admin.inventory.index') }}" class="nav-item {{ request()->routeIs('admin.inventory.*') ? 'active' : '' }}">
                         <i class="fas fa-boxes"></i>
                         <span>Inventory</span>
                     </a>
+                    @endif
+                    @if(in_array(auth()->user()->role, ['admin', 'reception']))
                     <a href="{{ route('admin.billing.index') }}" class="nav-item {{ request()->routeIs('admin.billing.*') ? 'active' : '' }}">
                         <i class="fas fa-file-invoice-dollar"></i>
                         <span>Billing</span>
                     </a>
+                    @endif
+                    @if(in_array(auth()->user()->role, ['admin', 'pharmacy']))
                     <a href="{{ route('admin.orders.index') }}" class="nav-item {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
                         <i class="fas fa-shopping-bag"></i>
                         <span>Orders</span>
                     </a>
+                    @endif
+                    @if(auth()->user()->role === 'admin')
                     <a href="{{ route('admin.staff.index') }}" class="nav-item {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
                         <i class="fas fa-user-md"></i>
                         <span>Staff</span>
@@ -792,6 +829,7 @@
                         <i class="fas fa-cog"></i>
                         <span>Settings</span>
                     </a>
+                    @endif
                 </div>
             </nav>
         </aside>

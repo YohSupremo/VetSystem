@@ -122,6 +122,7 @@
     sources.forEach((source, index) => {
         const item = document.createElement('div');
         item.className = 'carousel-item';
+        item.style.transform = `rotateY(${index * 72}deg) translateZ(200px)`;
 
         if (hasImages) {
             const circle = document.createElement('div');
@@ -155,19 +156,10 @@
     });
 
     function updateCarousel() {
-        const items = document.querySelectorAll('.carousel-item');
+        const angle = -currentIndex * 72;
+        carousel.style.transform = `rotateY(${angle}deg)`;
+
         const indicators = document.querySelectorAll('.indicator');
-
-        items.forEach((item, index) => {
-            const position = (index - currentIndex + sources.length) % sources.length;
-            const isActive = position === 0;
-
-            item.style.transform = `translateX(${position * 100}%) scale(${isActive ? 1 : 0.8})`;
-            item.style.opacity = isActive ? '1' : '0';
-            item.style.zIndex = isActive ? '10' : '0';
-            item.style.pointerEvents = isActive ? 'auto' : 'none';
-        });
-
         indicators.forEach((indicator, index) => {
             indicator.classList.toggle('active', index === currentIndex);
         });

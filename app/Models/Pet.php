@@ -70,6 +70,16 @@ class Pet extends Model
         return $this->hasMany(CageAssignment::class);
     }
 
+    public function chronicConditions()
+    {
+        return $this->hasMany(ChronicCondition::class);
+    }
+
+    public function petAllergies()
+    {
+        return $this->hasMany(PetAllergy::class);
+    }
+
     public function getAgeAttribute()
     {
         if (!$this->birth_date) {

@@ -175,7 +175,7 @@ class VaccinationController extends Controller
     {
         $pet = Pet::findOrFail($petId);
         $vaccinations = $pet->vaccinations()
-            ->with(['vaccine', 'administeredBy'])
+            ->with(['inventoryItem', 'administeredBy'])
             ->orderBy('administered_date', 'desc')
             ->orderBy('id', 'desc')
             ->get();

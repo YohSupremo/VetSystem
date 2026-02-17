@@ -593,10 +593,22 @@
                 <!-- Empty State -->
                 <div class="empty-occupancy">
                     <div class="empty-icon">
-                        <i class="fas fa-door-open"></i>
+                        @if($cage->status === 'out_of_service' || $cage->status === 'maintenance')
+                            <i class="fas fa-tools"></i>
+                        @else
+                            <i class="fas fa-door-open"></i>
+                        @endif
                     </div>
-                    <h4 class="empty-title">Cage is Available</h4>
-                    <p class="empty-text">This cage is currently empty and ready for occupancy.</p>
+                    @if($cage->status === 'out_of_service')
+                        <h4 class="empty-title">Cage Out of Service</h4>
+                        <p class="empty-text">This cage is currently out of service and not available for occupancy.</p>
+                    @elseif($cage->status === 'maintenance')
+                        <h4 class="empty-title">Cage Under Maintenance</h4>
+                        <p class="empty-text">This cage is currently under maintenance and temporarily unavailable.</p>
+                    @else
+                        <h4 class="empty-title">Cage is Available</h4>
+                        <p class="empty-text">This cage is currently empty and ready for occupancy.</p>
+                    @endif
                 </div>
             @endif
         </div>

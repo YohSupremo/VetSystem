@@ -39,7 +39,7 @@
                             <tr>
                                 <td>
                                     <div style="font-weight:700; color: var(--dark-text);">
-                                        {{ $isVirtual ? 'Appointment (Vaccination)' : ($vaccination->vaccine->vaccine_name ?? 'N/A') }}
+                                        {{ $isVirtual ? 'Appointment (Vaccination)' : ($vaccination->inventoryItem->name ?? 'N/A') }}
                                     </div>
                                     @if(!$isVirtual && $vaccination->batch_number)
                                         <div style="font-size:12px; color: var(--light-text);">

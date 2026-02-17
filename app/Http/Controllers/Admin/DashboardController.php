@@ -17,7 +17,6 @@ class DashboardController extends Controller
         $hasPetOwners = Schema::hasTable('pet_owners');
         $hasAppointments = Schema::hasTable('appointments');
         $hasVaccinations = Schema::hasTable('pet_vaccinations');
-        $hasVaccines = Schema::hasTable('vaccines');
         $hasCages = Schema::hasTable('cages');
         $hasInventoryStock = Schema::hasTable('inventory_stock');
         $hasInventoryItems = Schema::hasTable('inventory_items');
@@ -148,10 +147,10 @@ class DashboardController extends Controller
 
         $vaccinationsDueSoon = collect();
         $vaccinationsDueSoonCount = 0;
-        if ($hasVaccinations && $hasPets && $hasVaccines) {
+        if ($hasVaccinations && $hasPets && $hasInventoryItems) {
             $vaccinationsDueSoonQuery = DB::table('pet_vaccinations')
                 ->leftJoin('pets', 'pet_vaccinations.pet_id', '=', 'pets.id')
-                ->leftJoin('vaccines', 'pet_vaccinations.vaccine_id', '=', 'vaccines.id')
+                ->leftJoin('inventory_items', 'pet_vaccinations.inventory_item_id', '=', 'inventory_items.id')
                 ->leftJoin('users as admins', 'pet_vaccinations.administered_by', '=', 'admins.id')
                 ->whereBetween('pet_vaccinations.next_due_date', [Carbon::today(), Carbon::today()->copy()->addDays(30)]);
 
@@ -165,7 +164,7 @@ class DashboardController extends Controller
                     'pet_vaccinations.notes',
                     'pet_vaccinations.dose_number',
                     'pets.name as pet_name',
-                    'vaccines.vaccine_name',
+                    'inventory_items.name as vaccine_name',
                     DB::raw("CONCAT(admins.first_name, ' ', admins.last_name) as administered_by"),
                 ])
                 ->map(function ($vaccination) {

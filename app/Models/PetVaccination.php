@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class PetVaccination extends Model
 {
     public $timestamps = false;
+    protected $table = 'pet_vaccinations';
 
     protected $fillable = [
         'pet_id',
-        'vaccine_id',
+        'inventory_item_id',
         'batch_number',
         'dose_number',
         'administered_date',
@@ -31,9 +32,9 @@ class PetVaccination extends Model
         return $this->belongsTo(Pet::class);
     }
 
-    public function vaccine()
+    public function inventoryItem()
     {
-        return $this->belongsTo(Vaccine::class);
+        return $this->belongsTo(InventoryItem::class);
     }
 
     public function administeredBy()

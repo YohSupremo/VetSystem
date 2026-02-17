@@ -107,7 +107,7 @@
                                         <tbody>
                                             @foreach($vaccinations as $vac)
                                                 <tr>
-                                                    <td class="fw-bold">{{ $vac->vaccine->vaccine_name ?? 'Unknown Vaccine' }}</td>
+                                                    <td class="fw-bold">{{ $vac->inventoryItem->name ?? 'Unknown Vaccine' }}</td>
                                                     <td>{{ date('M d, Y', strtotime($vac->administered_date)) }}</td>
                                                     <td>
                                                         @if($vac->next_due_date)

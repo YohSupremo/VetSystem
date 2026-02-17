@@ -241,27 +241,12 @@ CREATE TABLE surgeries (
 ) ENGINE=InnoDB;
 
 -- =============================
--- VACCINES
--- =============================
-CREATE TABLE vaccines (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    vaccine_name VARCHAR(150) NOT NULL UNIQUE,
-    manufacturer VARCHAR(100),
-    description TEXT,
-    is_active TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_name (vaccine_name),
-    INDEX idx_active (is_active)
-) ENGINE=InnoDB;
-
--- =============================
 -- PET VACCINATIONS
 -- =============================
 CREATE TABLE pet_vaccinations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     pet_id BIGINT UNSIGNED NOT NULL,
-    vaccine_id BIGINT UNSIGNED NOT NULL,
+    inventory_item_id BIGINT UNSIGNED,
     batch_number VARCHAR(50),
     dose_number INT DEFAULT 1 COMMENT '1=First dose, 2=Second dose, 3=Booster, etc.',
     administered_date DATE NOT NULL,
@@ -273,10 +258,10 @@ CREATE TABLE pet_vaccinations (
     reminder_sent TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE CASCADE,
-    FOREIGN KEY (vaccine_id) REFERENCES vaccines(id) ON DELETE RESTRICT,
+    FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE RESTRICT,
     FOREIGN KEY (administered_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_pet (pet_id),
-    INDEX idx_vaccine (vaccine_id),
+    INDEX idx_inventory_item (inventory_item_id),
     INDEX idx_next_due (next_due_date),
     INDEX idx_expiry (expiry_date),
     INDEX idx_vaccination_search (pet_id, next_due_date)

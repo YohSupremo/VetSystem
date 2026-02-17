@@ -255,16 +255,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::get('/pet/{pet}', [VaccinationController::class, 'byPet'])->name('pet');
     });
 
-    // Vaccines
-    Route::prefix('vaccines')->name('vaccines.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\VaccineController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\Admin\VaccineController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\Admin\VaccineController::class, 'store'])->name('store');
-        Route::get('/{vaccine}/edit', [App\Http\Controllers\Admin\VaccineController::class, 'edit'])->name('edit');
-        Route::put('/{vaccine}', [App\Http\Controllers\Admin\VaccineController::class, 'update'])->name('update');
-        Route::delete('/{vaccine}', [App\Http\Controllers\Admin\VaccineController::class, 'destroy'])->name('destroy');
-    });
-
     // Prescriptions
     Route::prefix('prescriptions')->name('prescriptions.')->group(function () {
         Route::get('/', [PrescriptionController::class, 'index'])->name('index');

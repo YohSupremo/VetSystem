@@ -13,7 +13,7 @@ class Vaccination extends Model
 
     protected $fillable = [
         'pet_id',
-        'vaccine_id',
+        'inventory_item_id',
         'batch_number',
         'dose_number',
         'administered_date',
@@ -36,9 +36,9 @@ class Vaccination extends Model
         return $this->belongsTo(Pet::class);
     }
 
-    public function vaccine(): BelongsTo
+    public function inventoryItem(): BelongsTo
     {
-        return $this->belongsTo(Vaccine::class);
+        return $this->belongsTo(InventoryItem::class);
     }
 
     public function veterinarian(): BelongsTo

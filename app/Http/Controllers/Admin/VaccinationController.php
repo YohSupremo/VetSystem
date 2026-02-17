@@ -7,7 +7,6 @@ use App\Models\Appointment;
 use App\Models\InventoryItem;
 use App\Models\Pet;
 use App\Models\Vaccination;
-use App\Models\Vaccine;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -89,14 +88,6 @@ class VaccinationController extends Controller
                 ->withInput();
         }
 
-        $vaccine = Vaccine::firstOrCreate(
-            ['vaccine_name' => $inventoryItem->name],
-            ['is_active' => true]
-        );
-
-        $validated['vaccine_id'] = $vaccine->id;
-        unset($validated['inventory_item_id']);
-
         Vaccination::create($validated);
 
         return redirect()->route('admin.vaccinations.index')
@@ -108,7 +99,7 @@ class VaccinationController extends Controller
      */
     public function show($id)
     {
-        $vaccination = Vaccination::with(['pet.owner.user', 'vaccine', 'administeredBy'])
+        $vaccination = Vaccination::with(['pet.owner.user', 'inventoryItem', 'administeredBy'])
             ->findOrFail($id);
 
         return view('admin.vaccinations.show', compact('vaccination'));
@@ -119,19 +110,14 @@ class VaccinationController extends Controller
      */
     public function edit($id)
     {
-        $vaccination = Vaccination::with(['pet.owner.user', 'vaccine', 'administeredBy'])->findOrFail($id);
+        $vaccination = Vaccination::with(['pet.owner.user', 'inventoryItem', 'administeredBy'])->findOrFail($id);
         $pets = Pet::with('owner.user')->get();
         $vaccineItems = InventoryItem::where('category', 'vaccine')
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
         $veterinarians = User::where('role', 'veterinarian')->orderBy('first_name')->get();
-        $selectedVaccineItemId = null;
-        if ($vaccination->vaccine) {
-            $selectedVaccineItemId = InventoryItem::where('category', 'vaccine')
-                ->where('name', $vaccination->vaccine->vaccine_name)
-                ->value('id');
-        }
+        $selectedVaccineItemId = $vaccination->inventory_item_id;
 
         return view('admin.vaccinations.edit', compact('vaccination', 'pets', 'vaccineItems', 'veterinarians', 'selectedVaccineItemId'));
     }
@@ -163,14 +149,6 @@ class VaccinationController extends Controller
                 ->withErrors(['inventory_item_id' => 'Please select a valid vaccine from inventory.'])
                 ->withInput();
         }
-
-        $vaccine = Vaccine::firstOrCreate(
-            ['vaccine_name' => $inventoryItem->name],
-            ['is_active' => true]
-        );
-
-        $validated['vaccine_id'] = $vaccine->id;
-        unset($validated['inventory_item_id']);
 
         $vaccination->update($validated);
 

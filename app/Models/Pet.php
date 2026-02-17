@@ -35,16 +35,6 @@ class Pet extends Model
         return $this->belongsTo(PetOwner::class, 'owner_id');
     }
 
-    public function chronicConditions()
-    {
-        return $this->hasMany(ChronicCondition::class);
-    }
-
-    public function petAllergies()
-    {
-        return $this->hasMany(PetAllergy::class);
-    }
-
     public function surgeries()
     {
         return $this->hasMany(Surgery::class);

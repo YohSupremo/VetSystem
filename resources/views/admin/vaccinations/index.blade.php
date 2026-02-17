@@ -8,9 +8,11 @@
     <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
         <h3 style="margin:0;"><i class="fas fa-syringe"></i> Vaccination Records</h3>
         <div style="display: flex; gap: 10px;">
+            @if(auth()->user()->role !== 'veterinarian')
             <a href="{{ route('admin.inventory.index') }}" class="btn btn-success">
                 <i class="fas fa-vial"></i> Manage Vaccines (Inventory)
             </a>
+            @endif
             <a href="{{ route('admin.vaccinations.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Add Vaccination
             </a>

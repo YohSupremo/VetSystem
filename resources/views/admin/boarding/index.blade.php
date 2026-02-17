@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Boarding Management')
+@section('page-description', 'Manage pet boarding and accommodations')
+
 @push('styles')
 <style>
     .dashboard-cards {

@@ -56,13 +56,7 @@
                         <div class="col-12">
                             <h5 class="text-muted small text-uppercase mb-3">Pet Information</h5>
                             <div class="d-flex align-items-center p-3 bg-light rounded-3">
-                                @if($appointment->pet->photo_path)
-                                    <img src="{{ asset($appointment->pet->photo_path) }}" alt="{{ $appointment->pet->name }}" class="rounded-circle me-3" width="60" height="60" style="object-fit: cover;">
-                                @else
-                                    <div class="bg-white rounded-circle me-3 d-flex align-items-center justify-content-center border" style="width: 60px; height: 60px;">
-                                        <i class="fas fa-paw fa-2x text-muted"></i>
-                                    </div>
-                                @endif
+                                <img src="{{ $appointment->pet->photo_url }}" alt="{{ $appointment->pet->name }}" class="rounded-circle me-3" width="60" height="60" style="object-fit: cover;">
                                 <div>
                                     <h5 class="mb-1">{{ $appointment->pet->name }}</h5>
                                     <p class="mb-0 text-muted small">

@@ -173,18 +173,31 @@ class BillingController extends Controller
             ->whereIn('status', ['pending', 'partial'])
             ->findOrFail($id);
         
+        // Normalize payment method to supported enum values
+        $paymentMethod = $request->payment_method;
+        if ($paymentMethod === 'ewallet' || $paymentMethod === 'e-wallet') {
+            $paymentMethod = 'mobile_payment';
+        }
+
+        $amount = abs((float) $request->amount);
+        if ($amount <= 0) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Payment amount must be greater than zero.');
+        }
+
         // Create payment record
         $payment = Payment::create([
             'invoice_id' => $invoice->id,
-            'amount' => $request->amount,
-            'payment_method' => $request->payment_method,
+            'amount' => $amount,
+            'payment_method' => $paymentMethod,
             'reference_number' => $request->reference_number,
             'notes' => $request->notes
         ]);
         
         // Update invoice status
         $totalPaid = $invoice->payments()->sum('amount');
-        $invoice->paid_amount = $totalPaid;
         
         if ($totalPaid >= $invoice->total_amount) {
             $invoice->status = 'paid';

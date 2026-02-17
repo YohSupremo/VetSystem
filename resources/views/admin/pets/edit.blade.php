@@ -261,11 +261,6 @@
                     <select name="species" id="species" required>
                         <option value="dog" {{ old('species', $pet->species) == 'dog' ? 'selected' : '' }}>Dog</option>
                         <option value="cat" {{ old('species', $pet->species) == 'cat' ? 'selected' : '' }}>Cat</option>
-                        <option value="rabbit" {{ old('species', $pet->species) == 'rabbit' ? 'selected' : '' }}>Rabbit</option>
-                        <option value="bird" {{ old('species', $pet->species) == 'bird' ? 'selected' : '' }}>Bird</option>
-                        <option value="hamster" {{ old('species', $pet->species) == 'hamster' ? 'selected' : '' }}>Hamster</option>
-                        <option value="guinea_pig" {{ old('species', $pet->species) == 'guinea_pig' ? 'selected' : '' }}>Guinea Pig</option>
-                        <option value="other" {{ old('species', $pet->species) == 'other' ? 'selected' : '' }}>Other</option>
                     </select>
                     @if($errors->has('species'))
                         <div class="error-message">{{ $errors->first('species') }}</div>

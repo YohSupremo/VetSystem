@@ -47,13 +47,7 @@
                     <div class="card h-100 border-0 shadow-sm hover-card">
                         <div class="card-body p-4 text-center">
                             <div class="mb-3 position-relative d-inline-block">
-                                @if($pet->photo_path)
-                                    <img src="{{ asset($pet->photo_path) }}" alt="{{ $pet->name }}" class="rounded-circle shadow-sm" width="120" height="120" style="object-fit: cover;">
-                                @else
-                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center shadow-sm mx-auto" style="width: 120px; height: 120px;">
-                                        <i class="fas fa-paw fa-3x text-muted"></i>
-                                    </div>
-                                @endif
+                                <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" class="rounded-circle shadow-sm" width="120" height="120" style="object-fit: cover;">
                             </div>
                             
                             <h3 class="h4 fw-bold mb-1">{{ $pet->name }}</h3>

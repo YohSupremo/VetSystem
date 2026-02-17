@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'New Grooming Appointment')
+@section('page-description', 'Schedule a new grooming appointment')
+
 @push('styles')
 <style>
     .form-container {

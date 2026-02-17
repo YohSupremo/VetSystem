@@ -31,9 +31,7 @@
                         <div class="col-md-6 border-end">
                             <h6 class="text-uppercase text-muted small fw-bold mb-3">Patient</h6>
                             <div class="d-flex align-items-center">
-                                @if($pet->photo_path)
-                                    <img src="{{ asset($pet->photo_path) }}" class="rounded-circle me-3" width="50" height="50" style="object-fit: cover;">
-                                @endif
+                                <img src="{{ $pet->photo_url }}" class="rounded-circle me-3" width="50" height="50" style="object-fit: cover;">
                                 <div>
                                     <h5 class="mb-1">{{ $pet->name }}</h5>
                                     <div class="small text-muted">{{ $pet->species }} • {{ $pet->breed }}</div>

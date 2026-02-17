@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Edit Staff Member')
+@section('page-description', 'Update staff member information')
+
 @section('content')
 <div class="staff-form-wrapper">
     <!-- Enhanced Header -->

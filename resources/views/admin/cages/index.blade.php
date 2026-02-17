@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Cage Management')
+@section('page-description', 'Manage boarding cages and assignments')
+
 @section('content')
 <style>
     /* Simplified Theme */

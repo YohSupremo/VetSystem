@@ -157,6 +157,11 @@
     font-size: 12px;
 }
 
+.badge-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
 .btn {
     border-radius: 6px;
     font-weight: 600;

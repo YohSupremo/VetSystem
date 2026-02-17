@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\IncidentController;
 
 // Welcome Page with Dynamic Carousel
 Route::get('/', function () {
@@ -52,7 +53,7 @@ Route::get('/register', function(){
 
 Route::get('/login', function(){
     return view('login');
-});
+})->name('login');
 
 Route::post('/register/create', [UserController::class, 'register']);
 Route::post('/login-success', [UserController::class,'login']);
@@ -96,6 +97,12 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::get('/medical-records', [App\Http\Controllers\Customer\MedicalRecordController::class, 'index'])->name('medical-records.index');
     Route::get('/medical-records/pets/{petId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'petRecords'])->name('medical-records.pet');
     Route::get('/medical-records/pets/{petId}/records/{recordId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'show'])->name('medical-records.show');
+
+    // Incident Reports
+    Route::get('/incidents', [App\Http\Controllers\Customer\IncidentController::class, 'index'])->name('incidents.index');
+    Route::get('/incidents/create', [App\Http\Controllers\Customer\IncidentController::class, 'create'])->name('incidents.create');
+    Route::post('/incidents', [App\Http\Controllers\Customer\IncidentController::class, 'store'])->name('incidents.store');
+    Route::get('/incidents/{id}', [App\Http\Controllers\Customer\IncidentController::class, 'show'])->name('incidents.show');
     
     // Products / Shop
     Route::get('/products', [App\Http\Controllers\Customer\ProductController::class, 'index'])->name('products.index');
@@ -227,6 +234,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::put('/{medicalRecord}', [MedicalRecordController::class, 'update'])->name('update');
         Route::delete('/{medicalRecord}', [MedicalRecordController::class, 'destroy'])->name('destroy');
         Route::get('/pet/{pet}', [MedicalRecordController::class, 'byPet'])->name('pet');
+    });
+
+    // Incident Reports
+    Route::prefix('incidents')->name('incidents.')->group(function () {
+        Route::get('/', [IncidentController::class, 'index'])->name('index');
+        Route::get('/{id}', [IncidentController::class, 'show'])->name('show');
+        Route::put('/{id}', [IncidentController::class, 'update'])->name('update');
     });
 
     // Vaccinations

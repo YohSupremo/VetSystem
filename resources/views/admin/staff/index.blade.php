@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Staff Management')
+@section('page-description', 'Manage staff members and schedules')
+
 @section('content')
 <div class="content-header d-flex justify-content-between align-items-center mb-4">
     <div class="header-title">

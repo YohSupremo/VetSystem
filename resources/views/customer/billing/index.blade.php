@@ -125,9 +125,7 @@
                             <td>
                                 @if($invoice->pet)
                                     <div class="d-flex align-items-center">
-                                        @if($invoice->pet->photo_path)
-                                            <img src="{{ asset($invoice->pet->photo_path) }}" class="rounded-circle me-2" width="24" height="24">
-                                        @endif
+                                        <img src="{{ $invoice->pet->photo_url }}" class="rounded-circle me-2" width="24" height="24" alt="{{ $invoice->pet->name }}">
                                         {{ $invoice->pet->name }}
                                     </div>
                                 @else

@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Boarding Details')
+@section('page-description', 'View boarding reservation details')
+
 @push('styles')
 <style>
     .show-container {
@@ -286,7 +289,7 @@
         <div class="pet-preview">
             <div class="pet-preview-item">
                 @php $pet = $boarding->pet; @endphp
-                <img src="{{ $pet && $pet->photo_path ? $pet->photo_url : asset('images/default-pet.jpg') }}" alt="Pet" class="pet-preview-image">
+                <img src="{{ $pet && $pet->photo_path ? $pet->photo_url : asset('images/default-pet.svg') }}" alt="Pet" class="pet-preview-image">
                 <div class="pet-preview-info">
                     <h3>{{ $pet?->name ?? 'N/A' }}</h3>
                     <p><strong>Breed:</strong> {{ $pet?->breed ?? 'N/A' }}</p>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f5f5f7" />
+      <stop offset="1" stop-color="#e8e8ee" />
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="24" fill="url(#bg)" />
+  <circle cx="100" cy="92" r="52" fill="#ffffff" opacity="0.6" />
+  <g fill="#c6c6d4">
+    <circle cx="76" cy="80" r="8" />
+    <circle cx="124" cy="80" r="8" />
+    <circle cx="68" cy="104" r="10" />
+    <circle cx="132" cy="104" r="10" />
+    <circle cx="100" cy="118" r="14" />
+  </g>
+  <text x="100" y="170" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#9b9bb0">No Photo</text>
+</svg>

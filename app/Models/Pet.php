@@ -92,8 +92,20 @@ class Pet extends Model
     {
         if ($this->photo_path && trim($this->photo_path) !== '') {
             $path = ltrim($this->photo_path, '/');
-            return asset($path) . '?v=' . ($this->updated_at ? $this->updated_at->timestamp : time());
+            $fullPath = public_path($path);
+            if (file_exists($fullPath)) {
+                $imageInfo = @getimagesize($fullPath);
+                if ($imageInfo !== false) {
+                    return asset($path) . '?v=' . ($this->updated_at ? $this->updated_at->timestamp : time());
+                }
+            }
         }
+
+        $defaultPath = 'images/default-pet.svg';
+        if (file_exists(public_path($defaultPath))) {
+            return asset($defaultPath);
+        }
+
         return 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect fill="#f0f0f0" width="200" height="200"/><text x="50%" y="50%" font-size="80" text-anchor="middle" dominant-baseline="middle" fill="#ccc">?</text></svg>');
     }
 

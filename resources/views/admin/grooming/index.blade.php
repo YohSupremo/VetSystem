@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Grooming Services')
+@section('page-description', 'Manage grooming appointments and services')
+
 @push('styles')
 <style>
     .content-header {

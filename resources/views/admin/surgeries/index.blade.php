@@ -93,6 +93,15 @@
     color: rgba(255, 255, 255, 0.2);
     font-size: 4rem;
     overflow: hidden;
+    padding: 18px;
+}
+
+.pet-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.85);
 }
 
 .pet-image i {

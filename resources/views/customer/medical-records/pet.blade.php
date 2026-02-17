@@ -14,13 +14,7 @@
                     <p class="text-muted mb-0">Complete timeline of visits and treatments</p>
                 </div>
                 <div class="ms-auto">
-                    @if($pet->photo_path)
-                        <img src="{{ asset($pet->photo_path) }}" alt="{{ $pet->name }}" class="rounded-circle shadow-sm" width="60" height="60" style="object-fit: cover;">
-                    @else
-                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 60px; height: 60px;">
-                            <i class="fas fa-paw fa-2x text-muted"></i>
-                        </div>
-                    @endif
+                    <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" class="rounded-circle shadow-sm" width="60" height="60" style="object-fit: cover;">
                 </div>
             </div>
 

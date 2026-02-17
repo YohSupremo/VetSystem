@@ -37,7 +37,7 @@
                 
                 <div class="d-flex align-items-center gap-3">
                     <div class="user-avatar">SJ</div>
-                    <a href="#" class="logout-btn">
+                    <a href="/logout" class="logout-btn">
                         <i class="fas fa-sign-out-alt me-2"></i>Logout
                     </a>
                 </div>

@@ -188,11 +188,6 @@
                         <option value="">-- Select --</option>
                         <option value="dog" {{ old('species') == 'dog' ? 'selected' : '' }}>Dog</option>
                         <option value="cat" {{ old('species') == 'cat' ? 'selected' : '' }}>Cat</option>
-                        <option value="rabbit" {{ old('species') == 'rabbit' ? 'selected' : '' }}>Rabbit</option>
-                        <option value="bird" {{ old('species') == 'bird' ? 'selected' : '' }}>Bird</option>
-                        <option value="hamster" {{ old('species') == 'hamster' ? 'selected' : '' }}>Hamster</option>
-                        <option value="guinea_pig" {{ old('species') == 'guinea_pig' ? 'selected' : '' }}>Guinea Pig</option>
-                        <option value="other" {{ old('species') == 'other' ? 'selected' : '' }}>Other</option>
                     </select>
                     @if($errors->has('species'))
                         <div class="error-message">{{ $errors->first('species') }}</div>
@@ -295,11 +290,19 @@
     photoInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
             const file = e.target.files[0];
-            photoUpload.innerHTML = `
-                <i class="fas fa-check" style="color: var(--accent-green);"></i>
-                <p>${file.name}</p>
-                <p style="font-size: 11px; margin-top: 5px;">Ready to upload</p>
-            `;
+            const paragraphs = photoUpload.querySelectorAll('p');
+            if (paragraphs.length > 0) {
+                paragraphs[0].textContent = file.name;
+                if (paragraphs.length > 1) {
+                    paragraphs[1].textContent = 'Ready to upload';
+                }
+            }
+            const icon = photoUpload.querySelector('i');
+            if (icon) {
+                icon.classList.remove('fa-cloud-upload-alt');
+                icon.classList.add('fa-check');
+                icon.style.color = 'var(--accent-green)';
+            }
         }
     });
 </script>

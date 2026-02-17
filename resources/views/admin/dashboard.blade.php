@@ -702,11 +702,13 @@
                 @if($showMedical)
                 <div class="nav-section">
                     <div class="nav-section-title">Medical</div>
-                    @if(auth()->user()->role === 'admin')
+                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian']))
                     <a href="{{ route('admin.medical-records.index') }}" class="nav-item {{ request()->routeIs('admin.medical-records.*') ? 'active' : '' }}">
                         <i class="fas fa-file-medical"></i>
                         <span>Medical Records</span>
                     </a>
+                    @endif
+                    @if(auth()->user()->role === 'admin')
                     <a href="{{ route('admin.incidents.index') }}" class="nav-item {{ request()->routeIs('admin.incidents.*') ? 'active' : '' }}">
                         <i class="fas fa-exclamation-triangle"></i>
                         <span>Incidents</span>

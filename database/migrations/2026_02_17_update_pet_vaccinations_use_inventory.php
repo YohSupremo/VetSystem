@@ -10,10 +10,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('pet_vaccinations', function (Blueprint $table) {
-            // Drop the vaccine_id foreign key
-            $table->dropForeign('pet_vaccinations_vaccine_id_foreign');
-            $table->dropColumn('vaccine_id');
-            
             // Add inventory_item_id
             $table->foreignId('inventory_item_id')->nullable()->constrained('inventory_items')->onDelete('restrict');
         });
@@ -24,9 +20,6 @@ return new class extends Migration
         Schema::table('pet_vaccinations', function (Blueprint $table) {
             $table->dropForeign('pet_vaccinations_inventory_item_id_foreign');
             $table->dropColumn('inventory_item_id');
-            
-            // Restore vaccine_id
-            $table->foreignId('vaccine_id')->constrained()->onDelete('restrict');
         });
     }
 };

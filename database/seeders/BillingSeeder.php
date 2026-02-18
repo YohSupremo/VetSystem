@@ -26,64 +26,64 @@ class BillingSeeder extends Seeder
 
             $pet = Pet::firstOrCreate(
                 ['owner_id' => $owner->id, 'name' => 'Pet ' . ($index + 1)],
-                ['species' => 'Dog', 'breed' => 'Mixed', 'gender' => 'unknown']
+                [
+                    'registration_number' => '2026-' . str_pad($index + 1, 6, '0', STR_PAD_LEFT),
+                    'species' => 'Dog',
+                    'breed' => 'Mixed',
+                    'gender' => 'unknown'
+                ]
             );
 
-            $invoice = BillingInvoice::create([
-                'invoice_number' => '',
+            $invoice = new BillingInvoice([
                 'pet_id' => $pet->id,
-                'pet_owner_id' => $owner->id,
-                'invoice_date' => Carbon::now()->subDays(3)->toDateString(),
+                'owner_id' => $owner->id,
+                'invoice_prefix' => 'INV',
+                'issue_date' => Carbon::now()->subDays(3)->toDateString(),
                 'due_date' => Carbon::now()->addDays(7)->toDateString(),
                 'status' => $index === 0 ? 'paid' : 'partial',
-                'tax_amount' => 50,
+                'tax_rate' => 0,
                 'discount_amount' => 20,
                 'notes' => 'Seeded invoice for billing demo.',
-                'created_by' => $admin?->id,
             ]);
 
+            // Generate invoice number and sequence
             $invoice->invoice_number = $invoice->generateInvoiceNumber();
             $invoice->save();
 
             $items = [
                 ['type' => 'consultation', 'desc' => 'General checkup', 'qty' => 1, 'price' => 500],
-                ['type' => 'medication', 'desc' => 'Antibiotics', 'qty' => 2, 'price' => 150],
+                ['type' => 'product', 'desc' => 'Antibiotics', 'qty' => 2, 'price' => 150],
             ];
 
-            $subtotal = 0;
             foreach ($items as $item) {
-                $total = $item['qty'] * $item['price'];
-                $subtotal += $total;
-
                 BillingInvoiceItem::create([
                     'invoice_id' => $invoice->id,
                     'item_type' => $item['type'],
                     'description' => $item['desc'],
                     'quantity' => $item['qty'],
                     'unit_price' => $item['price'],
-                    'total_price' => $total,
                 ]);
             }
 
-            $invoice->subtotal = $subtotal;
-            $invoice->total_amount = $subtotal + $invoice->tax_amount - $invoice->discount_amount;
-
+            // Create payment for the invoice based on status
             if ($invoice->status === 'paid') {
-                $invoice->paid_amount = $invoice->total_amount;
-            } else {
-                $invoice->paid_amount = round($invoice->total_amount / 2, 2);
-            }
-
-            $invoice->save();
-
-            if ($invoice->paid_amount > 0) {
                 BillingPayment::create([
                     'invoice_id' => $invoice->id,
                     'payment_date' => Carbon::now()->subDay(),
-                    'amount' => $invoice->paid_amount,
+                    'amount' => $invoice->total_amount,
                     'payment_method' => 'cash',
-                    'transaction_id' => 'SEED-' . $invoice->id,
+                    'reference_number' => 'SEED-' . $invoice->id,
                     'notes' => 'Seeded payment',
+                    'received_by' => $admin?->id,
+                ]);
+            } elseif ($invoice->status === 'partial') {
+                BillingPayment::create([
+                    'invoice_id' => $invoice->id,
+                    'payment_date' => Carbon::now()->subDay(),
+                    'amount' => round($invoice->total_amount / 2, 2),
+                    'payment_method' => 'cash',
+                    'reference_number' => 'SEED-' . $invoice->id,
+                    'notes' => 'Seeded partial payment',
                     'received_by' => $admin?->id,
                 ]);
             }

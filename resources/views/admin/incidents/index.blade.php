@@ -19,13 +19,13 @@
     }
 </style>
 
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
 
 <div class="card">
     <div class="card-header">
         <h3>Incident Reports</h3>
+        <a href="{{ route('admin.incidents.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>New Incident
+        </a>
     </div>
     <div class="card-body p-0">
         @if($incidents->isEmpty())
@@ -65,11 +65,22 @@
                                     <a href="{{ route('admin.incidents.show', $incident->id) }}" class="btn btn-sm btn-outline-primary">
                                         View
                                     </a>
+                                    <a href="{{ route('admin.incidents.edit', $incident->id) }}" class="btn btn-sm btn-outline-secondary">
+                                        Edit
+                                    </a>
+                                    <form action="{{ route('admin.incidents.destroy', $incident->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this incident?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
                                 </td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+            <div class="p-3">
+                {{ $incidents->links() }}
             </div>
         @endif
     </div>

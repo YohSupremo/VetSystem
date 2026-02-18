@@ -239,8 +239,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
     // Incident Reports
     Route::prefix('incidents')->name('incidents.')->group(function () {
         Route::get('/', [IncidentController::class, 'index'])->name('index');
+        Route::get('/create', [IncidentController::class, 'create'])->name('create');
+        Route::post('/', [IncidentController::class, 'store'])->name('store');
         Route::get('/{id}', [IncidentController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [IncidentController::class, 'edit'])->name('edit');
         Route::put('/{id}', [IncidentController::class, 'update'])->name('update');
+        Route::put('/{id}/status', [IncidentController::class, 'updateStatus'])->name('status-update');
+        Route::delete('/{id}', [IncidentController::class, 'destroy'])->name('destroy');
     });
 
     // Vaccinations
@@ -299,6 +304,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::get('/', [BoardingController::class, 'index'])->name('index');
         Route::get('/new-boarding', [BoardingController::class, 'create'])->name('new-boarding');
         Route::post('/new-boarding', [BoardingController::class, 'createPass'])->name('new-boarding.store');
+        Route::post('/{boarding}/invoice', [BoardingController::class, 'generateInvoice'])->name('invoice.generate');
+        Route::post('/{boarding}/payment', [BoardingController::class, 'processPayment'])->name('payment.process');
         
         // RESTful routes
         Route::get('/create', [BoardingController::class, 'create'])->name('create');
@@ -356,6 +363,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
     // Cages
     Route::resource('cages', \App\Http\Controllers\Admin\CageController::class);
     Route::get('/cages/scan/{code}', [\App\Http\Controllers\Admin\CageController::class, 'scan'])->name('cages.scan');
+    Route::post('/cages/{id}/release', [\App\Http\Controllers\Admin\CageController::class, 'release'])->name('cages.release');
 
 // Customer Routes
     Route::get('prescriptions/pet/{petId}', [PrescriptionController::class, 'byPet'])->name('prescriptions.pet');

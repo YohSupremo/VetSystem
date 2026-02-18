@@ -9,6 +9,23 @@ use Illuminate\Http\Request;
 
 class CageController extends Controller
 {
+    private function activeAssignmentQuery(int $cageId)
+    {
+        $now = now();
+
+        return CageAssignment::where('cage_id', $cageId)
+            ->where(function ($query) use ($now) {
+                $query->whereNull('check_in_time')
+                    ->whereDate('start_date', '<=', $now->toDateString())
+                    ->orWhere('check_in_time', '<=', $now);
+            })
+            ->where(function ($query) use ($now) {
+                $query->whereNull('check_out_time')
+                    ->whereDate('end_date', '>=', $now->toDateString())
+                    ->orWhere('check_out_time', '>', $now);
+            });
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -35,9 +52,7 @@ class CageController extends Controller
         $cage->syncStatus();
         
         // Find current assignment if any
-        $assignment = CageAssignment::where('cage_id', $cage->id)
-            ->whereDate('start_date', '<=', now())
-            ->whereDate('end_date', '>=', now())
+        $assignment = $this->activeAssignmentQuery($cage->id)
             ->with(['pet.owner', 'pet.medicalRecords'])
             ->latest()
             ->first();
@@ -61,9 +76,7 @@ class CageController extends Controller
 
         // Find active assignment (only if currently active)
         // Logic: start_date <= today AND end_date >= today
-        $assignment = CageAssignment::where('cage_id', $cage->id)
-            ->whereDate('start_date', '<=', now())
-            ->whereDate('end_date', '>=', now())
+        $assignment = $this->activeAssignmentQuery($cage->id)
             ->with(['pet.owner', 'pet.medicalRecords' => function($query) {
                 $query->latest()->limit(5);
             }])
@@ -71,5 +84,29 @@ class CageController extends Controller
             ->first();
 
         return view('admin.cages.scan', compact('cage', 'assignment'));
+    }
+
+    /**
+     * Release current pet from cage.
+     */
+    public function release(string $id)
+    {
+        $cage = Cage::findOrFail($id);
+
+        $assignment = $this->activeAssignmentQuery($cage->id)->latest()->first();
+
+        if (!$assignment) {
+            return redirect()->route('admin.cages.index')
+                ->with('warning', 'No active cage assignment to release.');
+        }
+
+        $assignment->update([
+            'check_out_time' => now(),
+        ]);
+
+        $cage->syncStatus();
+
+        return redirect()->route('admin.cages.index')
+            ->with('success', 'Pet released successfully. Cage is now available.');
     }
 }

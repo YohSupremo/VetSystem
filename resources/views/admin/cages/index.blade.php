@@ -188,6 +188,23 @@
         opacity: 0.9;
     }
 
+    .btn-release {
+        background: #10B981;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+    }
+
+    .btn-release:hover {
+        opacity: 0.9;
+    }
+
     /* Pagination */
     .pagination {
         background: var(--card);
@@ -383,6 +400,13 @@
 </style>
 
 <div class="container">
+    @if(session('success'))
+        <div class="alert alert-success mb-3">{{ session('success') }}</div>
+    @endif
+    @if(session('warning'))
+        <div class="alert alert-warning mb-3">{{ session('warning') }}</div>
+    @endif
+
     <!-- Header -->
     <div class="header">
         <h1 class="title">Cage Management</h1>
@@ -439,6 +463,15 @@
                         <i class="fas fa-qrcode"></i>
                         QR Code
                     </button>
+                    @if($cage->status === 'occupied')
+                        <form method="POST" action="{{ route('admin.cages.release', $cage->id) }}" onsubmit="return confirm('Release pet from this cage?');" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn-release">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Release
+                            </button>
+                        </form>
+                    @endif
                     <a href="{{ route('admin.cages.show', $cage->id) }}" class="btn-details">
                         Details
                         <i class="fas fa-arrow-right"></i>

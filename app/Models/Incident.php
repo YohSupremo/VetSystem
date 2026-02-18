@@ -41,6 +41,11 @@ class Incident extends Model
         return $this->belongsTo(User::class, 'reported_by');
     }
 
+    public function affectedUser()
+    {
+        return $this->belongsTo(User::class, 'affected_user_id');
+    }
+
     public function cage()
     {
         return $this->belongsTo(Cage::class);

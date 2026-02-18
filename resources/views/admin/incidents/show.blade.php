@@ -20,14 +20,18 @@
     }
 </style>
 
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
-
 <div class="card">
     <div class="card-header">
         <h3>Incident {{ $incident->incident_number }}</h3>
-        <a href="{{ route('admin.incidents.index') }}" class="btn btn-secondary">Back to List</a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.incidents.edit', $incident->id) }}" class="btn btn-primary">Edit</a>
+            <form action="{{ route('admin.incidents.destroy', $incident->id) }}" method="POST" onsubmit="return confirm('Delete this incident?');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+            <a href="{{ route('admin.incidents.index') }}" class="btn btn-secondary">Back to List</a>
+        </div>
     </div>
     <div class="card-body">
         <div class="row g-4">
@@ -55,6 +59,14 @@
                 <div class="detail-label">Reported By</div>
                 <div class="detail-value">{{ $incident->reportedBy->first_name ?? 'N/A' }} {{ $incident->reportedBy->last_name ?? '' }}</div>
             </div>
+            <div class="col-md-4">
+                <div class="detail-label">Affected User</div>
+                <div class="detail-value">{{ $incident->affectedUser->first_name ?? 'N/A' }} {{ $incident->affectedUser->last_name ?? '' }}</div>
+            </div>
+            <div class="col-md-4">
+                <div class="detail-label">Cage</div>
+                <div class="detail-value">{{ $incident->cage->cage_code ?? 'N/A' }}</div>
+            </div>
             <div class="col-12">
                 <div class="detail-label">Location</div>
                 <div class="detail-value">{{ $incident->location }}</div>
@@ -69,6 +81,18 @@
                     <div class="detail-value">{{ $incident->immediate_action_taken }}</div>
                 </div>
             @endif
+            @if($incident->root_cause)
+                <div class="col-12">
+                    <div class="detail-label">Root Cause</div>
+                    <div class="detail-value">{{ $incident->root_cause }}</div>
+                </div>
+            @endif
+            @if($incident->corrective_action)
+                <div class="col-12">
+                    <div class="detail-label">Corrective Action</div>
+                    <div class="detail-value">{{ $incident->corrective_action }}</div>
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -78,7 +102,7 @@
         <h3>Assign Responders</h3>
     </div>
     <div class="card-body">
-        <form method="POST" action="{{ route('admin.incidents.update', $incident->id) }}">
+        <form method="POST" action="{{ route('admin.incidents.status-update', $incident->id) }}">
             @csrf
             @method('PUT')
             <div class="row g-3">

@@ -13,9 +13,7 @@
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+   
     @if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
@@ -54,7 +52,16 @@
                             <td class="text-capitalize">{{ str_replace('_', ' ', $incident->incident_type) }}</td>
                             <td class="text-capitalize">{{ $incident->severity }}</td>
                             <td>
-                                <span class="badge bg-secondary text-capitalize">{{ $incident->status }}</span>
+                                @php
+                                    $statusBadgeClass = match ($incident->status) {
+                                        'open' => 'bg-danger',
+                                        'investigating' => 'bg-warning text-dark',
+                                        'resolved' => 'bg-success',
+                                        'closed' => 'bg-secondary',
+                                        default => 'bg-secondary',
+                                    };
+                                @endphp
+                                <span class="badge {{ $statusBadgeClass }} text-capitalize">{{ $incident->status }}</span>
                             </td>
                             <td class="text-end">
                                 <a href="{{ route('customer.incidents.show', $incident->id) }}" class="btn btn-sm btn-outline-primary">

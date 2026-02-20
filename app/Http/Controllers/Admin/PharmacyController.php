@@ -7,7 +7,10 @@ use App\Models\InventoryItem;
 use App\Models\Prescription;
 use App\Models\InventoryStock;
 use App\Models\InventoryTransaction;
+use App\Models\MedicationDispensing;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class PharmacyController extends BaseController
 {
@@ -137,7 +140,7 @@ class PharmacyController extends BaseController
                 'type' => 'in',
                 'quantity' => $data['quantity'],
                 'reference' => 'Initial stock entry',
-                'performed_by' => auth()->id(),
+                'performed_by' => Auth::id(),
                 'notes' => 'Initial stock for medication: ' . $medication->name,
             ]);
 
@@ -150,7 +153,7 @@ class PharmacyController extends BaseController
             DB::rollback();
             
             // Log the detailed error for debugging
-            \Log::error('Pharmacy store error: ' . $e->getMessage(), [
+            Log::error('Pharmacy store error: ' . $e->getMessage(), [
                 'request_data' => $request->all(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -304,7 +307,7 @@ class PharmacyController extends BaseController
                     'type' => $transactionType,
                     'quantity' => abs($difference),
                     'reference' => 'Stock adjustment during update',
-                    'performed_by' => auth()->id(),
+                    'performed_by' => Auth::id(),
                     'notes' => 'Updated medication: ' . $medication->name,
                 ]);
             }
@@ -318,7 +321,7 @@ class PharmacyController extends BaseController
             DB::rollback();
             
             // Log the detailed error for debugging
-            \Log::error('Pharmacy update error: ' . $e->getMessage(), [
+            Log::error('Pharmacy update error: ' . $e->getMessage(), [
                 'medication_id' => $id,
                 'request_data' => $request->all(),
                 'trace' => $e->getTraceAsString()
@@ -406,7 +409,7 @@ class PharmacyController extends BaseController
                 MedicationDispensing::create([
                     'prescription_id' => $data['prescription_id'],
                     'inventory_item_id' => $data['inventory_item_id'],
-                    'dispensed_by' => auth()->id(),
+                    'dispensed_by' => Auth::id(),
                     'quantity_dispensed' => $data['quantity_dispensed'],
                     'unit_price' => $medication->unit_price,
                     'total_price' => $data['quantity_dispensed'] * $medication->unit_price,
@@ -425,7 +428,7 @@ class PharmacyController extends BaseController
                 'type' => 'out',
                 'quantity' => $data['quantity_dispensed'],
                 'reference' => 'Medication dispensed for prescription #' . $prescription->id,
-                'performed_by' => auth()->id(),
+                'performed_by' => Auth::id(),
                 'notes' => 'Dispensed: ' . $medication->name,
             ]);
             

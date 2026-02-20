@@ -1664,17 +1664,25 @@ body.landing-body {
     width: 100%;
     max-width: 28rem;
     margin: 0 auto;
+    perspective: 900px;
 }
 
 .landing-body .carousel-wrapper {
     position: relative;
+    width: 100%;
     aspect-ratio: 1;
+    min-height: 280px;
+    overflow: hidden;
+}
+
+.landing-body .carousel-slide-track {
+    position: absolute;
+    inset: 0;
 }
 
 .landing-body .carousel-item {
     position: absolute;
     inset: 0;
-    transition: all 0.7s ease-in-out;
 }
 
 .landing-body .carousel-circle {
@@ -1683,8 +1691,9 @@ body.landing-body {
     background: #fff;
     border-radius: 50%;
     box-shadow: 0 20px 60px rgba(124, 58, 237, 0.2);
-    padding: 2rem;
+    padding: 0;
     border: 4px solid #e9d5ff;
+    overflow: hidden;
 }
 
 .landing-body .carousel-image-wrapper {

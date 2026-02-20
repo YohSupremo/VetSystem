@@ -285,7 +285,7 @@
                 <div class="chart-legend">
                     @foreach($speciesChart['labels'] as $index => $label)
                         <div class="legend-item">
-                            <span class="legend-color" style="background: {{ $speciesChart['colors'][$index] }}"></span>
+                            <span class="legend-color" data-color="{{ $speciesChart['colors'][$index] }}"></span>
                             <span>{{ $label }} ({{ $speciesChart['counts'][$index] }})</span>
                         </div>
                     @endforeach
@@ -482,19 +482,24 @@
         @endif
     </div>
 
+    <div id="chart-data" style="display:none;" data-species="{{ json_encode($speciesChart) }}" data-appointment="{{ json_encode($appointmentStatusChart) }}"></div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const chartData = JSON.parse(document.getElementById('chart-data').dataset.species);
+            const appointmentData = JSON.parse(document.getElementById('chart-data').dataset.appointment);
+
             const speciesChartEl = document.querySelector('#speciesChart');
-            if (speciesChartEl && @json($speciesChart['hasData'])) {
+            if (speciesChartEl && chartData.hasData) {
                 const speciesChart = new ApexCharts(speciesChartEl, {
                     chart: {
                         type: 'donut',
                         height: 320,
                         toolbar: { show: false }
                     },
-                    series: @json($speciesChart['counts']),
-                    labels: @json($speciesChart['labels']),
-                    colors: @json($speciesChart['colors']),
+                    series: chartData.counts,
+                    labels: chartData.labels,
+                    colors: chartData.colors,
                     legend: { show: false },
                     stroke: { colors: ['#ffffff'], width: 3 },
                     dataLabels: {
@@ -524,7 +529,7 @@
                                     total: {
                                         show: true,
                                         label: 'Total',
-                                        formatter: () => @json(array_sum($speciesChart['counts']))
+                                        formatter: () => chartData.counts.reduce((sum, val) => sum + val, 0)
                                     }
                                 }
                             }
@@ -535,7 +540,7 @@
             }
 
             const appointmentChartEl = document.querySelector('#appointmentStatusChart');
-            if (appointmentChartEl && @json($appointmentStatusChart['hasData'])) {
+            if (appointmentChartEl && appointmentData.hasData) {
                 const appointmentChart = new ApexCharts(appointmentChartEl, {
                     chart: {
                         type: 'bar',
@@ -543,10 +548,10 @@
                         toolbar: { show: false }
                     },
                     series: [{
-                        data: @json($appointmentStatusChart['counts'])
+                        data: appointmentData.counts
                     }],
                     xaxis: {
-                        categories: @json($appointmentStatusChart['labels']),
+                        categories: appointmentData.labels,
                         labels: {
                             style: {
                                 fontFamily: 'DM Sans, sans-serif',
@@ -560,7 +565,7 @@
                             borderRadius: 8
                         }
                     },
-                    colors: @json($appointmentStatusChart['colors']),
+                    colors: appointmentData.colors,
                     dataLabels: {
                         enabled: true,
                         style: {
@@ -574,6 +579,11 @@
                 });
                 appointmentChart.render();
             }
+
+            // Set legend colors
+            document.querySelectorAll('.legend-color').forEach(el => {
+                el.style.backgroundColor = el.dataset.color;
+            });
         });
     </script>
 @endsection

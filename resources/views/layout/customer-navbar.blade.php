@@ -109,6 +109,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('customer.incidents.*') ? 'active' : '' }}"
+                       href="{{ route('customer.incidents.index') }}">
+                        Incident Reports
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('customer.billing.*') ? 'active' : '' }}"
                        href="{{ route('customer.billing.index') }}">
                         Billing

@@ -99,11 +99,107 @@
             min-height: 320px;
         }
 
+        .chart-section {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .species-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .species-card {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 140, 66, 0.12);
+            padding: 14px 16px;
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 180px;
+        }
+
+        .species-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .species-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark-text);
+        }
+
+        .species-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .species-count {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--light-text);
+            background: rgba(255, 140, 66, 0.12);
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+
+        .species-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 160px;
+            overflow-y: auto;
+        }
+
+        .species-list li {
+            font-size: 13px;
+            color: var(--light-text);
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 6px 8px;
+            border: 1px solid rgba(255, 140, 66, 0.08);
+        }
+
+        .species-empty {
+            font-size: 13px;
+            color: var(--light-text);
+            padding: 8px 0;
+        }
+
+        .chart-panel {
+            min-height: 320px;
+        }
+
         .chart-legend {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
             margin-top: 20px;
+        }
+
+        .chart-legend.scrollable {
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 6px;
         }
 
         .legend-item {
@@ -112,6 +208,107 @@
             gap: 8px;
             font-size: 13px;
             color: var(--light-text);
+        }
+
+        .legend-item.large {
+            align-items: flex-start;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 14px;
+            padding: 12px 14px;
+            border: 1px solid rgba(255, 140, 66, 0.12);
+            width: 100%;
+        }
+
+        .legend-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            line-height: 1.2;
+        }
+
+        .legend-label {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark-text);
+        }
+
+        .legend-count {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--light-text);
+        }
+
+        .chart-legend.scrollable.grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .chart-legend.grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .chart-legend.grid.two-col {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .pipeline-legend .legend-item.large {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .pipeline-legend .legend-pill {
+            max-width: 100%;
+            white-space: normal;
+            line-height: 1.1;
+        }
+
+        .dashboard-section.compact {
+            align-items: start;
+        }
+
+        .appointment-pipeline .chart-legend {
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        .appointment-pipeline .chart-section {
+            grid-template-columns: 1fr;
+            justify-items: center;
+        }
+
+        .appointment-pipeline .chart-panel,
+        .appointment-pipeline .chart-legend {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .legend-pill {
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--white);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        @media (max-width: 1200px) {
+            .chart-section {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-legend.scrollable {
+                max-height: 220px;
+            }
+
+            .species-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         .legend-color {
@@ -275,11 +472,12 @@
         </div>
     </div>
 
-    <div class="dashboard-section">
+    <div class="dashboard-section compact">
         <div class="card">
             <div class="card-header">
                 <h3><i class="fas fa-paw"></i> Species Mix</h3>
             </div>
+<<<<<<< HEAD
             @if($speciesChart['hasData'])
                 <div class="chart-container" id="speciesChart"></div>
                 <div class="chart-legend">
@@ -287,23 +485,54 @@
                         <div class="legend-item">
                             <span class="legend-color" data-color="{{ $speciesChart['colors'][$index] }}"></span>
                             <span>{{ $label }} ({{ $speciesChart['counts'][$index] }})</span>
+=======
+            <div class="species-grid">
+                @foreach($speciesChart['labels'] as $index => $label)
+                    <div class="species-card">
+                        <div class="species-card-header">
+                            <div class="species-title">
+                                <span class="species-dot" style="background: {{ $speciesChart['colors'][$index] }}"></span>
+                                {{ $label }}
+                            </div>
+                            <span class="species-count">{{ $speciesChart['counts'][$index] }} pets</span>
+>>>>>>> 88131b28205189d5fd4186b2bb55796d2af26680
                         </div>
-                    @endforeach
-                </div>
-            @else
-                <div class="empty-state">
-                    <i class="fas fa-chart-pie"></i>
-                    <p>Add pet profiles to populate species analytics.</p>
-                </div>
-            @endif
+                        @php
+                            $speciesKey = strtolower(str_replace(' ', '_', $label));
+                            $petNames = $speciesPets[$speciesKey] ?? [];
+                        @endphp
+                        @if(count($petNames) > 0)
+                            <ul class="species-list">
+                                @foreach($petNames as $petName)
+                                    <li>{{ $petName }}</li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <div class="species-empty">No pets registered yet.</div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
         </div>
 
-        <div class="card">
+        <div class="card appointment-pipeline">
             <div class="card-header">
                 <h3><i class="fas fa-notes-medical"></i> Appointment Pipeline</h3>
             </div>
             @if($appointmentStatusChart['hasData'])
-                <div class="chart-container" id="appointmentStatusChart"></div>
+                <div class="chart-legend grid two-col pipeline-legend">
+                    @foreach($appointmentStatusChart['labels'] as $index => $label)
+                        <div class="legend-item large">
+                            <span class="legend-pill" style="background: {{ $appointmentStatusChart['colors'][$index] }}">
+                                {{ $label }}
+                            </span>
+                            <div class="legend-text">
+                                <span class="legend-label">{{ $appointmentStatusChart['counts'][$index] }}</span>
+                                <span class="legend-count">appointments</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
             @else
                 <div class="empty-state">
                     <i class="fas fa-calendar-times"></i>
@@ -479,6 +708,7 @@
                 <span>Oldest Patient</span>
                 <strong>{{ $petAgeStats['oldest'] }} yrs</strong>
             </div>
+            <p class="metric-subtext" style="margin: 10px 0 0 0;">Based on {{ $petAgeStats['count'] }} pets with birth dates.</p>
         @endif
     </div>
 

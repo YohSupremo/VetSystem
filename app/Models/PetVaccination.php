@@ -7,18 +7,25 @@ use Illuminate\Database\Eloquent\Model;
 class PetVaccination extends Model
 {
     public $timestamps = false;
+    protected $table = 'pet_vaccinations';
 
     protected $fillable = [
         'pet_id',
-        'vaccine_id',
+        'inventory_item_id',
+        'vaccine_name',
+        'vaccine_type',
+        'manufacturer',
         'batch_number',
         'dose_number',
         'administered_date',
+        'vaccination_date',
         'next_due_date',
+        'veterinarian_id',
         'administered_by',
         'certificate_path',
         'notes',
         'reminder_sent',
+        'status',
     ];
 
     protected $casts = [
@@ -31,9 +38,14 @@ class PetVaccination extends Model
         return $this->belongsTo(Pet::class);
     }
 
-    public function vaccine()
+    public function inventoryItem()
     {
-        return $this->belongsTo(Vaccine::class);
+        return $this->belongsTo(InventoryItem::class);
+    }
+
+    public function vet()
+    {
+        return $this->belongsTo(User::class, 'veterinarian_id');
     }
 
     public function administeredBy()

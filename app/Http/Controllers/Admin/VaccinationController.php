@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\InventoryItem;
 use App\Models\Pet;
 use App\Models\Vaccination;
 use App\Models\User;
@@ -50,11 +51,14 @@ class VaccinationController extends Controller
     public function create()
     {
         $pets = Pet::with('owner.user')->get();
-        $vaccines = \App\Models\Vaccine::where('is_active', true)->orderBy('vaccine_name')->get();
+        $vaccineItems = InventoryItem::where('category', 'vaccine')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
         $veterinarians = User::where('role', 'veterinarian')->orderBy('first_name')->get();
         $selectedPetId = request()->query('pet_id');
 
-        return view('admin.vaccinations.create', compact('pets', 'vaccines', 'veterinarians', 'selectedPetId'));
+        return view('admin.vaccinations.create', compact('pets', 'vaccineItems', 'veterinarians', 'selectedPetId'));
     }
 
     /**
@@ -64,7 +68,7 @@ class VaccinationController extends Controller
     {
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
-            'vaccine_id' => 'required|exists:vaccines,id',
+            'inventory_item_id' => 'required|exists:inventory_items,id',
             'administered_date' => 'required|date',
             'administered_by' => 'required|exists:users,id',
             'next_due_date' => 'nullable|date|after_or_equal:administered_date',
@@ -76,6 +80,13 @@ class VaccinationController extends Controller
             'administered_by.required' => 'Please select who administered the vaccine.',
             'administered_by.exists' => 'The selected veterinarian is invalid.',
         ]);
+
+        $inventoryItem = InventoryItem::find($validated['inventory_item_id']);
+        if (!$inventoryItem || $inventoryItem->category !== 'vaccine') {
+            return back()
+                ->withErrors(['inventory_item_id' => 'Please select a valid vaccine from inventory.'])
+                ->withInput();
+        }
 
         Vaccination::create($validated);
 
@@ -88,7 +99,7 @@ class VaccinationController extends Controller
      */
     public function show($id)
     {
-        $vaccination = Vaccination::with(['pet.owner.user', 'vaccine', 'administeredBy'])
+        $vaccination = Vaccination::with(['pet.owner.user', 'inventoryItem', 'administeredBy'])
             ->findOrFail($id);
 
         return view('admin.vaccinations.show', compact('vaccination'));
@@ -99,12 +110,16 @@ class VaccinationController extends Controller
      */
     public function edit($id)
     {
-        $vaccination = Vaccination::with(['pet.owner.user', 'vaccine', 'administeredBy'])->findOrFail($id);
+        $vaccination = Vaccination::with(['pet.owner.user', 'inventoryItem', 'administeredBy'])->findOrFail($id);
         $pets = Pet::with('owner.user')->get();
-        $vaccines = \App\Models\Vaccine::where('is_active', true)->orderBy('vaccine_name')->get();
+        $vaccineItems = InventoryItem::where('category', 'vaccine')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
         $veterinarians = User::where('role', 'veterinarian')->orderBy('first_name')->get();
+        $selectedVaccineItemId = $vaccination->inventory_item_id;
 
-        return view('admin.vaccinations.edit', compact('vaccination', 'pets', 'vaccines', 'veterinarians'));
+        return view('admin.vaccinations.edit', compact('vaccination', 'pets', 'vaccineItems', 'veterinarians', 'selectedVaccineItemId'));
     }
 
     /**
@@ -115,7 +130,7 @@ class VaccinationController extends Controller
         $vaccination = Vaccination::findOrFail($id);
 
         $validated = $request->validate([
-            'vaccine_id' => 'required|exists:vaccines,id',
+            'inventory_item_id' => 'required|exists:inventory_items,id',
             'administered_date' => 'required|date',
             'administered_by' => 'required|exists:users,id',
             'next_due_date' => 'nullable|date|after_or_equal:administered_date',
@@ -127,6 +142,13 @@ class VaccinationController extends Controller
             'administered_by.required' => 'Please select who administered the vaccine.',
             'administered_by.exists' => 'The selected veterinarian is invalid.',
         ]);
+
+        $inventoryItem = InventoryItem::find($validated['inventory_item_id']);
+        if (!$inventoryItem || $inventoryItem->category !== 'vaccine') {
+            return back()
+                ->withErrors(['inventory_item_id' => 'Please select a valid vaccine from inventory.'])
+                ->withInput();
+        }
 
         $vaccination->update($validated);
 
@@ -153,7 +175,7 @@ class VaccinationController extends Controller
     {
         $pet = Pet::findOrFail($petId);
         $vaccinations = $pet->vaccinations()
-            ->with(['vaccine', 'administeredBy'])
+            ->with(['inventoryItem', 'administeredBy'])
             ->orderBy('administered_date', 'desc')
             ->orderBy('id', 'desc')
             ->get();

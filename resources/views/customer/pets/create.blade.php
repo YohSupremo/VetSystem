@@ -25,7 +25,7 @@
                             <!-- Photo Upload -->
                             <div class="col-12 text-center mb-3">
                                 <div class="mb-2">
-                                    <img id="photo-preview" src="{{ asset('assets/img/default-pet.png') }}" 
+                                     <img id="photo-preview" src="{{ asset('images/default-pet.svg') }}" 
                                          class="rounded-circle bg-light border" width="120" height="120" style="object-fit: cover;"
                                          onerror="this.src='https://placehold.co/120x120?text=Pet+Photo'">
                                 </div>
@@ -47,9 +47,6 @@
                                     <option value="">Select species...</option>
                                     <option value="Dog" {{ old('species') == 'Dog' ? 'selected' : '' }}>Dog</option>
                                     <option value="Cat" {{ old('species') == 'Cat' ? 'selected' : '' }}>Cat</option>
-                                    <option value="Bird" {{ old('species') == 'Bird' ? 'selected' : '' }}>Bird</option>
-                                    <option value="Reptile" {{ old('species') == 'Reptile' ? 'selected' : '' }}>Reptile</option>
-                                    <option value="Other" {{ old('species') == 'Other' ? 'selected' : '' }}>Other</option>
                                 </select>
                             </div>
 

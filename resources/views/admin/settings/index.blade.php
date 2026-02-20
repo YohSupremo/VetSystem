@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Settings')
+@section('page-description', 'Manage system settings and configurations')
+
 @section('content')
 <style>
     .settings-hero {

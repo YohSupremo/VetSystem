@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Grooming Details')
+@section('page-description', 'View grooming appointment details')
+
 @push('styles')
 <style>
     .show-container {

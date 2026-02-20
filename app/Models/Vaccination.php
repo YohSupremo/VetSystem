@@ -13,16 +13,22 @@ class Vaccination extends Model
 
     protected $fillable = [
         'pet_id',
-        'vaccine_id',
+        'inventory_item_id',
+        'vaccine_name',
+        'vaccine_type',
+        'manufacturer',
         'batch_number',
         'dose_number',
         'administered_date',
+        'vaccination_date',
         'next_due_date',
         'expiry_date',
         'administered_by',
+        'veterinarian_id',
         'certificate_path',
         'notes',
         'reminder_sent',
+        'status',
     ];
 
     protected $casts = [
@@ -36,9 +42,14 @@ class Vaccination extends Model
         return $this->belongsTo(Pet::class);
     }
 
-    public function vaccine(): BelongsTo
+    public function inventoryItem(): BelongsTo
     {
-        return $this->belongsTo(Vaccine::class);
+        return $this->belongsTo(InventoryItem::class);
+    }
+
+    public function vet(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'veterinarian_id');
     }
 
     public function veterinarian(): BelongsTo

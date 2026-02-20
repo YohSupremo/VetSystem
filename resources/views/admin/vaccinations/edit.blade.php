@@ -32,17 +32,17 @@
                 
                 <div class="form-group">
                     <label>Vaccine <span class="text-danger">*</span></label>
-                    <select name="vaccine_id" class="form-control" required>
+                    <select name="inventory_item_id" class="form-control" required>
                         <option value="">Choose a vaccine...</option>
-                        @forelse($vaccines as $vaccine)
-                            <option value="{{ $vaccine->id }}" {{ $vaccination->vaccine_id == $vaccine->id ? 'selected' : '' }}>
-                                {{ $vaccine->vaccine_name }}{{ $vaccine->manufacturer ? ' (' . $vaccine->manufacturer . ')' : '' }}
+                        @forelse($vaccineItems as $item)
+                            <option value="{{ $item->id }}" {{ old('inventory_item_id', $selectedVaccineItemId) == $item->id ? 'selected' : '' }}>
+                                {{ $item->name }}
                             </option>
                         @empty
-                            <option value="">No vaccines available</option>
+                            <option value="">No vaccines available in inventory</option>
                         @endforelse
                     </select>
-                    @error('vaccine_id')<span class="text-danger">{{ $message }}</span>@enderror
+                    @error('inventory_item_id')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-row">

@@ -49,7 +49,7 @@ class BillingController extends Controller
         
         // Get invoices for customer (using owner_id) with filtering
         $query = Invoice::where('owner_id', $petOwner->id)
-            ->with(['pet', 'payments'])
+            ->with(['pet', 'payments', 'invoiceItems', 'appointment'])
             ->orderBy('issue_date', 'desc');
         
         // Filter by status
@@ -66,6 +66,45 @@ class BillingController extends Controller
         }
         
         $invoices = $query->get();
+        $invoices->each(function ($invoice) {
+            $invoice->source_category = $this->resolveInvoiceCategory($invoice);
+        });
+
+        $selectedCategory = $request->get('category', 'all');
+
+        $categoryLabelMap = [
+            'all' => 'All',
+            'boarding' => 'Boarding',
+            'consultation' => 'Consultation',
+            'grooming' => 'Grooming',
+            'surgery' => 'Surgery',
+            'lab_test' => 'Lab Test',
+            'vaccination' => 'Vaccination',
+            'product' => 'Products',
+            'service' => 'Service',
+            'other' => 'Other',
+            'mixed' => 'Mixed',
+        ];
+
+        $categoryCounts = ['all' => $invoices->count()];
+        foreach ($invoices as $invoice) {
+            $category = $invoice->source_category ?: 'other';
+            $categoryCounts[$category] = ($categoryCounts[$category] ?? 0) + 1;
+        }
+
+        if ($selectedCategory !== 'all') {
+            $invoices = $invoices
+                ->where('source_category', $selectedCategory)
+                ->values();
+        }
+
+        $availableCategories = collect($categoryCounts)
+            ->keys()
+            ->filter(function ($key) {
+                return $key === 'all' || ($this->isKnownCategory($key));
+            })
+            ->values()
+            ->all();
         
         // Calculate summary (show all stats regardless of filters)
         $allInvoices = Invoice::where('owner_id', $petOwner->id)->get();
@@ -93,7 +132,66 @@ class BillingController extends Controller
             'paid_invoices' => $allInvoices->where('status', 'paid')->count()
         ];
         
-        return view('customer.billing.index', compact('invoices', 'invoiceStats'));
+        return view('customer.billing.index', compact(
+            'invoices',
+            'invoiceStats',
+            'selectedCategory',
+            'categoryCounts',
+            'categoryLabelMap',
+            'availableCategories'
+        ));
+    }
+
+    private function resolveInvoiceCategory($invoice): string
+    {
+        if (!$invoice instanceof Invoice) {
+            return 'other';
+        }
+
+        $itemTypes = $invoice->invoiceItems
+            ->pluck('item_type')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($itemTypes->count() === 1) {
+            return (string) $itemTypes->first();
+        }
+
+        if ($itemTypes->count() > 1) {
+            return 'mixed';
+        }
+
+        if ($invoice->appointment && !empty($invoice->appointment->type)) {
+            return (string) $invoice->appointment->type;
+        }
+
+        if (!empty($invoice->order_id)) {
+            return 'product';
+        }
+
+        if (str_contains((string) ($invoice->notes ?? ''), '[BOARDING_ID:')) {
+            return 'boarding';
+        }
+
+        return 'other';
+    }
+
+    private function isKnownCategory(string $category): bool
+    {
+        return in_array($category, [
+            'all',
+            'boarding',
+            'consultation',
+            'grooming',
+            'surgery',
+            'lab_test',
+            'vaccination',
+            'product',
+            'service',
+            'other',
+            'mixed',
+        ], true);
     }
     
     public function show($id)
@@ -173,18 +271,31 @@ class BillingController extends Controller
             ->whereIn('status', ['pending', 'partial'])
             ->findOrFail($id);
         
+        // Normalize payment method to supported enum values
+        $paymentMethod = $request->payment_method;
+        if ($paymentMethod === 'ewallet' || $paymentMethod === 'e-wallet') {
+            $paymentMethod = 'mobile_payment';
+        }
+
+        $amount = abs((float) $request->amount);
+        if ($amount <= 0) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Payment amount must be greater than zero.');
+        }
+
         // Create payment record
         $payment = Payment::create([
             'invoice_id' => $invoice->id,
-            'amount' => $request->amount,
-            'payment_method' => $request->payment_method,
+            'amount' => $amount,
+            'payment_method' => $paymentMethod,
             'reference_number' => $request->reference_number,
             'notes' => $request->notes
         ]);
         
         // Update invoice status
         $totalPaid = $invoice->payments()->sum('amount');
-        $invoice->paid_amount = $totalPaid;
         
         if ($totalPaid >= $invoice->total_amount) {
             $invoice->status = 'paid';

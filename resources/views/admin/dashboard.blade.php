@@ -38,50 +38,6 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: linear-gradient(135deg, var(--warm-cream) 0%, var(--soft-gray) 100%);
-            color: var(--dark-text);
-            min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(circle at 15% 20%, var(--paw-light) 0%, transparent 50%),
-                radial-gradient(circle at 85% 40%, var(--paw-medium) 0%, transparent 50%),
-                radial-gradient(circle at 45% 70%, var(--paw-light) 0%, transparent 50%),
-                radial-gradient(circle at 70% 85%, var(--paw-medium) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .paw-print {
-            position: fixed;
-            font-size: 40px;
-            color: var(--paw-light);
-            animation: floatPaw 20s infinite ease-in-out;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .paw-print:nth-child(1) { top: 10%; left: 5%; animation-delay: 0s; }
-        .paw-print:nth-child(2) { top: 60%; right: 8%; animation-delay: 5s; }
-        .paw-print:nth-child(3) { bottom: 15%; left: 12%; animation-delay: 10s; }
-        .paw-print:nth-child(4) { top: 35%; right: 15%; animation-delay: 15s; }
-
-        @keyframes floatPaw {
-            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
-            50% { transform: translateY(-20px) rotate(10deg); opacity: 0.6; }
-        }
-
         .dashboard-container {
             display: flex;
             min-height: 100vh;
@@ -238,6 +194,12 @@
             align-items: center;
             margin-bottom: 35px;
             animation: slideDown 0.6s ease-out;
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--accent-pink) 100%);
+            margin-left: -40px;
+            margin-right: -40px;
+            margin-top: -35px;
+            padding: 30px 40px;
+            border-radius: 0;
         }
 
         @keyframes slideDown {
@@ -248,13 +210,13 @@
         .header-left h2 {
             font-family: 'Fredoka', sans-serif;
             font-size: 32px;
-            color: var(--dark-text);
+            color: var(--white);
             margin-bottom: 8px;
             font-weight: 700;
         }
 
         .header-left p {
-            color: var(--light-text);
+            color: rgba(255, 255, 255, 0.9);
             font-size: 15px;
         }
 
@@ -278,6 +240,10 @@
             transition: all 0.3s ease;
             box-shadow: var(--shadow-soft);
             font-family: 'DM Sans', sans-serif;
+        }
+
+        .search-box input::placeholder {
+            color: var(--light-text);
         }
 
         .search-box input:focus {
@@ -313,7 +279,7 @@
         .icon-button:hover {
             transform: translateY(-3px);
             box-shadow: var(--shadow-hover);
-            background: var(--primary-orange);
+            background: rgba(255, 255, 255, 0.3);
             color: var(--white);
         }
 
@@ -676,12 +642,6 @@
     </style>
 </head>
 <body>
-    <!-- Animated background paw prints -->
-    <div class="paw-print">🐾</div>
-    <div class="paw-print">🐾</div>
-    <div class="paw-print">🐾</div>
-    <div class="paw-print">🐾</div>
-
     <div class="dashboard-container">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
@@ -690,6 +650,13 @@
                 <p>Veterinary Admin Portal</p>
             </div>
 
+            @php
+                $role = auth()->user()->role ?? null;
+                $showMedical = in_array($role, ['admin', 'veterinarian']);
+                $showServices = in_array($role, ['admin', 'staff', 'boarding', 'groomer', 'pharmacy']);
+                $showManagement = in_array($role, ['admin', 'pharmacy', 'reception']);
+            @endphp
+
             <nav class="nav-menu">
                 <div class="nav-section">
                     <div class="nav-section-title">Main Menu</div>
@@ -697,7 +664,7 @@
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
                     </a>
-                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian', 'reception', 'staff']))
+                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian', 'reception']))
                     <a href="{{ route('admin.appointments.index') }}" class="nav-item {{ request()->routeIs('admin.appointments.*') ? 'active' : '' }}"> 
                         <i class="fas fa-calendar-check"></i>
                         <span>Appointments</span>
@@ -706,19 +673,19 @@
                         @endif
                     </a>
                     @endif
-                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian', 'reception', 'staff', 'groomer', 'boarding']))
+                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian', 'reception', 'groomer', 'boarding']))
                     <a href="{{ route('admin.pets.index') }}" class="nav-item {{ request()->routeIs('admin.pets.*') ? 'active' : '' }}">
                         <i class="fas fa-paw"></i>
                         <span>Pets Registry</span>
                     </a>
                     @endif
-                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian', 'reception', 'staff', 'groomer', 'boarding']))
+                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian', 'reception', 'groomer', 'boarding']))
                     <a href="{{ route('admin.pet-owners.index') }}" class="nav-item {{ request()->routeIs('admin.pet-owners.*') ? 'active' : '' }}">
                         <i class="fas fa-users"></i>
                         <span>Pet Owners</span>
                     </a>
                     @endif
-                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian', 'reception', 'staff', 'groomer', 'boarding']))
+                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian', 'reception', 'groomer', 'boarding']))
                     <a href="{{ route('admin.queue.index') }}" class="nav-item {{ request()->routeIs('admin.queue.*') ? 'active' : '' }}">
                         <i class="fas fa-list-ul"></i>
                         <span>Queue Management</span>
@@ -732,13 +699,19 @@
                     @endif
                 </div>
 
-                @if(in_array(auth()->user()->role, ['admin', 'veterinarian']))
+                @if($showMedical)
                 <div class="nav-section">
                     <div class="nav-section-title">Medical</div>
-                    @if(auth()->user()->role === 'admin')
+                    @if(in_array(auth()->user()->role, ['admin', 'veterinarian']))
                     <a href="{{ route('admin.medical-records.index') }}" class="nav-item {{ request()->routeIs('admin.medical-records.*') ? 'active' : '' }}">
                         <i class="fas fa-file-medical"></i>
                         <span>Medical Records</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.incidents.index') }}" class="nav-item {{ request()->routeIs('admin.incidents.*') ? 'active' : '' }}">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Incidents</span>
                     </a>
                     @endif
                     @if(in_array(auth()->user()->role, ['admin', 'veterinarian']))
@@ -762,6 +735,7 @@
                 </div>
                 @endif
 
+                @if($showServices)
                 <div class="nav-section">
                     <div class="nav-section-title">Services</div>
                     @if(in_array(auth()->user()->role, ['admin', 'staff', 'boarding']))
@@ -795,7 +769,9 @@
                     </a>
                     @endif
                 </div>
+                @endif
 
+                @if($showManagement)
                 <div class="nav-section">
                     <div class="nav-section-title">Management</div>
                     @if(in_array(auth()->user()->role, ['admin', 'pharmacy']))
@@ -831,6 +807,7 @@
                     </a>
                     @endif
                 </div>
+                @endif
             </nav>
         </aside>
 
@@ -856,6 +833,9 @@
                     <button class="icon-button" id="messagesBtn">
                         <i class="fas fa-envelope"></i>
                     </button>
+                    <a href="/logout" class="icon-button" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
                     <div class="user-avatar" id="userMenuBtn">
                         {{ strtoupper(substr(Auth::user()->first_name ?? 'A', 0, 1)) }}{{ strtoupper(substr(Auth::user()->last_name ?? 'D', 0, 1)) }}
                     </div>
@@ -1314,5 +1294,40 @@
 
     </script>
 
-   
+    <script>
+        // Sidebar scroll position persistence
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.querySelector('.sidebar');
+            if (!sidebar) return;
+
+            const storageKey = 'admin-sidebar-scroll';
+            
+            // Restore scroll position
+            const savedScroll = sessionStorage.getItem(storageKey) || localStorage.getItem(storageKey);
+            if (savedScroll !== null) {
+                const scrollValue = parseInt(savedScroll, 10) || 0;
+                requestAnimationFrame(() => {
+                    sidebar.scrollTop = scrollValue;
+                });
+            }
+
+            // Save scroll position with throttling
+            let scrollTimeout;
+            const saveScroll = () => {
+                const position = sidebar.scrollTop.toString();
+                sessionStorage.setItem(storageKey, position);
+                localStorage.setItem(storageKey, position);
+            };
+
+            sidebar.addEventListener('scroll', () => {
+                if (scrollTimeout) {
+                    clearTimeout(scrollTimeout);
+                }
+                scrollTimeout = setTimeout(saveScroll, 100);
+            });
+
+            // Save on page unload
+            window.addEventListener('beforeunload', saveScroll);
+        });
+    </script>
 </body>

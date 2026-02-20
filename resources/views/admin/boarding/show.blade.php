@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Boarding Details')
+@section('page-description', 'View boarding reservation details')
+
 @push('styles')
 <style>
     .show-container {
@@ -177,6 +180,11 @@
         color: #155724;
     }
 
+    .status-upcoming {
+        background: #fff3cd;
+        color: #856404;
+    }
+
     .status-completed {
         background: #e2e3e5;
         color: #383d41;
@@ -286,7 +294,7 @@
         <div class="pet-preview">
             <div class="pet-preview-item">
                 @php $pet = $boarding->pet; @endphp
-                <img src="{{ $pet && $pet->photo_path ? $pet->photo_url : asset('images/default-pet.jpg') }}" alt="Pet" class="pet-preview-image">
+                <img src="{{ $pet && $pet->photo_path ? $pet->photo_url : asset('images/default-pet.svg') }}" alt="Pet" class="pet-preview-image">
                 <div class="pet-preview-info">
                     <h3>{{ $pet?->name ?? 'N/A' }}</h3>
                     <p><strong>Breed:</strong> {{ $pet?->breed ?? 'N/A' }}</p>
@@ -365,9 +373,16 @@
                 <span class="detail-label">Status</span>
                 <div>
                     @php
-                        $isActive = $boarding->isActive();
-                        $statusText = $isActive ? 'Active' : (now()->toDateString() > $boarding->end_date ? 'Completed' : 'Upcoming');
-                        $statusClass = $isActive ? 'active' : (now()->toDateString() > $boarding->end_date ? 'completed' : 'active');
+                        if ($boarding->isUpcoming()) {
+                            $statusText = 'Upcoming';
+                            $statusClass = 'upcoming';
+                        } elseif ($boarding->isCompleted()) {
+                            $statusText = 'Completed';
+                            $statusClass = 'completed';
+                        } else {
+                            $statusText = 'Active';
+                            $statusClass = 'active';
+                        }
                     @endphp
                     <span class="status-badge status-{{ $statusClass }}">
                         {{ $statusText }}
@@ -464,6 +479,98 @@
             <span class="detail-label">Feeding Notes</span>
             <span class="detail-value text">{{ $boarding->special_diet_notes ?? 'No notes provided.' }}</span>
         </div>
+    </div>
+
+    <!-- Billing Card -->
+    <div class="detail-card">
+        <div class="detail-section-title">
+            <i class="fas fa-file-invoice-dollar"></i> Billing & Payment
+        </div>
+
+        @if($invoice)
+            <div class="detail-row">
+                <div class="detail-group">
+                    <span class="detail-label">Invoice Number</span>
+                    <span class="detail-value">{{ $invoice->invoice_number }}</span>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Invoice Status</span>
+                    <span class="detail-value">{{ ucfirst($invoice->status) }}</span>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Total Amount</span>
+                    <span class="detail-value">₱{{ number_format($invoice->total_amount, 2) }}</span>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-group">
+                    <span class="detail-label">Paid Amount</span>
+                    <span class="detail-value">₱{{ number_format($invoice->paid_amount, 2) }}</span>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Balance</span>
+                    <span class="detail-value">₱{{ number_format($invoice->balance, 2) }}</span>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Due Date</span>
+                    <span class="detail-value">{{ optional($invoice->due_date)->format('M d, Y') }}</span>
+                </div>
+            </div>
+
+            @if(!$invoice->is_paid)
+                <form method="POST" action="{{ route('admin.boarding.payment.process', $boarding->id) }}">
+                    @csrf
+                    <div class="detail-row">
+                        <div class="detail-group">
+                            <label class="detail-label" for="payment_method">Payment Method</label>
+                            <select name="payment_method" id="payment_method" class="form-control" required>
+                                <option value="cash">Cash</option>
+                                <option value="credit_card">Credit Card</option>
+                                <option value="debit_card">Debit Card</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="check">Check</option>
+                                <option value="mobile_payment">Mobile Payment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="detail-group">
+                            <label class="detail-label" for="amount">Amount (leave blank to pay full balance)</label>
+                            <input type="number" name="amount" id="amount" step="0.01" min="0.01" max="{{ $invoice->balance }}" class="form-control" value="{{ old('amount') }}">
+                        </div>
+                        <div class="detail-group">
+                            <label class="detail-label" for="reference_number">Reference Number</label>
+                            <input type="text" name="reference_number" id="reference_number" class="form-control" value="{{ old('reference_number') }}">
+                        </div>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="notes">Payment Notes</label>
+                        <textarea name="notes" id="notes" class="form-control" rows="3">{{ old('notes') }}</textarea>
+                    </div>
+                    <div class="actions" style="margin-top: 1rem;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-money-check-alt"></i> Record Payment
+                        </button>
+                    </div>
+                </form>
+            @else
+                <div class="empty-state">
+                    <i class="fas fa-check-circle"></i> This boarding invoice is fully paid.
+                </div>
+            @endif
+        @else
+            <div class="empty-state">
+                <i class="fas fa-info-circle"></i> No invoice has been generated yet for this boarding.
+            </div>
+            <div class="actions" style="margin-top: 1rem;">
+                <form method="POST" action="{{ route('admin.boarding.invoice.generate', $boarding->id) }}">
+                    @csrf
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-file-invoice"></i> Generate Invoice
+                    </button>
+                </form>
+            </div>
+        @endif
     </div>
 
     <!-- Action Buttons -->

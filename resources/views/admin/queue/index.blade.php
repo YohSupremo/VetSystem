@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Queue Management')
+@section('page-description', 'Manage appointment queue and waiting list')
+
 @push('styles')
 <style>
     .queue-container {

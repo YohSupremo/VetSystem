@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class CageAssignment extends Model
 {
@@ -42,10 +43,49 @@ class CageAssignment extends Model
         return $this->belongsTo(Pet::class);
     }
 
+    public function startBoundary(): Carbon
+    {
+        if ($this->check_in_time) {
+            return Carbon::parse($this->check_in_time);
+        }
+
+        return Carbon::parse($this->start_date)->startOfDay();
+    }
+
+    public function endBoundary(): Carbon
+    {
+        if ($this->check_out_time) {
+            return Carbon::parse($this->check_out_time);
+        }
+
+        return Carbon::parse($this->end_date)->endOfDay();
+    }
+
     public function isActive()
     {
-        $today = now()->toDateString();
-        return $today >= $this->start_date && $today <= $this->end_date;
+        return !$this->isUpcoming() && !$this->isCompleted();
+    }
+
+    public function isUpcoming(): bool
+    {
+        $now = now();
+
+        if ($this->check_in_time) {
+            return $now->lt(Carbon::parse($this->check_in_time));
+        }
+
+        return $now->lt(Carbon::parse($this->start_date)->startOfDay());
+    }
+
+    public function isCompleted(): bool
+    {
+        $now = now();
+
+        if ($this->check_out_time) {
+            return $now->gte(Carbon::parse($this->check_out_time));
+        }
+
+        return $now->gt(Carbon::parse($this->end_date)->endOfDay());
     }
 
     /**
@@ -53,8 +93,20 @@ class CageAssignment extends Model
      */
     public function scopeActive($query)
     {
-        return $query->whereDate('start_date', '<=', now())
-                     ->whereDate('end_date', '>=', now());
+        $now = now();
+
+        return $query->where(function ($q) use ($now) {
+                $q->where(function ($sub) use ($now) {
+                    $sub->whereNull('check_in_time')
+                        ->whereDate('start_date', '<=', $now->toDateString());
+                })->orWhere('check_in_time', '<=', $now);
+            })
+            ->where(function ($q) use ($now) {
+                $q->where(function ($sub) use ($now) {
+                    $sub->whereNull('check_out_time')
+                        ->whereDate('end_date', '>=', $now->toDateString());
+                })->orWhere('check_out_time', '>', $now);
+            });
     }
 
     /**

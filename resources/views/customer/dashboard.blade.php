@@ -559,6 +559,13 @@
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-3">
+                    <a href="{{ route('customer.incidents.create') }}" class="action-card text-decoration-none">
+                        <div class="action-icon">🚨</div>
+                        <h3>Report Incident</h3>
+                        <p>Report an accident or urgent concern</p>
+                    </a>
+                </div>
+                <div class="col-md-6 col-lg-3">
                     <a href="{{ route('customer.billing.orders') }}" class="action-card text-decoration-none">
                         <div class="action-icon">📋</div>
                         <h3>My Orders</h3>

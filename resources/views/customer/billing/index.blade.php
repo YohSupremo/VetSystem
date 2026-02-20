@@ -68,6 +68,7 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-4">
             <form method="GET" action="{{ route('customer.billing.index') }}" class="row g-3">
+                <input type="hidden" name="category" value="{{ $selectedCategory ?? 'all' }}">
                 <div class="col-md-4">
                     <label class="form-label fw-bold">Status</label>
                     <select name="status" class="form-select">
@@ -98,6 +99,37 @@
         </div>
     </div>
 
+    <!-- Category Tabs -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <ul class="nav nav-pills flex-wrap gap-2">
+                @php
+                    $baseFilters = [
+                        'status' => request('status'),
+                        'start_date' => request('start_date'),
+                        'end_date' => request('end_date'),
+                    ];
+                @endphp
+                @foreach(($availableCategories ?? ['all']) as $categoryKey)
+                    @php
+                        $isActiveCategory = ($selectedCategory ?? 'all') === $categoryKey;
+                        $categoryCount = $categoryCounts[$categoryKey] ?? 0;
+                        $label = $categoryLabelMap[$categoryKey] ?? ucfirst(str_replace('_', ' ', $categoryKey));
+                    @endphp
+                    <li class="nav-item">
+                        <a
+                            href="{{ route('customer.billing.index', array_merge($baseFilters, ['category' => $categoryKey])) }}"
+                            class="nav-link {{ $isActiveCategory ? 'active' : '' }}"
+                        >
+                            {{ $label }}
+                            <span class="ms-1 badge {{ $isActiveCategory ? 'bg-light text-primary' : 'bg-secondary' }}">{{ $categoryCount }}</span>
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    </div>
+
     <!-- Invoices Table -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom-0 py-3 px-4">
@@ -111,6 +143,7 @@
                         <th>Date</th>
                         <th>Pet</th>
                         <th>Amount</th>
+                        <th>Category</th>
                         <th>Status</th>
                         <th class="text-end pe-4">Action</th>
                     </tr>
@@ -125,9 +158,7 @@
                             <td>
                                 @if($invoice->pet)
                                     <div class="d-flex align-items-center">
-                                        @if($invoice->pet->photo_path)
-                                            <img src="{{ asset($invoice->pet->photo_path) }}" class="rounded-circle me-2" width="24" height="24">
-                                        @endif
+                                        <img src="{{ $invoice->pet->photo_url }}" class="rounded-circle me-2" width="24" height="24" alt="{{ $invoice->pet->name }}">
                                         {{ $invoice->pet->name }}
                                     </div>
                                 @else
@@ -135,6 +166,11 @@
                                 @endif
                             </td>
                             <td class="fw-bold">₱{{ number_format($invoice->total_amount, 2) }}</td>
+                            <td>
+                                <span class="badge bg-info text-dark">
+                                    {{ $categoryLabelMap[$invoice->source_category] ?? ucfirst(str_replace('_', ' ', $invoice->source_category)) }}
+                                </span>
+                            </td>
                             <td>
                                 @if($invoice->status === 'paid')
                                     <span class="badge bg-success">Paid</span>
@@ -157,7 +193,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
+                            <td colspan="7" class="text-center py-5 text-muted">
                                 No invoices found.
                             </td>
                         </tr>

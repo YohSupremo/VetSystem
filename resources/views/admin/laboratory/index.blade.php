@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Laboratory Management')
+@section('page-description', 'Manage laboratory tests and results')
+
 @push('styles')
 <style>
     .content-header {

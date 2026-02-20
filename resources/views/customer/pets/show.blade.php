@@ -9,13 +9,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center p-4">
                     <div class="mb-3 position-relative d-inline-block">
-                        @if($pet->photo_path)
-                            <img src="{{ asset($pet->photo_path) }}" alt="{{ $pet->name }}" class="rounded-circle shadow-sm" width="150" height="150" style="object-fit: cover;">
-                        @else
-                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center shadow-sm mx-auto" style="width: 150px; height: 150px;">
-                                <i class="fas fa-paw fa-4x text-muted"></i>
-                            </div>
-                        @endif
+                        <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" class="rounded-circle shadow-sm" width="150" height="150" style="object-fit: cover;">
                     </div>
                     
                     <h2 class="fw-bold mb-1">{{ $pet->name }}</h2>

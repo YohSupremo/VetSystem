@@ -5,8 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Models\CageAssignment;
 use App\Models\Appointment;
 use App\Models\Pet;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use App\Models\Cage;
+use Carbon\Carbon;
 
 class BoardingController extends BaseController
 {
@@ -65,11 +69,36 @@ class BoardingController extends BaseController
                 return $date ? strtotime((string) $date) : 0;
             })
             ->values();
+
+        $boardingIds = $boardings->pluck('id')->filter()->map(fn ($id) => (int) $id)->unique()->values();
+        $boardingBilling = [];
+
+        if ($boardingIds->isNotEmpty()) {
+            $boardingIdLookup = array_flip($boardingIds->all());
+
+            $boardingInvoices = Invoice::with(['invoiceItems', 'payments'])
+                ->where('notes', 'like', '%[BOARDING_ID:%')
+                ->orderByDesc('id')
+                ->get();
+
+            foreach ($boardingInvoices as $invoice) {
+                if (!preg_match('/\[BOARDING_ID:(\d+)\]/', (string) ($invoice->notes ?? ''), $matches)) {
+                    continue;
+                }
+
+                $boardingId = (int) ($matches[1] ?? 0);
+                if ($boardingId <= 0 || !isset($boardingIdLookup[$boardingId])) {
+                    continue;
+                }
+
+                if (!isset($boardingBilling[$boardingId])) {
+                    $boardingBilling[$boardingId] = $invoice;
+                }
+            }
+        }
         
         // Calculate dashboard stats
-        $currentBoardings = CageAssignment::whereDate('start_date', '<=', now())
-            ->whereDate('end_date', '>=', now())
-            ->count();
+        $currentBoardings = CageAssignment::active()->count();
 
         $currentBoardings += Appointment::where('type', 'boarding')
             ->where('status', 'in_progress')
@@ -82,7 +111,7 @@ class BoardingController extends BaseController
         $pets = Pet::with('owner')->get();
         $cages = Cage::where('status', 'available')->get();
         
-        return view('admin.boarding.index', compact('pets', 'boardings', 'currentBoardings', 'availableCages', 'upcomingCheckouts', 'cages'));
+        return view('admin.boarding.index', compact('pets', 'boardings', 'currentBoardings', 'availableCages', 'upcomingCheckouts', 'cages', 'boardingBilling'));
     }
 
     private function mapBoardingStatusFromAppointment(string $appointmentStatus): array
@@ -134,23 +163,26 @@ class BoardingController extends BaseController
             'notes'               => 'nullable|string',
         ]);
 
+        $unpaidCompletedBoarding = $this->findUnpaidCompletedBoarding($info['pet_id']);
+        if ($unpaidCompletedBoarding) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'pet_id' => 'This pet has an unpaid completed boarding (ID #' . $unpaidCompletedBoarding->id . '). Please settle payment first before creating a new boarding.',
+                ]);
+        }
+
         $cage = Cage::find($info['cage_id']);
 
         if ($cage->status !== 'available') {
             return back()->withErrors(['cage_id' => 'This cage is not available.']);
         }
 
-        // Check if pet is already assigned to another cage in overlapping dates
-        $overlapping = CageAssignment::where('pet_id', $info['pet_id'])
-            ->where(function($query) use ($info) {
-                $query->whereBetween('start_date', [$info['start_date'], $info['end_date']])
-                      ->orWhereBetween('end_date', [$info['start_date'], $info['end_date']])
-                      ->orWhere(function($q) use ($info) {
-                          $q->where('start_date', '<=', $info['start_date'])
-                            ->where('end_date', '>=', $info['end_date']);
-                      });
-            })
-            ->exists();
+        $overlapping = $this->hasBlockingBoardingOverlap(
+            (int) $info['pet_id'],
+            (string) $info['start_date'],
+            (string) $info['end_date']
+        );
 
         if ($overlapping) {
             return back()->withErrors(['pet_id' => 'This pet is already assigned to a cage during the selected dates.']);
@@ -184,10 +216,12 @@ class BoardingController extends BaseController
             'notes' => $info['notes'] ?? null,
         ]);
 
+        $invoice = $this->ensureBoardingInvoice($assignment);
+
         // Sync cage status in case it was previously available
         $cage->syncStatus();
 
-        return redirect()->route('admin.boarding.index')->with('success', 'Pet successfully assigned to cage and boarding created.');
+        return redirect()->route('admin.boarding.index')->with('success', 'Pet successfully assigned to cage and boarding created. Invoice ' . $invoice->invoice_number . ' has been generated.');
     }
 
 
@@ -212,23 +246,26 @@ class BoardingController extends BaseController
             'notes'               => 'nullable|string',
         ]);
 
+        $unpaidCompletedBoarding = $this->findUnpaidCompletedBoarding($info['pet_id']);
+        if ($unpaidCompletedBoarding) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'pet_id' => 'This pet has an unpaid completed boarding (ID #' . $unpaidCompletedBoarding->id . '). Please settle payment first before creating a new boarding.',
+                ]);
+        }
+
         $cage = Cage::find($info['cage_id']);
 
         if ($cage->status !== 'available') {
             return back()->withInput()->withErrors(['cage_id' => 'This cage is not available.']);
         }
 
-        // Check if pet is already assigned to another cage in overlapping dates
-        $overlapping = CageAssignment::where('pet_id', $info['pet_id'])
-            ->where(function($query) use ($info) {
-                $query->whereBetween('start_date', [$info['start_date'], $info['end_date']])
-                      ->orWhereBetween('end_date', [$info['start_date'], $info['end_date']])
-                      ->orWhere(function($q) use ($info) {
-                          $q->where('start_date', '<=', $info['start_date'])
-                            ->where('end_date', '>=', $info['end_date']);
-                      });
-            })
-            ->exists();
+        $overlapping = $this->hasBlockingBoardingOverlap(
+            (int) $info['pet_id'],
+            (string) $info['start_date'],
+            (string) $info['end_date']
+        );
 
         if ($overlapping) {
             return back()->withInput()->withErrors(['pet_id' => 'This pet is already assigned to a cage during the selected dates.']);
@@ -254,10 +291,12 @@ class BoardingController extends BaseController
             'notes' => $info['notes'] ?? null,
         ]);
 
+        $invoice = $this->ensureBoardingInvoice($boarding);
+
         // Sync cage status to ensure accuracy
         $cage->syncStatus();
 
-        return redirect()->route('admin.boarding.index')->with('success', 'Pet successfully assigned to cage and boarding created.');
+        return redirect()->route('admin.boarding.index')->with('success', 'Pet successfully assigned to cage and boarding created. Invoice ' . $invoice->invoice_number . ' has been generated.');
     }
 
 
@@ -267,7 +306,62 @@ class BoardingController extends BaseController
     public function show($id)
     {
         $boarding = CageAssignment::with(['pet.owner.user', 'cage'])->findOrFail($id);
-        return view('admin.boarding.show', compact('boarding'));
+        $invoice = $this->findBoardingInvoice($boarding);
+
+        return view('admin.boarding.show', compact('boarding', 'invoice'));
+    }
+
+    public function generateInvoice($id)
+    {
+        $boarding = CageAssignment::with(['pet.owner'])->findOrFail($id);
+        $invoice = $this->ensureBoardingInvoice($boarding);
+
+        return redirect()
+            ->route('admin.boarding.show', $boarding->id)
+            ->with('success', 'Boarding invoice ' . $invoice->invoice_number . ' is ready.');
+    }
+
+    public function processPayment(Request $request, $id)
+    {
+        $boarding = CageAssignment::with(['pet.owner'])->findOrFail($id);
+        $invoice = $this->ensureBoardingInvoice($boarding);
+        $invoice->load(['invoiceItems', 'payments']);
+
+        if ($invoice->is_paid) {
+            return back()->withErrors(['error' => 'This boarding invoice is already fully paid.']);
+        }
+
+        $validated = $request->validate([
+            'payment_method' => 'required|in:cash,credit_card,debit_card,bank_transfer,check,mobile_payment,other',
+            'amount' => 'nullable|numeric|min:0.01|max:' . $invoice->balance,
+            'reference_number' => 'nullable|string|max:100',
+            'notes' => 'nullable|string',
+        ]);
+
+        $amount = isset($validated['amount']) && $validated['amount'] !== null
+            ? (float) $validated['amount']
+            : (float) $invoice->balance;
+
+        Payment::create([
+            'invoice_id' => $invoice->id,
+            'payment_date' => now(),
+            'amount' => $amount,
+            'payment_method' => $validated['payment_method'],
+            'reference_number' => $validated['reference_number'] ?? null,
+            'received_by' => auth()->id(),
+            'notes' => $validated['notes'] ?? 'Boarding payment for assignment #' . $boarding->id,
+        ]);
+
+        $invoice->load(['invoiceItems', 'payments']);
+        if ($invoice->balance <= 0) {
+            $invoice->update(['status' => 'paid']);
+        } else {
+            $invoice->update(['status' => 'partial']);
+        }
+
+        return redirect()
+            ->route('admin.boarding.show', $boarding->id)
+            ->with('success', 'Payment recorded successfully for invoice ' . $invoice->invoice_number . '.');
     }
 
     /**
@@ -389,5 +483,137 @@ class BoardingController extends BaseController
         $date = substr((string)$date, 0, 10);
 
         return \Carbon\Carbon::parse($date . ' ' . $time);
+    }
+
+    private function findUnpaidCompletedBoarding(int $petId): ?CageAssignment
+    {
+        $now = now();
+
+        $completedBoardings = CageAssignment::where('pet_id', $petId)
+            ->where(function ($query) use ($now) {
+                $query->where(function ($sub) use ($now) {
+                    $sub->whereNotNull('check_out_time')
+                        ->where('check_out_time', '<=', $now);
+                })->orWhere(function ($sub) use ($now) {
+                    $sub->whereNull('check_out_time')
+                        ->whereDate('end_date', '<', $now->toDateString());
+                });
+            })
+            ->orderByDesc('end_date')
+            ->orderByDesc('id')
+            ->get();
+
+        foreach ($completedBoardings as $boarding) {
+            if (!$boarding instanceof CageAssignment) {
+                continue;
+            }
+
+            $invoice = $this->findBoardingInvoice($boarding);
+            if (!$invoice || !$invoice->is_paid) {
+                return $boarding;
+            }
+        }
+
+        return null;
+    }
+
+    private function findBoardingInvoice(CageAssignment $boarding): ?Invoice
+    {
+        $tag = $this->boardingInvoiceTag($boarding->id);
+
+        return Invoice::with(['invoiceItems', 'payments'])
+            ->where('notes', 'like', '%' . $tag . '%')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    private function ensureBoardingInvoice(CageAssignment $boarding): Invoice
+    {
+        $existing = $this->findBoardingInvoice($boarding);
+        if ($existing) {
+            return $existing;
+        }
+
+        $ownerId = optional($boarding->pet)->owner_id;
+        if (!$ownerId) {
+            abort(422, 'Cannot create boarding invoice because pet owner is missing.');
+        }
+
+        $issueDate = now()->toDateString();
+        $invoice = new Invoice([
+            'owner_id' => $ownerId,
+            'pet_id' => $boarding->pet_id,
+            'invoice_prefix' => 'INV',
+            'issue_date' => $issueDate,
+            'due_date' => Carbon::parse($issueDate)->addDays(7)->toDateString(),
+            'tax_rate' => 0,
+            'discount_amount' => 0,
+            'status' => 'pending',
+            'notes' => 'Boarding invoice for assignment #' . $boarding->id . ' ' . $this->boardingInvoiceTag($boarding->id),
+        ]);
+
+        $invoice->invoice_number = $invoice->generateInvoiceNumber();
+        $invoice->save();
+
+        InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'item_type' => 'boarding',
+            'description' => $this->boardingInvoiceDescription($boarding),
+            'quantity' => 1,
+            'unit_price' => $this->calculateBoardingAmount($boarding),
+        ]);
+
+        return $invoice->load(['invoiceItems', 'payments']);
+    }
+
+    private function calculateBoardingAmount(CageAssignment $boarding): float
+    {
+        if ($boarding->daily_rate === null) {
+            return 0.0;
+        }
+
+        $start = Carbon::parse($boarding->start_date);
+        $end = Carbon::parse($boarding->end_date);
+        $days = max(1, $end->diffInDays($start) + 1);
+
+        return round($days * (float) $boarding->daily_rate, 2);
+    }
+
+    private function boardingInvoiceDescription(CageAssignment $boarding): string
+    {
+        $petName = optional($boarding->pet)->name ?? 'Pet';
+        $cageCode = optional($boarding->cage)->cage_code ?? 'N/A';
+        $start = $boarding->start_date ? Carbon::parse($boarding->start_date)->format('Y-m-d') : 'N/A';
+        $end = $boarding->end_date ? Carbon::parse($boarding->end_date)->format('Y-m-d') : 'N/A';
+
+        return 'Boarding for ' . $petName . ' (Cage ' . $cageCode . ') from ' . $start . ' to ' . $end;
+    }
+
+    private function boardingInvoiceTag(int $boardingId): string
+    {
+        return '[BOARDING_ID:' . $boardingId . ']';
+    }
+
+    private function hasBlockingBoardingOverlap(int $petId, string $startDate, string $endDate): bool
+    {
+        $now = now();
+        $today = $now->toDateString();
+
+        return CageAssignment::where('pet_id', $petId)
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('start_date', [$startDate, $endDate])
+                    ->orWhereBetween('end_date', [$startDate, $endDate])
+                    ->orWhere(function ($q) use ($startDate, $endDate) {
+                        $q->where('start_date', '<=', $startDate)
+                            ->where('end_date', '>=', $endDate);
+                    });
+            })
+            ->where(function ($query) use ($now, $today) {
+                $query->where(function ($q) use ($today) {
+                    $q->whereNull('check_out_time')
+                        ->whereDate('end_date', '>=', $today);
+                })->orWhere('check_out_time', '>', $now);
+            })
+            ->exists();
     }
 }

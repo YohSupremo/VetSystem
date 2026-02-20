@@ -17,7 +17,6 @@ class DashboardController extends Controller
         $hasPetOwners = Schema::hasTable('pet_owners');
         $hasAppointments = Schema::hasTable('appointments');
         $hasVaccinations = Schema::hasTable('pet_vaccinations');
-        $hasVaccines = Schema::hasTable('vaccines');
         $hasCages = Schema::hasTable('cages');
         $hasInventoryStock = Schema::hasTable('inventory_stock');
         $hasInventoryItems = Schema::hasTable('inventory_items');
@@ -38,50 +37,79 @@ class DashboardController extends Controller
                 ->count()
             : 0;
 
-        $speciesBreakdown = $hasPets
-            ? Pet::select('species', DB::raw('COUNT(*) as total'))
-                ->groupBy('species')
+        $speciesOptions = [
+            'dog' => 'Dog',
+            'cat' => 'Cat',
+        ];
+
+        $speciesCounts = array_fill_keys(array_keys($speciesOptions), 0);
+        $speciesPets = array_fill_keys(array_keys($speciesOptions), []);
+        if ($hasPets) {
+            $speciesBreakdown = Pet::selectRaw("LOWER(TRIM(COALESCE(NULLIF(species, ''), ''))) as species_key, COUNT(*) as total")
+                ->groupBy('species_key')
                 ->orderByDesc('total')
-                ->get()
-                ->map(function ($row) {
-                    $row->label = $row->species ? ucfirst($row->species) : 'Unknown';
-                    return $row;
-                })
-            : collect();
+                ->get();
+
+            foreach ($speciesBreakdown as $row) {
+                $normalizedKey = str_replace(' ', '_', (string) $row->species_key);
+                if (array_key_exists($normalizedKey, $speciesCounts)) {
+                    $speciesCounts[$normalizedKey] += (int) $row->total;
+                }
+            }
+
+            $petsBySpecies = Pet::select('name', 'species')
+                ->orderBy('name')
+                ->get();
+
+            foreach ($petsBySpecies as $pet) {
+                $rawSpecies = strtolower(trim((string) $pet->species));
+                $normalizedKey = str_replace(' ', '_', $rawSpecies);
+                if (array_key_exists($normalizedKey, $speciesPets)) {
+                    $speciesPets[$normalizedKey][] = $pet->name ?: 'Unnamed Pet';
+                }
+            }
+        }
 
         $palette = [
             '#FF8C42', '#4A90E2', '#FF6B9D', '#9B7EDE', '#5FD068',
             '#FFD166', '#73C2FB', '#F78DA7', '#8E44AD', '#2ECC71'
         ];
 
-        if ($speciesBreakdown->isEmpty()) {
-            $speciesChart = [
-                'labels' => ['No Data'],
-                'counts' => [0],
-                'colors' => [$palette[0]],
-                'hasData' => false,
-            ];
-        } else {
-            $speciesChart = [
-                'labels' => $speciesBreakdown->pluck('label')->values()->toArray(),
-                'counts' => $speciesBreakdown->pluck('total')->values()->toArray(),
-                'colors' => $speciesBreakdown->values()->map(function ($row, $index) use ($palette) {
-                    return $palette[$index % count($palette)];
-                })->toArray(),
-                'hasData' => true,
-            ];
-        }
+        $totalSpeciesCount = array_sum($speciesCounts);
+        $speciesChart = [
+            'labels' => array_values($speciesOptions),
+            'counts' => array_values($speciesCounts),
+            'colors' => array_values($speciesCounts),
+            'hasData' => $totalSpeciesCount > 0,
+        ];
 
-        $petAges = $hasPets
-            ? Pet::whereNotNull('birth_date')->get()->map(function ($pet) {
-                return Carbon::parse($pet->birth_date)->age;
-            })
-            : collect();
+        $speciesChart['colors'] = array_map(function ($index) use ($palette) {
+            return $palette[$index % count($palette)];
+        }, array_keys($speciesChart['counts']));
+
+        $petAges = collect();
+        if ($hasPets) {
+            $petAges = Pet::whereNotNull('birth_date')
+                ->whereDate('birth_date', '<=', Carbon::today())
+                ->get()
+                ->map(function ($pet) {
+                    try {
+                        return Carbon::parse($pet->birth_date)->age;
+                    } catch (\Exception $exception) {
+                        return null;
+                    }
+                })
+                ->filter(function ($age) {
+                    return $age !== null;
+                })
+                ->values();
+        }
 
         $petAgeStats = [
             'average' => $petAges->isNotEmpty() ? round($petAges->avg(), 1) : null,
             'youngest' => $petAges->isNotEmpty() ? $petAges->min() : null,
             'oldest' => $petAges->isNotEmpty() ? $petAges->max() : null,
+            'count' => $petAges->count(),
         ];
 
         $upcomingAppointments = $hasAppointments
@@ -119,10 +147,10 @@ class DashboardController extends Controller
 
         $vaccinationsDueSoon = collect();
         $vaccinationsDueSoonCount = 0;
-        if ($hasVaccinations && $hasPets && $hasVaccines) {
+        if ($hasVaccinations && $hasPets && $hasInventoryItems) {
             $vaccinationsDueSoonQuery = DB::table('pet_vaccinations')
                 ->leftJoin('pets', 'pet_vaccinations.pet_id', '=', 'pets.id')
-                ->leftJoin('vaccines', 'pet_vaccinations.vaccine_id', '=', 'vaccines.id')
+                ->leftJoin('inventory_items', 'pet_vaccinations.inventory_item_id', '=', 'inventory_items.id')
                 ->leftJoin('users as admins', 'pet_vaccinations.administered_by', '=', 'admins.id')
                 ->whereBetween('pet_vaccinations.next_due_date', [Carbon::today(), Carbon::today()->copy()->addDays(30)]);
 
@@ -136,7 +164,7 @@ class DashboardController extends Controller
                     'pet_vaccinations.notes',
                     'pet_vaccinations.dose_number',
                     'pets.name as pet_name',
-                    'vaccines.vaccine_name',
+                    'inventory_items.name as vaccine_name',
                     DB::raw("CONCAT(admins.first_name, ' ', admins.last_name) as administered_by"),
                 ])
                 ->map(function ($vaccination) {
@@ -153,29 +181,42 @@ class DashboardController extends Controller
                 ->select('status', DB::raw('COUNT(*) as total'))
                 ->groupBy('status')
                 ->get()
-                ->map(function ($row) {
-                    $row->label = $row->status ? ucfirst(str_replace('_', ' ', $row->status)) : 'Unspecified';
-                    return $row;
-                })
             : collect();
 
-        if ($appointmentStatusSummary->isEmpty()) {
-            $appointmentStatusChart = [
-                'labels' => ['No Data'],
-                'counts' => [0],
-                'colors' => [$palette[3]],
-                'hasData' => false,
-            ];
-        } else {
-            $appointmentStatusChart = [
-                'labels' => $appointmentStatusSummary->pluck('label')->values()->toArray(),
-                'counts' => $appointmentStatusSummary->pluck('total')->values()->toArray(),
-                'colors' => $appointmentStatusSummary->values()->map(function ($row, $index) use ($palette) {
-                    return $palette[($index + 3) % count($palette)];
-                })->toArray(),
-                'hasData' => true,
-            ];
+        $statusOrder = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'];
+        $statusLabels = [
+            'pending' => 'Pending',
+            'confirmed' => 'Confirmed',
+            'in_progress' => 'In Progress',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+            'no_show' => 'No Show',
+        ];
+
+        $statusCounts = array_fill_keys($statusOrder, 0);
+        foreach ($appointmentStatusSummary as $row) {
+            $statusKey = $row->status ?: 'unspecified';
+            if (!array_key_exists($statusKey, $statusCounts)) {
+                $statusCounts[$statusKey] = 0;
+                $statusOrder[] = $statusKey;
+                $statusLabels[$statusKey] = ucfirst(str_replace('_', ' ', $statusKey));
+            }
+            $statusCounts[$statusKey] = (int) $row->total;
         }
+
+        $totalAppointments = array_sum($statusCounts);
+        $appointmentStatusChart = [
+            'labels' => array_map(function ($statusKey) use ($statusLabels) {
+                return $statusLabels[$statusKey] ?? ucfirst(str_replace('_', ' ', $statusKey));
+            }, $statusOrder),
+            'counts' => array_map(function ($statusKey) use ($statusCounts) {
+                return $statusCounts[$statusKey] ?? 0;
+            }, $statusOrder),
+            'colors' => array_map(function ($index) use ($palette) {
+                return $palette[($index + 3) % count($palette)];
+            }, array_keys($statusOrder)),
+            'hasData' => $totalAppointments > 0,
+        ];
 
         $boardingCapacity = $hasCages ? DB::table('cages')->count() : 0;
         $occupiedCages = $hasCages ? DB::table('cages')->where('status', 'occupied')->count() : 0;
@@ -240,6 +281,7 @@ class DashboardController extends Controller
             'activeAppointmentsCount' => $activeAppointmentsCount,
             'appointmentsToday' => $appointmentsToday,
             'speciesChart' => $speciesChart,
+            'speciesPets' => $speciesPets,
             'petAgeStats' => $petAgeStats,
             'upcomingAppointments' => $upcomingAppointments,
             'appointmentStatusChart' => $appointmentStatusChart,

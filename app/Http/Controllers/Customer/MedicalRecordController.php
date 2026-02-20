@@ -81,7 +81,7 @@ class MedicalRecordController extends Controller
         
         // Get prescriptions separately
         $prescriptions = $pet->prescriptions()
-            ->with('prescribedBy')
+            ->with(['medicalRecord.veterinarian'])
             ->orderBy('created_at', 'desc')
             ->get();
         

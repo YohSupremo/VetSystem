@@ -85,11 +85,7 @@ class MedicalRecordController extends Controller
             return redirect()->route('login')->with('error', 'Access denied. Veterinarian access required.');
         }
 
-        $medicalRecord = MedicalRecord::where(function($query) use ($veterinarian) {
-            $query->where('veterinarian_id', $veterinarian->id)
-                  ->orWhereNull('veterinarian_id');
-        })
-            ->where('pet_id', $petId)
+        $medicalRecord = MedicalRecord::where('pet_id', $petId)
             ->with(['pet', 'pet.owner', 'veterinarian'])
             ->findOrFail($recordId);
 
@@ -166,25 +162,14 @@ class MedicalRecordController extends Controller
         }
         
         if ($petId) {
-            // Show medical records for specific pet
-            $medicalRecords = MedicalRecord::where(function($query) use ($veterinarian, $petId) {
-                $query->where('veterinarian_id', $veterinarian->id)
-                      ->orWhere(function($subQuery) use ($petId) {
-                          $subQuery->where('pet_id', $petId)
-                                   ->whereNull('veterinarian_id');
-                      });
-            })
-                ->where('pet_id', $petId)
-                ->with(['pet', 'pet.owner'])
+            // Show all medical records for specific pet
+            $medicalRecords = MedicalRecord::where('pet_id', $petId)
+                ->with(['pet', 'pet.owner', 'veterinarian'])
                 ->orderBy('record_date', 'desc')
                 ->paginate(10);
         } else {
-            // Show all medical records for this veterinarian
-            $medicalRecords = MedicalRecord::where(function($query) use ($veterinarian) {
-                $query->where('veterinarian_id', $veterinarian->id)
-                      ->orWhereNull('veterinarian_id');
-            })
-                ->with(['pet', 'pet.owner'])
+            // Show all medical records
+            $medicalRecords = MedicalRecord::with(['pet', 'pet.owner', 'veterinarian'])
                 ->orderBy('created_at', 'desc')
                 ->paginate(10);
         }

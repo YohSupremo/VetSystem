@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use Illuminate\Http\Request;
 use App\Models\BillingInvoice;
 use App\Models\BillingPayment;
+use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\Appointment;
 use App\Models\Pet;
 use App\Models\PetOwner;
@@ -46,29 +48,33 @@ class ReportController extends BaseController
         $endDate = $request->input('end_date', now()->toDateString());
         $reportType = $request->input('report_type', 'summary');
         
-        $invoices = BillingInvoice::with(['invoiceItems', 'payments'])
+        $invoices = Invoice::with(['invoiceItems', 'payments'])
             ->whereBetween('issue_date', [$startDate, $endDate])
             ->where('status', '!=', 'cancelled')
             ->get();
         $totalInvoices = $invoices->count();
         $totalRevenue = $invoices->sum(function ($invoice) {
-            return $invoice->subtotal + ($invoice->subtotal * ($invoice->tax_rate / 100)) - $invoice->discount_amount;
+            return (float) $invoice->total_amount;
         });
-        $paidAmount = $invoices->sum(function ($invoice) {
-            return $invoice->payments->sum('amount');
-        });
-        $outstandingAmount = $totalRevenue - $paidAmount;
 
-        $revenueByMonth = BillingInvoice::with('invoiceItems')
-            ->whereBetween('issue_date', [$startDate, $endDate])
-            ->where('status', '!=', 'cancelled')
-            ->get()
+        $paidAmount = Payment::query()
+            ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
+            ->whereDate('payments.payment_date', '>=', $startDate)
+            ->whereDate('payments.payment_date', '<=', $endDate)
+            ->where('invoices.status', '!=', 'cancelled')
+            ->sum('payments.amount');
+
+        $outstandingAmount = $invoices->sum(function ($invoice) {
+            return (float) $invoice->balance;
+        });
+
+        $revenueByMonth = $invoices
             ->groupBy(function ($inv) { return $inv->issue_date->format('Y-m'); })
             ->map(function ($group) {
                 return (object)[
                     'month' => $group->first()->issue_date->format('Y-m'),
                     'revenue' => $group->sum(function ($invoice) {
-                        return $invoice->subtotal + ($invoice->subtotal * ($invoice->tax_rate / 100)) - $invoice->discount_amount;
+                        return (float) $invoice->total_amount;
                     })
                 ];
             })->values();
@@ -92,19 +98,21 @@ class ReportController extends BaseController
             ->groupBy('payment_method')
             ->get();
 
-        $outstandingInvoices = BillingInvoice::with(['pet', 'petOwner'])
+        $outstandingInvoices = Invoice::with(['pet', 'petOwner'])
             ->whereIn('status', ['pending', 'partial', 'overdue'])
             ->orderBy('due_date', 'asc')
             ->limit(20)
             ->get();
 
         // Get cancelled invoices separately
-        $cancelledInvoices = BillingInvoice::with(['invoiceItems', 'payments'])
+        $cancelledInvoices = Invoice::with(['invoiceItems', 'payments'])
             ->whereBetween('issue_date', [$startDate, $endDate])
             ->where('status', 'cancelled')
             ->get();
         $cancelledCount = $cancelledInvoices->count();
-        $cancelledAmount = $cancelledInvoices->sum('total_amount');
+        $cancelledAmount = $cancelledInvoices->sum(function ($invoice) {
+            return (float) $invoice->total_amount;
+        });
         
         return view('admin.reports.financial', compact(
             'startDate',

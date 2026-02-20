@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Staff Details')
+@section('page-description', 'View staff member information')
+
 @section('content')
 <div class="staff-details-wrapper">
     <!-- Enhanced Header -->

@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Boarding Management')
+@section('page-description', 'Manage pet boarding and accommodations')
+
 @push('styles')
 <style>
     .dashboard-cards {
@@ -234,6 +237,7 @@
                     <th>Check-in</th>
                     <th>Check-out</th>
                     <th>Status</th>
+                    <th>Billing</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -265,8 +269,13 @@
                                 $statusText = $derivedStatus;
                                 $statusClass = $boarding->getAttribute('derived_status_class') ?? 'secondary';
                             } else {
-                                $isActive = $boarding->isActive();
-                                $statusText = $isActive ? 'Active' : (now()->toDateString() > $boarding->end_date ? 'Completed' : 'Upcoming');
+                                if ($boarding->isUpcoming()) {
+                                    $statusText = 'Upcoming';
+                                } elseif ($boarding->isCompleted()) {
+                                    $statusText = 'Completed';
+                                } else {
+                                    $statusText = 'Active';
+                                }
                                 $statusClass = match ($statusText) {
                                     'Active' => 'success',
                                     'Upcoming' => 'warning',
@@ -278,6 +287,30 @@
                         <span class="badge badge-{{ $statusClass }}">
                             {{ $statusText }}
                         </span>
+                    </td>
+                    <td>
+                        @if($boarding->id)
+                            @php
+                                $invoice = $boardingBilling[$boarding->id] ?? null;
+                            @endphp
+
+                            @if($invoice)
+                                @php
+                                    $billingClass = match ($invoice->status) {
+                                        'paid' => 'success',
+                                        'partial' => 'warning',
+                                        'pending', 'overdue' => 'danger',
+                                        default => 'secondary',
+                                    };
+                                @endphp
+                                <span class="badge badge-{{ $billingClass }}">{{ ucfirst($invoice->status) }}</span>
+                                <span class="text-muted">Bal: ₱{{ number_format($invoice->balance, 2) }}</span>
+                            @else
+                                <span class="badge badge-secondary">No Invoice</span>
+                            @endif
+                        @else
+                            <span class="badge badge-secondary">N/A</span>
+                        @endif
                     </td>
                     <td class="actions">
                         @if($boarding->id)
@@ -303,7 +336,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center">No boardings found</td>
+                    <td colspan="8" class="text-center">No boardings found</td>
                 </tr>
                 @endforelse
             </tbody>

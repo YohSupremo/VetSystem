@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\IncidentController;
 
 // Welcome Page with Dynamic Carousel
 Route::get('/', function () {
@@ -52,7 +53,7 @@ Route::get('/register', function(){
 
 Route::get('/login', function(){
     return view('login');
-});
+})->name('login');
 
 Route::post('/register/create', [UserController::class, 'register']);
 Route::post('/login-success', [UserController::class,'login']);
@@ -96,6 +97,12 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::get('/medical-records', [App\Http\Controllers\Customer\MedicalRecordController::class, 'index'])->name('medical-records.index');
     Route::get('/medical-records/pets/{petId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'petRecords'])->name('medical-records.pet');
     Route::get('/medical-records/pets/{petId}/records/{recordId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'show'])->name('medical-records.show');
+
+    // Incident Reports
+    Route::get('/incidents', [App\Http\Controllers\Customer\IncidentController::class, 'index'])->name('incidents.index');
+    Route::get('/incidents/create', [App\Http\Controllers\Customer\IncidentController::class, 'create'])->name('incidents.create');
+    Route::post('/incidents', [App\Http\Controllers\Customer\IncidentController::class, 'store'])->name('incidents.store');
+    Route::get('/incidents/{id}', [App\Http\Controllers\Customer\IncidentController::class, 'show'])->name('incidents.show');
     
     // Products / Shop
     Route::get('/products', [App\Http\Controllers\Customer\ProductController::class, 'index'])->name('products.index');
@@ -229,6 +236,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::get('/pet/{pet}', [MedicalRecordController::class, 'byPet'])->name('pet');
     });
 
+    // Incident Reports
+    Route::prefix('incidents')->name('incidents.')->group(function () {
+        Route::get('/', [IncidentController::class, 'index'])->name('index');
+        Route::get('/create', [IncidentController::class, 'create'])->name('create');
+        Route::post('/', [IncidentController::class, 'store'])->name('store');
+        Route::get('/{id}', [IncidentController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [IncidentController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [IncidentController::class, 'update'])->name('update');
+        Route::put('/{id}/status', [IncidentController::class, 'updateStatus'])->name('status-update');
+        Route::delete('/{id}', [IncidentController::class, 'destroy'])->name('destroy');
+    });
+
     // Vaccinations
     Route::prefix('vaccinations')->name('vaccinations.')->group(function () {
         Route::get('/', [VaccinationController::class, 'index'])->name('index');
@@ -239,16 +258,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::put('/{vaccination}', [VaccinationController::class, 'update'])->name('update');
         Route::delete('/{vaccination}', [VaccinationController::class, 'destroy'])->name('destroy');
         Route::get('/pet/{pet}', [VaccinationController::class, 'byPet'])->name('pet');
-    });
-
-    // Vaccines
-    Route::prefix('vaccines')->name('vaccines.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\VaccineController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\Admin\VaccineController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\Admin\VaccineController::class, 'store'])->name('store');
-        Route::get('/{vaccine}/edit', [App\Http\Controllers\Admin\VaccineController::class, 'edit'])->name('edit');
-        Route::put('/{vaccine}', [App\Http\Controllers\Admin\VaccineController::class, 'update'])->name('update');
-        Route::delete('/{vaccine}', [App\Http\Controllers\Admin\VaccineController::class, 'destroy'])->name('destroy');
     });
 
     // Prescriptions
@@ -295,6 +304,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::get('/', [BoardingController::class, 'index'])->name('index');
         Route::get('/new-boarding', [BoardingController::class, 'create'])->name('new-boarding');
         Route::post('/new-boarding', [BoardingController::class, 'createPass'])->name('new-boarding.store');
+        Route::post('/{boarding}/invoice', [BoardingController::class, 'generateInvoice'])->name('invoice.generate');
+        Route::post('/{boarding}/payment', [BoardingController::class, 'processPayment'])->name('payment.process');
         
         // RESTful routes
         Route::get('/create', [BoardingController::class, 'create'])->name('create');
@@ -352,6 +363,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
     // Cages
     Route::resource('cages', \App\Http\Controllers\Admin\CageController::class);
     Route::get('/cages/scan/{code}', [\App\Http\Controllers\Admin\CageController::class, 'scan'])->name('cages.scan');
+    Route::post('/cages/{id}/release', [\App\Http\Controllers\Admin\CageController::class, 'release'])->name('cages.release');
 
 // Customer Routes
     Route::get('prescriptions/pet/{petId}', [PrescriptionController::class, 'byPet'])->name('prescriptions.pet');

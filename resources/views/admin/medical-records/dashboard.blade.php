@@ -127,7 +127,7 @@
                             <tbody>
                                 @forelse($vaccinations as $vaccination)
                                 <tr>
-                                    <td>{{ $vaccination->vaccine->vaccine_name }}</td>
+                                    <td>{{ $vaccination->inventoryItem->name }}</td>
                                     <td>{{ $vaccination->pet->name }}</td>
                                     <td>{{ $vaccination->administered_date->format('M d, Y') }}</td>
                                     <td>

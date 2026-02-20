@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'New Boarding Reservation')
+@section('page-description', 'Create a new boarding reservation')
+
 @section('content')
 <style>
     :root {

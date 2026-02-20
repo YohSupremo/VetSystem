@@ -1,5 +1,8 @@
 @extends('admin.dashboard')
 
+@section('page-title', 'Cage QR Scanner')
+@section('page-description', 'Scan cage QR codes to view and manage assignments')
+
 @section('content')
 <style>
     .scan-container {

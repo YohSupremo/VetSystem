@@ -23,7 +23,7 @@ class MedicalRecordDashboardController extends Controller
             ->paginate(10);
             
         // Get upcoming vaccinations
-        $vaccinations = PetVaccination::with(['pet', 'vaccine', 'administeredBy'])
+        $vaccinations = PetVaccination::with(['pet', 'inventoryItem', 'administeredBy'])
             ->orderBy('next_due_date', 'asc')
             ->limit(20)
             ->get();

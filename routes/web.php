@@ -317,6 +317,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
     });
 
     // Grooming
+    Route::get('/grooming/appointment/{appointment}/complete', [GroomingController::class, 'completeFromAppointment'])->name('grooming.complete');
+    Route::post('/grooming/appointment/{appointment}/complete', [GroomingController::class, 'storeFromAppointment'])->name('grooming.complete.store');
+    Route::post('/grooming/{grooming}/mark-paid', [GroomingController::class, 'markPaid'])->name('grooming.mark-paid');
     Route::resource('grooming', GroomingController::class);
     
     // Grooming Services Management

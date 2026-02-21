@@ -21,20 +21,33 @@ class BillingController extends BaseController
     {
         $invoices = BillingInvoice::with(['pet', 'petOwner', 'invoiceItems', 'payments'])
             ->where('status', '!=', 'cancelled')
-            ->orderBy('issue_date', 'desc')
+            ->orderByDesc('issue_date')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate(20);
 
         $totalInvoices = BillingInvoice::where('status', '!=', 'cancelled')->count();
         $paidInvoices = BillingInvoice::where('status', 'paid')->count();
         $overdueInvoices = BillingInvoice::where('status', 'overdue')->count();
-        $totalRevenue = \App\Models\Payment::sum('amount');
+        $totalRevenue = BillingInvoice::with('invoiceItems')
+            ->where('status', '!=', 'cancelled')
+            ->get()
+            ->sum(function ($invoice) {
+                return (float) $invoice->total_amount;
+            });
+
+        $paidAmount = \App\Models\Payment::query()
+            ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
+            ->where('invoices.status', '!=', 'cancelled')
+            ->sum('payments.amount');
         
         return view('admin.billing.index', compact(
             'invoices',
             'totalInvoices',
             'paidInvoices',
             'overdueInvoices',
-            'totalRevenue'
+            'totalRevenue',
+            'paidAmount'
         ));
     }
 

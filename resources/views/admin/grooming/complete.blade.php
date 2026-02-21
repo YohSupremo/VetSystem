@@ -1,7 +1,7 @@
 @extends('admin.dashboard')
 
-@section('page-title', 'Edit Grooming Appointment')
-@section('page-description', 'Update grooming appointment details')
+@section('page-title', 'Complete Grooming Details')
+@section('page-description', 'Assign service and groomer to a grooming appointment')
 
 @push('styles')
 <style>
@@ -60,27 +60,18 @@
         background: #6c757d;
         color: #fff;
     }
-    .btn-danger {
-        background: #dc3545;
-        color: #fff;
-        margin-left: auto;
-    }
 </style>
 @endpush
 
 @section('content')
 <div class="form-container">
     <div class="page-header">
-        <h1><i class="fas fa-cut"></i> Edit Grooming Appointment</h1>
-        <p>Update the details for this grooming visit.</p>
+        <h1><i class="fas fa-clipboard-list"></i> Complete Grooming Details</h1>
+        <p>This appointment came from the general Appointments tab and still needs service/staff details.</p>
     </div>
 
-    @php $appointment = $groomingAppointment->appointment; @endphp
-    @php $selectedGroomerId = old('groomer_id', $groomingAppointment->groomer_id ?? optional($appointment)->veterinarian_id); @endphp
-
-    <form method="POST" action="{{ route('admin.grooming.update', $groomingAppointment->id) }}">
+    <form method="POST" action="{{ route('admin.grooming.complete.store', $appointment->id) }}">
         @csrf
-        @method('PUT')
 
         <div class="form-group">
             <label>Pet</label>
@@ -88,12 +79,21 @@
         </div>
 
         <div class="form-group">
+            <label for="appointment_date">Date</label>
+            <input type="date" id="appointment_date" name="appointment_date" class="form-control @error('appointment_date') is-invalid @enderror"
+                   value="{{ old('appointment_date', optional($appointment->appointment_date)->format('Y-m-d')) }}">
+            @error('appointment_date')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <div class="form-group">
             <label for="service_id">Grooming Service</label>
             <select id="service_id" name="service_id" class="form-control @error('service_id') is-invalid @enderror">
                 <option value="">Select a service</option>
                 @foreach($services as $service)
-                    <option value="{{ $service->id }}" @selected(old('service_id', $groomingAppointment->service_id) == $service->id)>
-                        {{ $service->service_name }} 
+                    <option value="{{ $service->id }}" @selected(old('service_id') == $service->id)>
+                        {{ $service->service_name }}
                         @if($service->price) - ₱{{ number_format($service->price, 2) }} @endif
                         @if($service->duration_minutes) ({{ $service->duration_minutes }} min) @endif
                     </option>
@@ -109,7 +109,7 @@
             <select id="groomer_id" name="groomer_id" class="form-control @error('groomer_id') is-invalid @enderror">
                 <option value="">No groomer assigned</option>
                 @foreach($groomers as $groomer)
-                    <option value="{{ $groomer->id }}" @selected($selectedGroomerId == $groomer->id)>
+                    <option value="{{ $groomer->id }}" @selected(old('groomer_id') == $groomer->id)>
                         {{ $groomer->first_name }} {{ $groomer->last_name }}
                     </option>
                 @endforeach
@@ -120,33 +120,33 @@
         </div>
 
         <div class="form-group">
-            <label for="appointment_date">Date</label>
-            <input type="date" id="appointment_date" name="appointment_date" class="form-control @error('appointment_date') is-invalid @enderror"
-                   value="{{ old('appointment_date', optional($appointment->appointment_date)->format('Y-m-d')) }}">
-            @error('appointment_date')
-                <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
-        </div>
-
-        <div class="form-group">
             <label for="status">Status</label>
-            <select id="status" name="status" class="form-control">
-                @php $currentStatus = $groomingAppointment->status ?? 'scheduled'; @endphp
+            <select id="status" name="status" class="form-control @error('status') is-invalid @enderror">
+                @php $currentStatus = old('status', 'scheduled'); @endphp
                 <option value="scheduled" @selected($currentStatus === 'scheduled')>Scheduled</option>
                 <option value="in_progress" @selected($currentStatus === 'in_progress')>In Progress</option>
                 <option value="completed" @selected($currentStatus === 'completed')>Completed</option>
                 <option value="cancelled" @selected($currentStatus === 'cancelled')>Cancelled</option>
             </select>
+            @error('status')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
 
         <div class="form-group">
             <label for="special_instructions">Special Instructions (optional)</label>
-            <textarea id="special_instructions" name="special_instructions" rows="3" class="form-control">{{ old('special_instructions', $groomingAppointment->special_instructions) }}</textarea>
+            <textarea id="special_instructions" name="special_instructions" rows="3" class="form-control @error('special_instructions') is-invalid @enderror">{{ old('special_instructions') }}</textarea>
+            @error('special_instructions')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
 
         <div class="form-group">
             <label for="notes">Notes (optional)</label>
-            <textarea id="notes" name="notes" rows="3" class="form-control">{{ old('notes', $appointment->notes) }}</textarea>
+            <textarea id="notes" name="notes" rows="3" class="form-control @error('notes') is-invalid @enderror">{{ old('notes', $appointment->notes) }}</textarea>
+            @error('notes')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
 
         <div class="form-actions">
@@ -154,37 +154,9 @@
                 <i class="fas fa-arrow-left"></i> Back
             </a>
             <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Update
+                <i class="fas fa-save"></i> Save Details
             </button>
         </div>
     </form>
-
-    <div class="form-actions" style="margin-top: 0.75rem;">
-        <div></div>
-        <form method="POST" action="{{ route('admin.grooming.destroy', $groomingAppointment->id) }}" class="delete-form">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="btn btn-danger">
-                <i class="fas fa-trash"></i> Delete
-            </button>
-        </form>
-    </div>
 </div>
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var form = document.querySelector('.delete-form');
-    if (form) {
-        form.addEventListener('submit', function (e) {
-            var ok = confirm('Are you sure you want to delete this grooming appointment?');
-            if (!ok) {
-                e.preventDefault();
-            }
-        });
-    }
-});
-</script>
-@endpush
 @endsection
-

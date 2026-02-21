@@ -159,7 +159,7 @@ class BoardingController extends BaseController
             'feeding_notes'       => 'nullable|string',
             'medication_notes'    => 'nullable|string',
             'medication_times'    => 'nullable|string',
-            'daily_rate'          => 'nullable|numeric|min:0',
+            'daily_rate'          => 'required|numeric|min:0',
             'notes'               => 'nullable|string',
         ]);
 
@@ -242,7 +242,7 @@ class BoardingController extends BaseController
             'special_diet_notes'  => 'nullable|string',
             'medication_instructions' => 'nullable|string',
             'medication_times'    => 'nullable|string',
-            'daily_rate'          => 'nullable|numeric|min:0',
+            'daily_rate'          => 'required|numeric|min:0',
             'notes'               => 'nullable|string',
         ]);
 
@@ -394,7 +394,7 @@ class BoardingController extends BaseController
             'special_diet_notes'  => 'nullable|string',
             'medication_instructions' => 'nullable|string',
             'medication_times'    => 'nullable|string',
-            'daily_rate'          => 'nullable|numeric|min:0',
+            'daily_rate'          => 'required|numeric|min:0',
             'notes'               => 'nullable|string',
         ]);
 

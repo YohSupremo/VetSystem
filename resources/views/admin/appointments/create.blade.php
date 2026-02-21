@@ -126,15 +126,18 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="veterinarian_id">Assigned Veterinarian <span style="color: var(--accent-pink);">*</span></label>
-                        <select name="veterinarian_id" id="veterinarian_id" required>
-                            <option value="">Select veterinarian</option>
-                            @foreach($veterinarians as $vet)
-                                <option value="{{ $vet->id }}" {{ old('veterinarian_id') == $vet->id ? 'selected' : '' }}>
-                                    Dr. {{ $vet->first_name }} {{ $vet->last_name }}
+                        <label for="veterinarian_id">Assigned Staff</label>
+                        <select name="veterinarian_id" id="veterinarian_id">
+                            <option value="">Select staff</option>
+                            @foreach($assignableStaff as $staff)
+                                <option value="{{ $staff->id }}"
+                                        data-role="{{ $staff->role }}"
+                                        {{ old('veterinarian_id') == $staff->id ? 'selected' : '' }}>
+                                    {{ $staff->first_name }} {{ $staff->last_name }} ({{ ucfirst($staff->role) }})
                                 </option>
                             @endforeach
                         </select>
+                        <div class="inline-hint" id="assignee_hint">Staff options are filtered by visit type.</div>
                         @error('veterinarian_id')
                             <div class="inline-hint">{{ $message }}</div>
                         @enderror
@@ -155,7 +158,7 @@
 
                     <div class="form-group">
                         <label for="type">Visit Type <span style="color: var(--accent-pink);">*</span></label>
-                        <select name="type" id="type" required>
+                        <select name="type" id="type">
                             @foreach($types as $type)
                                 <option value="{{ $type }}" {{ old('type') == $type ? 'selected' : '' }}>
                                     {{ ucfirst(str_replace('_', ' ', $type)) }}
@@ -211,4 +214,54 @@
             </div>
         </form>
     @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const typeSelect = document.getElementById('type');
+            const assigneeSelect = document.getElementById('veterinarian_id');
+            const assigneeHint = document.getElementById('assignee_hint');
+
+            const roleMap = {
+                consultation: 'veterinarian',
+                vaccination: 'veterinarian',
+                surgery: 'veterinarian',
+                follow_up: 'veterinarian',
+                emergency: 'veterinarian',
+                grooming: 'groomer',
+                boarding: 'boarding'
+            };
+
+            const hintMap = {
+                veterinarian: 'Showing veterinarians for this visit type.',
+                groomer: 'Showing groomers for this visit type.',
+                boarding: 'Showing boarding staff for this visit type.',
+                all: 'Showing all staff for this visit type.'
+            };
+
+            const filterAssignees = () => {
+                const selectedType = typeSelect.value;
+                const requiredRole = roleMap[selectedType] || null;
+
+                Array.from(assigneeSelect.options).forEach((option, index) => {
+                    if (index === 0) {
+                        option.hidden = false;
+                        return;
+                    }
+
+                    const optionRole = option.dataset.role;
+                    const shouldShow = !requiredRole || optionRole === requiredRole;
+                    option.hidden = !shouldShow;
+
+                    if (!shouldShow && option.selected) {
+                        assigneeSelect.value = '';
+                    }
+                });
+
+                assigneeHint.textContent = requiredRole ? hintMap[requiredRole] : hintMap.all;
+            };
+
+            typeSelect.addEventListener('change', filterAssignees);
+            filterAssignees();
+        });
+    </script>
 @endsection

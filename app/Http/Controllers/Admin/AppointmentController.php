@@ -101,12 +101,15 @@ class AppointmentController extends Controller
     public function create()
     {
         $pets = Pet::with('owner.user')->orderBy('name')->get();
-        $veterinarians = User::where('role', 'veterinarian')->where('is_active', 1)->get();
+        $assignableStaff = User::whereIn('role', ['veterinarian', 'groomer', 'boarding', 'staff'])
+            ->where('is_active', 1)
+            ->orderBy('first_name')
+            ->get();
         
         $types = ['consultation', 'vaccination', 'surgery', 'grooming', 'boarding', 'follow_up', 'emergency', 'other'];
         $statuses = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'];
         
-        return view('admin.appointments.create', compact('pets', 'veterinarians', 'types', 'statuses'));
+        return view('admin.appointments.create', compact('pets', 'assignableStaff', 'types', 'statuses'));
     }
 
     /**
@@ -123,6 +126,17 @@ class AppointmentController extends Controller
             'notes' => 'nullable|string',
             'queue_priority' => 'nullable|integer|min:0',
         ]);
+
+        if (!empty($validated['veterinarian_id'])) {
+            $assignee = User::find($validated['veterinarian_id']);
+            $requiredRole = $this->requiredAssigneeRoleForType($validated['type'] ?? null);
+
+            if ($requiredRole !== null && (!$assignee || $assignee->role !== $requiredRole)) {
+                return back()->withInput()->withErrors([
+                    'veterinarian_id' => 'Selected staff must have role: ' . ucfirst($requiredRole) . '.',
+                ]);
+            }
+        }
 
         // Parse the datetime-local format to proper DateTime
         $validated['appointment_date'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['appointment_date']);
@@ -148,12 +162,15 @@ class AppointmentController extends Controller
     public function edit(Appointment $appointment)
     {
         $pets = Pet::with('owner.user')->orderBy('name')->get();
-        $veterinarians = User::where('role', 'veterinarian')->where('is_active', 1)->get();
+        $assignableStaff = User::whereIn('role', ['veterinarian', 'groomer', 'boarding', 'staff'])
+            ->where('is_active', 1)
+            ->orderBy('first_name')
+            ->get();
         
         $types = ['consultation', 'vaccination', 'surgery', 'grooming', 'boarding', 'follow_up', 'emergency', 'other'];
         $statuses = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'];
         
-        return view('admin.appointments.edit', compact('appointment', 'pets', 'veterinarians', 'types', 'statuses'));
+        return view('admin.appointments.edit', compact('appointment', 'pets', 'assignableStaff', 'types', 'statuses'));
     }
 
     /**
@@ -170,6 +187,17 @@ class AppointmentController extends Controller
             'notes' => 'nullable|string',
             'queue_priority' => 'nullable|integer|min:0',
         ]);
+
+        if (!empty($validated['veterinarian_id'])) {
+            $assignee = User::find($validated['veterinarian_id']);
+            $requiredRole = $this->requiredAssigneeRoleForType($validated['type'] ?? null);
+
+            if ($requiredRole !== null && (!$assignee || $assignee->role !== $requiredRole)) {
+                return back()->withInput()->withErrors([
+                    'veterinarian_id' => 'Selected staff must have role: ' . ucfirst($requiredRole) . '.',
+                ]);
+            }
+        }
 
         // Parse the datetime-local format to proper DateTime
         $validated['appointment_date'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['appointment_date']);
@@ -200,5 +228,15 @@ class AppointmentController extends Controller
         
         return redirect()->route('admin.appointments.show', $appointment)
             ->with('success', 'Appointment has been cancelled successfully!');
+    }
+
+    private function requiredAssigneeRoleForType(?string $type): ?string
+    {
+        return match ($type) {
+            'consultation', 'vaccination', 'surgery', 'follow_up', 'emergency' => 'veterinarian',
+            'grooming' => 'groomer',
+            'boarding' => 'boarding',
+            default => null,
+        };
     }
 }

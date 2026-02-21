@@ -639,7 +639,7 @@
 
                 <div class="form-group">
                     <label class="form-label" for="daily_rate">Daily Rate (₱)</label>
-                    <input type="number" name="daily_rate" id="daily_rate" min="0" step="0.01"
+                          <input type="number" name="daily_rate" id="daily_rate" min="0" step="0.01"
                            value="{{ old('daily_rate', $boarding->daily_rate) }}"
                            placeholder="500.00"
                            class="form-control @error('daily_rate') is-invalid @enderror">

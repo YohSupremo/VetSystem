@@ -477,42 +477,39 @@
             <div class="card-header">
                 <h3><i class="fas fa-paw"></i> Species Mix</h3>
             </div>
-<<<<<<< HEAD
             @if($speciesChart['hasData'])
-                <div class="chart-container" id="speciesChart"></div>
-                <div class="chart-legend">
+                <div class="species-grid">
                     @foreach($speciesChart['labels'] as $index => $label)
-                        <div class="legend-item">
-                            <span class="legend-color" data-color="{{ $speciesChart['colors'][$index] }}"></span>
-                            <span>{{ $label }} ({{ $speciesChart['counts'][$index] }})</span>
-=======
-            <div class="species-grid">
-                @foreach($speciesChart['labels'] as $index => $label)
-                    <div class="species-card">
-                        <div class="species-card-header">
-                            <div class="species-title">
-                                <span class="species-dot" style="background: {{ $speciesChart['colors'][$index] }}"></span>
-                                {{ $label }}
+                        <div class="species-card">
+                            <div class="species-card-header">
+                                <div class="species-title">
+                                    <span class="species-dot" style="background: {{ $speciesChart['colors'][$index] }}"></span>
+                                    {{ $label }}
+                                </div>
+                                <span class="species-count">{{ $speciesChart['counts'][$index] }} pets</span>
                             </div>
-                            <span class="species-count">{{ $speciesChart['counts'][$index] }} pets</span>
->>>>>>> 88131b28205189d5fd4186b2bb55796d2af26680
+                            @php
+                                $speciesKey = strtolower(str_replace(' ', '_', $label));
+                                $petNames = $speciesPets[$speciesKey] ?? [];
+                            @endphp
+                            @if(count($petNames) > 0)
+                                <ul class="species-list">
+                                    @foreach($petNames as $petName)
+                                        <li>{{ $petName }}</li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                <div class="species-empty">No pets registered yet.</div>
+                            @endif
                         </div>
-                        @php
-                            $speciesKey = strtolower(str_replace(' ', '_', $label));
-                            $petNames = $speciesPets[$speciesKey] ?? [];
-                        @endphp
-                        @if(count($petNames) > 0)
-                            <ul class="species-list">
-                                @foreach($petNames as $petName)
-                                    <li>{{ $petName }}</li>
-                                @endforeach
-                            </ul>
-                        @else
-                            <div class="species-empty">No pets registered yet.</div>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="empty-state">
+                    <i class="fas fa-paw"></i>
+                    <p>No species data available yet.</p>
+                </div>
+            @endif
         </div>
 
         <div class="card appointment-pipeline">

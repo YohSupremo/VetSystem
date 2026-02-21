@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Appointment;
 use App\Models\GroomingAppointment;
 use App\Models\GroomingService;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Payment;
 use App\Models\Pet;
 use App\Models\User;
 use Carbon\Carbon;
@@ -31,7 +34,7 @@ class GroomingController extends BaseController
             ->filter()
             ->all();
 
-        $appointmentGroomings = Appointment::with(['pet.owner.user'])
+        $appointmentGroomings = Appointment::with(['pet.owner.user', 'veterinarian'])
             ->where('type', 'grooming')
             ->whereIn('status', ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'])
             ->when(!empty($linkedAppointmentIds), function ($query) use ($linkedAppointmentIds) {
@@ -55,6 +58,42 @@ class GroomingController extends BaseController
                 return $date ? $date->timestamp : 0;
             })
             ->values();
+
+        $appointmentIds = $groomingAppointments
+            ->map(fn ($item) => optional($item->appointment)->id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $invoicesByAppointment = Invoice::with(['invoiceItems', 'payments'])
+            ->whereIn('appointment_id', $appointmentIds)
+            ->where('status', '!=', 'cancelled')
+            ->orderByDesc('issue_date')
+            ->get()
+            ->groupBy('appointment_id');
+
+        $groomingAppointments = $groomingAppointments->map(function ($item) use ($invoicesByAppointment) {
+            $appointmentId = optional($item->appointment)->id;
+            $invoice = $appointmentId
+                ? optional($invoicesByAppointment->get($appointmentId))->first()
+                : null;
+
+            if (!$invoice) {
+                $item->setAttribute('payment_status', 'unbilled');
+                $item->setAttribute('invoice_id', null);
+                return $item;
+            }
+
+            $paymentStatus = $invoice->is_paid
+                ? 'paid'
+                : ((float) $invoice->paid_amount > 0 ? 'partial' : 'unpaid');
+
+            $item->setAttribute('payment_status', $paymentStatus);
+            $item->setAttribute('invoice_id', $invoice->id);
+
+            return $item;
+        });
 
         $todayAppointments = Appointment::where('type', 'grooming')
             ->whereDate('appointment_date', Carbon::today())
@@ -84,6 +123,80 @@ class GroomingController extends BaseController
     }
 
     /**
+     * Show form to complete grooming details for an existing appointment.
+     */
+    public function completeFromAppointment($appointmentId)
+    {
+        $appointment = Appointment::with(['pet.owner.user'])->findOrFail($appointmentId);
+
+        if ($appointment->type !== 'grooming') {
+            return redirect()->route('admin.grooming.index')
+                ->with('error', 'Only grooming appointments can be completed here.');
+        }
+
+        $existing = GroomingAppointment::where('appointment_id', $appointment->id)->first();
+        if ($existing) {
+            return redirect()->route('admin.grooming.edit', $existing->id)
+                ->with('info', 'Grooming details already exist. You can edit them below.');
+        }
+
+        $services = GroomingService::orderBy('service_name')->get();
+        $groomers = User::where('role', 'groomer')->orderBy('first_name')->get();
+
+        return view('admin.grooming.complete', compact('appointment', 'services', 'groomers'));
+    }
+
+    /**
+     * Store grooming details for an existing grooming appointment record.
+     */
+    public function storeFromAppointment(Request $request, $appointmentId)
+    {
+        $appointment = Appointment::findOrFail($appointmentId);
+
+        if ($appointment->type !== 'grooming') {
+            return redirect()->route('admin.grooming.index')
+                ->with('error', 'Only grooming appointments can be completed here.');
+        }
+
+        $existing = GroomingAppointment::where('appointment_id', $appointment->id)->first();
+        if ($existing) {
+            return redirect()->route('admin.grooming.edit', $existing->id)
+                ->with('info', 'Grooming details already exist.');
+        }
+
+        $data = $request->validate([
+            'service_id' => 'required|exists:grooming_services,id',
+            'groomer_id' => 'nullable|exists:users,id',
+            'appointment_date' => 'required|date',
+            'status' => 'required|in:scheduled,in_progress,completed,cancelled',
+            'special_instructions' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $appointment->update([
+            'veterinarian_id' => $data['groomer_id'] ?? $appointment->veterinarian_id,
+            'appointment_date' => $data['appointment_date'],
+            'status' => $this->mapAppointmentStatus($data['status']),
+            'notes' => $data['notes'] ?? $appointment->notes,
+        ]);
+
+        $groomingAppointment = GroomingAppointment::create([
+            'appointment_id' => $appointment->id,
+            'service_id' => $data['service_id'],
+            'groomer_id' => $data['groomer_id'] ?? null,
+            'special_instructions' => $data['special_instructions'] ?? null,
+            'status' => $data['status'],
+        ]);
+
+        if ($data['status'] === 'completed') {
+            $this->ensureGroomingInvoice($groomingAppointment);
+        }
+
+        return redirect()->route('admin.grooming.show', $groomingAppointment->id)
+            ->with('success', 'Grooming details completed successfully.');
+    }
+
+    /**
      * Store a newly created grooming appointment.
      */
     public function store(Request $request)
@@ -99,7 +212,7 @@ class GroomingController extends BaseController
 
         $appointment = Appointment::create([
             'pet_id' => $data['pet_id'],
-            'veterinarian_id' => null,
+            'veterinarian_id' => $data['groomer_id'] ?? null,
             'appointment_date' => $data['appointment_date'],
             'status' => 'confirmed',
             'type' => 'grooming',
@@ -125,6 +238,7 @@ class GroomingController extends BaseController
     {
         $groomingAppointment = GroomingAppointment::with([
             'appointment.pet.owner.user',
+            'appointment.veterinarian',
             'service',
             'groomer'
         ])->findOrFail($id);
@@ -166,21 +280,39 @@ class GroomingController extends BaseController
             'notes' => 'nullable|string',
         ]);
 
-        $appointment->update([
-            'appointment_date' => $data['appointment_date'],
-            'status' => $this->mapAppointmentStatus($data['status']),
-            'notes' => $data['notes'] ?? null,
-        ]);
+        DB::beginTransaction();
 
-        $groomingAppointment->update([
-            'service_id' => $data['service_id'],
-            'groomer_id' => $data['groomer_id'] ?? null,
-            'special_instructions' => $data['special_instructions'] ?? null,
-            'status' => $data['status'],
-        ]);
+        try {
+            $appointment->update([
+                'veterinarian_id' => $data['groomer_id'] ?? null,
+                'appointment_date' => $data['appointment_date'],
+                'status' => $this->mapAppointmentStatus($data['status']),
+                'notes' => $data['notes'] ?? null,
+            ]);
 
-        return redirect()->route('admin.grooming.show', $groomingAppointment->id)
-            ->with('success', 'Grooming appointment updated successfully.');
+            $groomingAppointment->update([
+                'service_id' => $data['service_id'],
+                'groomer_id' => $data['groomer_id'] ?? null,
+                'special_instructions' => $data['special_instructions'] ?? null,
+                'status' => $data['status'],
+            ]);
+
+            if ($data['status'] === 'completed') {
+                $this->ensureGroomingInvoice($groomingAppointment);
+            }
+
+            if ($data['status'] === 'cancelled') {
+                $this->cancelGroomingInvoice($groomingAppointment);
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.grooming.show', $groomingAppointment->id)
+                ->with('success', 'Grooming appointment updated successfully.');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return back()->withInput()->withErrors(['error' => 'Unable to update grooming appointment: ' . $exception->getMessage()]);
+        }
     }
 
     /**
@@ -196,6 +328,132 @@ class GroomingController extends BaseController
 
         return redirect()->route('admin.grooming.index')
             ->with('success', 'Grooming appointment deleted successfully.');
+    }
+
+    public function markPaid($id)
+    {
+        $groomingAppointment = GroomingAppointment::with(['appointment.pet', 'service'])->findOrFail($id);
+        $appointment = $groomingAppointment->appointment;
+
+        if (!$appointment) {
+            return back()->withErrors(['error' => 'Linked appointment not found.']);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $invoice = $this->ensureGroomingInvoice($groomingAppointment);
+
+            $invoice->load(['invoiceItems', 'payments']);
+
+            if ($invoice->is_paid) {
+                DB::commit();
+                return back()->with('success', 'Grooming invoice is already paid.');
+            }
+
+            $balance = (float) $invoice->balance;
+            if ($balance <= 0) {
+                $invoice->update(['status' => 'paid']);
+                DB::commit();
+                return back()->with('success', 'Grooming invoice marked as paid.');
+            }
+
+            Payment::create([
+                'invoice_id' => $invoice->id,
+                'payment_date' => now(),
+                'amount' => $balance,
+                'payment_method' => 'cash',
+                'reference_number' => null,
+                'received_by' => auth()->id(),
+                'notes' => 'Paid from grooming appointments list.',
+            ]);
+
+            $invoice->load(['invoiceItems', 'payments']);
+            $invoice->update(['status' => $invoice->balance <= 0 ? 'paid' : 'partial']);
+
+            DB::commit();
+
+            return back()->with('success', 'Grooming payment recorded successfully.');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Unable to mark grooming as paid: ' . $exception->getMessage()]);
+        }
+    }
+
+    private function ensureGroomingInvoice(GroomingAppointment $groomingAppointment): Invoice
+    {
+        $groomingAppointment->loadMissing(['appointment.pet', 'service']);
+        $appointment = $groomingAppointment->appointment;
+
+        $invoice = Invoice::with(['invoiceItems', 'payments'])
+            ->where('appointment_id', optional($appointment)->id)
+            ->where('status', '!=', 'cancelled')
+            ->orderByDesc('issue_date')
+            ->first();
+
+        if ($invoice) {
+            return $invoice;
+        }
+
+        $ownerId = optional($appointment->pet)->owner_id;
+        if (!$ownerId) {
+            throw new \RuntimeException('Cannot create invoice: pet owner is missing.');
+        }
+
+        $prefix = 'INV';
+        $year = now()->format('Y');
+        $lastSequence = Invoice::where('invoice_prefix', $prefix)
+            ->whereYear('issue_date', $year)
+            ->max('invoice_sequence');
+        $nextSequence = $lastSequence ? ((int) $lastSequence + 1) : 1;
+
+        $invoice = Invoice::create([
+            'invoice_number' => sprintf('%s-%s-%06d', $prefix, $year, $nextSequence),
+            'appointment_id' => $appointment->id,
+            'pet_id' => $appointment->pet_id,
+            'owner_id' => $ownerId,
+            'invoice_prefix' => $prefix,
+            'invoice_sequence' => $nextSequence,
+            'issue_date' => now()->toDateString(),
+            'due_date' => now()->toDateString(),
+            'status' => 'pending',
+            'tax_rate' => 0,
+            'discount_amount' => 0,
+            'notes' => 'Invoice for grooming appointment on ' . optional($appointment->appointment_date)->format('M d, Y'),
+        ]);
+
+        InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'item_type' => 'grooming',
+            'description' => $groomingAppointment->service->service_name ?? 'Grooming Service',
+            'quantity' => 1,
+            'unit_price' => (float) ($groomingAppointment->service->price ?? 0),
+        ]);
+
+        return $invoice->load(['invoiceItems', 'payments']);
+    }
+
+    private function cancelGroomingInvoice(GroomingAppointment $groomingAppointment): void
+    {
+        $groomingAppointment->loadMissing('appointment');
+        $appointmentId = optional($groomingAppointment->appointment)->id;
+
+        if (!$appointmentId) {
+            return;
+        }
+
+        $invoice = Invoice::with(['payments'])
+            ->where('appointment_id', $appointmentId)
+            ->where('status', '!=', 'cancelled')
+            ->orderByDesc('issue_date')
+            ->first();
+
+        if (!$invoice) {
+            return;
+        }
+
+        $invoice->payments()->delete();
+        $invoice->update(['status' => 'cancelled']);
     }
 
     private function mapAppointmentStatus(string $groomingStatus): string

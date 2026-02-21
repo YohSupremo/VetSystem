@@ -16,35 +16,36 @@
     .stats-card {
         background: #ffffff;
         border-radius: 14px;
-        padding: 1.25rem 1.5rem;
+        padding: 0.95rem 1rem;
         margin-bottom: 1rem;
         border: 1px solid #e9ecef;
         box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
     }
 
     .stats-card h3 {
-        font-size: 2rem;
+        font-size: 1.45rem;
         margin: 0;
         font-weight: 700;
         color: #0f172a;
     }
 
     .stats-card p {
-        margin: 0.35rem 0 0;
+        margin: 0.2rem 0 0;
         color: #64748b;
         font-weight: 500;
+        font-size: 0.85rem;
     }
 
     .stats-card .stat-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #1d4ed8;
         background: rgba(37, 99, 235, 0.1);
-        font-size: 1.1rem;
+        font-size: 0.95rem;
     }
 
     .table-card {
@@ -132,8 +133,8 @@
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-3">
+<div class="row mb-4 g-2">
+    <div class="col-6 col-md-4 col-lg-2">
         <div class="stats-card">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -144,7 +145,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-6 col-md-4 col-lg-2">
         <div class="stats-card" style="background: linear-gradient(135deg, #ecfdf3 0%, #dcfce7 100%);">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -155,7 +156,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-6 col-md-4 col-lg-2">
         <div class="stats-card" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -166,7 +167,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-6 col-md-4 col-lg-3">
         <div class="stats-card" style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -174,6 +175,17 @@
                     <p>Total Revenue</p>
                 </div>
                 <div class="stat-icon"><i class="fas fa-coins"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h3>{{ number_format($paidAmount, 2) }}</h3>
+                    <p>Paid Amount</p>
+                </div>
+                <div class="stat-icon" style="color:#15803d;background:rgba(34,197,94,0.12);"><i class="fas fa-money-bill-wave"></i></div>
             </div>
         </div>
     </div>

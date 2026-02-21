@@ -160,6 +160,10 @@
     .badge-status-in_progress { background: #fff3cd; color: #856404; }
     .badge-status-completed { background: #d4edda; color: #155724; }
     .badge-status-cancelled { background: #f8d7da; color: #721c24; }
+    .badge-payment-paid { background: #d4edda; color: #155724; }
+    .badge-payment-partial { background: #fff3cd; color: #856404; }
+    .badge-payment-unpaid { background: #f8d7da; color: #721c24; }
+    .badge-payment-unbilled { background: #e2e3e5; color: #495057; }
 
     .actions {
         display: flex;
@@ -201,6 +205,14 @@
         </a>
     </div>
 </div>
+
+
+
+@if($errors->has('error'))
+    <div class="alert alert-danger" style="margin-bottom: 1rem;">
+        {{ $errors->first('error') }}
+    </div>
+@endif
 
 <div class="dashboard-cards">
     <div class="dashboard-card">
@@ -250,6 +262,7 @@
                     <th>Service</th>
                     <th>Groomer</th>
                     <th>Status</th>
+                    <th>Payment</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -285,6 +298,8 @@
                         <td>
                             @if($groomingAppointment->groomer)
                                 {{ $groomingAppointment->groomer->first_name }} {{ $groomingAppointment->groomer->last_name }}
+                            @elseif($isVirtual && $appointment && $appointment->veterinarian && $appointment->veterinarian->role === 'groomer')
+                                {{ $appointment->veterinarian->first_name }} {{ $appointment->veterinarian->last_name }}
                             @else
                                 Not assigned
                             @endif
@@ -297,6 +312,14 @@
                                 {{ ucfirst(str_replace('_',' ', $status)) }}
                             </span>
                         </td>
+                        <td>
+                            @php
+                                $paymentStatus = $groomingAppointment->getAttribute('payment_status') ?? 'unbilled';
+                            @endphp
+                            <span class="badge badge-payment-{{ $paymentStatus }}">
+                                {{ ucfirst($paymentStatus) }}
+                            </span>
+                        </td>
                         <td class="actions">
                             @if(!$isVirtual)
                                 <a href="{{ route('admin.grooming.show', $groomingAppointment->id) }}" class="btn-icon" title="View">
@@ -305,6 +328,14 @@
                                 <a href="{{ route('admin.grooming.edit', $groomingAppointment->id) }}" class="btn-icon" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                @if(($groomingAppointment->getAttribute('payment_status') ?? 'unbilled') !== 'paid')
+                                    <form method="POST" action="{{ route('admin.grooming.mark-paid', $groomingAppointment->id) }}">
+                                        @csrf
+                                        <button type="submit" class="btn-icon" title="Mark Paid">
+                                            <i class="fas fa-hand-holding-usd"></i>
+                                        </button>
+                                    </form>
+                                @endif
                                 <form method="POST" action="{{ route('admin.grooming.destroy', $groomingAppointment->id) }}" class="delete-form">
                                     @csrf
                                     @method('DELETE')
@@ -316,12 +347,15 @@
                                 <a href="{{ route('admin.appointments.show', $appointment->id) }}" class="btn-icon" title="View Appointment">
                                     <i class="fas fa-calendar-check"></i>
                                 </a>
+                                <a href="{{ route('admin.grooming.complete', $appointment->id) }}" class="btn-icon" title="Complete Grooming Details">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </a>
                             @endif
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center">No grooming appointments found.</td>
+                        <td colspan="8" class="text-center">No grooming appointments found.</td>
                     </tr>
                 @endforelse
             </tbody>

@@ -75,7 +75,7 @@
 
         <div class="form-group">
             <label for="pet_id">Pet</label>
-            <select id="pet_id" name="pet_id" class="form-control" required>
+            <select id="pet_id" name="pet_id" class="form-control @error('pet_id') is-invalid @enderror">
                 <option value="">Select a pet</option>
                 @foreach($pets as $pet)
                     @php $ownerUser = optional($pet->owner)->user; @endphp
@@ -84,11 +84,14 @@
                     </option>
                 @endforeach
             </select>
+            @error('pet_id')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
 
         <div class="form-group">
             <label for="service_id">Grooming Service</label>
-            <select id="service_id" name="service_id" class="form-control" required>
+            <select id="service_id" name="service_id" class="form-control @error('service_id') is-invalid @enderror">
                 <option value="">Select a service</option>
                 @foreach($services as $service)
                     <option value="{{ $service->id }}" @selected(old('service_id') == $service->id)>
@@ -98,6 +101,9 @@
                     </option>
                 @endforeach
             </select>
+            @error('service_id')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
 
         <div class="form-group">
@@ -114,8 +120,11 @@
 
         <div class="form-group">
             <label for="appointment_date">Date</label>
-            <input type="date" id="appointment_date" name="appointment_date" class="form-control"
-                   value="{{ old('appointment_date') }}" required>
+            <input type="date" id="appointment_date" name="appointment_date" class="form-control @error('appointment_date') is-invalid @enderror"
+                   value="{{ old('appointment_date') }}">
+            @error('appointment_date')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
 
         <div class="form-group">

@@ -176,6 +176,36 @@ CREATE TABLE prescriptions (
 ) ENGINE=InnoDB;
 
 -- =============================
+-- MEDICATION DISPENSING
+-- =============================
+CREATE TABLE medication_dispensing (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    prescription_id BIGINT UNSIGNED NOT NULL,
+    invoice_id BIGINT UNSIGNED,
+    inventory_item_id BIGINT UNSIGNED NOT NULL,
+    dispensed_by BIGINT UNSIGNED,
+    quantity_dispensed INT NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    dispensed_at DATETIME NOT NULL,
+    instructions TEXT,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (prescription_id) REFERENCES prescriptions(id) ON DELETE CASCADE,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE SET NULL,
+    FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE RESTRICT,
+    FOREIGN KEY (dispensed_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_prescription (prescription_id),
+    INDEX idx_invoice (invoice_id),
+    INDEX idx_inventory_item (inventory_item_id),
+    INDEX idx_dispensed_by (dispensed_by),
+    INDEX idx_dispensed_at (dispensed_at),
+    INDEX idx_dispensing_search (prescription_id, dispensed_at),
+    CONSTRAINT chk_quantity_dispensed CHECK (quantity_dispensed > 0),
+    CONSTRAINT chk_dispensing_unit_price CHECK (unit_price >= 0)
+) ENGINE=InnoDB;
+
+-- =============================
 -- SURGERIES
 -- =============================
 CREATE TABLE surgeries (
@@ -288,6 +318,7 @@ CREATE TABLE lab_requisitions (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     medical_record_id BIGINT UNSIGNED NOT NULL,
     test_id BIGINT UNSIGNED NOT NULL,
+    invoice_id BIGINT UNSIGNED,
     requested_by BIGINT UNSIGNED NOT NULL,
     requested_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     sample_collected TINYINT(1) DEFAULT 0,
@@ -301,9 +332,11 @@ CREATE TABLE lab_requisitions (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (medical_record_id) REFERENCES medical_records(id) ON DELETE CASCADE,
     FOREIGN KEY (test_id) REFERENCES lab_tests(id) ON DELETE RESTRICT,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE SET NULL,
     FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_medical_record (medical_record_id),
     INDEX idx_test (test_id),
+    INDEX idx_invoice (invoice_id),
     INDEX idx_status (status)
 ) ENGINE=InnoDB;
 
@@ -756,6 +789,6 @@ CREATE TABLE incident_notes (
 
 -- =============================
 -- END OF SCHEMA
--- Total Tables: 33 -> no insurance
+-- Total Tables: 34 -> no insurance
 -- Enhanced Tables: 2 (pets, invoices)
 -- =============================

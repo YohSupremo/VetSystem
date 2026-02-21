@@ -10,6 +10,7 @@ class LabRequisition extends Model
     protected $fillable = [
         'medical_record_id',
         'test_id',
+        'invoice_id',
         'requested_by',
         'requested_date',
         'sample_collected',
@@ -50,5 +51,10 @@ class LabRequisition extends Model
     public function requestedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'requested_by');
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class, 'invoice_id');
     }
 }

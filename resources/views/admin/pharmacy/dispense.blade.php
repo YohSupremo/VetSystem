@@ -296,6 +296,9 @@
             <p>Select a prescription to dispense medication</p>
         </div>
         <div>
+            <a href="{{ route('admin.pharmacy.dispensing.history') }}" class="btn btn-primary" style="margin-right: .5rem;">
+                <i class="fas fa-history"></i> View History
+            </a>
             <a href="{{ route('admin.pharmacy.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Pharmacy
             </a>
@@ -313,6 +316,17 @@
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger" role="alert">
+            <strong>Please fix the following:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
     @endif
 
@@ -344,6 +358,26 @@
                         <div class="prescription-actions">
                             <form method="POST" action="{{ route('admin.pharmacy.dispense.store') }}">
                                 @csrf
+                                <input type="hidden" name="prescription_id" value="{{ $prescription->id }}">
+                                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; margin-bottom:0.5rem;">
+                                    <select name="inventory_item_id" class="form-select" style="min-width:240px;" required>
+                                        <option value="">Select medication</option>
+                                        @foreach($medications as $medicationOption)
+                                            <option value="{{ $medicationOption->id }}" {{ (string) old('prescription_id') === (string) $prescription->id && (string) old('inventory_item_id') === (string) $medicationOption->id ? 'selected' : '' }}>
+                                                {{ $medicationOption->name }} (Stock: {{ $medicationOption->inventoryStocks->sum('quantity') }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <input
+                                        type="number"
+                                        name="quantity_dispensed"
+                                        class="form-control"
+                                        min="1"
+                                        style="max-width:120px;"
+                                        value="{{ (string) old('prescription_id') === (string) $prescription->id ? old('quantity_dispensed', $prescription->quantity) : $prescription->quantity }}"
+                                        required
+                                    >
+                                </div>
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-hand-holding-medical"></i> Dispense
                                 </button>
@@ -374,7 +408,7 @@
                     </div>
                 </div>
             @endforeach
-        @endforelse
+        @endif
     </div>
 
     <div class="medication-grid">
@@ -419,7 +453,7 @@
                     </div>
                 </div>
             @endforeach
-        @endforelse
+        @endif
     </div>
 </div>
 @endsection

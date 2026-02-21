@@ -122,6 +122,24 @@
         color: #1565c0;
         text-transform: capitalize;
     }
+
+    .pagination-wrap .pagination {
+        margin: 0;
+    }
+
+    .pagination-wrap .page-link {
+        border-radius: 6px;
+        min-width: 34px;
+        text-align: center;
+        padding: 0.35rem 0.6rem;
+    }
+
+    .pagination-wrap .page-link i,
+    .pagination-wrap .page-link svg {
+        width: 14px;
+        height: 14px;
+        font-size: 14px;
+    }
 </style>
 @endpush
 
@@ -187,8 +205,8 @@
         </table>
     </div>
 
-    <div style="margin-top: 1rem;">
-        {{ $labTests->links() }}
+    <div class="pagination-wrap" style="margin-top: 1rem;">
+        {{ $labTests->links('pagination::bootstrap-5') }}
     </div>
 </div>
 

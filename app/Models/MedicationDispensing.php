@@ -11,11 +11,11 @@ class MedicationDispensing extends Model
 
     protected $fillable = [
         'prescription_id',
+        'invoice_id',
         'inventory_item_id',
         'dispensed_by',
         'quantity_dispensed',
         'unit_price',
-        'total_price',
         'dispensed_at',
         'instructions',
         'notes',
@@ -23,7 +23,6 @@ class MedicationDispensing extends Model
 
     protected $casts = [
         'unit_price' => 'decimal:2',
-        'total_price' => 'decimal:2',
         'dispensed_at' => 'datetime',
     ];
 
@@ -35,6 +34,11 @@ class MedicationDispensing extends Model
     public function inventoryItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class);
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
     }
 
     public function dispensedBy(): BelongsTo

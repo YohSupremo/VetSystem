@@ -292,6 +292,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::prefix('requisitions')->name('requisitions.')->group(function () {
             Route::get('/create', [LaboratoryController::class, 'requisitionsCreate'])->name('create');
             Route::post('/', [LaboratoryController::class, 'requisitionsStore'])->name('store');
+            Route::post('/{id}/mark-paid', [LaboratoryController::class, 'markRequisitionPaid'])->name('mark-paid');
             Route::get('/{labRequisition}', [LaboratoryController::class, 'requisitionsShow'])->name('show');
             Route::get('/{labRequisition}/edit', [LaboratoryController::class, 'requisitionsEdit'])->name('edit');
             Route::put('/{labRequisition}', [LaboratoryController::class, 'requisitionsUpdate'])->name('update');
@@ -342,6 +343,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::get('/dispense', [PharmacyController::class, 'dispenseForm'])->name('dispense');
         Route::post('/dispense', [PharmacyController::class, 'dispense'])->name('dispense.store');
         Route::get('/dispensing-history', [PharmacyController::class, 'dispensingHistory'])->name('dispensing.history');
+        Route::post('/dispensing-history/{id}/mark-paid', [PharmacyController::class, 'markDispensingPaid'])->name('dispensing.mark-paid');
         Route::get('/alerts', [PharmacyController::class, 'alerts'])->name('alerts');
         // Dynamic routes come after specific routes
         Route::post('/', [PharmacyController::class, 'store'])->name('store');

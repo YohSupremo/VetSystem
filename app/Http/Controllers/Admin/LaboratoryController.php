@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\LabRequisition;
 use App\Models\LabTest;
 use App\Models\MedicalRecord;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Payment;
 use App\Models\Pet;
 use App\Models\TestRequest;
 use App\Models\TestType;
@@ -13,6 +16,7 @@ use App\Models\TestResult;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class LaboratoryController extends Controller
@@ -30,9 +34,25 @@ class LaboratoryController extends Controller
             'medicalRecord.pet.owner.user',
             'test',
             'requestedBy',
+            'invoice.invoiceItems',
+            'invoice.payments',
         ])
             ->orderByDesc('requested_date')
             ->paginate(10);
+
+        $requisitions->getCollection()->transform(function ($req) {
+            if ($req->status === 'completed' && !$req->invoice_id) {
+                try {
+                    $invoice = $this->ensureLabRequisitionInvoice($req);
+                    $req->setRelation('invoice', $invoice);
+                    $req->invoice_id = $invoice->id;
+                } catch (\Throwable $e) {
+                    // Keep requisition visible even if invoice backfill fails for incomplete legacy records.
+                }
+            }
+
+            return $req;
+        });
 
         return view('admin.laboratory.index', compact(
             'pendingRequisitions',
@@ -155,6 +175,12 @@ class LaboratoryController extends Controller
 
         $labRequisition = LabRequisition::create($data);
 
+        if ($labRequisition->status === 'completed') {
+            $this->ensureLabRequisitionInvoice($labRequisition);
+        } elseif ($labRequisition->status === 'cancelled') {
+            $this->cancelLabRequisitionInvoice($labRequisition);
+        }
+
         return redirect()->route('admin.laboratory.requisitions.show', $labRequisition->id)
             ->with('success', 'Lab requisition created successfully.');
     }
@@ -207,8 +233,136 @@ class LaboratoryController extends Controller
 
         $labRequisition->update($data);
 
+        if ($labRequisition->status === 'completed') {
+            $this->ensureLabRequisitionInvoice($labRequisition);
+        } elseif ($labRequisition->status === 'cancelled') {
+            $this->cancelLabRequisitionInvoice($labRequisition);
+        }
+
         return redirect()->route('admin.laboratory.requisitions.show', $labRequisition->id)
             ->with('success', 'Lab requisition updated successfully.');
+    }
+
+    public function markRequisitionPaid($id)
+    {
+        $labRequisition = LabRequisition::with([
+            'invoice.invoiceItems',
+            'invoice.payments',
+            'medicalRecord.pet',
+            'test',
+        ])->findOrFail($id);
+
+        if ($labRequisition->status === 'cancelled') {
+            return back()->withErrors(['error' => 'Cancelled requisitions cannot be marked as paid.']);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $invoice = $labRequisition->invoice ?: $this->ensureLabRequisitionInvoice($labRequisition);
+            $invoice->load(['invoiceItems', 'payments']);
+
+            if ($invoice->is_paid) {
+                DB::commit();
+                return back()->with('success', 'Laboratory invoice is already paid.');
+            }
+
+            $balance = (float) $invoice->balance;
+            if ($balance <= 0) {
+                $invoice->update(['status' => 'paid']);
+                DB::commit();
+                return back()->with('success', 'Laboratory invoice marked as paid.');
+            }
+
+            Payment::create([
+                'invoice_id' => $invoice->id,
+                'payment_date' => now(),
+                'amount' => $balance,
+                'payment_method' => 'cash',
+                'reference_number' => null,
+                'received_by' => Auth::id(),
+                'notes' => 'Paid from laboratory requisitions list.',
+            ]);
+
+            $invoice->load(['invoiceItems', 'payments']);
+            $invoice->update(['status' => $invoice->balance <= 0 ? 'paid' : 'partial']);
+
+            DB::commit();
+
+            return back()->with('success', 'Laboratory payment recorded successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Unable to mark requisition as paid: ' . $e->getMessage()]);
+        }
+    }
+
+    private function ensureLabRequisitionInvoice(LabRequisition $labRequisition): Invoice
+    {
+        if ($labRequisition->invoice_id) {
+            $existingInvoice = Invoice::with(['invoiceItems', 'payments'])->find($labRequisition->invoice_id);
+            if ($existingInvoice) {
+                return $existingInvoice;
+            }
+        }
+
+        $labRequisition->loadMissing(['medicalRecord.pet', 'test']);
+
+        $pet = $labRequisition->medicalRecord?->pet;
+        $ownerId = $pet?->owner_id;
+        if (!$pet || !$ownerId) {
+            throw new \RuntimeException('Cannot create laboratory invoice: linked pet owner is missing.');
+        }
+
+        $prefix = 'INV';
+        $year = now()->format('Y');
+        $lastSequence = Invoice::where('invoice_prefix', $prefix)
+            ->whereYear('issue_date', $year)
+            ->max('invoice_sequence');
+        $nextSequence = $lastSequence ? ((int) $lastSequence + 1) : 1;
+
+        $invoice = Invoice::create([
+            'invoice_number' => sprintf('%s-%s-%06d', $prefix, $year, $nextSequence),
+            'order_id' => null,
+            'appointment_id' => null,
+            'pet_id' => $pet->id,
+            'owner_id' => $ownerId,
+            'invoice_prefix' => $prefix,
+            'invoice_sequence' => $nextSequence,
+            'issue_date' => now()->toDateString(),
+            'due_date' => now()->toDateString(),
+            'status' => 'pending',
+            'tax_rate' => 0,
+            'discount_amount' => 0,
+            'notes' => 'Laboratory requisition #' . $labRequisition->id,
+        ]);
+
+        InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'item_type' => 'lab_test',
+            'description' => 'Laboratory: ' . ($labRequisition->test->test_name ?? 'Lab Test'),
+            'quantity' => 1,
+            'unit_price' => (float) ($labRequisition->test->standard_price ?? 0),
+        ]);
+
+        $labRequisition->invoice_id = $invoice->id;
+        $labRequisition->save();
+
+        return $invoice->load(['invoiceItems', 'payments']);
+    }
+
+    private function cancelLabRequisitionInvoice(LabRequisition $labRequisition): void
+    {
+        $invoice = Invoice::with('payments')
+            ->where('id', $labRequisition->invoice_id)
+            ->where('status', '!=', 'cancelled')
+            ->first();
+
+        if (!$invoice) {
+            return;
+        }
+
+        $invoice->payments()->delete();
+        $invoice->update(['status' => 'cancelled']);
     }
 
     public function requisitionsDestroy(LabRequisition $labRequisition)

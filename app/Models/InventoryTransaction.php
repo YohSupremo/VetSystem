@@ -27,6 +27,11 @@ class InventoryTransaction extends Model
         return $this->belongsTo(InventoryStock::class, 'stock_id');
     }
 
+    public function stock()
+    {
+        return $this->belongsTo(InventoryStock::class, 'stock_id');
+    }
+
     public function performedBy()
     {
         return $this->belongsTo(User::class, 'performed_by');

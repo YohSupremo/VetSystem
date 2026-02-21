@@ -196,12 +196,31 @@
                     <th>Owner</th>
                     <th>Test</th>
                     <th>Status</th>
+                    <th>Payment</th>
                     <th>Requested</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($requisitions as $req)
+                    @php
+                        $paymentStatus = 'n/a';
+                        if ($req->status !== 'cancelled') {
+                            if ($req->invoice) {
+                                if ($req->invoice->status === 'cancelled') {
+                                    $paymentStatus = 'cancelled';
+                                } else {
+                                $paymentStatus = $req->invoice->is_paid
+                                    ? 'paid'
+                                    : ((float) $req->invoice->paid_amount > 0 ? 'partial' : 'unpaid');
+                                }
+                            } else {
+                                $paymentStatus = 'unpaid';
+                            }
+                        } elseif ($req->status === 'cancelled') {
+                            $paymentStatus = 'cancelled';
+                        }
+                    @endphp
                     <tr>
                         <td>{{ $req->id }}</td>
                         <td>{{ optional(optional($req->medicalRecord)->pet)->name ?? 'N/A' }}</td>
@@ -211,8 +230,29 @@
                         </td>
                         <td>{{ $req->test->test_name ?? 'N/A' }}</td>
                         <td><span class="badge">{{ $req->status }}</span></td>
+                        <td>
+                            @if($paymentStatus === 'paid')
+                                <span class="badge" style="background:#d1fae5;color:#065f46;">Paid</span>
+                            @elseif($paymentStatus === 'partial')
+                                <span class="badge" style="background:#fef3c7;color:#92400e;">Partial</span>
+                            @elseif($paymentStatus === 'unpaid')
+                                <span class="badge" style="background:#fee2e2;color:#991b1b;">Unpaid</span>
+                            @elseif($paymentStatus === 'cancelled')
+                                <span class="badge" style="background:#e5e7eb;color:#374151;">Cancelled</span>
+                            @else
+                                <span class="badge" style="background:#e5e7eb;color:#374151;">N/A</span>
+                            @endif
+                        </td>
                         <td>{{ optional($req->requested_date)->format('M d, Y') ?? 'N/A' }}</td>
                         <td class="actions">
+                            @if($req->status !== 'cancelled' && in_array($paymentStatus, ['unpaid', 'partial']))
+                                <form action="{{ route('admin.laboratory.requisitions.mark-paid', $req->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Mark this laboratory requisition as paid?');">
+                                    @csrf
+                                    <button type="submit" class="btn-icon" title="Mark Paid" style="color:#15803d;" aria-label="Mark Paid">
+                                        <i class="fas fa-hand-holding-usd"></i>
+                                    </button>
+                                </form>
+                            @endif
                             <a href="{{ route('admin.laboratory.requisitions.show', $req->id) }}" class="btn-icon" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
@@ -230,7 +270,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center">No lab requisitions found.</td>
+                        <td colspan="8" class="text-center">No lab requisitions found.</td>
                     </tr>
                 @endforelse
             </tbody>

@@ -23,6 +23,8 @@ class DatabaseSeeder extends Seeder
         $this->call(VeterinarianSeeder::class);
         $this->call(CagesSeeder::class);
         $this->call(GroomingServiceSeeder::class);
+        $this->call(LabTestSeeder::class);
+        $this->call(PharmacyInventorySeeder::class);
     }
 
     

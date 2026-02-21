@@ -5,12 +5,17 @@ namespace App\Http\Controllers\Admin;
 use Illuminate\Http\Request;
 use App\Models\InventoryItem;
 use App\Models\Prescription;
+use App\Models\User;
 use App\Models\InventoryStock;
 use App\Models\InventoryTransaction;
 use App\Models\MedicationDispensing;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class PharmacyController extends BaseController
 {
@@ -376,24 +381,56 @@ class PharmacyController extends BaseController
     {
         $data = $request->validate([
             'prescription_id' => 'required|exists:prescriptions,id',
-            'inventory_item_id' => 'required|exists:inventory_items,id',
-            'quantity_dispensed' => 'required|integer|min:1',
+            'inventory_item_id' => 'nullable|exists:inventory_items,id',
+            'quantity_dispensed' => 'nullable|integer|min:1',
             'instructions' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
-        
-        $medication = InventoryItem::with('inventoryStocks')->findOrFail($data['inventory_item_id']);
+
         $prescription = Prescription::findOrFail($data['prescription_id']);
+
+        $inventoryItemId = $data['inventory_item_id'] ?? null;
+        if (!$inventoryItemId) {
+            $matchedMedication = InventoryItem::where('category', 'medicine')
+                ->where('name', $prescription->medication_name)
+                ->first();
+
+            if (!$matchedMedication) {
+                $matchedMedication = InventoryItem::where('category', 'medicine')
+                    ->where('name', 'like', $prescription->medication_name . '%')
+                    ->orderBy('name')
+                    ->first();
+            }
+
+            if (!$matchedMedication) {
+                return back()->withErrors([
+                    'inventory_item_id' => 'No matching medication in inventory. Please select a medication manually.'
+                ])->withInput();
+            }
+
+            $inventoryItemId = $matchedMedication->id;
+        }
+
+        $quantityDispensed = (int) ($data['quantity_dispensed'] ?? $prescription->quantity ?? 0);
+        if ($quantityDispensed < 1) {
+            return back()->withErrors([
+                'quantity_dispensed' => 'Quantity dispensed must be at least 1.'
+            ])->withInput();
+        }
+
+        $medication = InventoryItem::with('inventoryStocks')->findOrFail($inventoryItemId);
         
         // Check stock availability
         $totalStock = $medication->inventoryStocks->sum('quantity');
-        if ($totalStock < $data['quantity_dispensed']) {
+        if ($totalStock < $quantityDispensed) {
             return back()->withErrors(['quantity_dispensed' => 'Insufficient stock available.']);
         }
         
         DB::beginTransaction();
         
         try {
+            $currentUserId = $this->resolveCurrentUserId();
+
             // Find the stock record to deduct from (FIFO - use oldest stock first)
             $stock = $medication->inventoryStocks
                 ->where('quantity', '>', 0)
@@ -404,40 +441,48 @@ class PharmacyController extends BaseController
                 throw new \Exception('No available stock found');
             }
             
-            // Create medication dispensing record (if this model exists)
-            if (class_exists('App\Models\MedicationDispensing')) {
-                MedicationDispensing::create([
+            // Create medication dispensing record only when the backing table exists
+            if (
+                class_exists('App\Models\MedicationDispensing') &&
+                (Schema::hasTable('medication_dispensing') || Schema::hasTable('medication_dispensings'))
+            ) {
+                $dispensing = MedicationDispensing::create([
                     'prescription_id' => $data['prescription_id'],
-                    'inventory_item_id' => $data['inventory_item_id'],
-                    'dispensed_by' => Auth::id(),
-                    'quantity_dispensed' => $data['quantity_dispensed'],
+                    'inventory_item_id' => $inventoryItemId,
+                    'dispensed_by' => $currentUserId,
+                    'quantity_dispensed' => $quantityDispensed,
                     'unit_price' => $medication->unit_price,
-                    'total_price' => $data['quantity_dispensed'] * $medication->unit_price,
                     'dispensed_at' => now(),
                     'instructions' => $data['instructions'] ?? $prescription->instructions,
-                    'notes' => $data['notes'],
+                    'notes' => $data['notes'] ?? null,
                 ]);
+
+                $this->ensurePharmacyInvoice($dispensing, $prescription, $medication);
             }
             
             // Update stock
-            $stock->decrement('quantity', $data['quantity_dispensed']);
+            $stock->decrement('quantity', $quantityDispensed);
             
             // Create inventory transaction
             InventoryTransaction::create([
                 'stock_id' => $stock->id,
                 'type' => 'out',
-                'quantity' => $data['quantity_dispensed'],
+                'quantity' => $quantityDispensed,
                 'reference' => 'Medication dispensed for prescription #' . $prescription->id,
-                'performed_by' => Auth::id(),
+                'performed_by' => $currentUserId,
                 'notes' => 'Dispensed: ' . $medication->name,
             ]);
             
             // Update prescription as dispensed
-            $prescription->update(['dispensed' => true]);
+            $prescription->update([
+                'dispensed' => true,
+                'dispensed_at' => now(),
+                'dispensed_by' => $currentUserId,
+            ]);
             
             DB::commit();
             
-            return redirect()->route('admin.pharmacy.dispensing')
+            return redirect()->route('admin.pharmacy.dispensing.history')
                 ->with('success', 'Medication dispensed successfully.');
                 
         } catch (\Exception $e) {
@@ -453,25 +498,195 @@ class PharmacyController extends BaseController
     {
         $medications = InventoryItem::where('category', 'medicine')->orderBy('name')->get();
 
-        $query = InventoryTransaction::where('type', 'out')
-            ->with(['stock.inventoryItem', 'performedBy'])
-            ->orderBy('transaction_date', 'desc');
+        if (Schema::hasTable('medication_dispensing')) {
+            $query = MedicationDispensing::with([
+                'inventoryItem',
+                'dispensedBy',
+                'invoice.invoiceItems',
+                'invoice.payments',
+                'prescription.medicalRecord.pet.owner.user',
+            ])->orderBy('dispensed_at', 'desc');
 
-        if ($request->filled('medication_id')) {
-            $query->whereHas('stock.inventoryItem', function($q) use ($request) {
-                $q->where('id', $request->medication_id);
-            });
-        }
-        if ($request->filled('date_from')) {
-            $query->whereDate('transaction_date', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('transaction_date', '<=', $request->date_to);
+            if ($request->filled('medication_id')) {
+                $query->where('inventory_item_id', $request->medication_id);
+            }
+            if ($request->filled('date_from')) {
+                $query->whereDate('dispensed_at', '>=', $request->date_from);
+            }
+            if ($request->filled('date_to')) {
+                $query->whereDate('dispensed_at', '<=', $request->date_to);
+            }
+
+            $historySource = 'medication_dispensing';
+        } else {
+            $query = InventoryTransaction::where('type', 'out')
+                ->with(['stock.inventoryItem', 'performedBy'])
+                ->orderBy('transaction_date', 'desc');
+
+            if ($request->filled('medication_id')) {
+                $query->whereHas('stock.inventoryItem', function($q) use ($request) {
+                    $q->where('id', $request->medication_id);
+                });
+            }
+            if ($request->filled('date_from')) {
+                $query->whereDate('transaction_date', '>=', $request->date_from);
+            }
+            if ($request->filled('date_to')) {
+                $query->whereDate('transaction_date', '<=', $request->date_to);
+            }
+
+            $historySource = 'inventory_transactions';
         }
 
         $dispensingRecords = $query->paginate(50)->appends($request->query());
 
-        return view('admin.pharmacy.dispensing-history', compact('dispensingRecords', 'medications'));
+        if ($historySource === 'medication_dispensing') {
+            $dispensingRecords->getCollection()->transform(function ($record) {
+                if (!$record->invoice_id) {
+                    try {
+                        $invoice = $this->ensurePharmacyInvoice($record, $record->prescription, $record->inventoryItem);
+                        $record->setRelation('invoice', $invoice);
+                        $record->invoice_id = $invoice->id;
+                    } catch (\Throwable $exception) {
+                        // Keep record visible even if invoice backfill fails for legacy inconsistent data.
+                    }
+                }
+
+                return $record;
+            });
+        }
+
+        return view('admin.pharmacy.dispensing-history', compact('dispensingRecords', 'medications', 'historySource'));
+    }
+
+    public function markDispensingPaid($id)
+    {
+        if (!Schema::hasTable('medication_dispensing')) {
+            return back()->withErrors(['error' => 'Medication dispensing table is not available.']);
+        }
+
+        $dispensing = MedicationDispensing::with([
+            'invoice.invoiceItems',
+            'invoice.payments',
+            'prescription.medicalRecord.pet',
+            'inventoryItem',
+        ])->findOrFail($id);
+
+        DB::beginTransaction();
+
+        try {
+            $currentUserId = $this->resolveCurrentUserId();
+
+            $invoice = $dispensing->invoice;
+            if (!$invoice) {
+                $invoice = $this->ensurePharmacyInvoice($dispensing, $dispensing->prescription, $dispensing->inventoryItem);
+            }
+
+            $invoice->load(['invoiceItems', 'payments']);
+
+            if ($invoice->is_paid) {
+                DB::commit();
+                return back()->with('success', 'Dispensing invoice is already paid.');
+            }
+
+            $balance = (float) $invoice->balance;
+            if ($balance <= 0) {
+                $invoice->update(['status' => 'paid']);
+                DB::commit();
+                return back()->with('success', 'Dispensing invoice marked as paid.');
+            }
+
+            Payment::create([
+                'invoice_id' => $invoice->id,
+                'payment_date' => now(),
+                'amount' => $balance,
+                'payment_method' => 'cash',
+                'reference_number' => null,
+                'received_by' => $currentUserId,
+                'notes' => 'Paid from pharmacy dispensing history.',
+            ]);
+
+            $invoice->load(['invoiceItems', 'payments']);
+            $invoice->update(['status' => $invoice->balance <= 0 ? 'paid' : 'partial']);
+
+            DB::commit();
+
+            return back()->with('success', 'Dispensing payment recorded successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Unable to mark dispensing as paid: ' . $e->getMessage()]);
+        }
+    }
+
+    private function ensurePharmacyInvoice(MedicationDispensing $dispensing, ?Prescription $prescription = null, ?InventoryItem $medication = null): Invoice
+    {
+        if ($dispensing->invoice_id) {
+            $existingInvoice = Invoice::with(['invoiceItems', 'payments'])->find($dispensing->invoice_id);
+            if ($existingInvoice) {
+                return $existingInvoice;
+            }
+        }
+
+        $prescription = $prescription ?: $dispensing->prescription;
+        $medication = $medication ?: $dispensing->inventoryItem;
+
+        if (!$prescription || !$medication) {
+            throw new \RuntimeException('Cannot create pharmacy invoice: dispensing record is missing prescription or medication linkage.');
+        }
+
+        $prescription->loadMissing('medicalRecord.pet');
+        $pet = $prescription->medicalRecord?->pet;
+        $ownerId = $pet?->owner_id;
+
+        if (!$pet || !$ownerId) {
+            throw new \RuntimeException('Cannot create pharmacy invoice: linked pet owner is missing.');
+        }
+
+        $prefix = 'INV';
+        $year = now()->format('Y');
+        $lastSequence = Invoice::where('invoice_prefix', $prefix)
+            ->whereYear('issue_date', $year)
+            ->max('invoice_sequence');
+        $nextSequence = $lastSequence ? ((int) $lastSequence + 1) : 1;
+
+        $invoice = Invoice::create([
+            'invoice_number' => sprintf('%s-%s-%06d', $prefix, $year, $nextSequence),
+            'order_id' => null,
+            'appointment_id' => null,
+            'pet_id' => $pet->id,
+            'owner_id' => $ownerId,
+            'invoice_prefix' => $prefix,
+            'invoice_sequence' => $nextSequence,
+            'issue_date' => now()->toDateString(),
+            'due_date' => now()->toDateString(),
+            'status' => 'pending',
+            'tax_rate' => 0,
+            'discount_amount' => 0,
+            'notes' => 'Pharmacy dispensing for prescription #' . $prescription->id,
+        ]);
+
+        InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'item_type' => 'product',
+            'description' => 'Pharmacy: ' . $medication->name,
+            'quantity' => $dispensing->quantity_dispensed,
+            'unit_price' => (float) $dispensing->unit_price,
+        ]);
+
+        $dispensing->invoice_id = $invoice->id;
+        $dispensing->save();
+
+        return $invoice->load(['invoiceItems', 'payments']);
+    }
+
+    private function resolveCurrentUserId(): ?int
+    {
+        $currentUserId = Auth::id();
+        if (!$currentUserId && session('username')) {
+            $currentUserId = User::where('username', session('username'))->value('id');
+        }
+
+        return $currentUserId;
     }
     
     /**

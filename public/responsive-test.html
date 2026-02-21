@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VetSystem Responsive Design Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <style>
+        .test-section {
+            margin: 2rem 0;
+            padding: 2rem;
+            border: 2px dashed #007bff;
+            border-radius: 1rem;
+        }
+        .device-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 123, 255, 0.9);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            z-index: 1000;
+        }
+        .breakpoint-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            margin: 0.25rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .active { background: #28a745; color: white; }
+        .inactive { background: #6c757d; color: white; }
+    </style>
+</head>
+<body class="customer-body">
+    <div class="device-info">
+        <div>Screen: <span id="screenSize"></span></div>
+        <div>Breakpoint: <span id="breakpoint"></span></div>
+    </div>
+
+    <div class="container-fluid">
+        <h1 class="text-center mb-4">VetSystem Responsive Design Test</h1>
+        
+        <div class="text-center mb-4">
+            <span class="breakpoint-indicator inactive" id="bp-xl">XL (≥1200px)</span>
+            <span class="breakpoint-indicator inactive" id="bp-lg">LG (≥992px)</span>
+            <span class="breakpoint-indicator inactive" id="bp-md">MD (≥768px)</span>
+            <span class="breakpoint-indicator inactive" id="bp-sm">SM (≥576px)</span>
+            <span class="breakpoint-indicator inactive" id="bp-xs">XS (<576px)</span>
+        </div>
+
+        <!-- Test Navigation -->
+        <div class="test-section">
+            <h2>Navigation Test</h2>
+            <div class="customer-header">
+                <div class="header-content">
+                    <div class="logo-section">
+                        <div class="paw-icon">🐾</div>
+                        <h1>VetCare</h1>
+                    </div>
+                    <div class="user-menu">
+                        <div class="user-avatar">JD</div>
+                        <a href="#" class="logout-btn">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Grid Layout -->
+        <div class="test-section">
+            <h2>Grid Layout Test</h2>
+            <div class="stats-grid">
+                <div class="stat-card pets">
+                    <div class="stat-icon">🐕</div>
+                    <div class="stat-content">
+                        <h3>12</h3>
+                        <p>Total Pets</p>
+                    </div>
+                </div>
+                <div class="stat-card appointments">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-content">
+                        <h3>5</h3>
+                        <p>Appointments</p>
+                    </div>
+                </div>
+                <div class="stat-card health">
+                    <div class="stat-icon">💊</div>
+                    <div class="stat-content">
+                        <h3>3</h3>
+                        <p>Medications</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Cards -->
+        <div class="test-section">
+            <h2>Cards Test</h2>
+            <div class="actions-grid">
+                <div class="action-card">
+                    <div class="action-icon">🐾</div>
+                    <h3>Add Pet</h3>
+                    <p>Register a new pet</p>
+                </div>
+                <div class="action-card">
+                    <div class="action-icon">📅</div>
+                    <h3>Book Appointment</h3>
+                    <p>Schedule a visit</p>
+                </div>
+                <div class="action-card">
+                    <div class="action-icon">💊</div>
+                    <h3>Order Medicine</h3>
+                    <p>Request prescription</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Forms -->
+        <div class="test-section">
+            <h2>Form Test</h2>
+            <div class="form-container">
+                <div class="form-group">
+                    <label class="form-label">Pet Name</label>
+                    <input type="text" class="form-control" placeholder="Enter pet name">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Species</label>
+                        <select class="form-select">
+                            <option>Dog</option>
+                            <option>Cat</option>
+                            <option>Bird</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Age</label>
+                        <input type="number" class="form-control" placeholder="Age">
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary">Save Pet</button>
+                    <button class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Table -->
+        <div class="test-section">
+            <h2>Table Test</h2>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Pet Name</th>
+                            <th>Owner</th>
+                            <th>Species</th>
+                            <th>Last Visit</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Max</td>
+                            <td>John Doe</td>
+                            <td>Dog</td>
+                            <td>2024-01-15</td>
+                            <td><span class="status-badge confirmed">Healthy</span></td>
+                        </tr>
+                        <tr>
+                            <td>Luna</td>
+                            <td>Jane Smith</td>
+                            <td>Cat</td>
+                            <td>2024-01-20</td>
+                            <td><span class="status-badge pending">Check-up</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDeviceInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            document.getElementById('screenSize').textContent = `${width}x${height}`;
+            
+            // Reset all breakpoints
+            document.querySelectorAll('.breakpoint-indicator').forEach(el => {
+                el.classList.remove('active');
+                el.classList.add('inactive');
+            });
+            
+            // Determine current breakpoint
+            let breakpoint = 'XS';
+            if (width >= 1200) {
+                breakpoint = 'XL';
+                document.getElementById('bp-xl').classList.remove('inactive');
+                document.getElementById('bp-xl').classList.add('active');
+            } else if (width >= 992) {
+                breakpoint = 'LG';
+                document.getElementById('bp-lg').classList.remove('inactive');
+                document.getElementById('bp-lg').classList.add('active');
+            } else if (width >= 768) {
+                breakpoint = 'MD';
+                document.getElementById('bp-md').classList.remove('inactive');
+                document.getElementById('bp-md').classList.add('active');
+            } else if (width >= 576) {
+                breakpoint = 'SM';
+                document.getElementById('bp-sm').classList.remove('inactive');
+                document.getElementById('bp-sm').classList.add('active');
+            } else {
+                document.getElementById('bp-xs').classList.remove('inactive');
+                document.getElementById('bp-xs').classList.add('active');
+            }
+            
+            document.getElementById('breakpoint').textContent = breakpoint;
+        }
+
+        // Update on load and resize
+        window.addEventListener('load', updateDeviceInfo);
+        window.addEventListener('resize', updateDeviceInfo);
+
+        // Test touch interactions
+        if ('ontouchstart' in window) {
+            document.body.classList.add('touch-device');
+            console.log('Touch device detected');
+        }
+
+        // Test orientation change
+        window.addEventListener('orientationchange', function() {
+            setTimeout(updateDeviceInfo, 100);
+        });
+    </script>
+</body>
+</html>

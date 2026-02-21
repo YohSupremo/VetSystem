@@ -613,38 +613,320 @@
             display: block;
         }
 
+        /* Mobile & Responsive Design */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 260px;
+            }
+            
+            .main-content {
+                padding: 30px 35px;
+            }
+            
+            .header {
+                padding: 25px 35px;
+                margin-left: -35px;
+                margin-right: -35px;
+                margin-top: -30px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                order: 2;
+                transform: none;
+                left: 0;
+                box-shadow: none;
+                border-radius: 0;
+                max-height: 60vh;
+                overflow-y: auto;
+            }
+            
+            .main-content {
+                order: 1;
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 20px;
+                margin-left: -20px;
+                margin-right: -20px;
+                margin-top: -20px;
+                border-radius: 0 0 20px 20px;
+            }
+            
+            .header-left h2 {
+                font-size: 28px;
+            }
+            
+            .search-box input {
+                width: 200px;
+            }
+            
+            .search-box input:focus {
+                width: 240px;
+            }
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
-                left: -280px;
-                transition: left 0.3s ease;
+                left: -100%;
+                top: 0;
+                width: 280px;
+                height: 100vh;
                 z-index: 1000;
+                transition: left 0.3s ease;
+                background: var(--white);
+                box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
             }
 
             .sidebar.active {
                 left: 0;
             }
+            
+            .sidebar::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: -1;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            
+            .sidebar.active::before {
+                opacity: 1;
+            }
 
             .main-content {
-                padding: 20px;
+                padding: 15px;
             }
 
             .header {
                 flex-direction: column;
-                gap: 20px;
-                align-items: flex-start;
+                gap: 15px;
+                align-items: stretch;
+                padding: 20px 15px;
+                margin-left: -15px;
+                margin-right: -15px;
+                margin-top: -15px;
+            }
+            
+            .header-left {
+                text-align: center;
+            }
+            
+            .header-left h2 {
+                font-size: 24px;
+            }
+            
+            .header-right {
+                flex-direction: column;
+                gap: 10px;
             }
 
             .search-box input {
                 width: 100%;
             }
+            
+            .search-box input:focus {
+                width: 100%;
+            }
+            
+            .icon-button {
+                width: 44px;
+                height: 44px;
+            }
+            
+            .user-avatar {
+                width: 44px;
+                height: 44px;
+                font-size: 16px;
+            }
+            
+            .card {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+                text-align: center;
+            }
+            
+            .card-header h3 {
+                font-size: 20px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header-left h2 {
+                font-size: 20px;
+            }
+            
+            .header-left p {
+                font-size: 14px;
+            }
+            
+            .logo-section h1 {
+                font-size: 24px;
+            }
+            
+            .logo-section p {
+                font-size: 12px;
+            }
+            
+            .nav-item {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+            
+            .nav-item i {
+                width: 20px;
+                font-size: 16px;
+            }
+            
+            .nav-section-title {
+                font-size: 10px;
+                padding: 0 20px;
+            }
+            
+            .card {
+                padding: 15px;
+                border-radius: 15px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .modal-header h2 {
+                font-size: 20px;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: var(--primary-orange);
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-menu-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .mobile-menu-toggle i {
+            font-size: 18px;
+        }
+        
+        .mobile-close-btn {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--accent-pink);
+            color: var(--white);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            z-index: 1002;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-close-btn:hover {
+            transform: rotate(90deg);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .mobile-close-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        /* Touch-friendly interactions */
+        @media (hover: none) and (pointer: coarse) {
+            .nav-item,
+            .btn,
+            .icon-button,
+            .user-avatar {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .nav-item:hover,
+            .btn:hover,
+            .icon-button:hover,
+            .user-avatar:hover {
+                transform: none;
+            }
+            
+            .nav-item:active {
+                background: var(--paw-medium);
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+    
     <div class="dashboard-container">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
+            <!-- Mobile Close Button -->
+            <button class="mobile-close-btn" id="mobileCloseBtn">
+                <i class="fas fa-times"></i>
+            </button>
+            
             <div class="logo-section">
                 <h1>🐾 PawCare</h1>
                 <p>Veterinary Admin Portal</p>
@@ -1352,6 +1634,57 @@
 
             // Save on page unload
             window.addEventListener('beforeunload', saveScroll);
+        });
+
+        // Mobile Menu Functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const mobileCloseBtn = document.getElementById('mobileCloseBtn');
+            const sidebar = document.getElementById('sidebar');
+            
+            if (!mobileMenuToggle || !mobileCloseBtn || !sidebar) return;
+
+            // Open mobile menu
+            mobileMenuToggle.addEventListener('click', () => {
+                sidebar.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+
+            // Close mobile menu
+            mobileCloseBtn.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768 && 
+                    sidebar.classList.contains('active') && 
+                    !sidebar.contains(e.target) && 
+                    !mobileMenuToggle.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                }
+            });
+
+            // Close menu on window resize if above mobile breakpoint
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 768 && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                }
+            });
+
+            // Close menu when clicking on navigation links
+            const navLinks = sidebar.querySelectorAll('.nav-item');
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('active');
+                        document.body.style.overflow = 'auto';
+                    }
+                });
+            });
         });
     </script>
 </body>

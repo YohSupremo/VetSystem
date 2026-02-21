@@ -868,22 +868,132 @@ body.customer-body::before {
     font-size: 0.9rem;
 }
 
-@media (max-width: 1024px) {
+/* Veterinarian Dashboard Responsive Design */
+@media (max-width: 1200px) {
+    .veterinarian-main {
+        padding: 1.5rem;
+        gap: 1.5rem;
+    }
+    
+    .veterinarian-sidebar {
+        width: 260px;
+    }
+}
+
+@media (max-width: 992px) {
+    .veterinarian-main {
+        flex-direction: column;
+        padding: 1rem;
+    }
+    
+    .veterinarian-sidebar {
+        width: 100%;
+        position: relative;
+        top: 0;
+        height: auto;
+        order: 2;
+    }
+    
+    .veterinarian-content {
+        order: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .veterinarian-header {
+        padding: 1rem;
+    }
+    
+    .veterinarian-header .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .veterinarian-main {
+        padding: 1rem;
+    }
+    
+    .veterinarian-sidebar {
+        padding: 1.5rem;
+        border-radius: 1.5rem;
+    }
+    
+    .veterinarian-body .section-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .veterinarian-body .appointment-item,
+    .veterinarian-body .patient-item {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .veterinarian-body .stat-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .veterinarian-header .logo-section h1 {
+        font-size: 1.5rem;
+    }
+    
+    .veterinarian-header .welcome-text {
+        font-size: 0.9rem;
+    }
+    
+    .veterinarian-sidebar {
+        padding: 1rem;
+    }
+    
+    .sidebar-menu h3 {
+        font-size: 0.8rem;
+    }
+    
+    .sidebar-menu a {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.9rem;
+    }
+    
+    .veterinarian-body .stat-content h3 {
+        font-size: 2rem;
+    }
+    
+    .veterinarian-body .content-card {
+        padding: 1.5rem;
+    }
+}
+
+/* Customer Dashboard Responsive Enhancements */
+@media (max-width: 1200px) {
+    .customer-main {
+        max-width: 100%;
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 992px) {
     .content-grid {
         grid-template-columns: 1fr;
-        gap: 2rem;
+        gap: 1.5rem;
     }
     
     .stats-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .actions-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 768px) {
+    .customer-header {
+        padding: 1rem;
+    }
+    
     .header-content {
         flex-direction: column;
         gap: 1rem;
@@ -892,6 +1002,10 @@ body.customer-body::before {
     
     .customer-main {
         padding: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
     
     .actions-grid {
@@ -911,6 +1025,312 @@ body.customer-body::before {
     
     .pet-info {
         flex-direction: column;
+    }
+}
+
+@media (max-width: 576px) {
+    .logo-section h1 {
+        font-size: 1.5rem;
+    }
+    
+    .customer-main {
+        padding: 0.75rem;
+    }
+    
+    .stat-card {
+        padding: 1.5rem;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .action-card {
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .pet-card, .appointment-card {
+        padding: 1rem;
+    }
+}
+
+/* Mobile-Optimized Tables */
+@media (max-width: 768px) {
+    .table-responsive {
+        border-radius: 1rem;
+        box-shadow: 0 4px 15px rgba(147, 51, 234, 0.1);
+    }
+    
+    .table {
+        font-size: 0.85rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem;
+        vertical-align: middle;
+    }
+    
+    .table th {
+        font-weight: 600;
+        background: rgba(147, 51, 234, 0.05);
+    }
+}
+
+/* Mobile Table Cards Alternative */
+@media (max-width: 576px) {
+    .mobile-table-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .mobile-table-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 1rem;
+        padding: 1rem;
+        border: 1px solid rgba(167, 139, 250, 0.2);
+        box-shadow: 0 4px 15px rgba(147, 51, 234, 0.1);
+    }
+    
+    .mobile-table-card .card-header {
+        font-weight: 600;
+        color: var(--primary-purple);
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(167, 139, 250, 0.2);
+    }
+    
+    .mobile-table-card .card-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.25rem 0;
+        font-size: 0.85rem;
+    }
+    
+    .mobile-table-card .card-label {
+        font-weight: 500;
+        color: #6B7280;
+    }
+    
+    .mobile-table-card .card-value {
+        color: var(--dark-text);
+        text-align: right;
+    }
+}
+
+/* Mobile-Optimized Forms */
+@media (max-width: 768px) {
+    .form-container {
+        padding: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--primary-purple);
+    }
+    
+    .form-control,
+    .form-select {
+        font-size: 0.9rem;
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        border: 2px solid rgba(167, 139, 250, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--secondary-purple);
+        box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+    }
+    
+    .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-radius: 0.75rem;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .btn-group .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .form-container {
+        padding: 0.75rem;
+    }
+    
+    .form-control,
+    .form-select {
+        padding: 0.6rem;
+        font-size: 0.85rem;
+    }
+    
+    .btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .form-check {
+        margin-bottom: 0.75rem;
+    }
+    
+    .form-check-input {
+        width: 1.2rem;
+        height: 1.2rem;
+        margin-right: 0.5rem;
+    }
+    
+    .form-check-label {
+        font-size: 0.85rem;
+    }
+}
+
+/* Touch-Friendly Interactions */
+@media (hover: none) and (pointer: coarse) {
+    .btn,
+    .form-control,
+    .form-select,
+    .nav-item,
+    .card,
+    .appointment-item,
+    .patient-item,
+    .pet-card,
+    .action-card {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .btn:hover,
+    .nav-item:hover,
+    .card:hover {
+        transform: none;
+    }
+    
+    .btn:active {
+        transform: scale(0.98);
+    }
+    
+    .nav-item:active {
+        background: rgba(167, 139, 250, 0.1);
+    }
+}
+
+/* Responsive Modal Improvements */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 1rem;
+        max-width: calc(100% - 2rem);
+    }
+    
+    .modal-content {
+        border-radius: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .modal-header {
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .modal-header h2,
+    .modal-header h3 {
+        font-size: 1.25rem;
+    }
+    
+    .modal-body {
+        padding: 1rem 0;
+    }
+    
+    .modal-footer {
+        padding-top: 1rem;
+        margin-top: 1rem;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-content {
+        padding: 1rem;
+        margin: 0.5rem;
+    }
+    
+    .modal-header h2,
+    .modal-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .modal-body {
+        font-size: 0.9rem;
+    }
+}
+
+/* Responsive Search and Filters */
+@media (max-width: 768px) {
+    .search-container {
+        margin-bottom: 1rem;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .filter-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .filter-item {
+        width: 100%;
+    }
+    
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .page-link {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
     }
 }
 

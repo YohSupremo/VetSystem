@@ -464,6 +464,98 @@
     color: #1e40af;
 }
 
+/* Mobile Quick Actions Container */
+.mobile-quick-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 2rem;
+    padding: 2rem;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.1);
+    margin-bottom: 2rem;
+}
+
+.mobile-quick-actions h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.mobile-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+.mobile-action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    padding: 1rem;
+    border-radius: 1rem;
+    position: relative;
+}
+
+.mobile-action-item:hover {
+    background: rgba(167, 139, 250, 0.1);
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: inherit;
+}
+
+.mobile-action-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, var(--light-purple), var(--secondary-purple));
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.mobile-action-item:hover .mobile-action-icon {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4);
+}
+
+.mobile-action-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-purple);
+    text-align: center;
+    line-height: 1.2;
+}
+
+.mobile-action-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--accent-pink);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(236, 72, 153, 0.4);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .customer-header {
@@ -485,6 +577,68 @@
     .welcome-text {
         font-size: 0.9rem;
     }
+    
+    /* Hide desktop Quick Actions on mobile */
+    .quick-actions .row {
+        display: none !important;
+    }
+    
+    /* Show mobile Quick Actions */
+    .mobile-quick-actions {
+        display: block !important;
+    }
+    
+    .mobile-actions-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+    
+    .mobile-action-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    .mobile-action-label {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .mobile-actions-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+    }
+    
+    .mobile-quick-actions {
+        padding: 1.5rem;
+    }
+    
+    .mobile-action-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+    
+    .mobile-action-label {
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .mobile-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+    
+    .mobile-quick-actions {
+        padding: 1rem;
+    }
+}
+
+/* Hide mobile Quick Actions on desktop by default */
+.mobile-quick-actions {
+    display: none;
 }
 </style>
 @endpush
@@ -536,6 +690,7 @@
         <!-- Quick Actions -->
         <section class="quick-actions mb-4">
             <h2 class="mb-3">Quick Actions</h2>
+            <!-- Desktop Version -->
             <div class="row g-3">
                 <div class="col-md-6 col-lg-3">
                     <a href="{{ route('customer.appointments.create') }}" class="action-card text-decoration-none">
@@ -598,6 +753,48 @@
                         @endif
                     </a>
                 </div>
+            </div>
+        </section>
+
+        <!-- Mobile Quick Actions -->
+        <section class="mobile-quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="mobile-actions-grid">
+                <a href="{{ route('customer.appointments.create') }}" class="mobile-action-item">
+                    <div class="mobile-action-icon">📅</div>
+                    <span class="mobile-action-label">Book Appointment</span>
+                </a>
+                <a href="{{ route('customer.pets.create') }}" class="mobile-action-item">
+                    <div class="mobile-action-icon">🐾</div>
+                    <span class="mobile-action-label">Add Pet</span>
+                </a>
+                <a href="{{ route('customer.medical-records.index') }}" class="mobile-action-item">
+                    <div class="mobile-action-icon">📋</div>
+                    <span class="mobile-action-label">Medical Records</span>
+                </a>
+                <a href="{{ route('customer.incidents.create') }}" class="mobile-action-item">
+                    <div class="mobile-action-icon">🚨</div>
+                    <span class="mobile-action-label">Report Incident</span>
+                </a>
+                <a href="{{ route('customer.billing.orders') }}" class="mobile-action-item">
+                    <div class="mobile-action-icon">📋</div>
+                    <span class="mobile-action-label">My Orders</span>
+                </a>
+                <a href="{{ route('customer.billing.index') }}" class="mobile-action-item">
+                    <div class="mobile-action-icon">💳</div>
+                    <span class="mobile-action-label">Billing</span>
+                </a>
+                <a href="{{ route('customer.products.index') }}" class="mobile-action-item">
+                    <div class="mobile-action-icon">🛍️</div>
+                    <span class="mobile-action-label">Shop Products</span>
+                </a>
+                <a href="{{ route('customer.cart.index') }}" class="mobile-action-item position-relative">
+                    <div class="mobile-action-icon">🛒</div>
+                    <span class="mobile-action-label">Shopping Cart</span>
+                    @if($cart && $cart->total_items > 0)
+                        <span class="mobile-action-badge">{{ $cart->total_items }}</span>
+                    @endif
+                </a>
             </div>
         </section>
 

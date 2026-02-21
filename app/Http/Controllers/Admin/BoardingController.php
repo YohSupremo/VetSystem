@@ -10,6 +10,8 @@ use App\Models\InvoiceItem;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use App\Models\Cage;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 
 class BoardingController extends BaseController
@@ -144,7 +146,7 @@ class BoardingController extends BaseController
 
     }
 
-    public function createPass(Request $request)
+    public function createPass(Request $request, NotificationService $notificationService)
     {
         $info = $request->validate([
             'cage_id'  => 'required|exists:cages,id',
@@ -218,6 +220,31 @@ class BoardingController extends BaseController
 
         $invoice = $this->ensureBoardingInvoice($assignment);
 
+        $petName = Pet::find($info['pet_id'])->name ?? 'Pet';
+        $notificationService->sendToRole(
+            'boarding',
+            Notification::TYPE_BOARDING,
+            'New Boarding Assignment',
+            $petName . ' has been assigned to a cage.',
+            [
+                'reference_type' => 'cage_assignment',
+                'reference_id' => $assignment->id,
+                'action_url' => route('admin.boarding.show', $assignment->id),
+            ]
+        );
+
+        $notificationService->sendToRole(
+            'staff',
+            Notification::TYPE_BOARDING,
+            'New Boarding Assignment',
+            $petName . ' has been assigned to a cage.',
+            [
+                'reference_type' => 'cage_assignment',
+                'reference_id' => $assignment->id,
+                'action_url' => route('admin.boarding.show', $assignment->id),
+            ]
+        );
+
         // Sync cage status in case it was previously available
         $cage->syncStatus();
 
@@ -228,7 +255,7 @@ class BoardingController extends BaseController
     /**
      * Store a newly created boarding service in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, NotificationService $notificationService)
     {
         $info = $request->validate([
             'cage_id'  => 'required|exists:cages,id',
@@ -292,6 +319,31 @@ class BoardingController extends BaseController
         ]);
 
         $invoice = $this->ensureBoardingInvoice($boarding);
+
+        $petName = Pet::find($info['pet_id'])->name ?? 'Pet';
+        $notificationService->sendToRole(
+            'boarding',
+            Notification::TYPE_BOARDING,
+            'New Boarding Assignment',
+            $petName . ' has been assigned to a cage.',
+            [
+                'reference_type' => 'cage_assignment',
+                'reference_id' => $boarding->id,
+                'action_url' => route('admin.boarding.show', $boarding->id),
+            ]
+        );
+
+        $notificationService->sendToRole(
+            'staff',
+            Notification::TYPE_BOARDING,
+            'New Boarding Assignment',
+            $petName . ' has been assigned to a cage.',
+            [
+                'reference_type' => 'cage_assignment',
+                'reference_id' => $boarding->id,
+                'action_url' => route('admin.boarding.show', $boarding->id),
+            ]
+        );
 
         // Sync cage status to ensure accuracy
         $cage->syncStatus();

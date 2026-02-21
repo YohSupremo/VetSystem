@@ -36,6 +36,10 @@
                 </div>
                 
                 <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-light position-relative" id="vetNotificationsBtn" type="button" data-bs-toggle="modal" data-bs-target="#vetNotificationsModal">
+                        <i class="fas fa-bell"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="vetUnreadBadge"></span>
+                    </button>
                     <div class="user-avatar">SJ</div>
                     <a href="/logout" class="logout-btn">
                         <i class="fas fa-sign-out-alt me-2"></i>Logout
@@ -73,8 +77,87 @@
         </div>
     </div>
 
+    <div class="modal fade" id="vetNotificationsModal" tabindex="-1" aria-labelledby="vetNotificationsLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="vetNotificationsLabel">Notifications</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="vetNotificationsContainer">
+                    <div class="text-center text-muted">Loading...</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const badge = document.getElementById('vetUnreadBadge');
+            const container = document.getElementById('vetNotificationsContainer');
+            const modalEl = document.getElementById('vetNotificationsModal');
+
+            function updateUnreadCount() {
+                fetch('/veterinarian/unread-count')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!badge) return;
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.classList.remove('d-none');
+                        } else {
+                            badge.classList.add('d-none');
+                        }
+                    })
+                    .catch(() => {});
+            }
+
+            function loadNotifications() {
+                if (!container) return;
+                container.innerHTML = '<div class="text-center text-muted">Loading...</div>';
+                fetch('/veterinarian/notifications/get')
+                    .then(response => response.json())
+                    .then(notifications => {
+                        if (!Array.isArray(notifications) || notifications.length === 0) {
+                            container.innerHTML = '<div class="text-center text-muted">No notifications</div>';
+                            return;
+                        }
+
+                        container.innerHTML = '';
+                        notifications.forEach(notif => {
+                            const item = document.createElement('div');
+                            item.className = 'border rounded-3 p-3 mb-2 bg-light';
+                            item.innerHTML = `
+                                <div class="d-flex gap-3 align-items-start">
+                                    <div class="text-primary"><i class="fas fa-${notif.icon || 'bell'}"></i></div>
+                                    <div>
+                                        <div class="fw-semibold">${notif.title}</div>
+                                        <div class="text-muted small">${notif.message}</div>
+                                        <div class="text-muted small mt-1">${notif.time}</div>
+                                    </div>
+                                </div>
+                            `;
+                            container.appendChild(item);
+                        });
+                    })
+                    .catch(() => {
+                        container.innerHTML = '<div class="text-center text-danger">Error loading notifications</div>';
+                    });
+            }
+
+            if (modalEl) {
+                modalEl.addEventListener('show.bs.modal', loadNotifications);
+            }
+
+            updateUnreadCount();
+        });
+    </script>
 
     @stack('scripts')
 </body>

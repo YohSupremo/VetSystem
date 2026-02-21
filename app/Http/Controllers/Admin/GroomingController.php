@@ -11,6 +11,8 @@ use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\Pet;
 use App\Models\User;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -149,7 +151,7 @@ class GroomingController extends BaseController
     /**
      * Store grooming details for an existing grooming appointment record.
      */
-    public function storeFromAppointment(Request $request, $appointmentId)
+    public function storeFromAppointment(Request $request, $appointmentId, NotificationService $notificationService)
     {
         $appointment = Appointment::findOrFail($appointmentId);
 
@@ -188,6 +190,51 @@ class GroomingController extends BaseController
             'status' => $data['status'],
         ]);
 
+        $appointment->loadMissing('pet');
+        $petName = $appointment->pet?->name ?? 'Pet';
+        $message = 'Grooming appointment scheduled for ' . $petName . '.';
+
+        if (!empty($data['groomer_id'])) {
+            $groomer = User::find($data['groomer_id']);
+            if ($groomer) {
+                $notificationService->send(
+                    $groomer,
+                    Notification::TYPE_APPOINTMENT,
+                    'New Grooming Appointment',
+                    $message,
+                    [
+                        'reference_type' => 'appointment',
+                        'reference_id' => $appointment->id,
+                        'action_url' => route('admin.grooming.show', $groomingAppointment->id),
+                    ]
+                );
+            }
+        } else {
+            $notificationService->sendToRole(
+                'groomer',
+                Notification::TYPE_APPOINTMENT,
+                'New Grooming Appointment',
+                $message,
+                [
+                    'reference_type' => 'appointment',
+                    'reference_id' => $appointment->id,
+                    'action_url' => route('admin.grooming.show', $groomingAppointment->id),
+                ]
+            );
+        }
+
+        $notificationService->sendToRole(
+            'staff',
+            Notification::TYPE_APPOINTMENT,
+            'New Grooming Appointment',
+            $message,
+            [
+                'reference_type' => 'appointment',
+                'reference_id' => $appointment->id,
+                'action_url' => route('admin.grooming.show', $groomingAppointment->id),
+            ]
+        );
+
         if ($data['status'] === 'completed') {
             $this->ensureGroomingInvoice($groomingAppointment);
         }
@@ -199,7 +246,7 @@ class GroomingController extends BaseController
     /**
      * Store a newly created grooming appointment.
      */
-    public function store(Request $request)
+    public function store(Request $request, NotificationService $notificationService)
     {
         $data = $request->validate([
             'pet_id' => 'required|exists:pets,id',
@@ -226,6 +273,51 @@ class GroomingController extends BaseController
             'special_instructions' => $data['special_instructions'] ?? null,
             'status' => 'scheduled',
         ]);
+
+        $appointment->loadMissing('pet');
+        $petName = $appointment->pet?->name ?? 'Pet';
+        $message = 'Grooming appointment scheduled for ' . $petName . '.';
+
+        if (!empty($data['groomer_id'])) {
+            $groomer = User::find($data['groomer_id']);
+            if ($groomer) {
+                $notificationService->send(
+                    $groomer,
+                    Notification::TYPE_APPOINTMENT,
+                    'New Grooming Appointment',
+                    $message,
+                    [
+                        'reference_type' => 'appointment',
+                        'reference_id' => $appointment->id,
+                        'action_url' => route('admin.grooming.index'),
+                    ]
+                );
+            }
+        } else {
+            $notificationService->sendToRole(
+                'groomer',
+                Notification::TYPE_APPOINTMENT,
+                'New Grooming Appointment',
+                $message,
+                [
+                    'reference_type' => 'appointment',
+                    'reference_id' => $appointment->id,
+                    'action_url' => route('admin.grooming.index'),
+                ]
+            );
+        }
+
+        $notificationService->sendToRole(
+            'staff',
+            Notification::TYPE_APPOINTMENT,
+            'New Grooming Appointment',
+            $message,
+            [
+                'reference_type' => 'appointment',
+                'reference_id' => $appointment->id,
+                'action_url' => route('admin.grooming.index'),
+            ]
+        );
 
         return redirect()->route('admin.grooming.index')
             ->with('success', 'Grooming appointment created successfully.');

@@ -55,6 +55,16 @@ class User extends Authenticatable
         return $this->hasMany(MedicalRecord::class, 'veterinarian_id');
     }
 
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function notificationSettings()
+    {
+        return $this->hasOne(NotificationSetting::class);
+    }
+
     public function getFullNameAttribute()
     {
         return trim($this->first_name . ' ' . $this->last_name);

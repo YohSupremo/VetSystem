@@ -970,6 +970,28 @@
             }
         });
 
+        const currentRole = '{{ auth()->user()->role ?? '' }}';
+        const notificationsBaseMap = {
+            admin: '/admin/notifications',
+            reception: '/admin/reception/notifications',
+            boarding: '/admin/boarding/notifications',
+            groomer: '/admin/grooming/notifications',
+            pharmacy: '/admin/pharmacy/notifications',
+            staff: '/admin/staff/notifications',
+            veterinarian: '/veterinarian/notifications'
+        };
+        const unreadCountBaseMap = {
+            admin: '/admin/notifications/unread-count',
+            reception: '/admin/reception/unread-count',
+            boarding: '/admin/boarding/unread-count',
+            groomer: '/admin/grooming/unread-count',
+            pharmacy: '/admin/pharmacy/unread-count',
+            staff: '/admin/staff/unread-count',
+            veterinarian: '/veterinarian/unread-count'
+        };
+        const notificationsBase = notificationsBaseMap[currentRole] || '/admin/notifications';
+        const unreadCountEndpoint = unreadCountBaseMap[currentRole] || '/admin/notifications/unread-count';
+
         // Notifications Functions
         function openNotifications() {
             openModal('notificationsModal');
@@ -980,7 +1002,7 @@
             const container = document.getElementById('notificationsContainer');
             container.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
             
-            fetch('/admin/notifications/get')
+            fetch(`${notificationsBase}/get`)
                 .then(response => response.json())
                 .then(notifications => {
                     container.innerHTML = '';
@@ -1209,7 +1231,7 @@
         }
 
         function updateUnreadCounts() {
-            fetch('/admin/unread-counts')
+            fetch(unreadCountEndpoint)
                 .then(response => response.json())
                 .then(data => {
                     const notificationsBtn = document.getElementById('notificationsBtn');
@@ -1217,8 +1239,10 @@
 
                     if (!notificationsBtn || !messagesBtn) return;
 
+                    const notificationCount = data.count ?? 0;
+
                     // Update notification dot
-                    if (data.notifications > 0) {
+                    if (notificationCount > 0) {
                         if (!notificationsBtn.querySelector('.notification-dot')) {
                             const dot = document.createElement('span');
                             dot.className = 'notification-dot';

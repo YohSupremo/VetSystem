@@ -24,11 +24,15 @@ return new class extends Migration
             ]);
             $table->string('title');
             $table->text('message');
-            $table->enum('method', ['email', 'sms', 'both'])->default('email');
+            $table->string('icon')->default('bell');
+            $table->enum('method', ['in_app', 'email', 'sms', 'both'])->default('in_app');
             $table->enum('status', ['pending', 'sent', 'failed', 'read'])->default('pending');
+            $table->enum('priority', ['low', 'normal', 'high', 'urgent'])->default('normal');
             $table->dateTime('scheduled_for');
             $table->dateTime('sent_at')->nullable();
             $table->dateTime('read_at')->nullable();
+            $table->boolean('is_read')->default(false);
+            $table->string('action_url')->nullable();
             $table->enum('reference_type', [
                 'appointment',
                 'pet',

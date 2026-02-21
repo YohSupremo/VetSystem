@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use Illuminate\Http\Request;
 use App\Models\InventoryItem;
 use App\Models\InventoryStock;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\File;
 
 class InventoryController extends BaseController
@@ -85,7 +87,7 @@ class InventoryController extends BaseController
     /**
      * Store a newly created inventory item in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, NotificationService $notificationService)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:150',
@@ -127,7 +129,7 @@ class InventoryController extends BaseController
             'is_active' => true,
         ]);
 
-        InventoryStock::create([
+        $stock = InventoryStock::create([
             'item_id' => $item->id,
             'quantity' => $validated['quantity'],
             'min_stock' => $validated['min_stock'],
@@ -135,6 +137,8 @@ class InventoryController extends BaseController
             'expiry_date' => $validated['expiry_date'] ?? null,
             'location' => $validated['location'] ?? null,
         ]);
+
+        $this->notifyInventoryAlerts($notificationService, $item, $stock);
 
         return redirect()->route('admin.inventory.index')
             ->with('success', 'Inventory item created successfully.');
@@ -161,7 +165,7 @@ class InventoryController extends BaseController
     /**
      * Update the specified inventory item in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, NotificationService $notificationService)
     {
         $item = InventoryItem::findOrFail($id);
         $validated = $request->validate([
@@ -216,7 +220,7 @@ class InventoryController extends BaseController
                 'location' => $validated['location'] ?? null,
             ]);
         } else {
-            InventoryStock::create([
+            $stock = InventoryStock::create([
                 'item_id' => $item->id,
                 'quantity' => $validated['quantity'],
                 'min_stock' => $validated['min_stock'],
@@ -224,6 +228,10 @@ class InventoryController extends BaseController
                 'expiry_date' => $validated['expiry_date'] ?? null,
                 'location' => $validated['location'] ?? null,
             ]);
+        }
+
+        if ($stock) {
+            $this->notifyInventoryAlerts($notificationService, $item, $stock);
         }
 
         return redirect()->route('admin.inventory.index')
@@ -243,5 +251,39 @@ class InventoryController extends BaseController
 
         return redirect()->route('admin.inventory.index')
             ->with('success', 'Inventory item deleted successfully.');
+    }
+
+    private function notifyInventoryAlerts(NotificationService $notificationService, InventoryItem $item, InventoryStock $stock): void
+    {
+        if ((int) $stock->quantity <= (int) $stock->min_stock) {
+            $notificationService->sendToRole(
+                'pharmacy',
+                Notification::TYPE_INVENTORY,
+                'Low Stock Alert',
+                $item->name . ' is low (' . $stock->quantity . ' remaining).',
+                [
+                    'reference_type' => 'inventory',
+                    'reference_id' => $item->id,
+                    'action_url' => route('admin.inventory.show', $item->id),
+                ]
+            );
+        }
+
+        if ($stock->expiry_date) {
+            $expiryDate = \Carbon\Carbon::parse($stock->expiry_date);
+            if ($expiryDate->isPast() || $expiryDate->isBetween(now(), now()->addDays(10))) {
+                $notificationService->sendToRole(
+                    'pharmacy',
+                    Notification::TYPE_EXPIRY,
+                    'Item Expiring Soon',
+                    $item->name . ' expires on ' . $expiryDate->toDateString() . '.',
+                    [
+                        'reference_type' => 'inventory',
+                        'reference_id' => $item->id,
+                        'action_url' => route('admin.inventory.show', $item->id),
+                    ]
+                );
+            }
+        }
     }
 }

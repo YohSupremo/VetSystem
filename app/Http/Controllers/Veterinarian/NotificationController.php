@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Veterinarian;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
@@ -13,11 +13,13 @@ class NotificationController extends Controller
 {
     public function index(Request $request)
     {
-        $notifications = $this->baseQuery()
+        $role = Auth::user()->role ?? null;
+        $notifications = Notification::forUser(Auth::id())
+            ->visibleToRole($role)
             ->latest()
             ->paginate(15);
 
-        return view('admin.notifications.index', compact('notifications'));
+        return view('veterinarian.notifications.index', compact('notifications'));
     }
 
     public function getNotifications(): JsonResponse
@@ -29,7 +31,8 @@ class NotificationController extends Controller
                 return response()->json([]);
             }
 
-            $notifications = $this->baseQuery()
+            $notifications = Notification::forUser($userId)
+                ->visibleToRole(Auth::user()->role ?? null)
                 ->latest()
                 ->limit(10)
                 ->get()
@@ -56,8 +59,9 @@ class NotificationController extends Controller
     public function markAsRead($id): JsonResponse
     {
         try {
-            $notification = $this->baseQuery()
-                ->where('id', $id)
+            $notification = Notification::where('id', $id)
+                ->where('user_id', Auth::id())
+                ->visibleToRole(Auth::user()->role ?? null)
                 ->firstOrFail();
 
             $notification->markAsRead();
@@ -70,7 +74,8 @@ class NotificationController extends Controller
 
     public function markAllAsRead(): JsonResponse
     {
-        $this->baseQuery()
+        Notification::forUser(Auth::id())
+            ->visibleToRole(Auth::user()->role ?? null)
             ->unread()
             ->update([
                 'is_read' => true,
@@ -91,23 +96,22 @@ class NotificationController extends Controller
             }
 
             return response()->json([
-                'count' => $this->baseQuery()->unread()->count(),
+                'count' => Notification::forUser($userId)
+                    ->visibleToRole(Auth::user()->role ?? null)
+                    ->unread()
+                    ->count(),
             ]);
         } catch (\Exception $e) {
             return response()->json(['count' => 0]);
         }
     }
 
-    public function getUnreadCounts(): JsonResponse
-    {
-        return $this->getUnreadCount();
-    }
-
     public function delete($id): JsonResponse
     {
         try {
-            $notification = $this->baseQuery()
-                ->where('id', $id)
+            $notification = Notification::where('id', $id)
+                ->where('user_id', Auth::id())
+                ->visibleToRole(Auth::user()->role ?? null)
                 ->firstOrFail();
 
             $notification->delete();
@@ -125,7 +129,7 @@ class NotificationController extends Controller
                 NotificationSetting::getDefaultSettings(Auth::id())
             );
 
-        return view('admin.notifications.settings', compact('settings'));
+        return view('veterinarian.notifications.settings', compact('settings'));
     }
 
     public function updateSettings(Request $request)
@@ -136,11 +140,11 @@ class NotificationController extends Controller
             'email_enabled' => 'boolean',
             'sms_enabled' => 'boolean',
             'appointment_reminder_enabled' => 'boolean',
-            'payment_due_enabled' => 'boolean',
-            'low_stock_enabled' => 'boolean',
-            'incident_report_enabled' => 'boolean',
-            'system_alert_enabled' => 'boolean',
-            'user_management_enabled' => 'boolean',
+            'medical_record_enabled' => 'boolean',
+            'prescription_enabled' => 'boolean',
+            'vaccination_enabled' => 'boolean',
+            'lab_result_enabled' => 'boolean',
+            'surgery_status_enabled' => 'boolean',
             'quiet_hours_enabled' => 'boolean',
             'quiet_hours_start' => 'nullable|date_format:H:i',
             'quiet_hours_end' => 'nullable|date_format:H:i',
@@ -152,35 +156,5 @@ class NotificationController extends Controller
         );
 
         return redirect()->back()->with('success', 'Notification settings updated successfully');
-    }
-
-    public function deleteOld(Request $request)
-    {
-        $validated = $request->validate([
-            'days' => 'required|integer|min:1|max:365',
-        ]);
-
-        $count = Notification::where('created_at', '<', now()->subDays($validated['days']))
-            ->where('is_read', true)
-            ->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => "$count notifications deleted",
-        ]);
-    }
-
-    private function baseQuery()
-    {
-        $role = Auth::user()->role ?? null;
-
-        if ($role === 'admin') {
-            return Notification::query()
-                ->adminOverview()
-                ->where('title', '!=', 'New Appointment Assigned');
-        }
-
-        return Notification::forUser(Auth::id())
-            ->visibleToRole($role);
     }
 }

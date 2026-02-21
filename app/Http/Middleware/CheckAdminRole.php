@@ -23,26 +23,14 @@ class CheckAdminRole
         // Define allowed routes for each role
         $rolePermissions = [
             'admin' => ['*'], // Admin can access everything
-            'veterinarian' => [
-                'admin.dashboard',
-                'admin.appointments.*',
-                'admin.pets.*',
-                'admin.pet-owners.*',
-                'admin.queue.*',
-                'admin.medical-records.*',
-                'admin.vaccinations.*',
-                'admin.prescriptions.*',
-                'admin.surgeries.*',
-                'admin.laboratory.*',
-                'admin.reports.medical',
-                'admin.reports.medical-report',
-            ],
             'pharmacy' => [
                 'admin.dashboard',
                 'admin.pharmacy.*',
                 'admin.prescriptions.*', // view/dispense only
                 'admin.inventory.*',
                 'admin.orders.*',
+                'admin.pharmacy.notifications.*',
+                'admin.pharmacy.unread-count',
                 'admin.reports.inventory',
                 'admin.reports.inventory-report',
             ],
@@ -53,6 +41,8 @@ class CheckAdminRole
                 'admin.pet-owners.*',
                 'admin.queue.*',
                 'admin.billing.*',
+                'admin.reception.notifications.*',
+                'admin.reception.unread-count',
                 'admin.reports.financial',
                 'admin.reports.cancelled-invoices',
                 'admin.reports.client',
@@ -67,6 +57,8 @@ class CheckAdminRole
                 'admin.cages.*',
                 'admin.grooming.*',
                 'admin.queue.*',
+                'admin.staff.notifications.*',
+                'admin.staff.unread-count',
             ],
             'boarding' => [
                 'admin.dashboard',
@@ -75,6 +67,8 @@ class CheckAdminRole
                 'admin.boarding.*',
                 'admin.cages.*',
                 'admin.queue.*',
+                'admin.boarding.notifications.*',
+                'admin.boarding.unread-count',
             ],
             'groomer' => [
                 'admin.dashboard',
@@ -84,6 +78,23 @@ class CheckAdminRole
                 'admin.grooming.*',
                 'admin.grooming-services.*',
                 'admin.queue.*',
+                'admin.grooming.notifications.*',
+                'admin.grooming.unread-count',
+            ],
+            'veterinarian' => [
+                'admin.dashboard',
+                'admin.appointments.*',
+                'admin.pets.*',
+                'admin.pet-owners.*',
+                'admin.queue.*',
+                'admin.medical-records.*',
+                'admin.vaccinations.*',
+                'admin.prescriptions.*',
+                'admin.surgeries.*',
+                'admin.laboratory.*',
+                'admin.reports.medical',
+                'admin.reports.medical-report',
+                'admin.notifications.*',
             ],
         ];
 

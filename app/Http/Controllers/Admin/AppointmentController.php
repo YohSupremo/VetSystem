@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Pet;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
@@ -115,7 +116,7 @@ class AppointmentController extends Controller
     /**
      * Store a newly created appointment.
      */
-    public function store(Request $request)
+    public function store(Request $request, NotificationService $notificationService)
     {
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
@@ -141,7 +142,38 @@ class AppointmentController extends Controller
         // Parse the datetime-local format to proper DateTime
         $validated['appointment_date'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['appointment_date']);
 
-        Appointment::create($validated);
+        $appointment = Appointment::create($validated);
+
+        $actor = auth()->user();
+        if ($actor) {
+            $notificationService->send(
+                $actor,
+                \App\Models\Notification::TYPE_APPOINTMENT,
+                'Appointment Created',
+                'A new appointment has been scheduled.',
+                [
+                    'reference_type' => 'appointment',
+                    'reference_id' => $appointment->id,
+                    'action_url' => route('admin.appointments.show', $appointment->id),
+                ]
+            );
+        }
+
+        if (!empty($appointment->veterinarian_id)) {
+            $assignee = User::find($appointment->veterinarian_id);
+            if ($assignee) {
+                $notificationService->send(
+                    $assignee,
+                    \App\Models\Notification::TYPE_APPOINTMENT,
+                    'New Appointment Assigned',
+                    'A new appointment has been assigned to you.',
+                    [
+                        'reference_type' => 'appointment',
+                        'reference_id' => $appointment->id,
+                    ]
+                );
+            }
+        }
 
         return redirect()->route('admin.appointments.index')
             ->with('success', 'Appointment created successfully!');

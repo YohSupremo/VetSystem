@@ -14,6 +14,8 @@ use App\Models\TestRequest;
 use App\Models\TestType;
 use App\Models\TestResult;
 use App\Models\User;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -149,7 +151,7 @@ class LaboratoryController extends Controller
         return view('admin.laboratory.requisitions.create', compact('medicalRecords', 'labTests', 'requesters'));
     }
 
-    public function requisitionsStore(Request $request)
+    public function requisitionsStore(Request $request, NotificationService $notificationService)
     {
         $data = $request->validate([
             'medical_record_id' => 'required|exists:medical_records,id',
@@ -177,6 +179,7 @@ class LaboratoryController extends Controller
 
         if ($labRequisition->status === 'completed') {
             $this->ensureLabRequisitionInvoice($labRequisition);
+            $this->notifyLabResult($notificationService, $labRequisition);
         } elseif ($labRequisition->status === 'cancelled') {
             $this->cancelLabRequisitionInvoice($labRequisition);
         }
@@ -201,8 +204,9 @@ class LaboratoryController extends Controller
         return view('admin.laboratory.requisitions.edit', compact('labRequisition', 'labTests', 'requesters'));
     }
 
-    public function requisitionsUpdate(Request $request, LabRequisition $labRequisition)
+    public function requisitionsUpdate(Request $request, LabRequisition $labRequisition, NotificationService $notificationService)
     {
+        $previousStatus = $labRequisition->status;
         $data = $request->validate([
             'test_id' => 'required|exists:lab_tests,id',
             'requested_by' => 'required|exists:users,id',
@@ -235,6 +239,9 @@ class LaboratoryController extends Controller
 
         if ($labRequisition->status === 'completed') {
             $this->ensureLabRequisitionInvoice($labRequisition);
+            if ($previousStatus !== 'completed') {
+                $this->notifyLabResult($notificationService, $labRequisition);
+            }
         } elseif ($labRequisition->status === 'cancelled') {
             $this->cancelLabRequisitionInvoice($labRequisition);
         }
@@ -363,6 +370,25 @@ class LaboratoryController extends Controller
 
         $invoice->payments()->delete();
         $invoice->update(['status' => 'cancelled']);
+    }
+
+    private function notifyLabResult(NotificationService $notificationService, LabRequisition $labRequisition): void
+    {
+        $labRequisition->loadMissing(['medicalRecord.pet', 'test']);
+        $petName = $labRequisition->medicalRecord?->pet?->name ?? 'Pet';
+        $testName = $labRequisition->test?->test_name ?? 'Lab Test';
+
+        $notificationService->sendToRole(
+            'veterinarian',
+            Notification::TYPE_LAB_TEST,
+            'Lab Results Ready',
+            'Results are available for ' . $petName . ' (' . $testName . ').',
+            [
+                'reference_type' => 'lab_test',
+                'reference_id' => $labRequisition->test_id,
+                'action_url' => route('admin.laboratory.requisitions.show', $labRequisition->id),
+            ]
+        );
     }
 
     public function requisitionsDestroy(LabRequisition $labRequisition)

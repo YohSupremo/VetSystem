@@ -9,6 +9,8 @@ use App\Models\Pet;
 use App\Models\PetOwner;
 use App\Models\Appointment;
 use Carbon\Carbon;
+use App\Models\Notification;
+use App\Services\NotificationService;
 
 class AppointmentController extends Controller
 {
@@ -126,7 +128,7 @@ class AppointmentController extends Controller
         return view('customer.appointments.create', compact('pets', 'appointmentTypes', 'availableSlots'));
     }
     
-    public function store(Request $request)
+    public function store(Request $request, NotificationService $notificationService)
     {
         $user = $this->authenticateUser();
         if ($user instanceof \Illuminate\Http\RedirectResponse) {
@@ -155,6 +157,23 @@ class AppointmentController extends Controller
             'status' => 'pending',
             'notes' => $validated['notes'] ?? null
         ]);
+
+        $ownerName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+        $petName = $pet->name ?? 'Pet';
+        $appointmentLabel = ucfirst(str_replace('_', ' ', $validated['type']));
+
+        $notificationService->sendToAllStaff(
+            Notification::TYPE_APPOINTMENT,
+            'New Customer Appointment',
+            $ownerName !== ''
+                ? "$ownerName booked $petName for $appointmentLabel."
+                : "A customer booked $petName for $appointmentLabel.",
+            [
+                'reference_type' => 'appointment',
+                'reference_id' => $appointment->id,
+                'action_url' => route('admin.appointments.show', $appointment->id),
+            ]
+        );
         
         return redirect()->route('customer.appointments.index')
             ->with('success', 'Appointment booked successfully! We will confirm your appointment shortly.');

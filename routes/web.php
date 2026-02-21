@@ -169,6 +169,18 @@ Route::prefix('veterinarian')->name('veterinarian.')->group(function () {
     Route::get('/laboratory/pets/{petId}/{testId}', [App\Http\Controllers\Veterinarian\LaboratoryController::class, 'show'])->name('laboratory.show');
     Route::get('/laboratory/pets/{petId}/{testId}/edit', [App\Http\Controllers\Veterinarian\LaboratoryController::class, 'edit'])->name('laboratory.edit');
     Route::put('/laboratory/pets/{petId}/{testId}', [App\Http\Controllers\Veterinarian\LaboratoryController::class, 'update'])->name('laboratory.update');
+
+    // Notifications
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Veterinarian\NotificationController::class, 'index'])->name('index');
+        Route::get('/get', [App\Http\Controllers\Veterinarian\NotificationController::class, 'getNotifications'])->name('get');
+        Route::post('/{id}/read', [App\Http\Controllers\Veterinarian\NotificationController::class, 'markAsRead'])->name('mark-read');
+        Route::post('/read-all', [App\Http\Controllers\Veterinarian\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+        Route::delete('/{id}', [App\Http\Controllers\Veterinarian\NotificationController::class, 'delete'])->name('delete');
+        Route::get('/settings', [App\Http\Controllers\Veterinarian\NotificationController::class, 'settings'])->name('settings');
+        Route::post('/settings/update', [App\Http\Controllers\Veterinarian\NotificationController::class, 'updateSettings'])->name('settings-update');
+    });
+    Route::get('/unread-count', [App\Http\Controllers\Veterinarian\NotificationController::class, 'getUnreadCount']);
 });
 
 // Admin Routes
@@ -176,13 +188,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Notification & Messages
-    Route::get('/notifications/get', [NotificationController::class, 'getNotifications']);
-    Route::get('/messages/get', [NotificationController::class, 'getMessages']);
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);
-    Route::post('/messages/{id}/read', [NotificationController::class, 'markMessageAsRead']);
-    Route::post('/notifications/read-all', [NotificationController::class, 'markAllNotificationsAsRead']);
-    Route::get('/unread-counts', [NotificationController::class, 'getUnreadCounts']);
+    // Notifications
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('/get', [NotificationController::class, 'getNotifications'])->name('get');
+        Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('mark-read');
+        Route::post('/read-all', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+        Route::delete('/{id}', [NotificationController::class, 'delete'])->name('delete');
+        Route::get('/settings', [NotificationController::class, 'settings'])->name('settings');
+        Route::post('/settings/update', [NotificationController::class, 'updateSettings'])->name('settings-update');
+        Route::post('/delete-old', [NotificationController::class, 'deleteOld'])->name('delete-old');
+        Route::get('/unread-count', [NotificationController::class, 'getUnreadCount'])->name('unread-count');
+    });
     
     // Pet Owners
     Route::resource('pet-owners', PetOwnerController::class);
@@ -315,13 +332,45 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::get('/{boarding}/edit', [BoardingController::class, 'edit'])->name('edit');
         Route::put('/{boarding}', [BoardingController::class, 'update'])->name('update');
         Route::delete('/{boarding}', [BoardingController::class, 'destroy'])->name('destroy');
+
+        // Boarding Notifications
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Boarding\NotificationController::class, 'index'])->name('index');
+            Route::get('/get', [App\Http\Controllers\Boarding\NotificationController::class, 'getNotifications'])->name('get');
+            Route::post('/{id}/read', [App\Http\Controllers\Boarding\NotificationController::class, 'markAsRead'])->name('mark-read');
+            Route::post('/read-all', [App\Http\Controllers\Boarding\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+            Route::delete('/{id}', [App\Http\Controllers\Boarding\NotificationController::class, 'delete'])->name('delete');
+            Route::get('/settings', [App\Http\Controllers\Boarding\NotificationController::class, 'settings'])->name('settings');
+            Route::post('/settings/update', [App\Http\Controllers\Boarding\NotificationController::class, 'updateSettings'])->name('settings-update');
+        });
+        Route::get('/unread-count', [App\Http\Controllers\Boarding\NotificationController::class, 'getUnreadCount'])->name('unread-count');
     });
 
     // Grooming
-    Route::get('/grooming/appointment/{appointment}/complete', [GroomingController::class, 'completeFromAppointment'])->name('grooming.complete');
-    Route::post('/grooming/appointment/{appointment}/complete', [GroomingController::class, 'storeFromAppointment'])->name('grooming.complete.store');
-    Route::post('/grooming/{grooming}/mark-paid', [GroomingController::class, 'markPaid'])->name('grooming.mark-paid');
-    Route::resource('grooming', GroomingController::class);
+    Route::prefix('grooming')->name('grooming.')->group(function () {
+        Route::get('/appointment/{appointment}/complete', [GroomingController::class, 'completeFromAppointment'])->name('complete');
+        Route::post('/appointment/{appointment}/complete', [GroomingController::class, 'storeFromAppointment'])->name('complete.store');
+        Route::post('/{grooming}/mark-paid', [GroomingController::class, 'markPaid'])->name('mark-paid');
+        Route::get('/', [GroomingController::class, 'index'])->name('index');
+        Route::get('/create', [GroomingController::class, 'create'])->name('create');
+        Route::post('/', [GroomingController::class, 'store'])->name('store');
+        Route::get('/{grooming}', [GroomingController::class, 'show'])->name('show');
+        Route::get('/{grooming}/edit', [GroomingController::class, 'edit'])->name('edit');
+        Route::put('/{grooming}', [GroomingController::class, 'update'])->name('update');
+        Route::delete('/{grooming}', [GroomingController::class, 'destroy'])->name('destroy');
+
+        // Grooming Notifications
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Groomer\NotificationController::class, 'index'])->name('index');
+            Route::get('/get', [App\Http\Controllers\Groomer\NotificationController::class, 'getNotifications'])->name('get');
+            Route::post('/{id}/read', [App\Http\Controllers\Groomer\NotificationController::class, 'markAsRead'])->name('mark-read');
+            Route::post('/read-all', [App\Http\Controllers\Groomer\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+            Route::delete('/{id}', [App\Http\Controllers\Groomer\NotificationController::class, 'delete'])->name('delete');
+            Route::get('/settings', [App\Http\Controllers\Groomer\NotificationController::class, 'settings'])->name('settings');
+            Route::post('/settings/update', [App\Http\Controllers\Groomer\NotificationController::class, 'updateSettings'])->name('settings-update');
+        });
+        Route::get('/unread-count', [App\Http\Controllers\Groomer\NotificationController::class, 'getUnreadCount'])->name('unread-count');
+    });
     
     // Grooming Services Management
     Route::prefix('grooming-services')->name('grooming-services.')->group(function () {
@@ -351,6 +400,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::get('/{id}/edit', [PharmacyController::class, 'edit'])->name('edit');
         Route::put('/{id}', [PharmacyController::class, 'update'])->name('update');
         Route::delete('/{id}', [PharmacyController::class, 'destroy'])->name('destroy');
+
+        // Pharmacy Notifications
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Pharmacy\NotificationController::class, 'index'])->name('index');
+            Route::get('/get', [App\Http\Controllers\Pharmacy\NotificationController::class, 'getNotifications'])->name('get');
+            Route::post('/{id}/read', [App\Http\Controllers\Pharmacy\NotificationController::class, 'markAsRead'])->name('mark-read');
+            Route::post('/read-all', [App\Http\Controllers\Pharmacy\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+            Route::delete('/{id}', [App\Http\Controllers\Pharmacy\NotificationController::class, 'delete'])->name('delete');
+            Route::get('/settings', [App\Http\Controllers\Pharmacy\NotificationController::class, 'settings'])->name('settings');
+            Route::post('/settings/update', [App\Http\Controllers\Pharmacy\NotificationController::class, 'updateSettings'])->name('settings-update');
+        });
+        Route::get('/unread-count', [App\Http\Controllers\Pharmacy\NotificationController::class, 'getUnreadCount'])->name('unread-count');
     });
 
     // Surgeries
@@ -383,6 +444,23 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::post('/{id}/mark-overdue', [BillingController::class, 'markOverdue'])->name('mark.overdue');
     });
 
+    // Reception
+    Route::prefix('reception')->name('reception.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\AppointmentController::class, 'index'])->name('index');
+        
+        // Reception Notifications
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Reception\NotificationController::class, 'index'])->name('index');
+            Route::get('/get', [App\Http\Controllers\Reception\NotificationController::class, 'getNotifications'])->name('get');
+            Route::post('/{id}/read', [App\Http\Controllers\Reception\NotificationController::class, 'markAsRead'])->name('mark-read');
+            Route::post('/read-all', [App\Http\Controllers\Reception\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+            Route::delete('/{id}', [App\Http\Controllers\Reception\NotificationController::class, 'delete'])->name('delete');
+            Route::get('/settings', [App\Http\Controllers\Reception\NotificationController::class, 'settings'])->name('settings');
+            Route::post('/settings/update', [App\Http\Controllers\Reception\NotificationController::class, 'updateSettings'])->name('settings-update');
+        });
+        Route::get('/unread-count', [App\Http\Controllers\Reception\NotificationController::class, 'getUnreadCount'])->name('unread-count');
+    });
+
     // Staff
     Route::prefix('staff')->name('staff.')->group(function(){
             Route::get('/create', [StaffController::class, 'create'])->name('create');
@@ -393,6 +471,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
             Route::get('/{id}/info', [StaffController::class, 'show'])->name('info');
             Route::delete('/destroy/{id}', [StaffController::class, 'destroy'])->name('destroy');
             Route::get('/filter', [StaffController::class, 'filter'])->name('filter');
+
+            // Staff Notifications
+            Route::prefix('notifications')->name('notifications.')->group(function () {
+                Route::get('/', [App\Http\Controllers\Staff\NotificationController::class, 'index'])->name('index');
+                Route::get('/get', [App\Http\Controllers\Staff\NotificationController::class, 'getNotifications'])->name('get');
+                Route::post('/{id}/read', [App\Http\Controllers\Staff\NotificationController::class, 'markAsRead'])->name('mark-read');
+                Route::post('/read-all', [App\Http\Controllers\Staff\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+                Route::delete('/{id}', [App\Http\Controllers\Staff\NotificationController::class, 'delete'])->name('delete');
+                Route::get('/settings', [App\Http\Controllers\Staff\NotificationController::class, 'settings'])->name('settings');
+                Route::post('/settings/update', [App\Http\Controllers\Staff\NotificationController::class, 'updateSettings'])->name('settings-update');
+            });
+            Route::get('/unread-count', [App\Http\Controllers\Staff\NotificationController::class, 'getUnreadCount'])->name('unread-count');
     });
 
     // Reports

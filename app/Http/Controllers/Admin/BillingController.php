@@ -10,6 +10,8 @@ use App\Models\Pet;
 use App\Models\PetOwner;
 use App\Models\Appointment;
 use App\Models\Prescription;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 
 class BillingController extends BaseController
@@ -69,7 +71,7 @@ class BillingController extends BaseController
     /**
      * Store a newly created billing record in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, NotificationService $notificationService)
     {
         $data = $request->validate([
             'pet_id' => 'nullable|exists:pets,id',
@@ -126,6 +128,18 @@ class BillingController extends BaseController
             }
 
             DB::commit();
+
+            $notificationService->sendToRole(
+                'reception',
+                Notification::TYPE_PAYMENT,
+                'Payment Due',
+                'Invoice ' . $invoice->invoice_number . ' is due on ' . $invoice->due_date . '.',
+                [
+                    'reference_type' => 'invoice',
+                    'reference_id' => $invoice->id,
+                    'action_url' => route('admin.billing.show', $invoice->id),
+                ]
+            );
             
             return redirect()->route('admin.billing.index')
                 ->with('success', 'Invoice created successfully.');
@@ -320,7 +334,7 @@ class BillingController extends BaseController
     /**
      * Generate invoice from appointment.
      */
-    public function generateFromAppointment($appointmentId)
+    public function generateFromAppointment($appointmentId, NotificationService $notificationService)
     {
         $appointment = Appointment::with(['pet'])->findOrFail($appointmentId);
         $petOwnerId = $appointment->pet ? $appointment->pet->owner_id : null;
@@ -348,6 +362,18 @@ class BillingController extends BaseController
             'quantity' => 1,
             'unit_price' => 50.00,
         ]);
+
+        $notificationService->sendToRole(
+            'reception',
+            Notification::TYPE_PAYMENT,
+            'Payment Due',
+            'Invoice ' . $invoice->invoice_number . ' is due on ' . $invoice->due_date . '.',
+            [
+                'reference_type' => 'invoice',
+                'reference_id' => $invoice->id,
+                'action_url' => route('admin.billing.show', $invoice->id),
+            ]
+        );
         
         return redirect()->route('admin.billing.edit', $invoice->id)
             ->with('success', 'Invoice generated from appointment successfully.');
@@ -370,13 +396,25 @@ class BillingController extends BaseController
     /**
      * Mark invoice as overdue.
      */
-    public function markOverdue($id)
+    public function markOverdue($id, NotificationService $notificationService)
     {
         $invoice = BillingInvoice::findOrFail($id);
         
         if (!$invoice->is_paid && \Carbon\Carbon::parse($invoice->due_date)->isPast()) {
             $invoice->status = 'overdue';
             $invoice->save();
+
+            $notificationService->sendToRole(
+                'reception',
+                Notification::TYPE_PAYMENT_OVERDUE,
+                'Payment Overdue',
+                'Invoice ' . $invoice->invoice_number . ' is now overdue.',
+                [
+                    'reference_type' => 'invoice',
+                    'reference_id' => $invoice->id,
+                    'action_url' => route('admin.billing.show', $invoice->id),
+                ]
+            );
         }
         
         return redirect()->route('admin.billing.show', $invoice->id)

@@ -6,6 +6,8 @@ use App\Models\Pet;
 use App\Models\Prescription;
 use App\Models\MedicalRecord;
 use App\Models\InventoryItem;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class PrescriptionController extends BaseController
@@ -88,7 +90,7 @@ class PrescriptionController extends BaseController
     /**
      * Store a newly created prescription in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, NotificationService $notificationService)
     {
         $validated = $request->validate([
             'medical_record_id' => 'required|exists:medical_records,id',
@@ -107,7 +109,33 @@ class PrescriptionController extends BaseController
             $validated['medication_name'] = $inventoryItem->name;
         }
 
-        Prescription::create($validated);
+        $prescription = Prescription::create($validated);
+        $prescription->loadMissing('medicalRecord.pet');
+
+        $petName = $prescription->medicalRecord?->pet?->name ?? 'Pet';
+        $notificationService->sendToRole(
+            'pharmacy',
+            Notification::TYPE_PRESCRIPTION,
+            'New Prescription',
+            'Prescription created for ' . $petName . '.',
+            [
+                'reference_type' => 'prescription',
+                'reference_id' => $prescription->id,
+                'action_url' => route('admin.prescriptions.show', $prescription->id),
+            ]
+        );
+
+        $notificationService->sendToRole(
+            'veterinarian',
+            Notification::TYPE_PRESCRIPTION,
+            'New Prescription',
+            'Prescription created for ' . $petName . '.',
+            [
+                'reference_type' => 'prescription',
+                'reference_id' => $prescription->id,
+                'action_url' => route('admin.prescriptions.show', $prescription->id),
+            ]
+        );
 
         return redirect()->route('admin.prescriptions.index')
             ->with('success', 'Prescription created successfully!');

@@ -8,6 +8,8 @@ use App\Models\InventoryItem;
 use App\Models\Pet;
 use App\Models\Vaccination;
 use App\Models\User;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -64,7 +66,7 @@ class VaccinationController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, NotificationService $notificationService)
     {
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
@@ -88,7 +90,23 @@ class VaccinationController extends Controller
                 ->withInput();
         }
 
-        Vaccination::create($validated);
+        $vaccination = Vaccination::create($validated);
+        $vaccination->loadMissing('pet');
+
+        if (!empty($vaccination->next_due_date)) {
+            $petName = $vaccination->pet?->name ?? 'Pet';
+            $notificationService->sendToRole(
+                'veterinarian',
+                Notification::TYPE_VACCINATION,
+                'Vaccination Due Scheduled',
+                $petName . ' has a vaccination due on ' . $vaccination->next_due_date . '.',
+                [
+                    'reference_type' => 'vaccination',
+                    'reference_id' => $vaccination->id,
+                    'action_url' => route('admin.vaccinations.show', $vaccination->id),
+                ]
+            );
+        }
 
         return redirect()->route('admin.vaccinations.index')
             ->with('success', 'Vaccination recorded successfully!');

@@ -72,30 +72,15 @@ class BoardingController extends BaseController
             })
             ->values();
 
-        $boardingIds = $boardings->pluck('id')->filter()->map(fn ($id) => (int) $id)->unique()->values();
         $boardingBilling = [];
+        foreach ($boardings as $boarding) {
+            if (!$boarding->id) {
+                continue;
+            }
 
-        if ($boardingIds->isNotEmpty()) {
-            $boardingIdLookup = array_flip($boardingIds->all());
-
-            $boardingInvoices = Invoice::with(['invoiceItems', 'payments'])
-                ->where('notes', 'like', '%[BOARDING_ID:%')
-                ->orderByDesc('id')
-                ->get();
-
-            foreach ($boardingInvoices as $invoice) {
-                if (!preg_match('/\[BOARDING_ID:(\d+)\]/', (string) ($invoice->notes ?? ''), $matches)) {
-                    continue;
-                }
-
-                $boardingId = (int) ($matches[1] ?? 0);
-                if ($boardingId <= 0 || !isset($boardingIdLookup[$boardingId])) {
-                    continue;
-                }
-
-                if (!isset($boardingBilling[$boardingId])) {
-                    $boardingBilling[$boardingId] = $invoice;
-                }
+            $invoice = $this->findBoardingInvoice($boarding);
+            if ($invoice) {
+                $boardingBilling[(int) $boarding->id] = $invoice;
             }
         }
         
@@ -494,6 +479,8 @@ class BoardingController extends BaseController
             'daily_rate' => $info['daily_rate'] ?? null,
             'notes' => $info['notes'] ?? null,
         ]);
+
+        $this->ensureBoardingInvoice($boarding->fresh(['pet', 'cage']));
         
         // Sync cage status to ensure accuracy (important if dates changed)
         $cage = Cage::find($info['cage_id']);
@@ -573,17 +560,23 @@ class BoardingController extends BaseController
     {
         $tag = $this->boardingInvoiceTag($boarding->id);
 
-        return Invoice::with(['invoiceItems', 'payments'])
+        $invoice = Invoice::with(['invoiceItems', 'payments'])
             ->where('notes', 'like', '%' . $tag . '%')
             ->orderByDesc('id')
             ->first();
+
+        if (!$invoice instanceof Invoice) {
+            return null;
+        }
+
+        return $this->syncBoardingInvoice($boarding, $invoice);
     }
 
     private function ensureBoardingInvoice(CageAssignment $boarding): Invoice
     {
         $existing = $this->findBoardingInvoice($boarding);
         if ($existing) {
-            return $existing;
+            return $this->syncBoardingInvoice($boarding, $existing);
         }
 
         $ownerId = optional($boarding->pet)->owner_id;
@@ -615,6 +608,62 @@ class BoardingController extends BaseController
             'unit_price' => $this->calculateBoardingAmount($boarding),
         ]);
 
+        return $this->syncBoardingInvoice($boarding, $invoice->load(['invoiceItems', 'payments']));
+    }
+
+    private function syncBoardingInvoice(CageAssignment $boarding, Invoice $invoice): Invoice
+    {
+        $invoice->loadMissing(['invoiceItems', 'payments']);
+
+        $amount = $this->calculateBoardingAmount($boarding);
+        $description = $this->boardingInvoiceDescription($boarding);
+
+        $boardingItem = $invoice->invoiceItems->firstWhere('item_type', 'boarding')
+            ?? $invoice->invoiceItems->first();
+
+        if ($boardingItem) {
+            $updates = [];
+
+            if ((int) $boardingItem->quantity !== 1) {
+                $updates['quantity'] = 1;
+            }
+
+            if ((float) $boardingItem->unit_price !== (float) $amount) {
+                $updates['unit_price'] = $amount;
+            }
+
+            if ((string) $boardingItem->description !== (string) $description) {
+                $updates['description'] = $description;
+            }
+
+            if (!empty($updates)) {
+                $boardingItem->update($updates);
+            }
+        } else {
+            InvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'item_type' => 'boarding',
+                'description' => $description,
+                'quantity' => 1,
+                'unit_price' => $amount,
+            ]);
+        }
+
+        $invoice->load(['invoiceItems', 'payments']);
+
+        if ($invoice->status !== 'cancelled') {
+            $targetStatus = $invoice->total_amount <= 0
+                ? 'pending'
+                : ($invoice->balance <= 0
+                    ? 'paid'
+                    : ($invoice->paid_amount > 0 ? 'partial' : 'pending'));
+
+            if ($invoice->status !== $targetStatus) {
+                $invoice->update(['status' => $targetStatus]);
+                $invoice->refresh();
+            }
+        }
+
         return $invoice->load(['invoiceItems', 'payments']);
     }
 
@@ -624,9 +673,21 @@ class BoardingController extends BaseController
             return 0.0;
         }
 
-        $start = Carbon::parse($boarding->start_date);
-        $end = Carbon::parse($boarding->end_date);
-        $days = max(1, $end->diffInDays($start) + 1);
+        $start = Carbon::parse($boarding->start_date)->startOfDay();
+        $plannedEnd = Carbon::parse($boarding->end_date)->endOfDay();
+
+        if ($boarding->check_out_time) {
+            $checkoutAt = Carbon::parse($boarding->check_out_time);
+            $effectiveEnd = $checkoutAt->lte(now()) ? $checkoutAt : now();
+        } else {
+            $effectiveEnd = now()->lt($plannedEnd) ? now() : $plannedEnd;
+        }
+
+        if ($effectiveEnd->lt($start)) {
+            return 0.0;
+        }
+
+        $days = $start->diffInDays($effectiveEnd->copy()->startOfDay()) + 1;
 
         return round($days * (float) $boarding->daily_rate, 2);
     }

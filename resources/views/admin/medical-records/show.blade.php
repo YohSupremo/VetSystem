@@ -121,6 +121,43 @@
             </div>
 
             <div class="record-section">
+                <h3>Linked Chronic Condition / Pet Allergy</h3>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Chronic Condition</label>
+                        @if(isset($linkedChronicConditions) && $linkedChronicConditions->count() > 0)
+                            @foreach($linkedChronicConditions as $condition)
+                                <div class="linked-item">
+                                    <p><strong>Condition:</strong> {{ $condition->condition_name ?: 'N/A' }}</p>
+                                    <p><strong>Ongoing Treatment:</strong> {{ $condition->ongoing_treatment ?: 'N/A' }}</p>
+                                    <p><strong>Status:</strong> {{ $condition->is_active ? 'Active' : 'Inactive' }}</p>
+                                </div>
+                            @endforeach
+                        @else
+                            <p class="text-muted">Not marked as chronic in this medical record.</p>
+                        @endif
+                    </div>
+
+                    <div class="info-item">
+                        <label>Pet Allergy</label>
+                        @if(isset($linkedPetAllergies) && $linkedPetAllergies->count() > 0)
+                            @foreach($linkedPetAllergies as $allergy)
+                                <div class="linked-item">
+                                    <p><strong>Allergen:</strong> {{ $allergy->allergen ?: 'N/A' }}</p>
+                                    <p><strong>Reaction Type:</strong> {{ $allergy->reaction_type ?: 'N/A' }}</p>
+                                    <p><strong>Severity:</strong> {{ ucfirst($allergy->severity ?: 'N/A') }}</p>
+                                    <p><strong>Status:</strong> {{ $allergy->is_active ? 'Active' : 'Inactive' }}</p>
+                                </div>
+                            @endforeach
+                        @else
+                            <p class="text-muted">Not marked as pet allergy in this medical record.</p>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="record-section">
                 <h3>Follow-up Date</h3>
                 <p>{{ $record->follow_up_date ? \Carbon\Carbon::parse($record->follow_up_date)->format('M d, Y') : 'Not scheduled' }}</p>
             </div>
@@ -250,6 +287,26 @@
     border-radius: 4px;
 }
 
+.linked-item {
+    background: #fff;
+    border: 1px solid #ececec;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+
+.linked-item:last-child {
+    margin-bottom: 0;
+}
+
+.linked-item p {
+    margin: 0 0 6px 0;
+}
+
+.linked-item p:last-child {
+    margin-bottom: 0;
+}
+
 .btn {
     padding: 10px 20px;
     border: none;
@@ -280,6 +337,20 @@
 
 .btn-secondary:hover {
     background: #5A6268;
+}
+
+.btn-warning {
+    background: #FFC107;
+    color: #212529;
+}
+
+.btn-warning:hover {
+    background: #E0A800;
+}
+
+.btn-sm {
+    padding: 8px 14px;
+    font-size: 12px;
 }
 
 @media (max-width: 768px) {

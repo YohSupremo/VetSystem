@@ -15,13 +15,31 @@
 
         <form action="{{ route('admin.vaccinations.store') }}" method="POST" class="form-main">
             @csrf
+            @if(!empty($selectedAppointmentId))
+                <input type="hidden" name="appointment_id" value="{{ $selectedAppointmentId }}">
+            @endif
+
+            @if(!empty($appointmentContext))
+                <div class="form-section" style="margin-bottom: 18px;">
+                    <div class="appointment-context-box">
+                        <strong>Accepted Appointment:</strong>
+                        #{{ $appointmentContext->id }}
+                        @if($appointmentContext->appointment_date)
+                            • {{ \Carbon\Carbon::parse($appointmentContext->appointment_date)->format('M d, Y h:i A') }}
+                        @endif
+                    </div>
+                </div>
+            @endif
 
             <div class="form-section">
                 <h3>Basic Information</h3>
                 
                 <div class="form-group">
                     <label>Select Pet <span class="text-danger">*</span></label>
-                    <select name="pet_id" class="form-control" required>
+                    @if(!empty($appointmentContext))
+                        <input type="hidden" name="pet_id" value="{{ old('pet_id', $selectedPetId ?? '') }}">
+                    @endif
+                    <select name="pet_id" class="form-control" {{ !empty($appointmentContext) ? 'disabled' : '' }}>
                         <option value="">Choose a pet...</option>
                         @forelse($pets as $pet)
                             <option value="{{ $pet->id }}" {{ old('pet_id', $selectedPetId ?? '') == $pet->id ? 'selected' : '' }}>
@@ -34,9 +52,11 @@
                     @error('pet_id')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
+                <div id="allergy-alert-box" class="allergy-alert-box" style="display: none;"></div>
+
                 <div class="form-group">
                     <label>Vaccine <span class="text-danger">*</span></label>
-                    <select name="inventory_item_id" id="inventory_item_id" class="form-control" required>
+                    <select name="inventory_item_id" id="inventory_item_id" class="form-control">
                         <option value="">Choose a vaccine...</option>
                         @forelse($vaccineItems as $item)
                             <option value="{{ $item->id }}" {{ old('inventory_item_id') == $item->id ? 'selected' : '' }}>
@@ -56,15 +76,15 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Vaccination Date <span class="text-danger">*</span></label>
-                        <input type="date" name="administered_date" class="form-control" value="{{ old('administered_date', date('Y-m-d')) }}" required>
+                        <input type="date" name="administered_date" class="form-control" value="{{ old('administered_date', $selectedAdministeredDate ?? date('Y-m-d')) }}">
                         @error('administered_date')<span class="text-danger">{{ $message }}</span>@enderror
                     </div>
                     <div class="form-group">
                         <label>Veterinarian <span class="text-danger">*</span></label>
-                        <select name="administered_by" class="form-control" required>
+                        <select name="administered_by" class="form-control">
                             <option value="">Select veterinarian...</option>
                             @forelse($veterinarians as $vet)
-                                <option value="{{ $vet->id }}" {{ old('administered_by') == $vet->id ? 'selected' : '' }}>
+                                <option value="{{ $vet->id }}" {{ old('administered_by', $selectedVeterinarianId ?? '') == $vet->id ? 'selected' : '' }}>
                                     Dr. {{ $vet->first_name }} {{ $vet->last_name }}
                                 </option>
                             @empty
@@ -76,7 +96,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Dose Number</label>
+                    <label>Dose Number <span class="text-danger">*</span></label>
                     <select name="dose_number" class="form-control">
                         <option value="">Select dose...</option>
                         <option value="1" {{ old('dose_number') == '1' ? 'selected' : '' }}>1st Dose (Initial)</option>
@@ -129,6 +149,46 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const petSelect = document.querySelector('select[name="pet_id"]');
+    const allergyAlertBox = document.getElementById('allergy-alert-box');
+    const allergyMap = @json($allergyMap ?? []);
+
+    if (!petSelect || !allergyAlertBox) {
+        return;
+    }
+
+    function renderAllergyAlert(petId) {
+        const allergies = allergyMap[String(petId)] || [];
+
+        if (!petId || allergies.length === 0) {
+            allergyAlertBox.style.display = 'none';
+            allergyAlertBox.innerHTML = '';
+            return;
+        }
+
+        const items = allergies.map(function (allergy) {
+            const severity = allergy.severity ? allergy.severity.toUpperCase() : 'UNKNOWN';
+            const reaction = allergy.reaction_type ? ` (${allergy.reaction_type})` : '';
+            return `<li><strong>${allergy.allergen}</strong>${reaction} - <span class="severity-inline">${severity}</span></li>`;
+        }).join('');
+
+        allergyAlertBox.innerHTML = `
+            <div class="allergy-alert-title"><i class="fas fa-exclamation-triangle"></i> Active Allergy Alert</div>
+            <ul class="allergy-alert-list">${items}</ul>
+        `;
+        allergyAlertBox.style.display = 'block';
+    }
+
+    petSelect.addEventListener('change', function () {
+        renderAllergyAlert(this.value);
+    });
+
+    renderAllergyAlert(petSelect.value);
+});
+</script>
+
 <style>
 .form-container {
     background: white;
@@ -155,6 +215,15 @@
     margin-bottom: 30px;
 }
 
+.appointment-context-box {
+    background: #FFF8E1;
+    border: 1px solid #FFE082;
+    color: #7A5200;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
 .form-section h3 {
     color: var(--dark-text);
     margin-bottom: 20px;
@@ -170,6 +239,34 @@
 
 .form-group {
     margin-bottom: 20px;
+}
+
+.allergy-alert-box {
+    margin-bottom: 18px;
+    background: #FFF4E5;
+    border: 1px solid #FFD8A8;
+    border-left: 4px solid #F59E0B;
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+.allergy-alert-title {
+    font-weight: 700;
+    color: #92400E;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.allergy-alert-list {
+    margin: 0;
+    padding-left: 20px;
+    color: #7C2D12;
+}
+
+.severity-inline {
+    font-weight: 700;
 }
 
 .form-group label {

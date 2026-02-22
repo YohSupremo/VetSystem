@@ -989,6 +989,14 @@
                         <i class="fas fa-file-medical"></i>
                         <span>Medical Records</span>
                     </a>
+                    <a href="{{ route('admin.chronic-conditions.index') }}" class="nav-item {{ request()->routeIs('admin.chronic-conditions.*') ? 'active' : '' }}">
+                        <i class="fas fa-notes-medical"></i>
+                        <span>Chronic Conditions</span>
+                    </a>
+                    <a href="{{ route('admin.pet-allergies.index') }}" class="nav-item {{ request()->routeIs('admin.pet-allergies.*') ? 'active' : '' }}">
+                        <i class="fas fa-allergies"></i>
+                        <span>Pet Allergies</span>
+                    </a>
                     @endif
                     @if(auth()->user()->role === 'admin')
                     <a href="{{ route('admin.incidents.index') }}" class="nav-item {{ request()->routeIs('admin.incidents.*') ? 'active' : '' }}">

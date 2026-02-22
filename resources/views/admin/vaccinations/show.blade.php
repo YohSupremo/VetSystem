@@ -275,6 +275,25 @@
     background: #5A6268;
 }
 
+.btn-success {
+    background: #28A745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-warning {
+    background: #FFC107;
+    color: #212529;
+}
+
+.btn-danger {
+    background: #DC3545;
+    color: white;
+}
+
 @media (max-width: 768px) {
     .info-grid {
         grid-template-columns: 1fr;

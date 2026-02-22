@@ -25,6 +25,8 @@ use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\IncidentController;
+use App\Http\Controllers\Admin\ChronicConditionController;
+use App\Http\Controllers\Admin\PetAllergyController;
 
 // Welcome Page with Dynamic Carousel
 Route::get('/', function () {
@@ -247,10 +249,35 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::get('/create', [MedicalRecordController::class, 'create'])->name('create');
         Route::post('/', [MedicalRecordController::class, 'store'])->name('store');
         Route::get('/{medicalRecord}', [MedicalRecordController::class, 'show'])->name('show');
+        Route::post('/{medicalRecord}/mark-chronic', [MedicalRecordController::class, 'markAsChronic'])->name('mark-chronic');
         Route::get('/{medicalRecord}/edit', [MedicalRecordController::class, 'edit'])->name('edit');
         Route::put('/{medicalRecord}', [MedicalRecordController::class, 'update'])->name('update');
         Route::delete('/{medicalRecord}', [MedicalRecordController::class, 'destroy'])->name('destroy');
         Route::get('/pet/{pet}', [MedicalRecordController::class, 'byPet'])->name('pet');
+    });
+
+    // Chronic Conditions
+    Route::prefix('chronic-conditions')->name('chronic-conditions.')->group(function () {
+        Route::get('/', [ChronicConditionController::class, 'index'])->name('index');
+        Route::get('/pet/{pet}', [ChronicConditionController::class, 'byPet'])->name('pet');
+        Route::get('/create', [ChronicConditionController::class, 'create'])->name('create');
+        Route::post('/', [ChronicConditionController::class, 'store'])->name('store');
+        Route::get('/{chronicCondition}', [ChronicConditionController::class, 'show'])->name('show');
+        Route::get('/{chronicCondition}/edit', [ChronicConditionController::class, 'edit'])->name('edit');
+        Route::put('/{chronicCondition}', [ChronicConditionController::class, 'update'])->name('update');
+        Route::delete('/{chronicCondition}', [ChronicConditionController::class, 'destroy'])->name('destroy');
+    });
+
+    // Pet Allergies
+    Route::prefix('pet-allergies')->name('pet-allergies.')->group(function () {
+        Route::get('/', [PetAllergyController::class, 'index'])->name('index');
+        Route::get('/pet/{pet}', [PetAllergyController::class, 'byPet'])->name('pet');
+        Route::get('/create', [PetAllergyController::class, 'create'])->name('create');
+        Route::post('/', [PetAllergyController::class, 'store'])->name('store');
+        Route::get('/{petAllergy}', [PetAllergyController::class, 'show'])->name('show');
+        Route::get('/{petAllergy}/edit', [PetAllergyController::class, 'edit'])->name('edit');
+        Route::put('/{petAllergy}', [PetAllergyController::class, 'update'])->name('update');
+        Route::delete('/{petAllergy}', [PetAllergyController::class, 'destroy'])->name('destroy');
     });
 
     // Incident Reports
@@ -269,7 +296,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
     Route::prefix('vaccinations')->name('vaccinations.')->group(function () {
         Route::get('/', [VaccinationController::class, 'index'])->name('index');
         Route::get('/create', [VaccinationController::class, 'create'])->name('create');
+        Route::post('/appointments/{appointment}/accept', [VaccinationController::class, 'acceptAppointment'])->name('appointments.accept');
         Route::post('/', [VaccinationController::class, 'store'])->name('store');
+        Route::post('/{vaccination}/payment', [VaccinationController::class, 'processPayment'])->name('payment.process');
         Route::get('/{vaccination}', [VaccinationController::class, 'show'])->name('show');
         Route::get('/{vaccination}/edit', [VaccinationController::class, 'edit'])->name('edit');
         Route::put('/{vaccination}', [VaccinationController::class, 'update'])->name('update');

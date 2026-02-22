@@ -2,13 +2,25 @@
 -- VETERINARY CLINIC MANAGEMENT SYSTEM
 -- COMPLETE SCHEMA WITH REGISTRATION NUMBERS
 -- Fully Normalized (2NF & 3NF Compliant)
--- Date: February 13, 2026
--- Version: 4.1 ENHANCED (Registration Numbers Only)
+-- Date: February 22, 2026
+-- Version: 4.4 ENHANCED (Registration + Notification + Medical Record Linkage)
 -- =============================
 
 -- CHANGES FROM v4.0:
 -- ✅ Added registration_number to pets table
 -- ✅ Added invoice_prefix and invoice_sequence to invoices table
+-- ✅ Confirmed notification_settings schema parity columns:
+--    in_app_enabled, appointment_reminder_hours, vaccination_due_days,
+--    incident_report_enabled, surgery_status_enabled, grooming_status_enabled,
+--    medication_dispensing_enabled, inventory_alert_enabled,
+--    default_advance_hours, quiet_hours_enabled,
+--    quiet_hours_start, quiet_hours_end, notification_frequency
+-- ✅ Confirmed notifications schema parity columns:
+--    icon, method, priority, scheduled_for, sent_at, read_at,
+--    is_read, action_url, reference_type, reference_id,
+--    error_message, retry_count
+-- ✅ Added nullable medical_record_id FK to chronic_conditions and pet_allergies
+--    to track where conditions/allergies were diagnosed
 
 CREATE DATABASE IF NOT EXISTS vet_clinic_final;
 USE vet_clinic_final;
@@ -265,6 +277,7 @@ CREATE TABLE pet_vaccinations (
 CREATE TABLE chronic_conditions (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     pet_id BIGINT UNSIGNED NOT NULL,
+    medical_record_id BIGINT UNSIGNED NULL,
     condition_name VARCHAR(150) NOT NULL,
     diagnosed_date DATE,
     ongoing_treatment TEXT,
@@ -273,7 +286,9 @@ CREATE TABLE chronic_conditions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE CASCADE,
+    FOREIGN KEY (medical_record_id) REFERENCES medical_records(id) ON DELETE SET NULL,
     INDEX idx_pet (pet_id),
+    INDEX idx_medical_record (medical_record_id),
     INDEX idx_active (is_active)
 ) ENGINE=InnoDB;
 
@@ -283,6 +298,7 @@ CREATE TABLE chronic_conditions (
 CREATE TABLE pet_allergies (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     pet_id BIGINT UNSIGNED NOT NULL,
+    medical_record_id BIGINT UNSIGNED NULL,
     allergen VARCHAR(150) NOT NULL,
     reaction_type VARCHAR(100),
     severity ENUM('mild','moderate','severe') DEFAULT 'mild',
@@ -292,7 +308,9 @@ CREATE TABLE pet_allergies (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE CASCADE,
+    FOREIGN KEY (medical_record_id) REFERENCES medical_records(id) ON DELETE SET NULL,
     INDEX idx_pet (pet_id),
+    INDEX idx_medical_record (medical_record_id),
     INDEX idx_severity (severity),
     INDEX idx_active (is_active)
 ) ENGINE=InnoDB;
@@ -712,13 +730,21 @@ CREATE TABLE notifications (
 CREATE TABLE notification_settings (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
+
+    -- Core channel toggles
     notifications_enabled TINYINT(1) DEFAULT 1,
     email_enabled TINYINT(1) DEFAULT 1,
     sms_enabled TINYINT(1) DEFAULT 0,
+
+    -- ✅ Added/required for app parity
     in_app_enabled TINYINT(1) DEFAULT 1,
+
+    -- Per-notification controls
     appointment_reminder_enabled TINYINT(1) DEFAULT 1,
+    -- ✅ Added/required for app parity
     appointment_reminder_hours INT DEFAULT 24,
     vaccination_due_enabled TINYINT(1) DEFAULT 1,
+    -- ✅ Added/required for app parity
     vaccination_due_days INT DEFAULT 7,
     payment_due_enabled TINYINT(1) DEFAULT 1,
     payment_overdue_enabled TINYINT(1) DEFAULT 1,
@@ -727,15 +753,28 @@ CREATE TABLE notification_settings (
     boarding_checkout_enabled TINYINT(1) DEFAULT 1,
     low_stock_enabled TINYINT(1) DEFAULT 1,
     item_expiry_enabled TINYINT(1) DEFAULT 1,
+
+    -- ✅ Added/required for app parity
     incident_report_enabled TINYINT(1) DEFAULT 1,
+    -- ✅ Added/required for app parity
     surgery_status_enabled TINYINT(1) DEFAULT 1,
+    -- ✅ Added/required for app parity
     grooming_status_enabled TINYINT(1) DEFAULT 1,
+    -- ✅ Added/required for app parity
     medication_dispensing_enabled TINYINT(1) DEFAULT 1,
+    -- ✅ Added/required for app parity
     inventory_alert_enabled TINYINT(1) DEFAULT 1,
+
+    -- Scheduling behavior
+    -- ✅ Added/required for app parity
     default_advance_hours INT DEFAULT 24,
+    -- ✅ Added/required for app parity
     quiet_hours_enabled TINYINT(1) DEFAULT 0,
+    -- ✅ Added/required for app parity
     quiet_hours_start TIME DEFAULT '22:00:00',
+    -- ✅ Added/required for app parity
     quiet_hours_end TIME DEFAULT '08:00:00',
+    -- ✅ Added/required for app parity
     notification_frequency ENUM('immediate','hourly','daily') DEFAULT 'immediate',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

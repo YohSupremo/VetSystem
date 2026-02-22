@@ -10,9 +10,17 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title"><i class="fas fa-file-medical"></i> Medical Records</h3>
-                    <a href="{{ route('admin.medical-records.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add New Patient Record
-                    </a>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('admin.chronic-conditions.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-notes-medical"></i> Chronic Conditions
+                        </a>
+                        <a href="{{ route('admin.pet-allergies.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-allergies"></i> Pet Allergies
+                        </a>
+                        <a href="{{ route('admin.medical-records.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add New Patient Record
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                    

@@ -37,6 +37,8 @@
                     @error('pet_id')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
 
+                <div id="allergy-alert-box" class="allergy-alert-box" style="display: none;"></div>
+
                 <div class="form-group">
                     <label>Veterinarian <span class="text-danger">*</span></label>
                     <select name="veterinarian_id" class="form-control">
@@ -71,6 +73,12 @@
                     document.addEventListener('DOMContentLoaded', function() {
                         const petSelect = document.querySelector('select[name="pet_id"]');
                         const appSelect = document.querySelector('select[name="appointment_id"]');
+                        const markAsChronic = document.querySelector('input[name="mark_as_chronic"]');
+                        const chronicFields = document.getElementById('chronic-fields');
+                        const markAsAllergy = document.querySelector('input[name="mark_as_allergy"]');
+                        const allergyFields = document.getElementById('allergy-fields');
+                        const allergyAlertBox = document.getElementById('allergy-alert-box');
+                        const allergyMap = @json($allergyMap ?? []);
                         
                         if (!petSelect || !appSelect) return;
 
@@ -101,9 +109,67 @@
                             } else {
                                 appSelect.value = "";
                             }
+
+                            renderAllergyAlert(selectedPetId);
+                        }
+
+                        function renderAllergyAlert(petId) {
+                            if (!allergyAlertBox) {
+                                return;
+                            }
+
+                            const allergies = (allergyMap[String(petId)] || []).filter(function (allergy) {
+                                return allergy
+                                    && allergy.allergen
+                                    && String(allergy.allergen).trim() !== ''
+                                    && allergy.reaction_type
+                                    && String(allergy.reaction_type).trim() !== ''
+                                    && allergy.severity
+                                    && String(allergy.severity).trim() !== '';
+                            });
+
+                            if (!petId || allergies.length === 0) {
+                                allergyAlertBox.style.display = 'none';
+                                allergyAlertBox.innerHTML = '';
+                                return;
+                            }
+
+                            const items = allergies.map(function (allergy) {
+                                const severity = allergy.severity ? allergy.severity.toUpperCase() : 'UNKNOWN';
+                                const reaction = allergy.reaction_type ? ` (${allergy.reaction_type})` : '';
+                                return `<li><strong>${allergy.allergen}</strong>${reaction} - <span class="severity-inline">${severity}</span></li>`;
+                            }).join('');
+
+                            allergyAlertBox.innerHTML = `
+                                <div class="allergy-alert-title"><i class="fas fa-exclamation-triangle"></i> Active Allergy Alert</div>
+                                <ul class="allergy-alert-list">${items}</ul>
+                            `;
+                            allergyAlertBox.style.display = 'block';
+                        }
+
+                        function toggleAllergyFields() {
+                            if (!markAsAllergy || !allergyFields) {
+                                return;
+                            }
+
+                            allergyFields.style.display = markAsAllergy.checked ? 'block' : 'none';
+                        }
+
+                        function toggleChronicFields() {
+                            if (!markAsChronic || !chronicFields) {
+                                return;
+                            }
+
+                            chronicFields.style.display = markAsChronic.checked ? 'block' : 'none';
                         }
 
                         petSelect.addEventListener('change', updateAppointments);
+                        if (markAsChronic) {
+                            markAsChronic.addEventListener('change', toggleChronicFields);
+                        }
+                        if (markAsAllergy) {
+                            markAsAllergy.addEventListener('change', toggleAllergyFields);
+                        }
                         
                         // Initial run if pet is already selected (e.g. valid edit or pre-fill)
                         if (petSelect.value) {
@@ -112,7 +178,11 @@
                             // If no pet selected, clear appointments initially
                             appSelect.innerHTML = '';
                             appSelect.appendChild(placeholder);
+                            renderAllergyAlert('');
                         }
+
+                        toggleChronicFields();
+                        toggleAllergyFields();
                     });
                 </script>
 
@@ -185,6 +255,61 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="chronic-toggle">
+                        <input type="checkbox" name="mark_as_chronic" value="1" {{ old('mark_as_chronic') ? 'checked' : '' }}>
+                        <span>Mark diagnosis as chronic condition</span>
+                    </label>
+                    @error('mark_as_chronic')<span class="text-danger">{{ $message }}</span>@enderror
+                </div>
+
+                <div id="chronic-fields" class="chronic-fields" style="display: none;">
+                    <div class="form-group">
+                        <label>Condition Name <span class="text-danger">*</span></label>
+                        <input type="text" name="chronic_condition_name" class="form-control" value="{{ old('chronic_condition_name') }}" placeholder="e.g. Diabetes Mellitus">
+                        @error('chronic_condition_name')<span class="text-danger">{{ $message }}</span>@enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ongoing Treatment</label>
+                        <textarea name="chronic_ongoing_treatment" class="form-control" rows="3" placeholder="Current long-term treatment plan...">{{ old('chronic_ongoing_treatment') }}</textarea>
+                        @error('chronic_ongoing_treatment')<span class="text-danger">{{ $message }}</span>@enderror
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="chronic-toggle">
+                        <input type="checkbox" name="mark_as_allergy" value="1" {{ old('mark_as_allergy') ? 'checked' : '' }}>
+                        <span>Mark diagnosis as pet allergy</span>
+                    </label>
+                    @error('mark_as_allergy')<span class="text-danger">{{ $message }}</span>@enderror
+                </div>
+
+                <div id="allergy-fields" class="allergy-fields" style="display: none;">
+                    <div class="form-group">
+                        <label>Allergen <span class="text-danger">*</span></label>
+                        <input type="text" name="allergy_allergen" class="form-control" value="{{ old('allergy_allergen') }}" placeholder="e.g. Chicken, Penicillin, Pollen">
+                        @error('allergy_allergen')<span class="text-danger">{{ $message }}</span>@enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label>Reaction Type</label>
+                        <input type="text" name="allergy_reaction_type" class="form-control" value="{{ old('allergy_reaction_type') }}" placeholder="e.g. Skin rash, Vomiting">
+                        @error('allergy_reaction_type')<span class="text-danger">{{ $message }}</span>@enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label>Severity <span class="text-danger">*</span></label>
+                        <select name="allergy_severity" class="form-control">
+                            <option value="">Choose severity...</option>
+                            <option value="mild" {{ old('allergy_severity') === 'mild' ? 'selected' : '' }}>Mild</option>
+                            <option value="moderate" {{ old('allergy_severity') === 'moderate' ? 'selected' : '' }}>Moderate</option>
+                            <option value="severe" {{ old('allergy_severity') === 'severe' ? 'selected' : '' }}>Severe</option>
+                        </select>
+                        @error('allergy_severity')<span class="text-danger">{{ $message }}</span>@enderror
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label>Treatment Plan</label>
                     <textarea name="treatment_plan" class="form-control" rows="4">{{ old('treatment_plan') }}</textarea>
                     @error('treatment_plan')<span class="text-danger">{{ $message }}</span>@enderror
@@ -250,6 +375,34 @@
     margin-bottom: 20px;
 }
 
+.allergy-alert-box {
+    margin-bottom: 18px;
+    background: #FFF4E5;
+    border: 1px solid #FFD8A8;
+    border-left: 4px solid #F59E0B;
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+.allergy-alert-title {
+    font-weight: 700;
+    color: #92400E;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.allergy-alert-list {
+    margin: 0;
+    padding-left: 20px;
+    color: #7C2D12;
+}
+
+.severity-inline {
+    font-weight: 700;
+}
+
 .form-group label {
     display: block;
     margin-bottom: 8px;
@@ -265,6 +418,21 @@
     border: 1px solid #e0e0e0;
     border-radius: 6px;
     font-size: 14px;
+}
+
+.chronic-toggle {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0 !important;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.form-group input[type="checkbox"] {
+    width: auto;
+    padding: 0;
+    margin: 0;
 }
 
 .form-group input:focus,

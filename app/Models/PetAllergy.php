@@ -8,6 +8,7 @@ class PetAllergy extends Model
 {
     protected $fillable = [
         'pet_id',
+        'medical_record_id',
         'allergen',
         'reaction_type',
         'severity',
@@ -24,5 +25,10 @@ class PetAllergy extends Model
     public function pet()
     {
         return $this->belongsTo(Pet::class);
+    }
+
+    public function medicalRecord()
+    {
+        return $this->belongsTo(MedicalRecord::class);
     }
 }

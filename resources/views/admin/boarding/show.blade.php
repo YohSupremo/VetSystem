@@ -362,8 +362,8 @@
                     @php
                         $days = null;
                         if ($boarding->start_date && $boarding->end_date) {
-                            $days = \Carbon\Carbon::parse($boarding->end_date)
-                                ->diffInDays(\Carbon\Carbon::parse($boarding->start_date)) + 1;
+                            $days = \Carbon\Carbon::parse($boarding->start_date)
+                                ->diffInDays(\Carbon\Carbon::parse($boarding->end_date)) + 1;
                         }
                     @endphp
                     {{ $days !== null ? $days . ' day' . ($days === 1 ? '' : 's') : 'N/A' }}

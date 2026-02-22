@@ -25,6 +25,23 @@
                     <input type="text" class="form-control" value="{{ $vaccination->pet->name ?? 'N/A' }}" disabled>
                     <input type="hidden" name="pet_id" value="{{ $vaccination->pet_id }}">
                 </div>
+
+                @if(!empty($activeAllergies) && $activeAllergies->count() > 0)
+                    <div class="allergy-alert-box">
+                        <div class="allergy-alert-title"><i class="fas fa-exclamation-triangle"></i> Active Allergy Alert</div>
+                        <ul class="allergy-alert-list">
+                            @foreach($activeAllergies as $allergy)
+                                <li>
+                                    <strong>{{ $allergy->allergen }}</strong>
+                                    @if(!empty($allergy->reaction_type))
+                                        ({{ $allergy->reaction_type }})
+                                    @endif
+                                    - <span class="severity-inline">{{ strtoupper($allergy->severity ?? 'unknown') }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
             </div>
 
             <div class="form-section">
@@ -32,7 +49,7 @@
                 
                 <div class="form-group">
                     <label>Vaccine <span class="text-danger">*</span></label>
-                    <select name="inventory_item_id" class="form-control" required>
+                    <select name="inventory_item_id" class="form-control">
                         <option value="">Choose a vaccine...</option>
                         @forelse($vaccineItems as $item)
                             <option value="{{ $item->id }}" {{ old('inventory_item_id', $selectedVaccineItemId) == $item->id ? 'selected' : '' }}>
@@ -48,7 +65,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Vaccination Date <span class="text-danger">*</span></label>
-                        <input type="date" name="administered_date" class="form-control" value="{{ $vaccination->administered_date ? $vaccination->administered_date->format('Y-m-d') : '' }}" required>
+                        <input type="date" name="administered_date" class="form-control" value="{{ old('administered_date', $vaccination->administered_date ? $vaccination->administered_date->format('Y-m-d') : '') }}">
                         @error('administered_date')<span class="text-danger">{{ $message }}</span>@enderror
                     </div>
                     <div class="form-group">
@@ -60,10 +77,10 @@
 
                 <div class="form-group">
                     <label>Veterinarian <span class="text-danger">*</span></label>
-                    <select name="administered_by" class="form-control" required>
+                    <select name="administered_by" class="form-control">
                         <option value="">Select veterinarian...</option>
                         @forelse($veterinarians as $vet)
-                            <option value="{{ $vet->id }}" {{ $vaccination->administered_by == $vet->id ? 'selected' : '' }}>
+                            <option value="{{ $vet->id }}" {{ old('administered_by', $vaccination->administered_by) == $vet->id ? 'selected' : '' }}>
                                 Dr. {{ $vet->first_name }} {{ $vet->last_name }}
                             </option>
                         @empty
@@ -74,13 +91,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Dose Number</label>
+                    <label>Dose Number <span class="text-danger">*</span></label>
                     <select name="dose_number" class="form-control">
                         <option value="">Select dose...</option>
-                        <option value="1" {{ $vaccination->dose_number == 1 ? 'selected' : '' }}>1st Dose (Initial)</option>
-                        <option value="2" {{ $vaccination->dose_number == 2 ? 'selected' : '' }}>2nd Dose</option>
-                        <option value="3" {{ $vaccination->dose_number == 3 ? 'selected' : '' }}>3rd Dose</option>
-                        <option value="4" {{ $vaccination->dose_number == 4 ? 'selected' : '' }}>Booster</option>
+                        <option value="1" {{ old('dose_number', $vaccination->dose_number ?? 1) == 1 ? 'selected' : '' }}>1st Dose (Initial)</option>
+                        <option value="2" {{ old('dose_number', $vaccination->dose_number ?? 1) == 2 ? 'selected' : '' }}>2nd Dose</option>
+                        <option value="3" {{ old('dose_number', $vaccination->dose_number ?? 1) == 3 ? 'selected' : '' }}>3rd Dose</option>
+                        <option value="4" {{ old('dose_number', $vaccination->dose_number ?? 1) == 4 ? 'selected' : '' }}>Booster</option>
                     </select>
                     @error('dose_number')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
@@ -154,6 +171,34 @@
 
 .form-group {
     margin-bottom: 20px;
+}
+
+.allergy-alert-box {
+    margin-bottom: 18px;
+    background: #FFF4E5;
+    border: 1px solid #FFD8A8;
+    border-left: 4px solid #F59E0B;
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+.allergy-alert-title {
+    font-weight: 700;
+    color: #92400E;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.allergy-alert-list {
+    margin: 0;
+    padding-left: 20px;
+    color: #7C2D12;
+}
+
+.severity-inline {
+    font-weight: 700;
 }
 
 .form-group label {

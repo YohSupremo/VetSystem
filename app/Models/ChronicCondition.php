@@ -8,6 +8,7 @@ class ChronicCondition extends Model
 {
     protected $fillable = [
         'pet_id',
+        'medical_record_id',
         'condition_name',
         'diagnosed_date',
         'ongoing_treatment',
@@ -23,5 +24,10 @@ class ChronicCondition extends Model
     public function pet()
     {
         return $this->belongsTo(Pet::class);
+    }
+
+    public function medicalRecord()
+    {
+        return $this->belongsTo(MedicalRecord::class);
     }
 }

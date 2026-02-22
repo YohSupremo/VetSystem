@@ -16,6 +16,8 @@ class AppointmentController extends Controller
      */
     public function index(Request $request)
     {
+        $this->normalizeVaccinationUnacceptedStatuses();
+
         $query = Appointment::with(['pet.owner.user', 'veterinarian']);
         
         // Apply filters
@@ -128,6 +130,10 @@ class AppointmentController extends Controller
             'queue_priority' => 'nullable|integer|min:0',
         ]);
 
+        if (($validated['type'] ?? null) === 'vaccination' && ($validated['status'] ?? null) === 'confirmed') {
+            $validated['status'] = 'pending';
+        }
+
         if (!empty($validated['veterinarian_id'])) {
             $assignee = User::find($validated['veterinarian_id']);
             $requiredRole = $this->requiredAssigneeRoleForType($validated['type'] ?? null);
@@ -220,6 +226,10 @@ class AppointmentController extends Controller
             'queue_priority' => 'nullable|integer|min:0',
         ]);
 
+        if (($validated['type'] ?? null) === 'vaccination' && ($validated['status'] ?? null) === 'confirmed') {
+            $validated['status'] = 'pending';
+        }
+
         if (!empty($validated['veterinarian_id'])) {
             $assignee = User::find($validated['veterinarian_id']);
             $requiredRole = $this->requiredAssigneeRoleForType($validated['type'] ?? null);
@@ -270,5 +280,13 @@ class AppointmentController extends Controller
             'boarding' => 'boarding',
             default => null,
         };
+    }
+
+    private function normalizeVaccinationUnacceptedStatuses(): void
+    {
+        Appointment::query()
+            ->where('type', 'vaccination')
+            ->where('status', 'confirmed')
+            ->update(['status' => 'pending']);
     }
 }

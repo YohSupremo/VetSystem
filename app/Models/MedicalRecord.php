@@ -49,4 +49,14 @@ class MedicalRecord extends Model
     {
         return $this->hasMany(Prescription::class);
     }
+
+    public function chronicConditions()
+    {
+        return $this->hasMany(ChronicCondition::class);
+    }
+
+    public function petAllergies()
+    {
+        return $this->hasMany(PetAllergy::class);
+    }
 }

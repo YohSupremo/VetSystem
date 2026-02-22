@@ -1,117 +1,544 @@
 @extends('layout.base')
 
+@php($bodyClass = 'customer-body')
+
+@section('title', "{{ $pet->name }}'s Medical History - PawCare")
+
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/customer-ui.css') }}">
+<style>
+.customer-container {
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+    z-index: 2;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+/* Medical Records Container */
+.medical-records-container {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.25);
+    overflow: hidden;
+    position: relative;
+}
+
+.medical-records-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-purple), var(--pink));
+}
+
+/* Navigation Tabs */
+.nav-tabs {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nav-tabs .nav-link {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px 12px 0 0;
+    padding: 0.75rem 1.25rem;
+    color: #000;
+    font-weight: 600;
+    transition: var(--transition-smooth);
+    text-decoration: none;
+    border-bottom: none;
+}
+
+.nav-tabs .nav-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(31, 38, 135, 0.3);
+    border-color: rgba(147, 51, 234, 0.4);
+    color: #000;
+    text-decoration: none;
+}
+
+.nav-tabs .nav-link.active {
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    color: white;
+    border: none;
+}
+
+/* Timeline */
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--primary-purple), var(--pink));
+    border-radius: 2px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2.5rem;
+    top: 0.5rem;
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(147, 51, 234, 0.4);
+}
+
+.record-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: var(--transition-smooth);
+}
+
+.record-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(31, 38, 135, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.record-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 0.5rem;
+}
+
+.record-meta {
+    color: #555;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.record-description {
+    color: #333;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.btn-record {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: #000;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: var(--transition-smooth);
+}
+
+.btn-record:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(31, 38, 135, 0.3);
+    border-color: rgba(147, 51, 234, 0.4);
+    color: #000;
+    text-decoration: none;
+}
+
+/* Tables */
+.glass-table {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.glass-table th {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    color: #000;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.05em;
+    padding: 1rem;
+}
+
+.glass-table td {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #000;
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.glass-table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.4rem 0.875rem;
+    border-radius: 8px;
+    font-size: 0.6875rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #000;
+}
+
+.status-success {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: rgba(16, 185, 129, 0.9);
+}
+
+.status-danger {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: rgba(239, 68, 68, 0.9);
+}
+
+.status-warning {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: rgba(245, 158, 11, 0.9);
+}
+
+.status-info {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: rgba(59, 130, 246, 0.9);
+}
+
+/* Prescription Cards */
+.prescription-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: var(--transition-smooth);
+    height: 100%;
+}
+
+.prescription-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(31, 38, 135, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.prescription-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 0.5rem;
+}
+
+.prescription-meta {
+    color: #555;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.prescription-input {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 0.5rem;
+    color: #000;
+    font-weight: 600;
+}
+
+/* Condition/Allergy Cards */
+.condition-card, .allergy-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: var(--transition-smooth);
+    margin-bottom: 1rem;
+}
+
+.condition-card:hover, .allergy-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(31, 38, 135, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.condition-title, .allergy-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 0.5rem;
+}
+
+.btn-small {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    color: #000;
+    font-weight: 600;
+    font-size: 0.75rem;
+    transition: var(--transition-smooth);
+}
+
+.btn-small:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(31, 38, 135, 0.3);
+    border-color: rgba(147, 51, 234, 0.4);
+    color: #000;
+}
+
+.btn-small.danger {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: rgba(239, 68, 68, 0.9);
+}
+
+.btn-small.danger:hover {
+    background: rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: rgba(239, 68, 68, 0.9);
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #333;
+}
+
+/* Back Button */
+.btn-back {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    padding: 0.75rem 1.5rem;
+    color: #000;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(31, 38, 135, 0.3);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #000;
+    text-decoration: none;
+}
+
+/* Pet Avatar */
+.pet-avatar {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(31, 38, 135, 0.2);
+}
+
+@media (max-width: 768px) {
+    .medical-records-container {
+        background: rgba(255, 255, 255, 0.25) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+    
+    .nav-tabs .nav-link {
+        background: rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: #000 !important;
+    }
+    
+    .record-card, .prescription-card, .condition-card, .allergy-card {
+        background: rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+    
+    .btn-record, .btn-small {
+        background: rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: #000 !important;
+    }
+}
+</style>
+@endpush
+
 @section('content')
 @include('layout.customer-navbar')
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="d-flex align-items-center mb-4">
-                <a href="{{ route('customer.medical-records.index') }}" class="text-decoration-none text-muted me-3">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-                <div>
-                    <h1 class="h2 mb-1">{{ $pet->name }}'s Medical History</h1>
-                    <p class="text-muted mb-0">Complete timeline of visits and treatments</p>
-                </div>
-                <div class="ms-auto">
-                    <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" class="rounded-circle shadow-sm" width="60" height="60" style="object-fit: cover;">
-                </div>
-            </div>
+<div class="floating-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+</div>
 
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom-0 pt-4 px-4">
-                    <ul class="nav nav-tabs card-header-tabs" id="recordTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="records-tab" data-bs-toggle="tab" data-bs-target="#records" type="button" role="tab" aria-controls="records" aria-selected="true">
-                                Medical Visits
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="vaccinations-tab" data-bs-toggle="tab" data-bs-target="#vaccinations" type="button" role="tab" aria-controls="vaccinations" aria-selected="false">
-                                Vaccinations
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="prescriptions-tab" data-bs-toggle="tab" data-bs-target="#prescriptions" type="button" role="tab" aria-controls="prescriptions" aria-selected="false">
-                                Prescriptions
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="chronic-allergies-tab" data-bs-toggle="tab" data-bs-target="#chronic-allergies" type="button" role="tab" aria-controls="chronic-allergies" aria-selected="false">
-                                Chronic & Allergies
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="surgeries-tab" data-bs-toggle="tab" data-bs-target="#surgeries" type="button" role="tab" aria-controls="surgeries" aria-selected="false">
-                                Surgeries
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="labs-tab" data-bs-toggle="tab" data-bs-target="#labs" type="button" role="tab" aria-controls="labs" aria-selected="false">
-                                Laboratory Tests
-                            </button>
-                        </li>
-                    </ul>
-                </div>
+<div class="customer-container">
+    <main class="customer-main">
+        <!-- Page Header -->
+        <div class="page-header mb-5 d-flex align-items-center">
+            <a href="{{ route('customer.medical-records.index') }}" class="btn-back me-3">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="flex-grow-1">
+                <h1 class="page-title">{{ $pet->name }}'s Medical History</h1>
+                <p class="page-subtitle">Complete timeline of visits and treatments</p>
+            </div>
+            <div class="pet-avatar">
+                <img src="{{ $pet->photo_url }}" alt="{{ $pet->name }}" class="rounded-circle" width="60" height="60" style="object-fit: cover;">
+            </div>
+        </div>
+
+        <div class="medical-records-container">
+            <div class="p-4">
+                <ul class="nav nav-tabs" id="recordTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="records-tab" data-bs-toggle="tab" data-bs-target="#records" type="button" role="tab" aria-controls="records" aria-selected="true">
+                            Medical Visits
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="vaccinations-tab" data-bs-toggle="tab" data-bs-target="#vaccinations" type="button" role="tab" aria-controls="vaccinations" aria-selected="false">
+                            Vaccinations
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="prescriptions-tab" data-bs-toggle="tab" data-bs-target="#prescriptions" type="button" role="tab" aria-controls="prescriptions" aria-selected="false">
+                            Prescriptions
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="chronic-allergies-tab" data-bs-toggle="tab" data-bs-target="#chronic-allergies" type="button" role="tab" aria-controls="chronic-allergies" aria-selected="false">
+                            Chronic & Allergies
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="surgeries-tab" data-bs-toggle="tab" data-bs-target="#surgeries" type="button" role="tab" aria-controls="surgeries" aria-selected="false">
+                            Surgeries
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="labs-tab" data-bs-toggle="tab" data-bs-target="#labs" type="button" role="tab" aria-controls="labs" aria-selected="false">
+                            Laboratory Tests
+                        </button>
+                    </li>
+                </ul>
                 
-                <div class="card-body p-4">
-                    <div class="tab-content" id="recordTabsContent">
-                        <!-- Medical Records Tab -->
-                        <div class="tab-pane fade show active" id="records" role="tabpanel" aria-labelledby="records-tab">
-                            @if($medicalRecords->isEmpty())
-                                <div class="text-center py-5">
-                                    <p class="text-muted">No medical records found for this pet.</p>
-                                </div>
-                            @else
-                                <div class="timeline">
-                                    @foreach($medicalRecords as $record)
-                                        <div class="border-start border-3 border-primary ps-4 pb-5 ms-2 position-relative">
-                                            <div class="position-absolute top-0 start-0 translate-middle bg-primary rounded-circle shadow-sm" style="width: 16px; height: 16px; margin-top: 5px;"></div>
-                                            
-                                            <div class="card border-0 bg-light mb-2">
-                                                <div class="card-body">
-                                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                                        <div>
-                                                            <h5 class="fw-bold mb-1">{{ $record->diagnosis ?: 'Checkup / Consultation' }}</h5>
-                                                            <div class="text-muted small">
-                                                                <i class="far fa-calendar-alt me-1"></i> {{ date('F d, Y', strtotime($record->visit_date)) }}
-                                                                @if($record->weight)
-                                                                    <span class="mx-2">•</span>
-                                                                    <i class="fas fa-weight me-1"></i> {{ $record->weight }} kg
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                        <a href="{{ route('customer.medical-records.show', ['petId' => $pet->id, 'recordId' => $record->id]) }}" class="btn btn-sm btn-outline-primary">
-                                                            Details
-                                                        </a>
+                <div class="tab-content" id="recordTabsContent">
+                    <!-- Medical Records Tab -->
+                    <div class="tab-pane fade show active" id="records" role="tabpanel" aria-labelledby="records-tab">
+                        @if($medicalRecords->isEmpty())
+                            <div class="empty-state">
+                                <p>No medical records found for this pet.</p>
+                            </div>
+                        @else
+                            <div class="timeline">
+                                @foreach($medicalRecords as $record)
+                                    <div class="timeline-item">
+                                        <div class="record-card">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <h5 class="record-title">{{ $record->diagnosis ?: 'Checkup / Consultation' }}</h5>
+                                                    <div class="record-meta">
+                                                        <i class="far fa-calendar-alt me-1"></i> {{ date('F d, Y', strtotime($record->visit_date)) }}
+                                                        @if($record->weight)
+                                                            <span class="mx-2">•</span>
+                                                            <i class="fas fa-weight me-1"></i> {{ $record->weight }} kg
+                                                        @endif
                                                     </div>
-                                                    
-                                                    <p class="mb-2">{{ Str::limit($record->treatment, 150) }}</p>
-                                                    
-                                                    @if($record->veterinarian)
-                                                        <div class="d-flex align-items-center mt-3 pt-3 border-top border-white">
-                                                            <div class="small text-muted">Attending Vet:</div>
-                                                            <div class="ms-2 fw-bold small">Dr. {{ $record->veterinarian->first_name }} {{ $record->veterinarian->last_name }}</div>
-                                                        </div>
-                                                    @endif
                                                 </div>
+                                                <a href="{{ route('customer.medical-records.show', ['petId' => $pet->id, 'recordId' => $record->id]) }}" class="btn-record">
+                                                    Details
+                                                </a>
                                             </div>
+                                            
+                                            <p class="record-description">{{ Str::limit($record->treatment, 150) }}</p>
+                                            
+                                            @if($record->veterinarian)
+                                                <div class="d-flex align-items-center mt-3 pt-3 border-top border-white">
+                                                    <div class="small text-muted">Attending Vet:</div>
+                                                    <div class="ms-2 fw-bold small">Dr. {{ $record->veterinarian->first_name }} {{ $record->veterinarian->last_name }}</div>
+                                                </div>
+                                            @endif
                                         </div>
-                                    @endforeach
-                                </div>
-                            @endif
-                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
 
                         <!-- Vaccinations Tab -->
                         <div class="tab-pane fade" id="vaccinations" role="tabpanel" aria-labelledby="vaccinations-tab">
                             @if($vaccinations->isEmpty())
-                                <div class="text-center py-5">
-                                    <p class="text-muted">No vaccination history found.</p>
+                                <div class="empty-state">
+                                    <p>No vaccination history found.</p>
                                 </div>
                             @else
                                 <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead class="table-light">
+                                    <table class="glass-table table">
+                                        <thead>
                                             <tr>
                                                 <th>Vaccine</th>
                                                 <th>Date Administered</th>
@@ -126,11 +553,11 @@
                                                     <td>{{ date('M d, Y', strtotime($vac->administered_date)) }}</td>
                                                     <td>
                                                         @if($vac->next_due_date)
-                                                            <span class="badge {{ $vac->next_due_date < now() ? 'bg-danger' : 'bg-success' }}">
+                                                            <span class="status-badge {{ $vac->next_due_date < now() ? 'status-danger' : 'status-success' }}">
                                                                 {{ date('M d, Y', strtotime($vac->next_due_date)) }}
                                                             </span>
                                                         @else
-                                                            <span class="text-muted">-</span>
+                                                            <span style="color: #666;">-</span>
                                                         @endif
                                                     </td>
                                                     <td>{{ $vac->remarks ?: '-' }}</td>
@@ -145,29 +572,27 @@
                         <!-- Prescriptions Tab -->
                         <div class="tab-pane fade" id="prescriptions" role="tabpanel" aria-labelledby="prescriptions-tab">
                             @if($prescriptions->isEmpty())
-                                <div class="text-center py-5">
-                                    <p class="text-muted">No details found.</p>
+                                <div class="empty-state">
+                                    <p>No details found.</p>
                                 </div>
                             @else
                                 <div class="row g-3">
                                     @foreach($prescriptions as $presc)
                                         <div class="col-md-6">
-                                            <div class="card h-100 border bg-light">
-                                                <div class="card-body">
-                                                    <h6 class="fw-bold">{{ $presc->medication_name }}</h6>
-                                                    <p class="small text-muted mb-2">{{ date('M d, Y', strtotime($presc->created_at)) }}</p>
-                                                    <hr class="my-2">
-                                                    <div class="input-group input-group-sm mb-2">
-                                                        <span class="input-group-text bg-white">Dosage</span>
-                                                        <input type="text" class="form-control bg-white" value="{{ $presc->dosage }}" readonly>
-                                                    </div>
-                                                    <div class="input-group input-group-sm mb-2">
-                                                        <span class="input-group-text bg-white">Frequency</span>
-                                                        <input type="text" class="form-control bg-white" value="{{ $presc->frequency }}" readonly>
-                                                    </div>
-                                                    <div class="small">
-                                                        <strong>Duration:</strong> {{ $presc->duration }}
-                                                    </div>
+                                            <div class="prescription-card">
+                                                <h6 class="prescription-title">{{ $presc->medication_name }}</h6>
+                                                <p class="prescription-meta">{{ date('M d, Y', strtotime($presc->created_at)) }}</p>
+                                                <hr style="border-color: rgba(255, 255, 255, 0.2); margin: 1rem 0;">
+                                                <div class="input-group input-group-sm mb-2">
+                                                    <span class="input-group-text prescription-input">Dosage</span>
+                                                    <input type="text" class="form-control prescription-input" value="{{ $presc->dosage }}" readonly>
+                                                </div>
+                                                <div class="input-group input-group-sm mb-2">
+                                                    <span class="input-group-text prescription-input">Frequency</span>
+                                                    <input type="text" class="form-control prescription-input" value="{{ $presc->frequency }}" readonly>
+                                                </div>
+                                                <div class="small">
+                                                    <strong>Duration:</strong> {{ $presc->duration }}
                                                 </div>
                                             </div>
                                         </div>

@@ -5,6 +5,7 @@
 @section('title', 'My Appointments - PawCare')
 
 @push('styles')
+<link rel="stylesheet" href="{{ asset('css/customer-ui.css') }}">
 <style>
 .customer-container {
     width: 100%;
@@ -14,14 +15,16 @@
 }
 
 .customer-header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(167, 139, 250, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding: 1.5rem 2rem;
     position: sticky;
     top: 0;
     z-index: 100;
     border-radius: 0 0 2rem 2rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
 }
 
 .logo-section .paw-icon {
@@ -63,7 +66,7 @@
 
 .hero-subtitle {
     font-size: 1.15rem;
-    color: #64748B;
+    color: #333;
     font-weight: 500;
 }
 
@@ -87,17 +90,19 @@
 .filter-label {
     font-size: 0.875rem;
     font-weight: 700;
-    color: #475569;
+    color: #333;
 }
 
 .filter-select {
     appearance: none;
-    border: 1px solid rgba(15, 23, 42, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 999px;
     padding: 0.6rem 2.5rem 0.6rem 1rem;
-    background: white;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     font-weight: 600;
-    color: #0F172A;
+    color: #000;
     position: relative;
 }
 
@@ -112,15 +117,20 @@
     padding: 0.65rem 1.25rem;
     border-radius: 999px;
     font-weight: 700;
-    background: #0F172A;
-    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #000;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: var(--transition-smooth);
 }
 
 .filter-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 10px 20px -10px rgba(15, 23, 42, 0.6);
+    box-shadow: 0 10px 20px -10px rgba(31, 38, 135, 0.4);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .btn-primary {
@@ -153,19 +163,35 @@
     margin-bottom: 3rem;
 }
 
-/* Card Design */
+/* Card Design with Glassmorphism */
 .appointment-card {
-    background: white;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(0, 0, 0, 0.04);
+    transition: var(--transition-smooth);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.25);
+    position: relative;
+}
+
+.appointment-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+    pointer-events: none;
 }
 
 .appointment-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 60px rgba(31, 38, 135, 0.4);
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Card Top Bar */
@@ -207,11 +233,12 @@
 .pet-name {
     font-size: 1.375rem;
     font-weight: 800;
-    color: #0F172A;
+    color: #000;
     margin: 0;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
-/* Status */
+/* Status with Glassmorphism */
 .status {
     padding: 0.4rem 0.875rem;
     border-radius: 8px;
@@ -219,42 +246,55 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #000;
 }
 
 .status-pending {
-    background: #FEF3C7;
-    color: #78350F;
+    background: rgba(254, 243, 199, 0.3);
+    border-color: rgba(254, 243, 199, 0.5);
+    color: rgba(120, 53, 15, 0.9);
 }
 
 .status-scheduled {
-    background: #DBEAFE;
-    color: #1E3A8A;
+    background: rgba(219, 234, 254, 0.3);
+    border-color: rgba(219, 234, 254, 0.5);
+    color: rgba(30, 58, 138, 0.9);
 }
 
 .status-in_progress {
-    background: #E0E7FF;
-    color: #3730A3;
+    background: rgba(224, 231, 255, 0.3);
+    border-color: rgba(224, 231, 255, 0.5);
+    color: rgba(55, 48, 163, 0.9);
 }
 
 .status-completed {
-    background: #D1FAE5;
-    color: #064E3B;
+    background: rgba(209, 250, 229, 0.3);
+    border-color: rgba(209, 250, 229, 0.5);
+    color: rgba(6, 78, 59, 0.9);
 }
 
 .status-cancelled {
-    background: #FEE2E2;
-    color: #7F1D1D;
+    background: rgba(254, 226, 226, 0.3);
+    border-color: rgba(254, 226, 226, 0.5);
+    color: rgba(127, 29, 29, 0.9);
 }
 
-/* Type Badge */
+/* Type Badge with Glassmorphism */
 .type-badge {
     display: inline-block;
     padding: 0.5rem 1.125rem;
-    background: linear-gradient(135deg, rgba(147, 51, 234, 0.08), rgba(236, 72, 153, 0.08));
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 10px;
     font-size: 0.875rem;
     font-weight: 700;
-    color: var(--primary-purple);
+    color: #000;
     margin-bottom: 1.5rem;
 }
 
@@ -275,7 +315,10 @@
 .info-icon {
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(236, 72, 153, 0.1));
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -293,7 +336,7 @@
     font-size: 0.6875rem;
     font-weight: 700;
     text-transform: uppercase;
-    color: #94A3B8;
+    color: #555;
     letter-spacing: 0.05em;
     margin-bottom: 0.25rem;
 }
@@ -301,39 +344,43 @@
 .info-value {
     font-size: 0.9375rem;
     font-weight: 600;
-    color: #0F172A;
+    color: #000;
 }
 
-/* Notes */
+/* Notes with Glassmorphism */
 .notes {
-    background: linear-gradient(135deg, rgba(147, 51, 234, 0.05), rgba(236, 72, 153, 0.05));
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     border-left: 3px solid var(--primary-purple);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 1rem;
     border-radius: 8px;
     margin-bottom: 1.5rem;
 }
 
 .notes.cancelled {
-    background: #FEF2F2;
-    border-left-color: #DC2626;
+    background: rgba(254, 226, 226, 0.2);
+    border-left-color: rgba(220, 38, 38, 0.5);
+    border-color: rgba(254, 226, 226, 0.3);
 }
 
 .notes-title {
     font-size: 0.6875rem;
     font-weight: 800;
     text-transform: uppercase;
-    color: var(--primary-purple);
+    color: #000;
     letter-spacing: 0.05em;
     margin-bottom: 0.5rem;
 }
 
 .notes.cancelled .notes-title {
-    color: #DC2626;
+    color: rgba(220, 38, 38, 0.9);
 }
 
 .notes-body {
     font-size: 0.875rem;
-    color: #475569;
+    color: #333;
     line-height: 1.6;
     white-space: pre-wrap;
 }
@@ -361,9 +408,14 @@
     align-items: center;
     justify-content: center;
     gap: 0.375rem;
-    transition: all 0.2s ease;
+    transition: var(--transition-smooth);
     border: none;
     cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #000;
 }
 
 .btn-view {
@@ -373,7 +425,8 @@
 
 .btn-view:hover {
     opacity: 0.9;
-    transform: translateY(-1px);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.4);
     color: white;
 }
 
@@ -384,26 +437,32 @@
 
 .btn-edit:hover {
     opacity: 0.9;
-    transform: translateY(-1px);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
     color: white;
 }
 
 .btn-cancel {
-    background: white;
-    color: #DC2626;
-    border: 2px solid #DC2626;
+    background: rgba(220, 38, 38, 0.2);
+    color: rgba(220, 38, 38, 0.9);
+    border: 1px solid rgba(220, 38, 38, 0.3);
 }
 
 .btn-cancel:hover {
-    background: #DC2626;
-    color: white;
+    background: rgba(220, 38, 38, 0.3);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3);
+    color: #000;
 }
 
-/* Alert */
+/* Alert with Glassmorphism */
 .alert {
-    background: linear-gradient(135deg, #D1FAE5, #A7F3D0);
-    border-left: 4px solid #10B981;
-    color: #064E3B;
+    background: rgba(16, 185, 129, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-left: 4px solid rgba(16, 185, 129, 0.5);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #000;
     padding: 1.125rem 1.5rem;
     border-radius: 12px;
     margin-bottom: 2rem;
@@ -411,7 +470,7 @@
     align-items: center;
     gap: 0.875rem;
     font-weight: 600;
-    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
 }
 
 /* Section Header */
@@ -438,51 +497,210 @@
     margin-top: 0.75rem;
 }
 
-/* Empty State */
+/* Empty State with Glassmorphism */
 .empty-state {
     text-align: center;
     padding: 5rem 2rem;
-    background: white;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
     border-radius: 20px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.empty-state::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-purple), var(--pink));
 }
 
 .empty-icon {
     font-size: 5rem;
-    opacity: 0.2;
     margin-bottom: 1.5rem;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 4px 10px rgba(147, 51, 234, 0.3));
 }
 
 .empty-title {
     font-size: 1.75rem;
     font-weight: 800;
-    color: #0F172A;
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: 0.625rem;
 }
 
 .empty-text {
     font-size: 1.0625rem;
-    color: #64748B;
+    color: #333;
     margin-bottom: 2rem;
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+    .customer-container {
+        padding: 1.5rem;
+    }
+    
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    
     .appointments-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .appointment-card {
+        padding: 1.5rem;
+        min-height: 200px;
+    }
+    
+    .appointment-header {
+        margin-bottom: 1rem;
+    }
+    
+    .appointment-title {
+        font-size: 1.25rem;
+    }
+    
+    .appointment-meta {
+        font-size: 0.875rem;
+    }
+    
+    .appointment-description {
+        font-size: 0.875rem;
+    }
+    
+    .card-actions {
+        gap: 0.75rem;
+    }
+    
+    .btn-action {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.875rem;
+    }
+    
+    .empty-state {
+        padding: 3rem;
+    }
+    
+    .empty-text {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .customer-container {
+        padding: 1rem;
+    }
+    
+    .page-header {
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .page-title {
+        font-size: 1.75rem;
+    }
+    
+    .page-subtitle {
+        font-size: 0.9rem;
     }
     
     .hero-title {
         font-size: 2.25rem;
     }
     
-    .pet-header {
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .appointments-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .appointment-card {
+        padding: 1.25rem;
+        min-height: 180px;
+        background: rgba(255, 255, 255, 0.25) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+    
+    .appointment-header {
         flex-direction: column;
         gap: 1rem;
+        text-align: center;
+    }
+    
+    .appointment-title {
+        font-size: 1.125rem;
+    }
+    
+    .appointment-meta {
+        font-size: 0.75rem;
+    }
+    
+    .appointment-description {
+        font-size: 0.75rem;
     }
     
     .card-actions {
         grid-template-columns: 1fr;
+        gap: 0.75rem;
+    .filter-btn {
+        background: rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: #000 !important;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-purple), var(--pink)) !important;
+        color: white !important;
+    }
+    
+    .btn-action {
+        background: rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: #000 !important;
+    }
+    
+    .empty-state {
+        background: rgba(255, 255, 255, 0.25) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
     }
 }
 
@@ -495,15 +713,24 @@
         font-size: 2rem;
     }
 }
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
 </style>
 @endpush
 
 @section('content')
 @include('layout.customer-navbar')
-<div class="floating-shapes">
-    <div class="shape"></div>
-    <div class="shape"></div>
-    <div class="shape"></div>
+<div class="floating-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
 </div>
 
 <div class="customer-container">

@@ -12,6 +12,7 @@ use App\Models\MedicalRecord;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
+use App\Models\StaffSchedule;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -55,7 +56,13 @@ class SurgeryController extends BaseController
     public function create()
     {
         $pets = Pet::with('owner.user')->get();
-        $surgeons = User::where('role', 'veterinarian')->get();
+        
+        // Get scheduled surgeons for current day/time
+        $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
+        $surgeons = User::where('role', 'veterinarian')
+            ->whereIn('id', $scheduledStaffIds)
+            ->get();
+        
         $surgeryTypes = SurgeryType::where('is_active', true)->orderBy('name')->get();
         $medicalRecords = MedicalRecord::with('pet')->get();
 
@@ -118,7 +125,13 @@ class SurgeryController extends BaseController
     {
         $surgery = Surgery::findOrFail($id);
         $pets = Pet::with('owner.user')->get();
-        $surgeons = User::where('role', 'veterinarian')->get();
+        
+        // Get scheduled surgeons for current day/time
+        $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
+        $surgeons = User::where('role', 'veterinarian')
+            ->whereIn('id', $scheduledStaffIds)
+            ->get();
+        
         $surgeryTypes = SurgeryType::where('is_active', true)->orderBy('name')->get();
 
         return view('admin.surgeries.edit', compact('surgery', 'pets', 'surgeons', 'surgeryTypes'));

@@ -65,6 +65,11 @@ class User extends Authenticatable
         return $this->hasOne(NotificationSetting::class);
     }
 
+    public function staffSchedules()
+    {
+        return $this->hasMany(StaffSchedule::class);
+    }
+
     public function getFullNameAttribute()
     {
         return trim($this->first_name . ' ' . $this->last_name);

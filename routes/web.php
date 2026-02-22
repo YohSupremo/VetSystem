@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\StaffScheduleController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\IncidentController;
@@ -219,6 +220,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
 
     // Admin Users
     Route::resource('users', App\Http\Controllers\Admin\UserController::class);
+    
+    // Staff Schedules
+    Route::prefix('staff-schedules')->name('staff-schedules.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\StaffScheduleController::class, 'index'])->name('index');
+        Route::get('/{userId}/edit', [App\Http\Controllers\Admin\StaffScheduleController::class, 'edit'])->name('edit');
+        Route::put('/{userId}', [App\Http\Controllers\Admin\StaffScheduleController::class, 'update'])->name('update');
+        Route::post('/toggle', [App\Http\Controllers\Admin\StaffScheduleController::class, 'toggle'])->name('toggle');
+    });
     
     // Pets
     Route::resource('pets', PetController::class);

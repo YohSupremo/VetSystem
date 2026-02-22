@@ -1087,6 +1087,10 @@
                         <i class="fas fa-user-md"></i>
                         <span>Staff</span>
                     </a>
+                    <a href="{{ route('admin.staff-schedules.index') }}" class="nav-item {{ request()->routeIs('admin.staff-schedules.*') ? 'active' : '' }}">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Staff Schedules</span>
+                    </a>
                     <a href="{{ route('admin.reports.index') }}" class="nav-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                         <i class="fas fa-chart-bar"></i>
                         <span>Reports</span>

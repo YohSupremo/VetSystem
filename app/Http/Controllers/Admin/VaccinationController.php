@@ -16,6 +16,7 @@ use App\Models\InventoryTransaction;
 use App\Models\Payment;
 use App\Models\Notification;
 use App\Models\PetAllergy;
+use App\Models\StaffSchedule;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -69,7 +70,14 @@ class VaccinationController extends Controller
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
-        $veterinarians = User::where('role', 'veterinarian')->orderBy('first_name')->get();
+        
+        // Get scheduled veterinarians for current day/time
+        $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
+        $veterinarians = User::where('role', 'veterinarian')
+            ->whereIn('id', $scheduledStaffIds)
+            ->orderBy('first_name')
+            ->get();
+        
         $selectedPetId = request()->query('pet_id');
         $selectedAppointmentId = request()->query('appointment_id');
 
@@ -279,7 +287,14 @@ class VaccinationController extends Controller
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
-        $veterinarians = User::where('role', 'veterinarian')->orderBy('first_name')->get();
+        
+        // Get scheduled veterinarians for current day/time
+        $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
+        $veterinarians = User::where('role', 'veterinarian')
+            ->whereIn('id', $scheduledStaffIds)
+            ->orderBy('first_name')
+            ->get();
+        
         $selectedVaccineItemId = $vaccination->inventory_item_id;
         $activeAllergies = PetAllergy::query()
             ->where('pet_id', $vaccination->pet_id)

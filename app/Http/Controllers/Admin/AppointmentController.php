@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Pet;
 use App\Models\User;
+use App\Models\StaffSchedule;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
@@ -104,8 +105,12 @@ class AppointmentController extends Controller
     public function create()
     {
         $pets = Pet::with('owner.user')->orderBy('name')->get();
+        
+        // Get scheduled staff for current day/time
+        $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
         $assignableStaff = User::whereIn('role', ['veterinarian', 'groomer', 'boarding', 'staff'])
             ->where('is_active', 1)
+            ->whereIn('id', $scheduledStaffIds)
             ->orderBy('first_name')
             ->get();
         
@@ -200,8 +205,12 @@ class AppointmentController extends Controller
     public function edit(Appointment $appointment)
     {
         $pets = Pet::with('owner.user')->orderBy('name')->get();
+        
+        // Get scheduled staff for current day/time
+        $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
         $assignableStaff = User::whereIn('role', ['veterinarian', 'groomer', 'boarding', 'staff'])
             ->where('is_active', 1)
+            ->whereIn('id', $scheduledStaffIds)
             ->orderBy('first_name')
             ->get();
         

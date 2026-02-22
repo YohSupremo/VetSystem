@@ -55,21 +55,33 @@ class StaffScheduleController extends BaseController
             'schedules.*' => 'in:Monday_morning,Monday_night,Tuesday_morning,Tuesday_night,Wednesday_morning,Wednesday_night,Thursday_morning,Thursday_night,Friday_morning,Friday_night,Saturday_morning,Saturday_night,Sunday_morning,Sunday_night',
         ]);
 
+        $requestedSchedules = $validated['schedules'] ?? [];
+
+        foreach ($requestedSchedules as $schedule) {
+            [$day, $shift] = explode('_', $schedule);
+
+            if (!$this->canAssignShift($user, $day, $shift)) {
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'schedules' => $this->getShiftLimitErrorMessage($user, $day, $shift),
+                    ]);
+            }
+        }
+
         // Delete all existing schedules for this user
         StaffSchedule::where('user_id', $userId)->delete();
 
         // Create new schedules
-        if (!empty($validated['schedules'])) {
-            foreach ($validated['schedules'] as $schedule) {
-                [$day, $shift] = explode('_', $schedule);
-                
-                StaffSchedule::create([
-                    'user_id' => $userId,
-                    'day_of_week' => $day,
-                    'shift' => $shift,
-                    'is_active' => true,
-                ]);
-            }
+        foreach ($requestedSchedules as $schedule) {
+            [$day, $shift] = explode('_', $schedule);
+
+            StaffSchedule::create([
+                'user_id' => $userId,
+                'day_of_week' => $day,
+                'shift' => $shift,
+                'is_active' => true,
+            ]);
         }
 
         return redirect()->route('admin.staff-schedules.index')
@@ -87,6 +99,7 @@ class StaffScheduleController extends BaseController
             'shift' => 'required|in:morning,night',
         ]);
 
+        $user = User::findOrFail($validated['user_id']);
         $schedule = StaffSchedule::where('user_id', $validated['user_id'])
             ->where('day_of_week', $validated['day_of_week'])
             ->where('shift', $validated['shift'])
@@ -97,6 +110,13 @@ class StaffScheduleController extends BaseController
             $schedule->delete();
             $action = 'removed';
         } else {
+            if (!$this->canAssignShift($user, $validated['day_of_week'], $validated['shift'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $this->getShiftLimitErrorMessage($user, $validated['day_of_week'], $validated['shift']),
+                ], 422);
+            }
+
             // Create new schedule
             StaffSchedule::create([
                 'user_id' => $validated['user_id'],
@@ -112,5 +132,38 @@ class StaffScheduleController extends BaseController
             'action' => $action,
             'message' => 'Schedule updated successfully.'
         ]);
+    }
+
+    private function canAssignShift(User $user, string $dayOfWeek, string $shift): bool
+    {
+        $limit = $this->getShiftLimitByRole($user->role);
+
+        $count = StaffSchedule::where('day_of_week', $dayOfWeek)
+            ->where('shift', $shift)
+            ->whereHas('user', function ($query) use ($user) {
+                $query->where('role', $user->role);
+            })
+            ->where('user_id', '!=', $user->id)
+            ->count();
+
+        return $count < $limit;
+    }
+
+    private function getShiftLimitByRole(?string $role): int
+    {
+        if ($role === 'reception') {
+            return 1;
+        }
+
+        return 3;
+    }
+
+    private function getShiftLimitErrorMessage(User $user, string $dayOfWeek, string $shift): string
+    {
+        $roleLabel = $user->role ? ucfirst($user->role) : 'Staff';
+        $shiftLabel = $shift === 'morning' ? 'morning' : 'night';
+        $limit = $this->getShiftLimitByRole($user->role);
+
+        return "Limit reached: only {$limit} {$roleLabel} allowed for {$dayOfWeek} {$shiftLabel} shift.";
     }
 }

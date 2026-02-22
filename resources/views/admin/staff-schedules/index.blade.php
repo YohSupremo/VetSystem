@@ -37,6 +37,55 @@
         font-weight: 600;
         min-width: 150px;
     }
+    .schedule-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        z-index: 1050;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+    }
+    .schedule-modal-backdrop.is-visible {
+        display: flex;
+    }
+    .schedule-modal {
+        background: #ffffff;
+        border-radius: 10px;
+        max-width: 420px;
+        width: 100%;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
+    }
+    .schedule-modal-header,
+    .schedule-modal-footer {
+        padding: 0.9rem 1.1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .schedule-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-weight: 600;
+    }
+    .schedule-modal-body {
+        padding: 1rem 1.1rem;
+        color: #374151;
+    }
+    .schedule-modal-footer {
+        border-top: 1px solid #e5e7eb;
+        border-bottom: none;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+    .schedule-modal-close {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        line-height: 1;
+        color: #64748b;
+    }
 </style>
 
 <div class="content-header">
@@ -125,9 +174,62 @@
     </div>
 </div>
 
+<div class="schedule-modal-backdrop" id="scheduleLimitBackdrop" aria-hidden="true">
+    <div class="schedule-modal" role="dialog" aria-labelledby="scheduleLimitModalLabel" aria-modal="true">
+        <div class="schedule-modal-header">
+            <span id="scheduleLimitModalLabel">Schedule Limit Reached</span>
+            <button type="button" class="schedule-modal-close" id="scheduleLimitClose" aria-label="Close">&times;</button>
+        </div>
+        <div class="schedule-modal-body">
+            <p id="scheduleLimitMessage" class="mb-0">This shift is already at its limit.</p>
+        </div>
+        <div class="schedule-modal-footer">
+            <button type="button" class="btn btn-secondary" id="scheduleLimitOk">OK</button>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const checkboxes = document.querySelectorAll('.schedule-checkbox');
+    const warningModalEl = document.getElementById('scheduleLimitBackdrop');
+    const warningMessageEl = document.getElementById('scheduleLimitMessage');
+    const closeBtn = document.getElementById('scheduleLimitClose');
+    const okBtn = document.getElementById('scheduleLimitOk');
+
+    const showWarning = (message) => {
+        if (warningMessageEl) {
+            warningMessageEl.textContent = message || 'This shift is already at its limit.';
+        }
+
+        if (warningModalEl) {
+            warningModalEl.classList.add('is-visible');
+            warningModalEl.setAttribute('aria-hidden', 'false');
+        }
+    };
+
+    const hideWarning = () => {
+        if (warningModalEl) {
+            warningModalEl.classList.remove('is-visible');
+            warningModalEl.setAttribute('aria-hidden', 'true');
+        }
+    };
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hideWarning);
+    }
+
+    if (okBtn) {
+        okBtn.addEventListener('click', hideWarning);
+    }
+
+    if (warningModalEl) {
+        warningModalEl.addEventListener('click', (event) => {
+            if (event.target === warningModalEl) {
+                hideWarning();
+            }
+        });
+    }
     
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
@@ -148,19 +250,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     shift: shift
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.success) {
+            .then(async response => {
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
                     // Revert checkbox if failed
                     this.checked = !this.checked;
-                    alert('Failed to update schedule');
+                    showWarning(data.message || 'Failed to update schedule');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 // Revert checkbox on error
                 this.checked = !this.checked;
-                alert('An error occurred');
+                showWarning('An error occurred');
             });
         });
     });

@@ -6,14 +6,6 @@
 
 @section('content')
 <div class="landing-page">
-    <div class="bg-shapes">
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-    </div>
-
     <nav>
         <div class="nav-container">
             <div class="logo">
@@ -65,177 +57,80 @@
             </div>
 
             <div class="carousel-container">
-                <div class="carousel-wrapper" id="carousel"></div>
-
-                <div class="deco-1"></div>
-                <div class="deco-2"></div>
-
-                <div class="indicators" id="indicators"></div>
+                <div class="carousel-wrapper">
+                    <div class="carousel-track">
+                        <div class="carousel-slide active">
+                            <img src="/images/carousel/pet-1.png" alt="Pet 1" class="carousel-image">
+                        </div>
+                        <div class="carousel-slide">
+                            <img src="/images/carousel/pet-2.png" alt="Pet 2" class="carousel-image">
+                        </div>
+                        <div class="carousel-slide">
+                            <img src="/images/carousel/pet-3.png" alt="Pet 3" class="carousel-image">
+                        </div>
+                        <div class="carousel-slide">
+                            <img src="/images/carousel/pet-4.png" alt="Pet 4" class="carousel-image">
+                        </div>
+                        <div class="carousel-slide">
+                            <img src="/images/carousel/pet-5.png" alt="Pet 5" class="carousel-image">
+                        </div>
+                    </div>
+                                        <div class="carousel-indicators">
+                        <span class="indicator active" onclick="goToSlide(0)"></span>
+                        <span class="indicator" onclick="goToSlide(1)"></span>
+                        <span class="indicator" onclick="goToSlide(2)"></span>
+                        <span class="indicator" onclick="goToSlide(3)"></span>
+                        <span class="indicator" onclick="goToSlide(4)"></span>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 </div>
-<script type="application/json" id="carousel-data">@json($carouselImages ?? [])</script>
-@endsection
 
-@push('styles')
-<style>
-    .carousel-slide-track {
-        display: flex;
-        width: 100%;
-        height: 100%;
-        position: relative;
-    }
-    .carousel-item {
-        position: absolute;
-        inset: 0;
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
-        pointer-events: none;
-    }
-    .carousel-item.active {
-        opacity: 1;
-        pointer-events: auto;
-    }
-    .carousel-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 50%;
-        display: block;
-    }
-    .carousel-circle {
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-    }
-    .image-placeholder {
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #E9D5FF 0%, #C4B5FD 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 64px;
-        border-radius: 50%;
-    }
-</style>
-@endpush
-
-@push('scripts')
 <script>
-    (function() {
-        var dataEl = document.getElementById('carousel-data');
-        var carouselImages = [];
-        if (dataEl && dataEl.textContent) {
-            try { carouselImages = JSON.parse(dataEl.textContent); } catch (e) {
-                console.error('Failed to parse carousel data:', e);
-            }
-        }
-        if (!Array.isArray(carouselImages)) carouselImages = [];
+let currentSlide = 0;
+const slides = document.querySelectorAll('.carousel-slide');
+const indicators = document.querySelectorAll('.indicator');
+const totalSlides = slides.length;
 
-        var fallbackIcons = ['🐕', '🐈', '🐇', '🦜', '🐠'];
-        var hasImages = carouselImages.length > 0;
-        var sources = hasImages ? carouselImages : fallbackIcons;
+function showSlide(index) {
+    // Hide all slides
+    slides.forEach(slide => slide.classList.remove('active'));
+    indicators.forEach(indicator => indicator.classList.remove('active'));
+    
+    // Show current slide
+    slides[index].classList.add('active');
+    indicators[index].classList.add('active');
+}
 
-        var currentIndex = 0;
-        var carousel = document.getElementById('carousel');
-        var indicatorsContainer = document.getElementById('indicators');
-        if (!carousel || !indicatorsContainer) {
-            console.error('Carousel elements not found');
-            return;
-        }
+function changeSlide(direction) {
+    currentSlide += direction;
+    
+    if (currentSlide < 0) {
+        currentSlide = totalSlides - 1;
+    } else if (currentSlide >= totalSlides) {
+        currentSlide = 0;
+    }
+    
+    showSlide(currentSlide);
+}
 
-        var track = document.createElement('div');
-        track.className = 'carousel-slide-track';
-        carousel.appendChild(track);
+function goToSlide(index) {
+    currentSlide = index;
+    showSlide(currentSlide);
+}
 
-        sources.forEach(function(source, index) {
-            var item = document.createElement('div');
-            item.className = 'carousel-item' + (index === 0 ? ' active' : '');
-            item.setAttribute('data-index', index);
+// Auto-advance carousel
+function autoAdvanceCarousel() {
+    changeSlide(1);
+}
 
-            var circle = document.createElement('div');
-            circle.className = 'carousel-circle';
+// Start auto-advance
+setInterval(autoAdvanceCarousel, 4000);
 
-            if (hasImages) {
-                var img = document.createElement('img');
-                img.src = source;
-                img.alt = 'Pet ' + (index + 1);
-                img.className = 'carousel-image';
-                img.onload = function() {
-                    console.log('Image loaded:', source);
-                };
-                img.onerror = function() {
-                    console.error('Image failed to load:', source);
-                    circle.innerHTML = '<div class="image-placeholder">' + fallbackIcons[index % fallbackIcons.length] + '</div>';
-                };
-                circle.appendChild(img);
-            } else {
-                circle.innerHTML = '<div class="image-placeholder">' + source + '</div>';
-            }
-            item.appendChild(circle);
-            track.appendChild(item);
-        });
-
-        sources.forEach(function(_, index) {
-            var indicator = document.createElement('button');
-            indicator.className = 'indicator' + (index === 0 ? ' active' : '');
-            indicator.setAttribute('aria-label', 'Go to slide ' + (index + 1));
-            indicator.addEventListener('click', function() { goToSlide(index); });
-            indicatorsContainer.appendChild(indicator);
-        });
-
-        function updateCarousel() {
-            var items = track.querySelectorAll('.carousel-item');
-            var indicators = indicatorsContainer.querySelectorAll('.indicator');
-            items.forEach(function(el, i) {
-                el.classList.toggle('active', i === currentIndex);
-            });
-            indicators.forEach(function(el, i) {
-                el.classList.toggle('active', i === currentIndex);
-            });
-        }
-
-        function goToSlide(index) {
-            currentIndex = index;
-            updateCarousel();
-        }
-
-        function nextSlide() {
-            if (sources.length <= 1) return;
-            currentIndex = (currentIndex + 1) % sources.length;
-            updateCarousel();
-        }
-
-        function prevSlide() {
-            if (sources.length <= 1) return;
-            currentIndex = (currentIndex - 1 + sources.length) % sources.length;
-            updateCarousel();
-        }
-
-        var autoRotate = null;
-        if (sources.length > 1) {
-            autoRotate = setInterval(nextSlide, 3000);
-        }
-        carousel.addEventListener('mouseenter', function() {
-            if (autoRotate) { clearInterval(autoRotate); autoRotate = null; }
-        });
-        carousel.addEventListener('mouseleave', function() {
-            if (sources.length > 1 && !autoRotate) autoRotate = setInterval(nextSlide, 3000);
-        });
-
-        updateCarousel();
-
-        document.addEventListener('keydown', function(e) {
-            if (sources.length <= 1) return;
-            if (e.key === 'ArrowLeft') prevSlide();
-            if (e.key === 'ArrowRight') nextSlide();
-        });
-    })();
+// Initialize
+showSlide(0);
 </script>
-@endpush
+
+@endsection

@@ -10,6 +10,10 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    
+    @if(str_contains($bodyClass ?? '', 'customer-body'))
+        <link rel="stylesheet" href="{{ asset('css/customer-ui.css') }}">
+    @endif
 
     @stack('styles')
 </head>

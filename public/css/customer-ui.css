@@ -40,7 +40,7 @@
     overflow-x: hidden;
 }
 
-/* Animated Background Elements */
+/* Add floating orbs to customer pages */
 .customer-body::before {
     content: '';
     position: fixed;
@@ -54,7 +54,58 @@
         radial-gradient(circle at 40% 40%, rgba(168, 85, 247, 0.2) 0%, transparent 50%);
     animation: backgroundShift 20s ease-in-out infinite;
     z-index: -2;
+    filter: blur(30px);
 }
+
+/* Floating Orbs Container */
+.customer-body .floating-orbs {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.customer-body .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(40px);
+    opacity: 0.7;
+    animation: float 20s infinite ease-in-out;
+}
+
+.customer-body .orb1 {
+    width: 300px;
+    height: 300px;
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    top: 10%;
+    left: 10%;
+    animation-duration: 25s;
+}
+
+.customer-body .orb2 {
+    width: 200px;
+    height: 200px;
+    background: linear-gradient(135deg, var(--secondary-purple), var(--light-purple));
+    top: 60%;
+    right: 15%;
+    animation-duration: 30s;
+    animation-delay: -5s;
+}
+
+.customer-body .orb3 {
+    width: 250px;
+    height: 250px;
+    background: linear-gradient(135deg, var(--pink), var(--primary-purple));
+    bottom: 20%;
+    left: 50%;
+    animation-duration: 35s;
+    animation-delay: -10s;
+}
+
 
 @keyframes backgroundShift {
     0%, 100% { transform: translate(0, 0) rotate(0deg); }
@@ -887,4 +938,156 @@
     .customer-body::before {
         display: none !important;
     }
+}
+
+/* ===================================
+   Appointment Create Page Specific Styles
+   =================================== */
+
+/* Bootstrap Override for Appointment Create */
+.customer-body .card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    box-shadow: var(--glass-shadow);
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+}
+
+.customer-body .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.05) 100%);
+    z-index: -1;
+}
+
+.customer-body .card:hover {
+    transform: translateY(-5px) scale(1.01);
+    box-shadow: 0 15px 45px rgba(31, 38, 135, 0.45);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.customer-body .card-header {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 1.25rem 1.5rem;
+    border-radius: 20px 20px 0 0;
+}
+
+.customer-body .card-body {
+    padding: 2rem;
+    background: transparent;
+}
+
+.customer-body .form-label {
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.customer-body .form-control,
+.customer-body .form-select {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    transition: var(--transition-quick);
+    color: #000;
+}
+
+.customer-body .form-control::placeholder,
+.customer-body .form-select option {
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.customer-body .form-control:focus,
+.customer-body .form-select:focus {
+    outline: none;
+    border-color: var(--primary-purple);
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+.customer-body .btn-outline-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+    color: #000;
+}
+
+.customer-body .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(31, 38, 135, 0.3);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.customer-body .btn-check:checked + .btn-outline-secondary {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: var(--glass-border);
+    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.4);
+}
+
+.customer-body .btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.4);
+}
+
+.customer-body .btn-primary:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.6);
+    color: white;
+}
+
+.customer-body .alert {
+    background: rgba(239, 68, 68, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #000;
+    border-radius: 12px;
+}
+
+.customer-body .text-primary {
+    color: #000 !important;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.customer-body .text-muted {
+    color: #000 !important;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
 }

@@ -291,6 +291,51 @@ class AppointmentController extends Controller
         };
     }
 
+    /**
+     * Assign an appointment to a veterinarian.
+     */
+    public function assign(Request $request, Appointment $appointment)
+    {
+        $validated = $request->validate([
+            'veterinarian_id' => 'required|exists:users,id',
+        ]);
+
+        $assignee = User::find($validated['veterinarian_id']);
+        $requiredRole = $this->requiredAssigneeRoleForType($appointment->type);
+
+        if ($requiredRole !== null && (!$assignee || $assignee->role !== $requiredRole)) {
+            return back()->withInput()->withErrors([
+                'veterinarian_id' => 'Selected staff must have role: ' . ucfirst($requiredRole) . '.',
+            ]);
+        }
+
+        $oldVeterinarianId = $appointment->veterinarian_id;
+        $appointment->veterinarian_id = $validated['veterinarian_id'];
+        $appointment->save();
+
+        // Send notification to the assigned veterinarian
+        if ($appointment->veterinarian_id && $appointment->veterinarian_id !== $oldVeterinarianId) {
+            $notificationService = app(NotificationService::class);
+            $assignee = User::find($appointment->veterinarian_id);
+            if ($assignee) {
+                $notificationService->send(
+                    $assignee,
+                    \App\Models\Notification::TYPE_APPOINTMENT,
+                    'Appointment Assigned',
+                    'An appointment has been assigned to you.',
+                    [
+                        'reference_type' => 'appointment',
+                        'reference_id' => $appointment->id,
+                        'action_url' => route('veterinarian.appointments.show', $appointment->id),
+                    ]
+                );
+            }
+        }
+
+        return redirect()->route('admin.appointments.show', $appointment)
+            ->with('success', 'Appointment assigned successfully!');
+    }
+
     private function normalizeVaccinationUnacceptedStatuses(): void
     {
         Appointment::query()

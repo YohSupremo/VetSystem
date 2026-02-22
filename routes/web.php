@@ -154,7 +154,6 @@ Route::prefix('veterinarian')->name('veterinarian.')->group(function () {
     Route::get('/appointments/{id}', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'showAppointment'])->name('appointments.show');
     Route::post('/appointments/{id}/status', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'updateAppointmentStatus'])->name('appointments.update-status');
     Route::post('/appointments/{id}/cancel', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'cancelAppointment'])->name('appointments.cancel');
-    Route::post('/appointments/{id}/claim', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'claimAppointment'])->name('appointments.claim');
     Route::get('/patients', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'patients'])->name('patients.index');
     Route::get('/patients/{id}', [App\Http\Controllers\Veterinarian\VeterinarianController::class, 'showPatient'])->name('patients.show');
     Route::get('/medical-records', [App\Http\Controllers\Veterinarian\MedicalRecordController::class, 'index'])->name('medical-records.index');
@@ -236,6 +235,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
     // Appointments
     Route::resource('appointments', AppointmentController::class);
     Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+    Route::post('/appointments/{appointment}/assign', [AppointmentController::class, 'assign'])->name('appointments.assign');
     
     // Inventory Management
     Route::resource('inventory', InventoryController::class);

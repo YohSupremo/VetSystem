@@ -187,10 +187,48 @@
                     @if($appointment->veterinarian)
                         Dr. {{ $appointment->veterinarian->first_name }} {{ $appointment->veterinarian->last_name }}
                     @else
-                        Unassigned
+                        <span style="color: var(--primary-orange);">Unassigned</span>
                     @endif
                 </div>
             </div>
+
+            @if(!$appointment->veterinarian || $appointment->status === 'pending')
+            <div class="info-row">
+                <div class="info-label">Assign to Staff</div>
+                <div class="info-value">
+                    <form action="{{ route('admin.appointments.assign', $appointment->id) }}" method="POST" style="display: flex; gap: 8px; align-items: center;">
+                        @csrf
+                        <select name="veterinarian_id" class="form-control" style="flex: 1; padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px;" required>
+                            <option value="">Select Staff...</option>
+                            @php
+                                $requiredRole = match($appointment->type) {
+                                    'consultation', 'vaccination', 'surgery', 'follow_up', 'emergency' => 'veterinarian',
+                                    'grooming' => 'groomer',
+                                    'boarding' => 'boarding',
+                                    default => null,
+                                };
+                            @endphp
+                            @if($requiredRole)
+                                @php
+                                    $availableStaff = \App\Models\User::where('role', $requiredRole)
+                                        ->where('is_active', 1)
+                                        ->orderBy('first_name')
+                                        ->get();
+                                @endphp
+                                @foreach($availableStaff as $staff)
+                                    <option value="{{ $staff->id }}" {{ $appointment->veterinarian_id == $staff->id ? 'selected' : '' }}>
+                                        Dr. {{ $staff->first_name }} {{ $staff->last_name }} ({{ ucfirst($staff->role) }})
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <button type="submit" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;">
+                            <i class="fas fa-user-plus"></i> Assign
+                        </button>
+                    </form>
+                </div>
+            </div>
+            @endif
 
             <div class="info-row">
                 <div class="info-label">Created on</div>

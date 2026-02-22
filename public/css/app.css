@@ -486,6 +486,7 @@ body.customer-body::before {
     padding: 2rem 1rem;
 }
 
+
 /* Override Bootstrap margins for our custom grid */
 .customer-main .row {
     margin-left: -1rem;

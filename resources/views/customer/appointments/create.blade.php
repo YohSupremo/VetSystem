@@ -1,7 +1,14 @@
 @extends('layout.base')
 
+@php($bodyClass = 'customer-body')
+
 @section('content')
 @include('layout.customer-navbar')
+<div class="floating-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+</div>
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">

@@ -17,6 +17,8 @@ class StaffSchedule extends Model
 
     protected $casts = [
         'schedule_date' => 'date',
+        'shift_start' => 'datetime',
+        'shift_end' => 'datetime',
     ];
 
     public function user()

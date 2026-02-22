@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class QrScanLog extends Model
 {
-    public $timestamps = false;
-
     protected $fillable = [
         'scan_type',
         'cage_id',

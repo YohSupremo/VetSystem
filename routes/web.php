@@ -99,6 +99,16 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::get('/medical-records', [App\Http\Controllers\Customer\MedicalRecordController::class, 'index'])->name('medical-records.index');
     Route::get('/medical-records/pets/{petId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'petRecords'])->name('medical-records.pet');
     Route::get('/medical-records/pets/{petId}/records/{recordId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'show'])->name('medical-records.show');
+    
+    // Chronic Conditions CRUD
+    Route::post('/medical-records/pets/{petId}/chronic-conditions', [App\Http\Controllers\Customer\MedicalRecordController::class, 'storeChronicCondition'])->name('medical-records.chronic-conditions.store');
+    Route::put('/medical-records/pets/{petId}/chronic-conditions/{conditionId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'updateChronicCondition'])->name('medical-records.chronic-conditions.update');
+    Route::delete('/medical-records/pets/{petId}/chronic-conditions/{conditionId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'destroyChronicCondition'])->name('medical-records.chronic-conditions.destroy');
+    
+    // Pet Allergies CRUD
+    Route::post('/medical-records/pets/{petId}/allergies', [App\Http\Controllers\Customer\MedicalRecordController::class, 'storeAllergy'])->name('medical-records.allergies.store');
+    Route::put('/medical-records/pets/{petId}/allergies/{allergyId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'updateAllergy'])->name('medical-records.allergies.update');
+    Route::delete('/medical-records/pets/{petId}/allergies/{allergyId}', [App\Http\Controllers\Customer\MedicalRecordController::class, 'destroyAllergy'])->name('medical-records.allergies.destroy');
 
     // Incident Reports
     Route::get('/incidents', [App\Http\Controllers\Customer\IncidentController::class, 'index'])->name('incidents.index');
@@ -448,6 +458,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->grou
         Route::get('/', [SurgeryController::class, 'index'])->name('index');
         Route::get('/create', [SurgeryController::class, 'create'])->name('create');
         Route::post('/', [SurgeryController::class, 'store'])->name('store');
+        Route::post('/{surgery}/payment', [SurgeryController::class, 'processPayment'])->name('payment.process');
         Route::get('/{surgery}', [SurgeryController::class, 'show'])->name('show');
         Route::get('/{surgery}/edit', [SurgeryController::class, 'edit'])->name('edit');
         Route::put('/{surgery}', [SurgeryController::class, 'update'])->name('update');

@@ -6,9 +6,16 @@ use Illuminate\Http\Request;
 use App\Models\Appointment;
 use App\Models\Pet;
 use App\Models\Surgery;
+use App\Models\SurgeryType;
 use App\Models\User;
 use App\Models\MedicalRecord;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Payment;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class SurgeryController extends BaseController
 {
@@ -49,9 +56,10 @@ class SurgeryController extends BaseController
     {
         $pets = Pet::with('owner.user')->get();
         $surgeons = User::where('role', 'veterinarian')->get();
+        $surgeryTypes = SurgeryType::where('is_active', true)->orderBy('name')->get();
         $medicalRecords = MedicalRecord::with('pet')->get();
 
-        return view('admin.surgeries.create', compact('pets', 'surgeons', 'medicalRecords'));
+        return view('admin.surgeries.create', compact('pets', 'surgeons', 'surgeryTypes', 'medicalRecords'));
     }
 
     /**
@@ -62,7 +70,7 @@ class SurgeryController extends BaseController
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
             'surgeon_id' => 'required|exists:users,id',
-            'procedure_name' => 'required|string|max:255',
+            'surgery_type_id' => 'required|exists:surgery_types,id',
             'scheduled_date' => 'required|date_format:Y-m-d\TH:i',
             'anesthesia_type' => 'nullable|string|max:255',
             'pre_op_notes' => 'nullable|string',
@@ -70,17 +78,23 @@ class SurgeryController extends BaseController
             'medical_record_id' => 'nullable|exists:medical_records,id',
         ]);
 
-        Surgery::create([
-            'pet_id' => $validated['pet_id'],
-            'surgeon_id' => $validated['surgeon_id'],
-            'procedure_name' => $validated['procedure_name'],
-            'scheduled_date' => $validated['scheduled_date'],
-            'anesthesia_type' => $validated['anesthesia_type'],
-            'pre_op_notes' => $validated['pre_op_notes'],
-            'post_op_instructions' => $validated['post_op_instructions'],
-            'medical_record_id' => $validated['medical_record_id'],
-            'status' => 'scheduled',
-        ]);
+        $surgery = DB::transaction(function () use ($validated) {
+            $surgery = Surgery::create([
+                'pet_id' => $validated['pet_id'],
+                'surgeon_id' => $validated['surgeon_id'],
+                'surgery_type_id' => $validated['surgery_type_id'],
+                'scheduled_date' => $validated['scheduled_date'],
+                'anesthesia_type' => $validated['anesthesia_type'],
+                'pre_op_notes' => $validated['pre_op_notes'],
+                'post_op_instructions' => $validated['post_op_instructions'],
+                'medical_record_id' => $validated['medical_record_id'],
+                'status' => 'scheduled',
+            ]);
+
+            $this->ensureSurgeryInvoice($surgery);
+
+            return $surgery;
+        });
 
         return redirect()->route('admin.surgeries.index')
             ->with('success', 'Surgery scheduled successfully!');
@@ -91,7 +105,7 @@ class SurgeryController extends BaseController
      */
     public function show($id)
     {
-        $surgery = Surgery::with(['pet.owner.user', 'surgeon', 'medicalRecord'])
+        $surgery = Surgery::with(['pet.owner.user', 'surgeon', 'medicalRecord', 'surgeryType'])
             ->findOrFail($id);
 
         return view('admin.surgeries.show', compact('surgery'));
@@ -105,8 +119,9 @@ class SurgeryController extends BaseController
         $surgery = Surgery::findOrFail($id);
         $pets = Pet::with('owner.user')->get();
         $surgeons = User::where('role', 'veterinarian')->get();
+        $surgeryTypes = SurgeryType::where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.surgeries.edit', compact('surgery', 'pets', 'surgeons'));
+        return view('admin.surgeries.edit', compact('surgery', 'pets', 'surgeons', 'surgeryTypes'));
     }
 
     /**
@@ -118,7 +133,7 @@ class SurgeryController extends BaseController
 
         $validated = $request->validate([
             'surgeon_id' => 'required|exists:users,id',
-            'procedure_name' => 'required|string|max:255',
+            'surgery_type_id' => 'required|exists:surgery_types,id',
             'scheduled_date' => 'required|date_format:Y-m-d\TH:i',
             'anesthesia_type' => 'nullable|string|max:255',
             'status' => 'nullable|in:scheduled,in_progress,completed,cancelled',
@@ -128,7 +143,10 @@ class SurgeryController extends BaseController
             'outcome' => 'nullable|string',
         ]);
 
-        $surgery->update($validated);
+        DB::transaction(function () use ($surgery, $validated) {
+            $surgery->update($validated);
+            $this->ensureSurgeryInvoice($surgery);
+        });
 
         return redirect()->route('admin.surgeries.show', $surgery->id)
             ->with('success', 'Surgery updated successfully!');
@@ -151,9 +169,9 @@ class SurgeryController extends BaseController
      */
     public function byPet($petId)
     {
-        $pet = Pet::with('surgeries.surgeon')->findOrFail($petId);
+        $pet = Pet::with(['surgeries.surgeon', 'surgeries.surgeryType'])->findOrFail($petId);
         $surgeries = $pet->surgeries()
-            ->with('surgeon')
+            ->with(['surgeon', 'surgeryType'])
             ->orderBy('scheduled_date', 'desc')
             ->get();
 
@@ -166,7 +184,6 @@ class SurgeryController extends BaseController
             $surgery = new Surgery();
             $surgery->setRelation('pet', $appointment->pet);
             $surgery->setRelation('appointment', $appointment);
-            $surgery->setAttribute('procedure_name', 'Appointment (Surgery)');
             $surgery->setAttribute('scheduled_date', $appointment->appointment_date);
             $surgery->setAttribute('status', $this->mapSurgeryStatusFromAppointment($appointment->status));
             $surgery->setAttribute('is_virtual', true);
@@ -184,6 +201,22 @@ class SurgeryController extends BaseController
         $perPage = 10;
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
         $pageItems = $allSurgeries->slice(($currentPage - 1) * $perPage, $perPage)->values();
+
+        // Load invoices for non-virtual surgeries
+        $pageItems = $pageItems->map(function ($item) {
+            $isVirtual = (bool) $item->getAttribute('is_virtual');
+            if ($isVirtual) {
+                return $item;
+            }
+
+            $invoice = $this->findSurgeryInvoice($item);
+            if ($invoice) {
+                $item->setAttribute('billing_invoice', $invoice);
+            }
+
+            return $item;
+        });
+
         $surgeries = new LengthAwarePaginator(
             $pageItems,
             $allSurgeries->count(),
@@ -193,6 +226,217 @@ class SurgeryController extends BaseController
         );
 
         return view('admin.surgeries.pet', compact('pet', 'surgeries'));
+    }
+
+    /**
+     * Process payment for surgery.
+     */
+    public function processPayment($id)
+    {
+        $surgery = Surgery::with(['pet.owner', 'surgeryType'])->findOrFail($id);
+        $invoice = $this->ensureSurgeryInvoice($surgery);
+        $invoice->load(['invoiceItems', 'payments']);
+
+        if ($invoice->status === 'cancelled') {
+            return back()->withErrors(['error' => 'Cannot process payment for a cancelled invoice.']);
+        }
+
+        if ($invoice->is_paid) {
+            return back()->with('success', 'Invoice is already paid.');
+        }
+
+        $balance = $invoice->balance;
+        if ($balance <= 0) {
+            $invoice->update(['status' => 'paid']);
+            return back()->with('success', 'Surgery invoice marked as paid.');
+        }
+
+        DB::beginTransaction();
+        try {
+            Payment::create([
+                'invoice_id' => $invoice->id,
+                'payment_date' => now(),
+                'amount' => $balance,
+                'payment_method' => 'cash',
+                'reference_number' => null,
+                'received_by' => Auth::id(),
+                'notes' => 'Paid from surgery records list.',
+            ]);
+
+            $invoice->load(['invoiceItems', 'payments']);
+            $invoice->update(['status' => $invoice->balance <= 0 ? 'paid' : 'partial']);
+
+            DB::commit();
+
+            return back()->with('success', 'Surgery payment recorded successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Unable to mark surgery as paid: ' . $e->getMessage()]);
+        }
+    }
+
+    // ===== Private Helper Methods =====
+
+    private function ensureSurgeryInvoice(Surgery $surgery): Invoice
+    {
+        $existing = $this->findSurgeryInvoice($surgery);
+        if ($existing) {
+            return $this->syncSurgeryInvoice($surgery, $existing);
+        }
+
+        $surgery->loadMissing(['pet.owner']);
+        $ownerId = optional($surgery->pet)->owner_id;
+
+        if (!$ownerId) {
+            abort(422, 'Cannot create surgery invoice because pet owner is missing.');
+        }
+
+        $issueDate = $surgery->scheduled_date
+            ? Carbon::parse($surgery->scheduled_date)->toDateString()
+            : now()->toDateString();
+
+        $invoice = new Invoice([
+            'owner_id' => $ownerId,
+            'pet_id' => $surgery->pet_id,
+            'invoice_prefix' => 'INV',
+            'issue_date' => $issueDate,
+            'due_date' => $issueDate,
+            'tax_rate' => 0,
+            'discount_amount' => 0,
+            'status' => 'pending',
+            'notes' => 'Surgery invoice for record #' . $surgery->id . ' ' . $this->surgeryInvoiceTag($surgery->id),
+        ]);
+
+        $invoice->invoice_number = $invoice->generateInvoiceNumber();
+        $invoice->save();
+
+        InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'item_type' => 'surgery',
+            'description' => $this->surgeryInvoiceDescription($surgery),
+            'quantity' => 1,
+            'unit_price' => $this->surgeryUnitPrice($surgery),
+        ]);
+
+        return $this->syncSurgeryInvoice($surgery, $invoice->load(['invoiceItems', 'payments']));
+    }
+
+    private function findSurgeryInvoice(Surgery $surgery): ?Invoice
+    {
+        $tag = $this->surgeryInvoiceTag($surgery->id);
+
+        $invoice = Invoice::with(['invoiceItems', 'payments'])
+            ->where('pet_id', $surgery->pet_id)
+            ->where('notes', 'like', '%' . $tag . '%')
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$invoice instanceof Invoice) {
+            return null;
+        }
+
+        return $invoice;
+    }
+
+    private function syncSurgeryInvoice(Surgery $surgery, Invoice $invoice): Invoice
+    {
+        $invoice->loadMissing(['invoiceItems', 'payments']);
+
+        $description = $this->surgeryInvoiceDescription($surgery);
+        $unitPrice = $this->surgeryUnitPrice($surgery);
+        $issueDate = $surgery->scheduled_date
+            ? Carbon::parse($surgery->scheduled_date)->toDateString()
+            : now()->toDateString();
+
+        $item = $invoice->invoiceItems->firstWhere('item_type', 'surgery')
+            ?? $invoice->invoiceItems->first();
+
+        if ($item) {
+            $updates = [];
+
+            if ((string) $item->item_type !== 'surgery') {
+                $updates['item_type'] = 'surgery';
+            }
+
+            if ((int) $item->quantity !== 1) {
+                $updates['quantity'] = 1;
+            }
+
+            if ((float) $item->unit_price !== (float) $unitPrice) {
+                $updates['unit_price'] = $unitPrice;
+            }
+
+            if ((string) $item->description !== (string) $description) {
+                $updates['description'] = $description;
+            }
+
+            if (!empty($updates)) {
+                $item->update($updates);
+            }
+        } else {
+            InvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'item_type' => 'surgery',
+                'description' => $description,
+                'quantity' => 1,
+                'unit_price' => $unitPrice,
+            ]);
+        }
+
+        $invoiceUpdates = [];
+
+        $currentIssueDate = $invoice->issue_date ? Carbon::parse($invoice->issue_date)->toDateString() : null;
+        $currentDueDate = $invoice->due_date ? Carbon::parse($invoice->due_date)->toDateString() : null;
+
+        if ($currentIssueDate !== $issueDate) {
+            $invoiceUpdates['issue_date'] = $issueDate;
+        }
+
+        if ($currentDueDate !== $issueDate) {
+            $invoiceUpdates['due_date'] = $issueDate;
+        }
+
+        if (!empty($invoiceUpdates)) {
+            $invoice->update($invoiceUpdates);
+            $invoice->refresh();
+        }
+
+        $invoice->loadMissing(['invoiceItems', 'payments']);
+
+        if ($invoice->status !== 'cancelled') {
+            $targetStatus = ($invoice->is_paid ? 'paid'
+                : ($invoice->paid_amount > 0 ? 'partial' : 'pending'));
+
+            if ($invoice->status !== $targetStatus) {
+                $invoice->update(['status' => $targetStatus]);
+                $invoice->refresh();
+            }
+        }
+
+        return $invoice->load(['invoiceItems', 'payments']);
+    }
+
+    private function surgeryUnitPrice(Surgery $surgery): float
+    {
+        $surgery->loadMissing('surgeryType');
+        return round((float) (optional($surgery->surgeryType)->price ?? 0), 2);
+    }
+
+    private function surgeryInvoiceDescription(Surgery $surgery): string
+    {
+        $surgery->loadMissing(['pet', 'surgeryType']);
+        $petName = optional($surgery->pet)->name ?? 'Pet';
+        $surgeryName = optional($surgery->surgeryType)->name ?? 'Surgery';
+        $date = $surgery->scheduled_date
+            ? Carbon::parse($surgery->scheduled_date)->format('Y-m-d')
+            : now()->format('Y-m-d');
+
+        return 'Surgery for ' . $petName . ' (' . $surgeryName . ') on ' . $date;
+    }
+
+    private function surgeryInvoiceTag(int $surgeryId): string
+    {
+        return '[SURGERY_ID:' . $surgeryId . ']';
     }
 
     private function mapSurgeryStatusFromAppointment(string $appointmentStatus): string

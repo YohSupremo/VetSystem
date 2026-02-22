@@ -52,8 +52,12 @@
                 <h3>Surgery Details</h3>
                 <div class="info-grid">
                     <div class="info-item">
-                        <label>Procedure Name</label>
-                        <p>{{ $surgery->procedure_name ?? 'N/A' }}</p>
+                        <label>Surgery Type</label>
+                        <p>{{ $surgery->surgeryType->name ?? 'N/A' }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>Price</label>
+                        <p>₱{{ $surgery->surgeryType ? number_format($surgery->surgeryType->price, 2) : '0.00' }}</p>
                     </div>
                     <div class="info-item">
                         <label>Surgeon</label>

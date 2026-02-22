@@ -237,7 +237,7 @@
                                 @forelse($surgeries as $surgery)
                                 <tr>
                                     <td>
-                                        <strong>{{ $surgery->procedure_name }}</strong>
+                                        <strong>{{ $surgery->surgeryType->name ?? 'N/A' }}</strong>
                                         <div class="text-muted small">{{ $surgery->anesthesia_type }}</div>
                                     </td>
                                     <td>{{ $surgery->pet->name }}</td>
@@ -344,7 +344,7 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <h6 class="text-muted">Procedure</h6>
-                        <h4>{{ $surgery->procedure_name }}</h4>
+                        <h4>{{ $surgery->surgeryType->name ?? 'N/A' }}</h4>
                         <p class="mb-1"><strong>Anesthesia:</strong> {{ $surgery->anesthesia_type }}</p>
                         <p class="mb-1"><strong>Status:</strong> 
                             @php

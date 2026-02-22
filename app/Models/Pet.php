@@ -80,6 +80,16 @@ class Pet extends Model
         return $this->hasMany(PetAllergy::class);
     }
 
+    public function allergies()
+    {
+        return $this->petAllergies();
+    }
+
+    public function labRequisitions()
+    {
+        return $this->hasManyThrough(LabRequisition::class, MedicalRecord::class);
+    }
+
     public function getAgeAttribute()
     {
         if (!$this->birth_date) {

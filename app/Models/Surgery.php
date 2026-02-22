@@ -11,7 +11,7 @@ class Surgery extends Model
         'pet_id',
         'surgeon_id',
         'medical_record_id',
-        'procedure_name',
+        'surgery_type_id',
         'scheduled_date',
         'anesthesia_type',
         'pre_op_notes',
@@ -40,5 +40,10 @@ class Surgery extends Model
     public function medicalRecord(): BelongsTo
     {
         return $this->belongsTo(MedicalRecord::class);
+    }
+
+    public function surgeryType(): BelongsTo
+    {
+        return $this->belongsTo(SurgeryType::class);
     }
 }

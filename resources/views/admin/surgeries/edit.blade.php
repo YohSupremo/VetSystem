@@ -46,10 +46,52 @@
                 <h3>Surgery Details</h3>
                 
                 <div class="form-group">
-                    <label>Procedure Name <span class="text-danger">*</span></label>
-                    <input type="text" name="procedure_name" class="form-control" value="{{ $surgery->procedure_name }}" required>
-                    @error('procedure_name')<span class="text-danger">{{ $message }}</span>@enderror
+                    <label>Surgery Type <span class="text-danger">*</span></label>
+                    <select name="surgery_type_id" class="form-control" id="surgery-type-select" required>
+                        <option value="">Choose surgery type...</option>
+                        @forelse($surgeryTypes as $type)
+                            <option value="{{ $type->id }}" 
+                                    data-price="{{ $type->price }}" 
+                                    data-duration="{{ $type->estimated_duration_minutes }}"
+                                    {{ $surgery->surgery_type_id == $type->id ? 'selected' : '' }}>
+                                {{ $type->name }} - ₱{{ number_format($type->price, 2) }}
+                            </option>
+                        @empty
+                            <option value="">No surgery types available</option>
+                        @endforelse
+                    </select>
+                    @error('surgery_type_id')<span class="text-danger">{{ $message }}</span>@enderror
+                    <small class="form-text text-muted" id="surgery-info"></small>
                 </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const surgerySelect = document.getElementById('surgery-type-select');
+                        const surgeryInfo = document.getElementById('surgery-info');
+                        
+                        if (surgerySelect && surgeryInfo) {
+                            surgerySelect.addEventListener('change', function() {
+                                const selected = this.options[this.selectedIndex];
+                                if (selected.value) {
+                                    const price = selected.dataset.price;
+                                    const duration = selected.dataset.duration;
+                                    let info = `Price: ₱${parseFloat(price).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+                                    if (duration) {
+                                        info += ` | Estimated Duration: ${duration} minutes`;
+                                    }
+                                    surgeryInfo.textContent = info;
+                                } else {
+                                    surgeryInfo.textContent = '';
+                                }
+                            });
+                            
+                            // Trigger on page load if there's a selected value
+                            if (surgerySelect.value) {
+                                surgerySelect.dispatchEvent(new Event('change'));
+                            }
+                        }
+                    });
+                </script>
 
                 <div class="form-row">
                     <div class="form-group">

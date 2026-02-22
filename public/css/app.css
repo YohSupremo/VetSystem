@@ -11,7 +11,9 @@ body.auth-body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
     background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
-    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow-x: hidden;
 }
 
@@ -98,20 +100,41 @@ body.auth-body::before {
 }
 
 .auth-body .auth-card {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     padding: 3rem 2.5rem;
     border-radius: 2rem;
-    box-shadow: 0 20px 60px rgba(147, 51, 234, 0.15);
+    box-shadow: 
+        0 8px 32px rgba(31, 38, 135, 0.37),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     width: 100%;
     max-width: 500px;
-    border: 1px solid rgba(167, 139, 250, 0.2);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.auth-body .auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.05) 100%);
+    border-radius: 2rem;
+    z-index: -1;
 }
 
 .auth-body .auth-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 25px 70px rgba(147, 51, 234, 0.25);
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 
+        0 15px 45px rgba(31, 38, 135, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
 .auth-body .logo-section {
@@ -161,16 +184,31 @@ body.auth-body::before {
 
 .auth-body .form-control {
     border-radius: 1rem;
-    border: 2px solid var(--light-purple);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #333;
+    box-shadow: 
+        0 4px 15px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.auth-body .form-control::placeholder {
+    color: rgba(0, 0, 0, 0.5);
 }
 
 .auth-body .form-control:focus {
-    border-color: var(--secondary-purple);
-    box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.1);
-    background: white;
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 
+        0 0 0 4px rgba(255, 255, 255, 0.1),
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
 }
 
 .auth-body .form-control.is-invalid {
@@ -184,37 +222,52 @@ body.auth-body::before {
 }
 
 .auth-body .btn-primary {
-    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
-    border: none;
+    background: rgba(147, 51, 234, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 1rem;
     padding: 0.85rem 1.5rem;
     font-weight: 600;
     font-size: 1rem;
+    color: white;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3);
+    box-shadow: 
+        0 4px 15px rgba(147, 51, 234, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .auth-body .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(147, 51, 234, 0.4);
-    background: linear-gradient(135deg, #7C3AED, #DB2777);
+    box-shadow: 
+        0 6px 25px rgba(147, 51, 234, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    background: rgba(147, 51, 234, 0.9);
 }
 
 .auth-body .btn-secondary {
-    background: white;
-    border: 2px solid var(--light-purple);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 1rem;
     padding: 0.85rem 1.5rem;
     font-weight: 600;
     color: var(--primary-purple);
     transition: all 0.3s ease;
+    box-shadow: 
+        0 4px 15px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .auth-body .btn-secondary:hover {
-    background: var(--light-purple);
-    border-color: var(--secondary-purple);
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
     color: var(--primary-purple);
     transform: translateY(-2px);
+    box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .auth-body .divider {
@@ -1453,7 +1506,7 @@ body.landing-body::before {
 .landing-body nav {
     position: relative;
     z-index: 10;
-    padding: 1.5rem 3rem;
+    padding: 0.75rem 3rem;
 }
 
 .landing-body .nav-container {
@@ -1530,7 +1583,7 @@ body.landing-body::before {
     z-index: 10;
     max-width: 1280px;
     margin: 0 auto;
-    padding: 3rem;
+    padding: 1.5rem;
 }
 
 .landing-body .content-grid {
@@ -1652,10 +1705,10 @@ body.landing-body::before {
 .landing-body .carousel-container {
     position: relative;
     width: 100%;
-    max-width: 28rem;
+    max-width: 32rem;
     padding: 2rem;
     transition: none;
-    transform: translateX(2rem);
+    transform: translateX(4rem);
 }
 
 .landing-body .carousel-container::before {

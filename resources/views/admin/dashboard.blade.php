@@ -1052,12 +1052,7 @@
                         <span>Pharmacy</span>
                     </a>
                     @endif
-                    @if(auth()->user()->role === 'admin')
-                    <a href="{{ route('admin.laboratory.index') }}" class="nav-item {{ request()->routeIs('admin.laboratory.*') ? 'active' : '' }}">
-                        <i class="fas fa-flask"></i>
-                        <span>Laboratory</span>
-                    </a>
-                    @endif
+                  
                 </div>
                 @endif
 

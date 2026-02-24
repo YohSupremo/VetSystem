@@ -283,6 +283,7 @@
                                 type="checkbox" 
                                 name="is_active" 
                                 id="is_active" 
+                                value="1"
                                 class="toggle-input"
                                 {{ old('is_active', true) ? 'checked' : '' }}>
                             <label for="is_active" class="toggle-label">

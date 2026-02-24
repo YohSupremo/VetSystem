@@ -36,7 +36,8 @@ class StaffController extends BaseController
             'contact_number' => 'required|string|max:20',
             'email' => 'required|string|email|max:255|unique:users,email',
             'username' => 'required|string|max:50|unique:users,username',
-            'password' => 'required|string|min:6|confirmed'
+            'password' => 'required|string|min:6|confirmed',
+            'is_active' => 'nullable|boolean',
         ],
         [
             'password.confirmed' => 'Password does not match'
@@ -44,6 +45,7 @@ class StaffController extends BaseController
         );
 
         $staff['password'] = bcrypt($staff['password']);
+        $staff['is_active'] = isset($staff['is_active']) ? (int) $staff['is_active'] : 1;
         
         $staff_create = User::create($staff);
 
@@ -87,7 +89,8 @@ class StaffController extends BaseController
             'contact_number' => 'required|string|max:20',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($id)],
             'username' => ['required', 'string', 'max:50', Rule::unique('users')->ignore($id)],
-            'password' => 'nullable|string|min:6|confirmed'
+            'password' => 'nullable|string|min:6|confirmed',
+            'is_active' => 'nullable|boolean',
         ],
         [
             'password.confirmed' => 'Password does not match'
@@ -102,7 +105,7 @@ class StaffController extends BaseController
         }
 
       
-        
+            $data['is_active'] = isset($data['is_active']) ? (int) $data['is_active'] : 0;
 
       
         $user->update($data);

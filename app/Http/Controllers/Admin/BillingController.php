@@ -38,10 +38,15 @@ class BillingController extends BaseController
                 return (float) $invoice->total_amount;
             });
 
-        $paidAmount = \App\Models\Payment::query()
-            ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
-            ->where('invoices.status', '!=', 'cancelled')
-            ->sum('payments.amount');
+        $paidAmount = BillingInvoice::with(['invoiceItems', 'payments'])
+            ->where('status', '!=', 'cancelled')
+            ->get()
+            ->sum(function ($invoice) {
+                $invoiceTotal = (float) $invoice->total_amount;
+                $invoicePaid = (float) $invoice->payments->sum('amount');
+
+                return min($invoicePaid, $invoiceTotal);
+            });
         
         return view('admin.billing.index', compact(
             'invoices',

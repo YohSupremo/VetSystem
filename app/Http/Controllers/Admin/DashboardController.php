@@ -25,16 +25,31 @@ class DashboardController extends Controller
         $petCount = $hasPets ? Pet::count() : 0;
         $petOwnerCount = $hasPetOwners ? PetOwner::count() : 0;
 
+        // Check if user is a veterinarian for filtering
+        $user = auth()->user();
+        $isVeterinarian = $user && $user->isVeterinarian();
+        $veterinarianId = $isVeterinarian ? $user->id : null;
+
         $activeAppointmentsCount = $hasAppointments
-            ? DB::table('appointments')
-                ->whereIn('status', ['pending', 'confirmed', 'in_progress'])
-                ->count()
+            ? ($isVeterinarian 
+                ? DB::table('appointments')
+                    ->whereIn('status', ['pending', 'confirmed', 'in_progress'])
+                    ->where('veterinarian_id', $veterinarianId)
+                    ->count()
+                : DB::table('appointments')
+                    ->whereIn('status', ['pending', 'confirmed', 'in_progress'])
+                    ->count())
             : 0;
 
         $appointmentsToday = $hasAppointments
-            ? DB::table('appointments')
-                ->whereDate('appointment_date', Carbon::today())
-                ->count()
+            ? ($isVeterinarian
+                ? DB::table('appointments')
+                    ->whereDate('appointment_date', Carbon::today())
+                    ->where('veterinarian_id', $veterinarianId)
+                    ->count()
+                : DB::table('appointments')
+                    ->whereDate('appointment_date', Carbon::today())
+                    ->count())
             : 0;
 
         $speciesOptions = [
@@ -113,23 +128,42 @@ class DashboardController extends Controller
         ];
 
         $upcomingAppointments = $hasAppointments
-            ? DB::table('appointments')
-                ->leftJoin('pets', 'appointments.pet_id', '=', 'pets.id')
-                ->leftJoin('pet_owners', 'pets.owner_id', '=', 'pet_owners.id')
-                ->leftJoin('users as owners', 'pet_owners.user_id', '=', 'owners.id')
-                ->leftJoin('users as vets', 'appointments.veterinarian_id', '=', 'vets.id')
-                ->where('appointments.appointment_date', '>=', Carbon::now()->startOfDay())
-                ->orderBy('appointments.appointment_date')
-                ->limit(5)
-                ->get([
-                    'appointments.id',
-                    'appointments.appointment_date',
-                    'appointments.type',
-                    'appointments.status',
-                    'pets.name as pet_name',
-                    DB::raw("owners.first_name || ' ' || owners.last_name as owner_name"),
-                    DB::raw("vets.first_name || ' ' || vets.last_name as veterinarian_name"),
-                ])
+            ? ($isVeterinarian
+                ? DB::table('appointments')
+                    ->leftJoin('pets', 'appointments.pet_id', '=', 'pets.id')
+                    ->leftJoin('pet_owners', 'pets.owner_id', '=', 'pet_owners.id')
+                    ->leftJoin('users as owners', 'pet_owners.user_id', '=', 'owners.id')
+                    ->leftJoin('users as vets', 'appointments.veterinarian_id', '=', 'vets.id')
+                    ->where('appointments.appointment_date', '>=', Carbon::now()->startOfDay())
+                    ->where('appointments.veterinarian_id', $veterinarianId)
+                    ->orderBy('appointments.appointment_date')
+                    ->limit(5)
+                    ->get([
+                        'appointments.id',
+                        'appointments.appointment_date',
+                        'appointments.type',
+                        'appointments.status',
+                        'pets.name as pet_name',
+                        DB::raw("owners.first_name || ' ' || owners.last_name as owner_name"),
+                        DB::raw("vets.first_name || ' ' || vets.last_name as veterinarian_name"),
+                    ])
+                : DB::table('appointments')
+                    ->leftJoin('pets', 'appointments.pet_id', '=', 'pets.id')
+                    ->leftJoin('pet_owners', 'pets.owner_id', '=', 'pet_owners.id')
+                    ->leftJoin('users as owners', 'pet_owners.user_id', '=', 'owners.id')
+                    ->leftJoin('users as vets', 'appointments.veterinarian_id', '=', 'vets.id')
+                    ->where('appointments.appointment_date', '>=', Carbon::now()->startOfDay())
+                    ->orderBy('appointments.appointment_date')
+                    ->limit(5)
+                    ->get([
+                        'appointments.id',
+                        'appointments.appointment_date',
+                        'appointments.type',
+                        'appointments.status',
+                        'pets.name as pet_name',
+                        DB::raw("owners.first_name || ' ' || owners.last_name as owner_name"),
+                        DB::raw("vets.first_name || ' ' || vets.last_name as veterinarian_name"),
+                    ]))
                 ->map(function ($appointment) {
                     $appointment->formatted_date = $appointment->appointment_date
                         ? Carbon::parse($appointment->appointment_date)->format('M d, Y g:i A')

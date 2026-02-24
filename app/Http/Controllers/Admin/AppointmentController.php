@@ -21,6 +21,12 @@ class AppointmentController extends Controller
 
         $query = Appointment::with(['pet.owner.user', 'veterinarian']);
         
+        // If the user is a veterinarian, only show their assigned appointments
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian()) {
+            $query->where('veterinarian_id', $user->id);
+        }
+        
         // Apply filters
         if ($request->filled('pet_id')) {
             $query->where('pet_id', $request->pet_id);
@@ -106,18 +112,28 @@ class AppointmentController extends Controller
     {
         $pets = Pet::with('owner.user')->orderBy('name')->get();
         
+        // Check if user is veterinarian
+        $user = auth()->user();
+        $isVeterinarian = $user && $user->isVeterinarian();
+        
         // Get scheduled staff for current day/time
         $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
-        $assignableStaff = User::whereIn('role', ['veterinarian', 'groomer', 'boarding', 'staff'])
-            ->where('is_active', 1)
-            ->whereIn('id', $scheduledStaffIds)
-            ->orderBy('first_name')
-            ->get();
+        
+        if ($isVeterinarian) {
+            // For vets, only include themselves
+            $assignableStaff = collect([$user]);
+        } else {
+            $assignableStaff = User::whereIn('role', ['veterinarian', 'groomer', 'boarding', 'staff'])
+                ->where('is_active', 1)
+                ->whereIn('id', $scheduledStaffIds)
+                ->orderBy('first_name')
+                ->get();
+        }
         
         $types = ['consultation', 'vaccination', 'surgery', 'grooming', 'boarding', 'follow_up', 'emergency', 'other'];
         $statuses = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'];
         
-        return view('admin.appointments.create', compact('pets', 'assignableStaff', 'types', 'statuses'));
+        return view('admin.appointments.create', compact('pets', 'assignableStaff', 'types', 'statuses', 'isVeterinarian'));
     }
 
     /**
@@ -125,6 +141,10 @@ class AppointmentController extends Controller
      */
     public function store(Request $request, NotificationService $notificationService)
     {
+        // Check if user is veterinarian and force their ID
+        $user = auth()->user();
+        $isVeterinarian = $user && $user->isVeterinarian();
+        
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
             'veterinarian_id' => 'nullable|exists:users,id',
@@ -134,6 +154,11 @@ class AppointmentController extends Controller
             'notes' => 'nullable|string',
             'queue_priority' => 'nullable|integer|min:0',
         ]);
+
+        // If veterinarian is creating appointment, automatically assign to them
+        if ($isVeterinarian) {
+            $validated['veterinarian_id'] = $user->id;
+        }
 
         if (($validated['type'] ?? null) === 'vaccination' && ($validated['status'] ?? null) === 'confirmed') {
             $validated['status'] = 'pending';
@@ -195,6 +220,12 @@ class AppointmentController extends Controller
      */
     public function show(Appointment $appointment)
     {
+        // If the user is a veterinarian, ensure they can only view their assigned appointments
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian() && $appointment->veterinarian_id !== $user->id) {
+            abort(403, 'Unauthorized to view this appointment.');
+        }
+        
         $appointment->load(['pet.owner.user', 'veterinarian']);
         return view('admin.appointments.show', compact('appointment'));
     }
@@ -204,20 +235,34 @@ class AppointmentController extends Controller
      */
     public function edit(Appointment $appointment)
     {
+        // If the user is a veterinarian, ensure they can only edit their assigned appointments
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian() && $appointment->veterinarian_id !== $user->id) {
+            abort(403, 'Unauthorized to edit this appointment.');
+        }
+        
+        $isVeterinarian = $user && $user->isVeterinarian();
+        
         $pets = Pet::with('owner.user')->orderBy('name')->get();
         
         // Get scheduled staff for current day/time
         $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
-        $assignableStaff = User::whereIn('role', ['veterinarian', 'groomer', 'boarding', 'staff'])
-            ->where('is_active', 1)
-            ->whereIn('id', $scheduledStaffIds)
-            ->orderBy('first_name')
-            ->get();
+        
+        if ($isVeterinarian) {
+            // For vets, only include themselves
+            $assignableStaff = collect([$user]);
+        } else {
+            $assignableStaff = User::whereIn('role', ['veterinarian', 'groomer', 'boarding', 'staff'])
+                ->where('is_active', 1)
+                ->whereIn('id', $scheduledStaffIds)
+                ->orderBy('first_name')
+                ->get();
+        }
         
         $types = ['consultation', 'vaccination', 'surgery', 'grooming', 'boarding', 'follow_up', 'emergency', 'other'];
         $statuses = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'];
         
-        return view('admin.appointments.edit', compact('appointment', 'pets', 'assignableStaff', 'types', 'statuses'));
+        return view('admin.appointments.edit', compact('appointment', 'pets', 'assignableStaff', 'types', 'statuses', 'isVeterinarian'));
     }
 
     /**
@@ -225,6 +270,14 @@ class AppointmentController extends Controller
      */
     public function update(Request $request, Appointment $appointment)
     {
+        // If the user is a veterinarian, ensure they can only update their assigned appointments
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian() && $appointment->veterinarian_id !== $user->id) {
+            abort(403, 'Unauthorized to update this appointment.');
+        }
+        
+        $isVeterinarian = $user && $user->isVeterinarian();
+        
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
             'veterinarian_id' => 'nullable|exists:users,id',
@@ -234,6 +287,11 @@ class AppointmentController extends Controller
             'notes' => 'nullable|string',
             'queue_priority' => 'nullable|integer|min:0',
         ]);
+
+        // If veterinarian is updating, ensure they can't change the assigned staff
+        if ($isVeterinarian) {
+            $validated['veterinarian_id'] = $user->id;
+        }
 
         if (($validated['type'] ?? null) === 'vaccination' && ($validated['status'] ?? null) === 'confirmed') {
             $validated['status'] = 'pending';
@@ -264,6 +322,12 @@ class AppointmentController extends Controller
      */
     public function destroy(Appointment $appointment)
     {
+        // If the user is a veterinarian, prevent them from deleting appointments
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian()) {
+            abort(403, 'Veterinarians are not authorized to delete appointments.');
+        }
+        
         $appointment->delete();
         
         return redirect()->route('admin.appointments.index')
@@ -275,6 +339,12 @@ class AppointmentController extends Controller
      */
     public function cancel(Appointment $appointment)
     {
+        // If the user is a veterinarian, ensure they can only cancel their assigned appointments
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian() && $appointment->veterinarian_id !== $user->id) {
+            abort(403, 'Unauthorized to cancel this appointment.');
+        }
+        
         $appointment->update(['status' => 'cancelled']);
         
         return redirect()->route('admin.appointments.show', $appointment)
@@ -296,6 +366,12 @@ class AppointmentController extends Controller
      */
     public function assign(Request $request, Appointment $appointment)
     {
+        // Veterinarians cannot reassign appointments
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian()) {
+            abort(403, 'Veterinarians are not authorized to assign appointments.');
+        }
+        
         $validated = $request->validate([
             'veterinarian_id' => 'required|exists:users,id',
         ]);

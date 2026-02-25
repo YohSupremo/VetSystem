@@ -116,6 +116,11 @@
         margin-bottom: 20px;
         display: block;
     }
+
+    .chart-wrapper {
+        position: relative;
+        height: 320px;
+    }
 </style>
 
 <div class="content-header reports-hero">
@@ -192,6 +197,20 @@
     </div>
 </div>
 
+<div class="table-card mb-4">
+    <div class="table-card-header">
+        <div>
+            <h5 class="mb-0">Overview Chart</h5>
+            <small class="text-muted">Snapshot of key record volumes</small>
+        </div>
+    </div>
+    <div class="p-4">
+        <div class="chart-wrapper">
+            {!! $reportsOverviewChart->container() !!}
+        </div>
+    </div>
+</div>
+
 <div class="table-card">
     <div class="table-card-header">
         <div>
@@ -219,4 +238,7 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+{!! $reportsOverviewChart->script() !!}
 @endsection

@@ -369,7 +369,9 @@ class AppointmentController extends Controller
         // Veterinarians cannot reassign appointments
         $user = auth()->user();
         if ($user && $user->isVeterinarian()) {
-            abort(403, 'Veterinarians are not authorized to assign appointments.');
+            return redirect()
+                ->route('admin.appointments.show', $appointment)
+                ->with('warning', 'You are not authorized to assign appointments.');
         }
         
         $validated = $request->validate([

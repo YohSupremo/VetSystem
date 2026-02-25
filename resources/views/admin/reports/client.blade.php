@@ -41,6 +41,11 @@
         border: 1px solid #e2e8f0;
         padding: 0.6rem 0.75rem;
     }
+
+    .chart-wrapper {
+        position: relative;
+        height: 320px;
+    }
 </style>
 
 <div class="content-header report-hero">
@@ -92,6 +97,32 @@
             <div class="text-muted small">Active Clients</div>
             <div class="h4 mb-0">{{ $activeClients }}</div>
         </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="report-card">
+            <h5 class="mb-3">Client Metrics</h5>
+            <div class="chart-wrapper">
+                {!! $clientStatsChart->container() !!}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="report-card">
+            <h5 class="mb-3">Client Acquisition Trend</h5>
+            <div class="chart-wrapper">
+                {!! $clientAcquisitionChart->container() !!}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="report-card">
+    <h5 class="mb-3">Pets per Client Distribution</h5>
+    <div class="chart-wrapper">
+        {!! $petsPerClientChart->container() !!}
     </div>
 </div>
 
@@ -173,4 +204,9 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+{!! $clientStatsChart->script() !!}
+{!! $clientAcquisitionChart->script() !!}
+{!! $petsPerClientChart->script() !!}
 @endsection

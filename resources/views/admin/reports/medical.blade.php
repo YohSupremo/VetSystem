@@ -41,6 +41,11 @@
         border: 1px solid #e2e8f0;
         padding: 0.6rem 0.75rem;
     }
+
+    .chart-wrapper {
+        position: relative;
+        height: 320px;
+    }
 </style>
 
 <div class="content-header report-hero">
@@ -104,6 +109,32 @@
             <div class="text-muted small">Surgeries</div>
             <div class="h4 mb-0">{{ $totalSurgeries }}</div>
         </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="report-card">
+            <h5 class="mb-3">Medical Activity Overview</h5>
+            <div class="chart-wrapper">
+                {!! $medicalVolumeChart->container() !!}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="report-card">
+            <h5 class="mb-3">Pet Types Distribution</h5>
+            <div class="chart-wrapper">
+                {!! $petTypesChart->container() !!}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="report-card">
+    <h5 class="mb-3">Top Diagnoses</h5>
+    <div class="chart-wrapper">
+        {!! $commonDiagnosesChart->container() !!}
     </div>
 </div>
 
@@ -183,4 +214,9 @@
         </table>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+{!! $medicalVolumeChart->script() !!}
+{!! $commonDiagnosesChart->script() !!}
+{!! $petTypesChart->script() !!}
 @endsection

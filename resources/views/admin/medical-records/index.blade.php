@@ -11,13 +11,13 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title"><i class="fas fa-file-medical"></i> Medical Records</h3>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('admin.chronic-conditions.index') }}" class="btn btn-secondary">
+                        <a href="{{ route('admin.chronic-conditions.index') }}" class="btn btn-secondary btn-medical-secondary">
                             <i class="fas fa-notes-medical"></i> Chronic Conditions
                         </a>
-                        <a href="{{ route('admin.pet-allergies.index') }}" class="btn btn-secondary">
+                        <a href="{{ route('admin.pet-allergies.index') }}" class="btn btn-secondary btn-medical-secondary">
                             <i class="fas fa-allergies"></i> Pet Allergies
                         </a>
-                        <a href="{{ route('admin.medical-records.create') }}" class="btn btn-primary">
+                        <a href="{{ route('admin.medical-records.create') }}" class="btn btn-primary btn-medical-primary">
                             <i class="fas fa-plus"></i> Add New Patient Record
                         </a>
                     </div>
@@ -122,15 +122,21 @@
 }
 
 .card-header {
-    background: linear-gradient(135deg, var(--primary-orange) 0%, #FF8C42 100%);
-    color: white;
+    background: linear-gradient(135deg, rgba(255, 247, 237, 0.95), rgba(253, 242, 248, 0.95));
+    color: #1F2937;
     padding: 20px 25px;
     border-radius: 10px 10px 0 0 !important;
+    border-bottom: 1px solid rgba(251, 146, 60, 0.2);
 }
 
 .card-title {
     margin: 0;
     font-size: 20px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #FB923C 0%, #EC4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .card-body {
@@ -177,13 +183,39 @@
 }
 
 .btn-primary {
-    background: var(--primary-orange);
-    border-color: var(--primary-orange);
+    background: linear-gradient(135deg, #FB923C 0%, #EC4899 100%);
+    border-color: transparent;
 }
 
 .btn-primary:hover {
-    background: #E85A2D;
-    border-color: #E85A2D;
+    background: linear-gradient(135deg, #F97316 0%, #DB2777 100%);
+    border-color: transparent;
+}
+
+.btn-medical-primary {
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    box-shadow: 0 10px 20px rgba(236, 72, 153, 0.24);
+}
+
+.btn-medical-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 24px rgba(236, 72, 153, 0.3);
+}
+
+.btn-medical-secondary {
+    border-radius: 12px;
+    border: 1px solid #FED7AA;
+    background: #FFF7ED;
+    color: #C2410C;
+    font-weight: 700;
+}
+
+.btn-medical-secondary:hover {
+    background: #FFEDD5;
+    border-color: #FDBA74;
+    color: #9A3412;
 }
 
 .btn-group .btn {

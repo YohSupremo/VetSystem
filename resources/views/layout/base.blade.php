@@ -18,6 +18,11 @@
     @stack('styles')
 </head>
 <body class="{{ $bodyClass ?? '' }}">
+    @php($isAuthBody = str_contains($bodyClass ?? '', 'auth-body'))
+    @unless($isAuthBody)
+        @include('partials.flash-messages', ['containerClass' => 'container mt-3 app-flash-themed'])
+    @endunless
+
     @yield('content')
 
     <!-- Bootstrap JS -->

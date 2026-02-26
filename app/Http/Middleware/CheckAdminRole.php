@@ -14,7 +14,7 @@ class CheckAdminRole
     public function handle(Request $request, Closure $next)
     {
         if (!Auth::check()) {
-            return redirect('/login');
+            return redirect()->route('login')->with('warning', 'Please log in first to access this module.');
         }
 
         $user = Auth::user();
@@ -100,7 +100,7 @@ class CheckAdminRole
 
         // Check if user role has permissions
         if (!isset($rolePermissions[$user->role])) {
-            return redirect('/login');
+            return $this->redirectToDefaultPage($user->role, 'You are not authorized to access admin modules.');
         }
 
         $allowedRoutes = $rolePermissions[$user->role];
@@ -124,27 +124,41 @@ class CheckAdminRole
         }
 
         // If not allowed, redirect to default page
-        return $this->redirectToDefaultPage($user->role);
+        return $this->redirectToDefaultPage($user->role, 'You are not authorized to access this page.');
     }
 
     /**
      * Redirect user to their default allowed page based on role
      */
-    private function redirectToDefaultPage($role)
+    private function redirectToDefaultPage($role, $message = null)
     {
         switch ($role) {
             case 'veterinarian':
-                return redirect()->route('admin.vaccinations.index');
+                $redirect = redirect()->route('admin.vaccinations.index');
+                break;
             case 'pharmacy':
-                return redirect()->route('admin.inventory.index');
+                $redirect = redirect()->route('admin.inventory.index');
+                break;
             case 'reception':
-                return redirect()->route('admin.billing.index');
+                $redirect = redirect()->route('admin.billing.index');
+                break;
             case 'boarding':
             case 'groomer':
-                return redirect()->route('admin.appointments.index');
+                $redirect = redirect()->route('admin.appointments.index');
+                break;
+            case 'pet_owner':
+            case 'registered_user':
+            case 'customer':
+                $redirect = redirect()->route('customer.dashboard');
+                break;
             case 'admin':
+                $redirect = redirect()->route('admin.dashboard');
+                break;
             default:
-                return redirect()->route('admin.dashboard');
+                $redirect = redirect()->route('login');
+                break;
         }
+
+        return $message ? $redirect->with('error', $message) : $redirect;
     }
 }

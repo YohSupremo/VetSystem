@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
+            'auth.flash' => \App\Http\Middleware\EnsureAuthenticatedWithFlash::class,
             'admin.role' => \App\Http\Middleware\CheckAdminRole::class,
         ]);
     })

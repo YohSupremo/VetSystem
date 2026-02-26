@@ -10,20 +10,60 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 2rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #e9ecef;
+        padding: 1.05rem 1.2rem;
+        border: 1px solid rgba(251, 146, 60, 0.2);
+        border-radius: 16px;
+        box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+        background: linear-gradient(135deg, rgba(255, 247, 237, 0.95), rgba(253, 242, 248, 0.95));
     }
 
     .header-title h1 {
         font-size: 1.75rem;
-        font-weight: 600;
+        font-weight: 800;
         margin: 0 0 0.5rem;
-        color: #2c3e50;
+        background: linear-gradient(135deg, #FB923C 0%, #EC4899 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
     .header-title p {
         color: #6c757d;
         margin: 0;
+    }
+
+    .header-actions {
+        display:flex;
+        gap:.75rem;
+        flex-wrap: wrap;
+    }
+
+    .lab-header-btn {
+        text-decoration:none;
+        border: none;
+        border-radius: 12px;
+        padding: 0.58rem 1rem;
+        font-weight: 700;
+    }
+
+    .lab-tests-btn {
+        background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.22);
+    }
+
+    .lab-tests-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 24px rgba(99, 102, 241, 0.28);
+    }
+
+    .lab-new-btn {
+        background: linear-gradient(135deg, #FB923C 0%, #EC4899 100%);
+        box-shadow: 0 10px 20px rgba(236, 72, 153, 0.24);
+    }
+
+    .lab-new-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 24px rgba(236, 72, 153, 0.3);
     }
 
     .dashboard-cards {
@@ -142,11 +182,11 @@
         <h1><i class="fas fa-flask"></i> Laboratory Management</h1>
         <p>Manage lab tests and lab requisitions (schema-based).</p>
     </div>
-    <div style="display:flex; gap: .75rem; flex-wrap: wrap;">
-        <a href="{{ route('admin.laboratory.tests.index') }}" class="btn btn-primary" style="text-decoration:none;">
+    <div class="header-actions">
+        <a href="{{ route('admin.laboratory.tests.index') }}" class="btn btn-primary lab-header-btn lab-tests-btn">
             <i class="fas fa-vials"></i> Lab Tests
         </a>
-        <a href="{{ route('admin.laboratory.requisitions.create') }}" class="btn btn-primary" style="text-decoration:none; background: linear-gradient(135deg,#4caf50,#388e3c);">
+        <a href="{{ route('admin.laboratory.requisitions.create') }}" class="btn btn-primary lab-header-btn lab-new-btn">
             <i class="fas fa-plus"></i> New Requisition
         </a>
     </div>

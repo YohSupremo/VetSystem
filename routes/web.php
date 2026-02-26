@@ -75,7 +75,7 @@ Route::get('/reports', function () {
 });
 
 // Customer Routes
-Route::prefix('customer')->name('customer.')->group(function () {
+Route::prefix('customer')->name('customer.')->middleware(['auth.flash'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Customer\CustomerDashboardController::class, 'index'])->name('dashboard');
     
     // Pet Management
@@ -143,7 +143,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
 });
 
 // Veterinarian Routes
-Route::prefix('veterinarian')->name('veterinarian.')->group(function () {
+Route::prefix('veterinarian')->name('veterinarian.')->middleware(['auth.flash'])->group(function () {
     Route::get('/test', function() {
         return view('veterinarian.test');
     });
@@ -196,7 +196,7 @@ Route::prefix('veterinarian')->name('veterinarian.')->group(function () {
 });
 
 // Admin Routes
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

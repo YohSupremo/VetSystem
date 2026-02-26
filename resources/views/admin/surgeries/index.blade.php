@@ -5,9 +5,9 @@
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h4 mb-0">Surgical Records</h2>
-        <a href="{{ route('admin.surgeries.create') }}" class="btn btn-primary">
+    <div class="surgeries-header mb-4">
+        <h2 class="h4 mb-0"><i class="fas fa-scalpel me-2"></i>Surgical Records</h2>
+        <a href="{{ route('admin.surgeries.create') }}" class="btn btn-primary surgeries-create-btn">
             <i class="fas fa-scalpel me-2"></i>Schedule Surgery
         </a>
     </div>
@@ -62,6 +62,40 @@
 
 @push('styles')
 <style>
+.surgeries-header {
+    background: linear-gradient(135deg, rgba(255, 247, 237, 0.95), rgba(253, 242, 248, 0.95));
+    border: 1px solid rgba(251, 146, 60, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+    padding: 1.05rem 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+}
+
+.surgeries-header h2 {
+    font-weight: 800;
+    background: linear-gradient(135deg, #FB923C 0%, #EC4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.surgeries-create-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 0.58rem 1rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #FB923C 0%, #EC4899 100%);
+    box-shadow: 0 10px 20px rgba(236, 72, 153, 0.24);
+}
+
+.surgeries-create-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 24px rgba(236, 72, 153, 0.3);
+}
+
 /* Reusing styles from previous views with some adjustments */
 .pets-container {
     display: grid;
@@ -144,6 +178,13 @@
 
 .alert {
     border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .surgeries-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 </style>
 @endpush

@@ -19,7 +19,8 @@
 </head>
 <body class="{{ $bodyClass ?? '' }}">
     @php($isAuthBody = str_contains($bodyClass ?? '', 'auth-body'))
-    @unless($isAuthBody)
+    @php($isCustomerBody = str_contains($bodyClass ?? '', 'customer-body'))
+    @unless($isAuthBody || $isCustomerBody)
         @include('partials.flash-messages', ['containerClass' => 'container mt-3 app-flash-themed'])
     @endunless
 

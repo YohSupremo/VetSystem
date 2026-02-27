@@ -1,8 +1,12 @@
 @php($containerClass = $containerClass ?? '')
+@php($showSuccess = $showSuccess ?? true)
+@php($showError = $showError ?? true)
+@php($showWarning = $showWarning ?? true)
+@php($showInfo = $showInfo ?? true)
 
-@if(session('success') || session('error') || session('warning') || session('info'))
+@if(($showSuccess && session('success')) || ($showError && session('error')) || ($showWarning && session('warning')) || ($showInfo && session('info')))
     <div class="{{ $containerClass }}">
-        @if(session('success'))
+        @if($showSuccess && session('success'))
             <div class="alert alert-success alert-dismissible fade show app-flash-alert" role="alert">
                 <span class="app-flash-icon" aria-hidden="true">✓</span>
                 <span class="app-flash-message">{{ session('success') }}</span>
@@ -10,7 +14,7 @@
             </div>
         @endif
 
-        @if(session('error'))
+        @if($showError && session('error'))
             <div class="alert alert-danger alert-dismissible fade show app-flash-alert" role="alert">
                 <span class="app-flash-icon" aria-hidden="true">✕</span>
                 <span class="app-flash-message">{{ session('error') }}</span>
@@ -18,7 +22,7 @@
             </div>
         @endif
 
-        @if(session('warning'))
+        @if($showWarning && session('warning'))
             <div class="alert alert-warning alert-dismissible fade show app-flash-alert" role="alert">
                 <span class="app-flash-icon" aria-hidden="true">!</span>
                 <span class="app-flash-message">{{ session('warning') }}</span>
@@ -26,7 +30,7 @@
             </div>
         @endif
 
-        @if(session('info'))
+        @if($showInfo && session('info'))
             <div class="alert alert-info alert-dismissible fade show app-flash-alert" role="alert">
                 <span class="app-flash-icon" aria-hidden="true">i</span>
                 <span class="app-flash-message">{{ session('info') }}</span>

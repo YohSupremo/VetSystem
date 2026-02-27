@@ -17,7 +17,10 @@
             <p>Login to access your PawCare account</p>
         </div>
 
-        @include('partials.flash-messages', ['containerClass' => 'app-flash-inline app-flash-themed'])
+        @include('partials.flash-messages', [
+            'containerClass' => 'app-flash-inline app-flash-themed',
+            'showSuccess' => false,
+        ])
 
         <form action="/login-success" method="POST">
             @csrf

@@ -1290,6 +1290,34 @@
         function loadNotifications() {
             const container = document.getElementById('notificationsContainer');
             container.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+            const resolveNotificationIcon = (icon, title = '', message = '') => {
+                if (typeof icon === 'string' && icon.trim().length > 0) {
+                    const faToken = icon.match(/fa-[a-z0-9-]+/i);
+                    if (faToken) {
+                        return faToken[0].toLowerCase();
+                    }
+
+                    const normalized = icon
+                        .trim()
+                        .toLowerCase()
+                        .replace(/^fa[srlbd]?\s+/, '')
+                        .replace(/^fa-/, '')
+                        .replace(/[^a-z0-9-]/g, '');
+
+                    if (normalized) {
+                        return `fa-${normalized}`;
+                    }
+                }
+
+                const context = `${title} ${message}`.toLowerCase();
+                if (context.includes('groom')) return 'fa-cut';
+                if (context.includes('appointment')) return 'fa-calendar-check';
+                if (context.includes('boarding') || context.includes('cage')) return 'fa-hotel';
+                if (context.includes('vaccine') || context.includes('vaccination')) return 'fa-syringe';
+                if (context.includes('invoice') || context.includes('payment')) return 'fa-file-invoice-dollar';
+                return 'fa-bell';
+            };
             
             fetch(`${notificationsBase}/get`)
                 .then(response => response.json())
@@ -1309,12 +1337,13 @@
                     notifications.forEach(notif => {
                         const item = document.createElement('div');
                         item.className = `notification-item ${notif.unread ? 'unread' : ''}`;
+                        const iconClass = resolveNotificationIcon(notif.icon, notif.title, notif.message);
                         item.innerHTML = `
                             <div style="display: flex; gap: 10px;">
                                 <div style="width: 40px; height: 40px; background: rgba(255, 140, 66, 0.1); 
                                             border-radius: 8px; display: flex; align-items: center; 
                                             justify-content: center; color: var(--primary-orange); flex-shrink: 0;">
-                                    <i class="fas ${notif.icon}"></i>
+                                    <i class="fas ${iconClass}"></i>
                                 </div>
                                 <div style="flex: 1;">
                                     <div class="notification-title">${notif.title}</div>

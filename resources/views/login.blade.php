@@ -14,7 +14,7 @@
         <div class="logo-section">
             <div class="paw-icon">🐾</div>
             <h2>Welcome Back</h2>
-            <p>Login to access your PawCare account</p>
+            <p>Login to access your {{ $clinicName ?? 'PawCare' }} account</p>
         </div>
 
         @include('partials.flash-messages', [

@@ -204,7 +204,7 @@
     <div class="container-fluid px-3 px-md-4">
         <a class="navbar-brand d-flex align-items-center" href="{{ route('customer.dashboard') }}">
             <span class="paw-icon">🐾</span>
-            <span>PawCare</span>
+            <span>{{ $clinicName ?? 'PawCare' }}</span>
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#customerNavbar"

@@ -2,7 +2,7 @@
 
 @php($bodyClass = 'landing-body')
 
-@section('title', 'PawCare - Veterinary Care')
+@section('title', ($clinicName ?? 'PawCare') . ' - Veterinary Care')
 
 @section('content')
 <div class="landing-page">
@@ -10,7 +10,7 @@
         <div class="nav-container">
             <div class="logo">
                 <span class="paw">🐾</span>
-                <h1>PawCare</h1>
+                <h1>{{ $clinicName ?? 'PawCare' }}</h1>
             </div>
             <div class="nav-buttons">
                 <a href="/login" class="btn btn-login">Login</a>

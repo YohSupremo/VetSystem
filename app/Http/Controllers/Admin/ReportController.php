@@ -69,7 +69,8 @@ class ReportController extends BaseController
      */
     public function financialReport(Request $request)
     {
-        $startDate = $request->input('start_date', now()->subMonth()->toDateString());
+        $defaultStartDate = Invoice::query()->min('issue_date') ?? now()->toDateString();
+        $startDate = $request->input('start_date', $defaultStartDate);
         $endDate = $request->input('end_date', now()->toDateString());
         $reportType = $request->input('report_type', 'summary');
         
@@ -82,12 +83,12 @@ class ReportController extends BaseController
             return (float) $invoice->total_amount;
         });
 
-        $paidAmount = Payment::query()
-            ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
-            ->whereDate('payments.payment_date', '>=', $startDate)
-            ->whereDate('payments.payment_date', '<=', $endDate)
-            ->where('invoices.status', '!=', 'cancelled')
-            ->sum('payments.amount');
+        $paidAmount = $invoices->sum(function ($invoice) {
+            $invoiceTotal = (float) $invoice->total_amount;
+            $invoicePaid = (float) $invoice->payments->sum('amount');
+
+            return min($invoicePaid, $invoiceTotal);
+        });
 
         $outstandingAmount = $invoices->sum(function ($invoice) {
             return (float) $invoice->balance;
@@ -114,14 +115,45 @@ class ReportController extends BaseController
             ->limit(10)
             ->get();
 
-        $paymentMethods = DB::table('payments')
-            ->select('payment_method', DB::raw('COUNT(*) as count, SUM(amount) as total'))
-            ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
-            ->whereDate('payments.payment_date', '>=', $startDate)
-            ->whereDate('payments.payment_date', '<=', $endDate)
-            ->where('invoices.status', '!=', 'cancelled')
-            ->groupBy('payment_method')
-            ->get();
+        $paymentMethods = collect();
+
+        foreach ($invoices as $invoice) {
+            $remaining = (float) $invoice->total_amount;
+
+            foreach ($invoice->payments->sortBy('payment_date') as $payment) {
+                if ($remaining <= 0) {
+                    break;
+                }
+
+                $appliedAmount = min((float) $payment->amount, $remaining);
+
+                if ($appliedAmount <= 0) {
+                    continue;
+                }
+
+                $method = (string) ($payment->payment_method ?: 'unknown');
+
+                if (! $paymentMethods->has($method)) {
+                    $paymentMethods->put($method, (object) [
+                        'payment_method' => $method,
+                        'count' => 0,
+                        'total' => 0,
+                    ]);
+                }
+
+                $row = $paymentMethods->get($method);
+                $row->count += 1;
+                $row->total += $appliedAmount;
+                $paymentMethods->put($method, $row);
+
+                $remaining -= $appliedAmount;
+            }
+        }
+
+        $paymentMethods = $paymentMethods
+            ->values()
+            ->sortByDesc('total')
+            ->values();
 
         $revenueByMonthChart = $this->makeChart(
             'line',

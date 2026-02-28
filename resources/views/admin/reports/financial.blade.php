@@ -97,7 +97,7 @@
             <div class="h4 mb-0">PHP {{ number_format($totalRevenue ?? 0, 2) }}</div>
         </div>
         <div class="stat-card">
-            <div class="text-muted small">Paid Amount</div>
+            <div class="text-muted small">Paid Amount (Applied)</div>
             <div class="h4 mb-0">PHP {{ number_format($paidAmount ?? 0, 2) }}</div>
         </div>
         <div class="stat-card">
@@ -105,6 +105,10 @@
             <div class="h4 mb-0">PHP {{ number_format($outstandingAmount ?? 0, 2) }}</div>
         </div>
     </div>
+</div>
+
+<div class="text-muted small mb-3">
+    Paid and payment-method totals are based on applied payments per invoice and are capped at each invoice total to avoid overcounting.
 </div>
 
 <div class="report-card border-danger" style="border-left: 4px solid #dc3545;">
@@ -180,7 +184,7 @@
     </div>
     <div class="col-lg-6">
         <div class="report-card">
-            <h5 class="mb-3">Payment Methods</h5>
+            <h5 class="mb-3">Payment Methods (Applied)</h5>
             <div class="table-responsive">
                 <table class="table table-sm">
                     <thead>

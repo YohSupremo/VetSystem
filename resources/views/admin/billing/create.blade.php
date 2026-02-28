@@ -118,7 +118,7 @@
             </div>
             <div class="col-md-2 mb-3">
                 <label for="tax_rate" class="form-label">Tax Rate (%)</label>
-                <input type="number" class="form-control" id="tax_rate" name="tax_rate" value="{{ old('tax_rate', 0) }}" min="0" max="100" step="0.01">
+                <input type="number" class="form-control" id="tax_rate" name="tax_rate" value="{{ old('tax_rate', $defaultTaxRate ?? 0) }}" min="0" max="100" step="0.01">
             </div>
             <div class="col-md-2 mb-3">
                 <label for="discount_amount" class="form-label">Discount</label>

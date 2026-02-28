@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use App\Models\Appointment;
+use App\Models\ClinicSetting;
 use App\Models\GroomingAppointment;
 use App\Models\GroomingService;
 use App\Models\Invoice;
@@ -84,6 +85,8 @@ class GroomingController extends BaseController
             if (!$invoice) {
                 $item->setAttribute('payment_status', 'unbilled');
                 $item->setAttribute('invoice_id', null);
+                $item->setAttribute('invoice_total', null);
+                $item->setAttribute('invoice_tax', null);
                 return $item;
             }
 
@@ -93,6 +96,8 @@ class GroomingController extends BaseController
 
             $item->setAttribute('payment_status', $paymentStatus);
             $item->setAttribute('invoice_id', $invoice->id);
+            $item->setAttribute('invoice_total', (float) $invoice->total_amount);
+            $item->setAttribute('invoice_tax', (float) $invoice->tax_amount);
 
             return $item;
         });
@@ -483,7 +488,7 @@ class GroomingController extends BaseController
             ->orderByDesc('issue_date')
             ->first();
 
-        if ($invoice) {
+        if ($invoice instanceof Invoice) {
             return $invoice;
         }
 
@@ -492,7 +497,8 @@ class GroomingController extends BaseController
             throw new \RuntimeException('Cannot create invoice: pet owner is missing.');
         }
 
-        $prefix = 'INV';
+        $prefix = ClinicSetting::invoicePrefix();
+        $defaultTaxRate = ClinicSetting::defaultTaxRate();
         $year = now()->format('Y');
         $lastSequence = Invoice::where('invoice_prefix', $prefix)
             ->whereYear('issue_date', $year)
@@ -509,7 +515,7 @@ class GroomingController extends BaseController
             'issue_date' => now()->toDateString(),
             'due_date' => now()->toDateString(),
             'status' => 'pending',
-            'tax_rate' => 0,
+            'tax_rate' => $defaultTaxRate,
             'discount_amount' => 0,
             'notes' => 'Invoice for grooming appointment on ' . optional($appointment->appointment_date)->format('M d, Y'),
         ]);
@@ -540,7 +546,7 @@ class GroomingController extends BaseController
             ->orderByDesc('issue_date')
             ->first();
 
-        if (!$invoice) {
+        if (!$invoice instanceof Invoice) {
             return;
         }
 

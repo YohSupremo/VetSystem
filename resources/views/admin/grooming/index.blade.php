@@ -262,6 +262,8 @@
                     <th>Service</th>
                     <th>Groomer</th>
                     <th>Status</th>
+                    <th>Total</th>
+                    <th>Tax</th>
                     <th>Payment</th>
                     <th>Actions</th>
                 </tr>
@@ -313,6 +315,21 @@
                             </span>
                         </td>
                         <td>
+                            @if(!is_null($groomingAppointment->getAttribute('invoice_total')))
+                                ₱{{ number_format((float) $groomingAppointment->getAttribute('invoice_total'), 2) }}
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            @php $invoiceTax = $groomingAppointment->getAttribute('invoice_tax'); @endphp
+                            @if(!is_null($invoiceTax) && (float) $invoiceTax > 0)
+                                ₱{{ number_format((float) $invoiceTax, 2) }}
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td>
                             @php
                                 $paymentStatus = $groomingAppointment->getAttribute('payment_status') ?? 'unbilled';
                             @endphp
@@ -355,7 +372,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center">No grooming appointments found.</td>
+                        <td colspan="10" class="text-center">No grooming appointments found.</td>
                     </tr>
                 @endforelse
             </tbody>

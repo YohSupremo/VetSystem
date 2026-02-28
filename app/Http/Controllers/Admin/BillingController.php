@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\BillingInvoice;
 use App\Models\BillingInvoiceItem;
 use App\Models\BillingPayment;
+use App\Models\ClinicSetting;
 use App\Models\Pet;
 use App\Models\PetOwner;
 use App\Models\Appointment;
@@ -69,8 +70,9 @@ class BillingController extends BaseController
             ->orderBy('users.last_name')
             ->get();
         $pets = Pet::orderBy('name')->get();
+        $defaultTaxRate = ClinicSetting::defaultTaxRate();
         
-        return view('admin.billing.create', compact('petOwners', 'pets'));
+        return view('admin.billing.create', compact('petOwners', 'pets', 'defaultTaxRate'));
     }
 
     /**
@@ -97,7 +99,8 @@ class BillingController extends BaseController
 
         try {
             // Generate invoice number and sequence
-            $prefix = 'INV';
+            $prefix = ClinicSetting::invoicePrefix();
+            $defaultTaxRate = ClinicSetting::defaultTaxRate();
             $issueDate = $data['invoice_date'];
             $year = date('Y', strtotime($issueDate));
             
@@ -117,7 +120,7 @@ class BillingController extends BaseController
                 'issue_date' => $data['invoice_date'],
                 'due_date' => $data['due_date'],
                 'status' => 'pending',
-                'tax_rate' => $data['tax_rate'] ?? 0,
+                'tax_rate' => $data['tax_rate'] ?? $defaultTaxRate,
                 'discount_amount' => $data['discount_amount'] ?? 0,
                 'notes' => $data['notes'] ?? null,
             ]);
@@ -195,6 +198,7 @@ class BillingController extends BaseController
     public function update(Request $request, $id)
     {
         $invoice = BillingInvoice::findOrFail($id);
+        $defaultTaxRate = ClinicSetting::defaultTaxRate();
         
         $data = $request->validate([
             'pet_id' => 'nullable|exists:pets,id',
@@ -219,7 +223,7 @@ class BillingController extends BaseController
                 'owner_id' => $data['pet_owner_id'],
                 'issue_date' => $data['invoice_date'],
                 'due_date' => $data['due_date'],
-                'tax_rate' => $data['tax_rate'] ?? 0,
+                'tax_rate' => $data['tax_rate'] ?? $defaultTaxRate,
                 'discount_amount' => $data['discount_amount'] ?? 0,
                 'notes' => $data['notes'] ?? null,
             ]);
@@ -345,15 +349,19 @@ class BillingController extends BaseController
         $petOwnerId = $appointment->pet ? $appointment->pet->owner_id : null;
 
         $tempNum = 'INV-' . date('YmdHis') . '-' . substr(uniqid(), -4);
+        $prefix = ClinicSetting::invoicePrefix();
+        $defaultTaxRate = ClinicSetting::defaultTaxRate();
+
         $invoice = BillingInvoice::create([
             'invoice_number' => $tempNum,
             'appointment_id' => $appointment->id,
             'pet_id' => $appointment->pet_id,
             'owner_id' => $petOwnerId,
+            'invoice_prefix' => $prefix,
             'issue_date' => now()->toDateString(),
             'due_date' => now()->addDays(7)->toDateString(),
             'status' => 'pending',
-            'tax_rate' => 0,
+            'tax_rate' => $defaultTaxRate,
             'discount_amount' => 0,
             'notes' => 'Invoice for appointment on ' . $appointment->appointment_date->format('M d, Y'),
         ]);

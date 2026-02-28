@@ -42,7 +42,7 @@ class NotificationController extends Controller
                         'icon' => $notif->icon,
                         'priority' => $notif->priority,
                         'time' => $notif->created_at->diffForHumans(),
-                        'unread' => !$notif->is_read,
+                        'unread' => $notif->status !== Notification::STATUS_READ,
                         'action_url' => $notif->action_url,
                     ];
                 });
@@ -56,11 +56,16 @@ class NotificationController extends Controller
     public function markAsRead($id): JsonResponse
     {
         try {
-            $notification = $this->baseQuery()
+            $updated = $this->baseQuery()
                 ->where('id', $id)
-                ->firstOrFail();
+                ->update([
+                    'status' => Notification::STATUS_READ,
+                    'read_at' => now(),
+                ]);
 
-            $notification->markAsRead();
+            if (!$updated) {
+                return response()->json(['error' => 'Notification not found'], 404);
+            }
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
@@ -70,15 +75,14 @@ class NotificationController extends Controller
 
     public function markAllAsRead(): JsonResponse
     {
-        $this->baseQuery()
+        $updated = $this->baseQuery()
             ->unread()
             ->update([
-                'is_read' => true,
                 'read_at' => now(),
                 'status' => Notification::STATUS_READ,
             ]);
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'updated' => $updated]);
     }
 
     public function getUnreadCount(): JsonResponse
@@ -146,9 +150,30 @@ class NotificationController extends Controller
             'quiet_hours_end' => 'nullable|date_format:H:i',
         ]);
 
+        $notificationFields = [
+            'notifications_enabled',
+            'in_app_enabled',
+            'email_enabled',
+            'sms_enabled',
+            'appointment_reminder_enabled',
+            'payment_due_enabled',
+            'low_stock_enabled',
+            'incident_report_enabled',
+            'quiet_hours_enabled',
+        ];
+
+        $notificationData = [
+            'quiet_hours_start' => $validated['quiet_hours_start'] ?? null,
+            'quiet_hours_end' => $validated['quiet_hours_end'] ?? null,
+        ];
+
+        foreach ($notificationFields as $field) {
+            $notificationData[$field] = $request->boolean($field);
+        }
+
         NotificationSetting::updateOrCreate(
             ['user_id' => Auth::id()],
-            $validated
+            $notificationData
         );
 
         return redirect()->back()->with('success', 'Notification settings updated successfully');
@@ -161,7 +186,7 @@ class NotificationController extends Controller
         ]);
 
         $count = Notification::where('created_at', '<', now()->subDays($validated['days']))
-            ->where('is_read', true)
+            ->where('status', Notification::STATUS_READ)
             ->delete();
 
         return response()->json([

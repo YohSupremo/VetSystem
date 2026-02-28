@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\CartItem;
+use App\Models\ClinicSetting;
 use App\Models\InventoryItem;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -64,7 +65,18 @@ class CartController extends Controller
                 ->with('warning', 'Some items in your cart are no longer available and have been removed.');
         }
 
-        return view('customer.cart.index', compact('cart'));
+        $cartSubtotal = (float) $cart->cartItems->sum('total');
+        $defaultTaxRate = ClinicSetting::defaultTaxRate();
+        $cartTaxAmount = $cartSubtotal * ($defaultTaxRate / 100);
+        $cartGrandTotal = $cartSubtotal + $cartTaxAmount;
+
+        return view('customer.cart.index', compact(
+            'cart',
+            'defaultTaxRate',
+            'cartSubtotal',
+            'cartTaxAmount',
+            'cartGrandTotal'
+        ));
     }
 
     /**
@@ -240,7 +252,7 @@ class CartController extends Controller
             'notes' => ($validated['notes'] ? $validated['notes'] . "\n" : '') . 'Payment Method: ' . ucfirst(str_replace('_', ' ', $validated['payment_method'])),
         ]);
 
-        $totalAmount = 0;
+        $subtotalAmount = 0;
 
         // Add order items and update stock
         foreach ($cart->cartItems as $cartItem) {
@@ -252,7 +264,7 @@ class CartController extends Controller
                 'unit_price' => $cartItem->unit_price,
             ]);
 
-            $totalAmount += $cartItem->quantity * $cartItem->unit_price;
+            $subtotalAmount += $cartItem->quantity * $cartItem->unit_price;
 
             // Update inventory stock using the model helper
             $cartItem->inventoryItem->decrementStock($cartItem->quantity);
@@ -281,24 +293,26 @@ class CartController extends Controller
         }
 
         // Generate invoice number
+        $prefix = ClinicSetting::invoicePrefix();
+        $defaultTaxRate = ClinicSetting::defaultTaxRate();
         $year = date('Y');
-        $lastInvoice = \App\Models\Invoice::where('invoice_prefix', 'INV')
+        $lastInvoice = \App\Models\Invoice::where('invoice_prefix', $prefix)
             ->whereYear('created_at', $year)
             ->orderBy('invoice_sequence', 'desc')
             ->first();
         $sequence = $lastInvoice ? $lastInvoice->invoice_sequence + 1 : 1;
-        $invoiceNumber = sprintf('INV-%s-%06d', $year, $sequence);
+        $invoiceNumber = sprintf('%s-%s-%06d', $prefix, $year, $sequence);
 
         // Create invoice
         $invoice = \App\Models\Invoice::create([
             'order_id' => $order->id,
             'owner_id' => $petOwner->id,
-            'invoice_prefix' => 'INV',
+            'invoice_prefix' => $prefix,
             'invoice_sequence' => $sequence,
             'invoice_number' => $invoiceNumber,
             'issue_date' => now()->toDateString(),
             'due_date' => now()->addDays(7)->toDateString(),
-            'tax_rate' => 0,
+            'tax_rate' => $defaultTaxRate,
             'discount_amount' => 0,
             'status' => $isOnlinePayment ? 'paid' : 'pending',
             'notes' => 'Order #' . $order->id . ' - Payment Method: ' . ucfirst(str_replace('_', ' ', $validated['payment_method'])),
@@ -315,12 +329,15 @@ class CartController extends Controller
             ]);
         }
 
+        $invoice->load('invoiceItems');
+        $invoiceTotalAmount = (float) $invoice->total_amount;
+
         // If online payment, create payment record (auto-record as income)
         if ($isOnlinePayment) {
             \App\Models\Payment::create([
                 'invoice_id' => $invoice->id,
                 'payment_date' => now(),
-                'amount' => $totalAmount,
+                'amount' => $invoiceTotalAmount,
                 'payment_method' => $validated['payment_method'],
                 'reference_number' => 'ONLINE-' . $order->id . '-' . time(),
                 'received_by' => null, // System generated
@@ -333,9 +350,9 @@ class CartController extends Controller
 
         $successMessage = 'Order placed successfully!';
         if ($isOnlinePayment) {
-            $successMessage .= ' Payment of ₱' . number_format($totalAmount, 2) . ' has been recorded.';
+            $successMessage .= ' Payment of ₱' . number_format($invoiceTotalAmount, 2) . ' has been recorded.';
         } else {
-            $successMessage .= ' Please pay ₱' . number_format($totalAmount, 2) . ' upon pickup.';
+            $successMessage .= ' Please pay ₱' . number_format($invoiceTotalAmount, 2) . ' upon pickup.';
         }
 
         return redirect()->route('customer.billing.orders')

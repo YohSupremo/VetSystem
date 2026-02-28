@@ -38,6 +38,8 @@
                             <th>Next Due</th>
                             <th>Veterinarian</th>
                             <th>Payment Status</th>
+                            <th>Tax</th>
+                            <th>Total</th>
                             <th class="col-actions">Actions</th>
                         </tr>
                     </thead>
@@ -83,6 +85,30 @@
                                             <span class="status-badge status-{{ strtolower($invoice->status) }}">
                                                 {{ ucfirst($invoice->status) }}
                                             </span>
+                                        @else
+                                            <span class="null-val">—</span>
+                                        @endif
+                                    @else
+                                        <span class="null-val">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if(!$isVirtual)
+                                        @php $invoice = $vaccination->getAttribute('billing_invoice'); @endphp
+                                        @if($invoice)
+                                            PHP {{ number_format((float) ($invoice->tax_amount ?? 0), 2) }}
+                                        @else
+                                            <span class="null-val">—</span>
+                                        @endif
+                                    @else
+                                        <span class="null-val">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if(!$isVirtual)
+                                        @php $invoice = $vaccination->getAttribute('billing_invoice'); @endphp
+                                        @if($invoice)
+                                            PHP {{ number_format((float) ($invoice->total_amount ?? 0), 2) }}
                                         @else
                                             <span class="null-val">—</span>
                                         @endif
@@ -258,12 +284,14 @@
     table-layout: fixed;
 }
 
-.vacc-table th:nth-child(1), .vacc-table td:nth-child(1) { width: 20%; }
-.vacc-table th:nth-child(2), .vacc-table td:nth-child(2) { width: 15%; text-align: center; }
-.vacc-table th:nth-child(3), .vacc-table td:nth-child(3) { width: 15%; text-align: center; }
-.vacc-table th:nth-child(4), .vacc-table td:nth-child(4) { width: 22%; text-align: center; }
-.vacc-table th:nth-child(5), .vacc-table td:nth-child(5) { width: 13%; text-align: center; }
-.vacc-table th:nth-child(6), .vacc-table td:nth-child(6) { width: 15%; text-align: center; }
+.vacc-table th:nth-child(1), .vacc-table td:nth-child(1) { width: 18%; }
+.vacc-table th:nth-child(2), .vacc-table td:nth-child(2) { width: 12%; text-align: center; }
+.vacc-table th:nth-child(3), .vacc-table td:nth-child(3) { width: 12%; text-align: center; }
+.vacc-table th:nth-child(4), .vacc-table td:nth-child(4) { width: 18%; text-align: center; }
+.vacc-table th:nth-child(5), .vacc-table td:nth-child(5) { width: 10%; text-align: center; }
+.vacc-table th:nth-child(6), .vacc-table td:nth-child(6) { width: 10%; text-align: center; }
+.vacc-table th:nth-child(7), .vacc-table td:nth-child(7) { width: 10%; text-align: center; }
+.vacc-table th:nth-child(8), .vacc-table td:nth-child(8) { width: 10%; text-align: center; }
 
 .vacc-table thead tr {
     border-bottom: 1px solid var(--soft-gray, #f0f0f0);

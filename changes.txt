@@ -1,4 +1,165 @@
 ====================================================================
+APPLIED RECOMMENDATION: NOTIFICATION READ-STATE NORMALIZATION
+====================================================================
+Date: February 28, 2026
+Purpose: Remove redundant notifications.is_read and use status + read_at
+
+IMPLEMENTED:
+1. final_database.txt
+   - Removed notifications.is_read from schema
+   - Documented status + read_at as source of truth
+
+2. app/Models/Notification.php
+   - Removed is_read from fillable/casts
+   - Updated scopeUnread() to use status
+   - Updated markAsRead()/markAsUnread() to use status + read_at
+   - Added computed accessor getIsReadAttribute() for compatibility
+
+3. app/Services/NotificationService.php
+   - Replaced all is_read filters/updates with status-based logic
+
+4. Notification controllers updated (all roles):
+   - app/Http/Controllers/Admin/NotificationController.php
+   - app/Http/Controllers/Veterinarian/NotificationController.php
+   - app/Http/Controllers/Staff/NotificationController.php
+   - app/Http/Controllers/Reception/NotificationController.php
+   - app/Http/Controllers/Boarding/NotificationController.php
+   - app/Http/Controllers/Groomer/NotificationController.php
+   - app/Http/Controllers/Pharmacy/NotificationController.php
+   Changes: unread payload + mark-all-read + cleanup queries now use status/read_at.
+
+5. Migration updates:
+   - database/migrations/2026_02_13_073006_create_notifications.php (removed is_read)
+   - database/migrations/2026_02_22_102000_backfill_notifications_columns.php (no longer adds is_read)
+   - database/migrations/2026_02_28_130000_drop_is_read_from_notifications_table.php (new)
+
+====================================================================
+APPLIED RECOMMENDATION: CENTRALIZED BILLING DEFAULTS
+====================================================================
+Date: February 28, 2026
+Purpose: Remove hardcoded invoice prefix and tax defaults
+
+IMPLEMENTED:
+1. app/Models/ClinicSetting.php
+   - Added helper methods:
+     - current()
+     - invoicePrefix()
+     - defaultTaxRate()
+   - Added safe fallback behavior if clinic_settings table is not available
+
+2. Updated invoice creation flows to use ClinicSetting defaults:
+   - app/Http/Controllers/Customer/CartController.php
+   - app/Http/Controllers/Admin/BillingController.php
+   - app/Http/Controllers/Admin/GroomingController.php
+   - app/Http/Controllers/Admin/LaboratoryController.php
+   - app/Http/Controllers/Admin/PharmacyController.php
+   - app/Http/Controllers/Admin/BoardingController.php
+   - app/Http/Controllers/Admin/SurgeryController.php
+   - app/Http/Controllers/Admin/VaccinationController.php
+
+RESULT:
+- Removed hardcoded invoice prefix 'INV' from controllers
+- Removed hardcoded tax_rate = 0 from controllers
+- Invoice prefix and default tax now come from clinic_settings
+
+====================================================================
+LATEST SYSTEM SETTINGS + BRANDING CHANGES
+====================================================================
+Date: February 28, 2026
+Purpose: Track recent implementation and refactor work
+
+FILES CHANGED (LATEST):
+1. final_database.txt
+   - Added clinic_settings table (non-JSON, column-based)
+   - Updated schema summary totals
+
+2. database/migrations/2026_02_28_120000_create_clinic_settings_table.php
+   - Added migration for clinic_settings
+
+3. app/Models/ClinicSetting.php
+   - Added ClinicSetting model with defaults/casts
+
+4. app/Http/Controllers/Admin/NotificationController.php
+   - Initially wired clinic settings
+   - Then refactored back to notification-only settings logic
+
+5. resources/views/admin/notifications/settings.blade.php
+   - Initially contained clinic fields
+   - Then cleaned to notification-only fields
+
+6. app/Http/Controllers/Admin/SettingController.php
+   - Implemented clinic settings load/save + validation
+
+7. resources/views/admin/settings/index.blade.php
+   - Replaced with dedicated clinic settings page
+
+8. resources/views/admin/dashboard.blade.php
+   - Replaced hardcoded "PawCare" with dynamic clinic name from clinic_settings
+   - Added fallback to "PawCare" if settings not available
+
+9. changes.txt
+   - Added this latest changes section
+
+NOTES FROM DATABASE REVIEW:
+- Potential overlap: notifications.status vs notifications.is_read
+- Potential overlap: inventory_stock.min_stock vs clinic_settings.low_stock_threshold (recommend global fallback + per-item override)
+- Multiple controllers still hardcode invoice_prefix='INV' and tax_rate=0 (recommend central billing settings service)
+
+====================================================================
+CLINIC SETTINGS MODULE REFACTOR
+====================================================================
+Date: February 28, 2026
+Purpose: Move clinic settings out of notification settings and into admin/settings
+
+FILES CHANGED:
+1. app/Http/Controllers/Admin/SettingController.php
+   - Implemented real load/save logic for clinic_settings table
+   - Added validation and singleton upsert behavior
+
+2. resources/views/admin/settings/index.blade.php
+   - Replaced with focused clinic settings UI
+   - Bound form fields to clinic_settings data
+
+3. app/Http/Controllers/Admin/NotificationController.php
+   - Removed clinic settings responsibilities
+   - Restored notification-only settings flow
+
+4. resources/views/admin/notifications/settings.blade.php
+   - Removed clinic settings form section
+
+5. changes.txt (this file)
+   - Added this refactor log section
+
+====================================================================
+CLINIC SETTINGS IMPLEMENTATION CHANGES
+====================================================================
+Date: February 28, 2026
+Purpose: Implement non-JSON global clinic settings end-to-end
+
+FILES CHANGED:
+1. final_database.txt
+   - Added non-JSON table: clinic_settings
+   - Updated schema summary totals
+
+2. database/migrations/2026_02_28_120000_create_clinic_settings_table.php
+   - Added Laravel migration for clinic_settings table
+
+3. app/Models/ClinicSetting.php
+   - Added Eloquent model with fillable fields, casts, defaults, and updatedBy relation
+
+4. app/Http/Controllers/Admin/NotificationController.php
+   - Added clinic settings load/save logic
+   - Added validation rules for clinic settings fields
+   - Updated success message to generic settings update
+
+5. resources/views/admin/notifications/settings.blade.php
+   - Added Clinic Settings form section
+   - Added fields: clinic profile, timezone, currency, invoice prefix, tax, appointment defaults, stock threshold
+
+6. changes.txt (this file)
+   - Added this implementation log section
+
+====================================================================
 VET SYSTEM CUSTOMER CRUD IMPLEMENTATION CHANGES
 ====================================================================
 Date: February 13, 2026

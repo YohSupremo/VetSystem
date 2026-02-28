@@ -57,9 +57,19 @@
                                 @endforeach
                             </tbody>
                             <tfoot class="border-top">
+                                @if(isset($invoice) && $invoice)
+                                    <tr>
+                                        <td colspan="2" class="text-end pt-3 fw-bold text-uppercase text-muted small">Subtotal</td>
+                                        <td class="text-end pt-3 pe-4 fw-bold">₱{{ number_format($invoice->subtotal, 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2" class="text-end fw-bold text-uppercase text-muted small">Tax ({{ number_format($invoice->tax_rate, 2) }}%)</td>
+                                        <td class="text-end pe-4 fw-bold">₱{{ number_format($invoice->tax_amount, 2) }}</td>
+                                    </tr>
+                                @endif
                                 <tr>
                                     <td colspan="2" class="text-end pt-3 fw-bold text-uppercase text-muted small">Total Amount</td>
-                                    <td class="text-end pt-3 pe-4 fw-bold fs-5 text-primary">₱{{ number_format($order->items->sum('total'), 2) }}</td>
+                                    <td class="text-end pt-3 pe-4 fw-bold fs-5 text-primary">₱{{ number_format((isset($invoice) && $invoice) ? $invoice->total_amount : $order->items->sum('total'), 2) }}</td>
                                 </tr>
                             </tfoot>
                         </table>

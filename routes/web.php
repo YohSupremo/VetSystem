@@ -192,7 +192,7 @@ Route::prefix('veterinarian')->name('veterinarian.')->middleware(['auth.flash'])
         Route::get('/settings', [App\Http\Controllers\Veterinarian\NotificationController::class, 'settings'])->name('settings');
         Route::post('/settings/update', [App\Http\Controllers\Veterinarian\NotificationController::class, 'updateSettings'])->name('settings-update');
     });
-    Route::get('/unread-count', [App\Http\Controllers\Veterinarian\NotificationController::class, 'getUnreadCount']);
+    Route::get('/unread-count', [App\Http\Controllers\Veterinarian\NotificationController::class, 'getUnreadCount'])->name('unread-count');
 });
 
 // Admin Routes

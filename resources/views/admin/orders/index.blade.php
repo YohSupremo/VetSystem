@@ -207,7 +207,7 @@
                             $ownerUser = optional($order->owner)->user;
                             $ownerName = $ownerUser ? trim(($ownerUser->first_name ?? '').' '.($ownerUser->last_name ?? '')) : 'Unknown';
                             $ownerEmail = optional($ownerUser)->email ?? 'No email';
-                            $orderTotal = $order->items->sum('total');
+                            $orderTotal = $order->invoice ? $order->invoice->total_amount : $order->items->sum('total');
                             $orderDate = $order->order_date ?? $order->created_at;
                         @endphp
                         <tr>

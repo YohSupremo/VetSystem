@@ -85,6 +85,11 @@ class Invoice extends Model
         return $this->subtotal * ((float) $this->tax_rate / 100);
     }
 
+    public function getTaxAttribute()
+    {
+        return $this->tax_amount;
+    }
+
     public function getTotalAmountAttribute()
     {
         return $this->subtotal + $this->tax_amount - (float) $this->discount_amount;

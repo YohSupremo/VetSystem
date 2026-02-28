@@ -98,7 +98,11 @@
                         
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">Subtotal ({{ $cart->cartItems->sum('quantity') }} items)</span>
-                            <span class="fw-bold">₱{{ number_format($cart->cartItems->sum('total'), 2) }}</span>
+                            <span class="fw-bold">₱{{ number_format($cartSubtotal ?? $cart->cartItems->sum('total'), 2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Tax ({{ number_format($defaultTaxRate ?? 0, 2) }}%)</span>
+                            <span class="fw-bold">₱{{ number_format($cartTaxAmount ?? 0, 2) }}</span>
                         </div>
                         <div class="d-flex justify-content-between mb-4">
                             <span class="text-muted">Shipping</span>
@@ -109,7 +113,7 @@
                         
                         <div class="d-flex justify-content-between mb-4">
                             <span class="fw-bold fs-5">Total</span>
-                            <span class="fw-bold fs-5 text-primary">₱{{ number_format($cart->cartItems->sum('total'), 2) }}</span>
+                            <span class="fw-bold fs-5 text-primary">₱{{ number_format($cartGrandTotal ?? $cart->cartItems->sum('total'), 2) }}</span>
                         </div>
                         
                         <form action="{{ route('customer.cart.checkout') }}" method="POST">

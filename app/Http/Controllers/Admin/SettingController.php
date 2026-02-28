@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\ClinicSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SettingController extends BaseController
 {
@@ -11,7 +13,10 @@ class SettingController extends BaseController
      */
     public function index()
     {
-        return view('admin.settings.index');
+        $clinicSettings = ClinicSetting::query()->first()
+            ?? new ClinicSetting(ClinicSetting::defaults());
+
+        return view('admin.settings.index', compact('clinicSettings'));
     }
 
     /**
@@ -27,8 +32,44 @@ class SettingController extends BaseController
      */
     public function store(Request $request)
     {
-        // Placeholder for settings store logic
-        return redirect()->route('admin.settings.index')->with('success', 'Setting created successfully.');
+        $validated = $request->validate([
+            'clinic_name' => 'required|string|max:150',
+            'clinic_phone' => 'nullable|string|max:30',
+            'clinic_email' => 'nullable|email|max:150',
+            'clinic_address' => 'nullable|string',
+            'timezone' => 'required|timezone',
+            'currency_code' => 'required|string|size:3',
+            'invoice_prefix' => 'required|string|max:10',
+            'default_tax_rate' => 'required|numeric|min:0|max:100',
+            'appointment_slot_minutes' => 'required|integer|min:1|max:480',
+            'appointment_buffer_minutes' => 'required|integer|min:0|max:240',
+            'low_stock_threshold' => 'required|integer|min:0|max:100000',
+        ]);
+
+        $payload = [
+            'clinic_name' => $validated['clinic_name'],
+            'clinic_phone' => $validated['clinic_phone'] ?? null,
+            'clinic_email' => $validated['clinic_email'] ?? null,
+            'clinic_address' => $validated['clinic_address'] ?? null,
+            'timezone' => $validated['timezone'],
+            'currency_code' => strtoupper($validated['currency_code']),
+            'invoice_prefix' => strtoupper($validated['invoice_prefix']),
+            'default_tax_rate' => $validated['default_tax_rate'],
+            'appointment_slot_minutes' => $validated['appointment_slot_minutes'],
+            'appointment_buffer_minutes' => $validated['appointment_buffer_minutes'],
+            'low_stock_threshold' => $validated['low_stock_threshold'],
+            'updated_by' => Auth::id(),
+        ];
+
+        $current = ClinicSetting::query()->first();
+
+        if ($current) {
+            $current->update($payload);
+        } else {
+            ClinicSetting::create($payload);
+        }
+
+        return redirect()->route('admin.settings.index')->with('success', 'Clinic settings updated successfully.');
     }
 
     /**
@@ -52,8 +93,7 @@ class SettingController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        // Placeholder for settings update logic
-        return redirect()->route('admin.settings.index')->with('success', 'Setting updated successfully.');
+        return $this->store($request);
     }
 
     /**

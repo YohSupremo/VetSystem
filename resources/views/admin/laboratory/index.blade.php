@@ -236,6 +236,8 @@
                     <th>Owner</th>
                     <th>Test</th>
                     <th>Status</th>
+                    <th>Total</th>
+                    <th>Tax</th>
                     <th>Payment</th>
                     <th>Requested</th>
                     <th>Actions</th>
@@ -245,6 +247,8 @@
                 @forelse($requisitions as $req)
                     @php
                         $paymentStatus = 'n/a';
+                        $invoiceTotal = $req->invoice ? (float) $req->invoice->total_amount : null;
+                        $invoiceTax = $req->invoice ? (float) $req->invoice->tax_amount : null;
                         if ($req->status !== 'cancelled') {
                             if ($req->invoice) {
                                 if ($req->invoice->status === 'cancelled') {
@@ -270,6 +274,20 @@
                         </td>
                         <td>{{ $req->test->test_name ?? 'N/A' }}</td>
                         <td><span class="badge">{{ $req->status }}</span></td>
+                        <td>
+                            @if($invoiceTotal !== null)
+                                ₱{{ number_format($invoiceTotal, 2) }}
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($invoiceTax !== null && $invoiceTax > 0)
+                                ₱{{ number_format($invoiceTax, 2) }}
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
                         <td>
                             @if($paymentStatus === 'paid')
                                 <span class="badge" style="background:#d1fae5;color:#065f46;">Paid</span>

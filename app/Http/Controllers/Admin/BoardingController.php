@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\CageAssignment;
 use App\Models\Appointment;
+use App\Models\ClinicSetting;
 use App\Models\Pet;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -360,6 +361,7 @@ class BoardingController extends BaseController
 
     public function processPayment(Request $request, $id)
     {
+        $stayOnPage = $request->boolean('stay_on_page');
         $boarding = CageAssignment::with(['pet.owner'])->findOrFail($id);
         $invoice = $this->ensureBoardingInvoice($boarding);
         $invoice->load(['invoiceItems', 'payments']);
@@ -396,9 +398,15 @@ class BoardingController extends BaseController
             $invoice->update(['status' => 'partial']);
         }
 
+        $successMessage = 'Payment recorded successfully for invoice ' . $invoice->invoice_number . '.';
+
+        if ($stayOnPage) {
+            return back()->with('success', $successMessage);
+        }
+
         return redirect()
             ->route('admin.boarding.show', $boarding->id)
-            ->with('success', 'Payment recorded successfully for invoice ' . $invoice->invoice_number . '.');
+            ->with('success', $successMessage);
     }
 
     /**
@@ -585,13 +593,15 @@ class BoardingController extends BaseController
         }
 
         $issueDate = now()->toDateString();
+        $prefix = ClinicSetting::invoicePrefix();
+        $defaultTaxRate = ClinicSetting::defaultTaxRate();
         $invoice = new Invoice([
             'owner_id' => $ownerId,
             'pet_id' => $boarding->pet_id,
-            'invoice_prefix' => 'INV',
+            'invoice_prefix' => $prefix,
             'issue_date' => $issueDate,
             'due_date' => Carbon::parse($issueDate)->addDays(7)->toDateString(),
-            'tax_rate' => 0,
+            'tax_rate' => $defaultTaxRate,
             'discount_amount' => 0,
             'status' => 'pending',
             'notes' => 'Boarding invoice for assignment #' . $boarding->id . ' ' . $this->boardingInvoiceTag($boarding->id),

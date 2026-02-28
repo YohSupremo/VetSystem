@@ -3,7 +3,7 @@
 -- COMPLETE SCHEMA WITH REGISTRATION NUMBERS
 -- Fully Normalized (2NF & 3NF Compliant)
 -- Date: February 22, 2026
--- Version: 4.4 ENHANCED (Registration + Notification + Medical Record Linkage)
+-- Version: 4.5 ENHANCED (Registration + Notification + Medical Record Linkage)
 -- =============================
 
 -- CHANGES FROM v4.0:
@@ -17,10 +17,13 @@
 --    quiet_hours_start, quiet_hours_end, notification_frequency
 -- ✅ Confirmed notifications schema parity columns:
 --    icon, method, priority, scheduled_for, sent_at, read_at,
---    is_read, action_url, reference_type, reference_id,
+--    action_url, reference_type, reference_id,
 --    error_message, retry_count
 -- ✅ Added nullable medical_record_id FK to chronic_conditions and pet_allergies
 --    to track where conditions/allergies were diagnosed
+-- ✅ Added clinic_settings table (non-JSON, column-based global system settings)
+-- ✅ Normalized notification read state to avoid redundancy:
+--    use status + read_at as source of truth (removed is_read)
 
 CREATE DATABASE IF NOT EXISTS vet_clinic_final;
 USE vet_clinic_final;
@@ -685,6 +688,34 @@ CREATE TABLE staff_schedules (
 ) ENGINE=InnoDB;
 
 -- =============================
+-- CLINIC SETTINGS (GLOBAL / NON-JSON)
+-- =============================
+CREATE TABLE clinic_settings (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    clinic_name VARCHAR(150) NOT NULL,
+    clinic_phone VARCHAR(30),
+    clinic_email VARCHAR(150),
+    clinic_address TEXT,
+    timezone VARCHAR(100) DEFAULT 'Asia/Manila',
+    currency_code CHAR(3) DEFAULT 'PHP',
+    invoice_prefix VARCHAR(10) DEFAULT 'INV',
+    default_tax_rate DECIMAL(5,2) DEFAULT 0.00,
+    appointment_slot_minutes INT DEFAULT 30,
+    appointment_buffer_minutes INT DEFAULT 10,
+    low_stock_threshold INT DEFAULT 10,
+    updated_by BIGINT UNSIGNED,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT chk_default_tax_rate CHECK (default_tax_rate >= 0 AND default_tax_rate <= 100),
+    CONSTRAINT chk_slot_minutes CHECK (appointment_slot_minutes > 0),
+    CONSTRAINT chk_buffer_minutes CHECK (appointment_buffer_minutes >= 0),
+    CONSTRAINT chk_low_stock_threshold CHECK (low_stock_threshold >= 0),
+    INDEX idx_clinic_name (clinic_name),
+    INDEX idx_invoice_prefix (invoice_prefix)
+) ENGINE=InnoDB;
+
+-- =============================
 -- NOTIFICATION SYSTEM
 -- =============================
 CREATE TABLE notifications (
@@ -705,12 +736,11 @@ CREATE TABLE notifications (
     message TEXT NOT NULL,
     icon VARCHAR(255) DEFAULT 'bell',
     method ENUM('in_app','email','sms','both') DEFAULT 'in_app',
-    status ENUM('pending','sent','failed','read') DEFAULT 'pending',
+    status ENUM('pending','sent','failed','read') DEFAULT 'pending' COMMENT 'Read state is tracked via status + read_at',
     priority ENUM('low','normal','high','urgent') DEFAULT 'normal',
     scheduled_for DATETIME NOT NULL,
     sent_at DATETIME,
     read_at DATETIME,
-    is_read TINYINT(1) DEFAULT 0,
     action_url VARCHAR(255),
     reference_type ENUM('appointment','pet','invoice','prescription','vaccination','lab_test','cage_assignment','inventory') NULL,
     reference_id BIGINT UNSIGNED NULL,
@@ -844,6 +874,6 @@ CREATE TABLE incident_notes (
 
 -- =============================
 -- END OF SCHEMA
--- Total Tables: 34 -> no insurance
--- Enhanced Tables: 2 (pets, invoices)
+-- Total Tables: 35 -> no insurance
+-- Enhanced Tables: 3 (pets, invoices, clinic_settings)
 -- =============================

@@ -21,7 +21,6 @@ class Notification extends Model
         'error_message',
         'retry_count',
         'icon',
-        'is_read',
         'priority',
         'action_url',
     ];
@@ -30,7 +29,6 @@ class Notification extends Model
         'scheduled_for' => 'datetime',
         'sent_at' => 'datetime',
         'read_at' => 'datetime',
-        'is_read' => 'boolean',
     ];
 
     // Notification types (must match enum in migration)
@@ -68,7 +66,7 @@ class Notification extends Model
 
     public function scopeUnread($query)
     {
-        return $query->where('is_read', false)->orWhere('status', '!=', 'read');
+        return $query->where('status', '!=', self::STATUS_READ);
     }
 
     public function scopeForUser($query, $userId)
@@ -188,7 +186,6 @@ class Notification extends Model
     public function markAsRead()
     {
         $this->update([
-            'is_read' => true,
             'read_at' => now(),
             'status' => self::STATUS_READ,
         ]);
@@ -199,7 +196,7 @@ class Notification extends Model
     public function markAsUnread()
     {
         $this->update([
-            'is_read' => false,
+            'status' => self::STATUS_PENDING,
             'read_at' => null,
         ]);
 
@@ -209,5 +206,10 @@ class Notification extends Model
     public function delete()
     {
         return parent::delete();
+    }
+
+    public function getIsReadAttribute(): bool
+    {
+        return $this->status === self::STATUS_READ;
     }
 }

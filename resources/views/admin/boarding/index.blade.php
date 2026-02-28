@@ -238,6 +238,7 @@
                     <th>Check-out</th>
                     <th>Status</th>
                     <th>Billing</th>
+                    <th>Tax</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -312,8 +313,36 @@
                             <span class="badge badge-secondary">N/A</span>
                         @endif
                     </td>
+                    <td>
+                        @if($boarding->id)
+                            @php
+                                $invoice = $boardingBilling[$boarding->id] ?? null;
+                            @endphp
+
+                            @if($invoice && (float) $invoice->tax_amount > 0)
+                                <span class="text-muted">₱{{ number_format($invoice->tax_amount, 2) }}</span>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        @else
+                            <span class="text-muted">—</span>
+                        @endif
+                    </td>
                     <td class="actions">
                         @if($boarding->id)
+                            @php
+                                $invoice = $boardingBilling[$boarding->id] ?? null;
+                            @endphp
+                            @if($invoice && !in_array($invoice->status, ['paid', 'cancelled']))
+                                <form method="POST" action="{{ route('admin.boarding.payment.process', $boarding->id) }}" style="display:inline;" onsubmit="return confirm('Mark this boarding invoice as paid?');">
+                                    @csrf
+                                    <input type="hidden" name="payment_method" value="cash">
+                                    <input type="hidden" name="stay_on_page" value="1">
+                                    <button type="submit" class="btn-icon" title="Mark Paid" style="color:#15803d;">
+                                        <i class="fas fa-hand-holding-usd"></i>
+                                    </button>
+                                </form>
+                            @endif
                             <a href="{{ route('admin.boarding.show', $boarding->id) }}" class="btn-icon" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
@@ -336,7 +365,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="text-center">No boardings found</td>
+                    <td colspan="9" class="text-center">No boardings found</td>
                 </tr>
                 @endforelse
             </tbody>

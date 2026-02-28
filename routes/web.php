@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Models\ClinicSetting;
+use App\Models\Pet;
+use App\Models\User;
+use App\Models\Appointment;
 
 // Include test routes
 require __DIR__.'/test-db.php';
@@ -32,6 +36,11 @@ use App\Http\Controllers\Admin\PetAllergyController;
 // Welcome Page with Dynamic Carousel
 Route::get('/', function () {
     $carouselImages = [];
+    $landingStats = [
+        'pets' => 0,
+        'veterinarians' => 0,
+        'appointments' => 0,
+    ];
     $carouselDir = public_path('images/carousel');
 
     if (is_dir($carouselDir)) {
@@ -46,8 +55,21 @@ Route::get('/', function () {
         $carouselImages = array_values(array_unique($carouselImages));
     }
 
-    return view('welcome', compact('carouselImages'));
+    try {
+        $landingStats['pets'] = Pet::count();
+        $landingStats['veterinarians'] = User::where('role', 'veterinarian')->count();
+        $landingStats['appointments'] = Appointment::count();
+    } catch (\Throwable $e) {
+    }
+
+    return view('welcome', compact('carouselImages', 'landingStats'));
 });
+
+Route::get('/learn-more', function () {
+    $clinicSetting = ClinicSetting::current();
+
+    return view('learn-more', compact('clinicSetting'));
+})->name('learn-more');
 
 // Authentication Routes
 Route::get('/register', function(){

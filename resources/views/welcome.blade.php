@@ -37,21 +37,21 @@
                         Get Started
                         <span>&rarr;</span>
                     </a>
-                    <a href="#services" class="btn btn-secondary">Learn More</a>
+                    <a href="{{ route('learn-more') }}" class="btn btn-secondary">Learn More</a>
                 </div>
 
                 <div class="stats">
                     <div class="stat-item">
-                        <div class="stat-number">500+</div>
+                        <div class="stat-number">{{ number_format($landingStats['pets'] ?? 0) }}</div>
                         <div class="stat-label">Happy Pets</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number">50+</div>
+                        <div class="stat-number">{{ number_format($landingStats['veterinarians'] ?? 0) }}</div>
                         <div class="stat-label">Expert Vets</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number">24/7</div>
-                        <div class="stat-label">Support</div>
+                        <div class="stat-number">{{ number_format($landingStats['appointments'] ?? 0) }}</div>
+                        <div class="stat-label">Appointments</div>
                     </div>
                 </div>
             </div>

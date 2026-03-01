@@ -41,6 +41,11 @@
         border: 1px solid #e2e8f0;
         padding: 0.6rem 0.75rem;
     }
+
+    .chart-wrapper {
+        position: relative;
+        height: 320px;
+    }
 </style>
 
 <div class="content-header report-hero">
@@ -100,6 +105,32 @@
             <div class="text-muted small">Inventory Value</div>
             <div class="h4 mb-0">PHP {{ number_format($totalValue ?? 0, 2) }}</div>
         </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="report-card">
+            <h5 class="mb-3">Inventory Status Breakdown</h5>
+            <div class="chart-wrapper">
+                {!! $inventoryStatusChart->container() !!}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="report-card">
+            <h5 class="mb-3">Top Moved Items by Quantity</h5>
+            <div class="chart-wrapper">
+                {!! $topMovedItemsChart->container() !!}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="report-card">
+    <h5 class="mb-3">Movement Trend</h5>
+    <div class="chart-wrapper">
+        {!! $movementTrendsChart->container() !!}
     </div>
 </div>
 
@@ -237,4 +268,9 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+{!! $inventoryStatusChart->script() !!}
+{!! $movementTrendsChart->script() !!}
+{!! $topMovedItemsChart->script() !!}
 @endsection

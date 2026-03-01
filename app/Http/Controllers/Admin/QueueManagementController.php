@@ -26,7 +26,11 @@ class QueueManagementController extends Controller
     {
         $veterinarianId = $request->query('veterinarian_id');
         
-        if ($veterinarianId === '' || $veterinarianId === 'all') {
+        // If the user is a veterinarian, force filter to their own appointments
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian()) {
+            $veterinarianId = $user->id;
+        } elseif ($veterinarianId === '' || $veterinarianId === 'all') {
             $veterinarianId = null;
         }
 
@@ -60,7 +64,11 @@ class QueueManagementController extends Controller
     {
         $veterinarianId = $request->query('veterinarian_id');
         
-        if ($veterinarianId === '' || $veterinarianId === 'all') {
+        // If the user is a veterinarian, force filter to their own appointments
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian()) {
+            $veterinarianId = $user->id;
+        } elseif ($veterinarianId === '' || $veterinarianId === 'all') {
             $veterinarianId = null;
         }
 
@@ -84,7 +92,11 @@ class QueueManagementController extends Controller
     {
         $veterinarianId = $request->query('veterinarian_id');
         
-        if ($veterinarianId === '' || $veterinarianId === 'all') {
+        // If the user is a veterinarian, force filter to their own appointments
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian()) {
+            $veterinarianId = $user->id;
+        } elseif ($veterinarianId === '' || $veterinarianId === 'all') {
             $veterinarianId = null;
         }
 
@@ -106,6 +118,15 @@ class QueueManagementController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
+        // If the user is a veterinarian, verify the appointment is assigned to them
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian()) {
+            $appointment = Appointment::findOrFail($id);
+            if ($appointment->veterinarian_id !== $user->id) {
+                abort(403, 'Unauthorized to update this appointment.');
+            }
+        }
+        
         $request->validate([
             'status' => 'required|in:pending,confirmed,in_progress,completed,cancelled,no_show',
         ]);
@@ -144,7 +165,11 @@ class QueueManagementController extends Controller
     {
         $veterinarianId = $request->query('veterinarian_id');
         
-        if ($veterinarianId === '' || $veterinarianId === 'all') {
+        // If the user is a veterinarian, force filter to their own appointments
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian()) {
+            $veterinarianId = $user->id;
+        } elseif ($veterinarianId === '' || $veterinarianId === 'all') {
             $veterinarianId = null;
         }
 

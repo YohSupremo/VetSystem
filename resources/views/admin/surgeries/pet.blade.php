@@ -37,6 +37,8 @@
                             <th>Scheduled</th>
                             <th>Surgeon</th>
                             <th>Status</th>
+                            <th>Total Amount</th>
+                            <th>Tax</th>
                             <th>Payment Status</th>
                             <th class="col-actions">Actions</th>
                         </tr>
@@ -84,6 +86,30 @@
                                     <span class="status-badge" style="background: {{ $statusStyle['bg'] }}; color: {{ $statusStyle['color'] }};">
                                         {{ ucfirst(str_replace('_', ' ', $surgery->status)) }}
                                     </span>
+                                </td>
+                                <td>
+                                    @if(!$isVirtual)
+                                        @php $invoice = $surgery->getAttribute('billing_invoice'); @endphp
+                                        @if($invoice)
+                                            <span class="null-val">₱{{ number_format($invoice->total_amount, 2) }}</span>
+                                        @else
+                                            <span class="null-val">—</span>
+                                        @endif
+                                    @else
+                                        <span class="null-val">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if(!$isVirtual)
+                                        @php $invoice = $surgery->getAttribute('billing_invoice'); @endphp
+                                        @if($invoice && (float) $invoice->tax_amount > 0)
+                                            <span class="null-val">₱{{ number_format($invoice->tax_amount, 2) }}</span>
+                                        @else
+                                            <span class="null-val">—</span>
+                                        @endif
+                                    @else
+                                        <span class="null-val">—</span>
+                                    @endif
                                 </td>
                                 <td>
                                     @if(!$isVirtual)
@@ -261,21 +287,23 @@
     table-layout: fixed;
 }
 
-.surg-table th:nth-child(1), .surg-table td:nth-child(1) { width: 20%; }
-.surg-table th:nth-child(2), .surg-table td:nth-child(2) { width: 18%; text-align: center; }
-.surg-table th:nth-child(3), .surg-table td:nth-child(3) { width: 17%; text-align: center; }
-.surg-table th:nth-child(4), .surg-table td:nth-child(4) { width: 13%; text-align: center; }
-.surg-table th:nth-child(5), .surg-table td:nth-child(5) { width: 13%; text-align: center; }
-.surg-table th:nth-child(6), .surg-table td:nth-child(6) { width: 19%; text-align: center; }
+.surg-table th:nth-child(1), .surg-table td:nth-child(1) { width: 18%; }
+.surg-table th:nth-child(2), .surg-table td:nth-child(2) { width: 15%; text-align: center; }
+.surg-table th:nth-child(3), .surg-table td:nth-child(3) { width: 14%; text-align: center; }
+.surg-table th:nth-child(4), .surg-table td:nth-child(4) { width: 10%; text-align: center; }
+.surg-table th:nth-child(5), .surg-table td:nth-child(5) { width: 12%; text-align: center; }
+.surg-table th:nth-child(6), .surg-table td:nth-child(6) { width: 8%; text-align: center; }
+.surg-table th:nth-child(7), .surg-table td:nth-child(7) { width: 11%; text-align: center; }
+.surg-table th:nth-child(8), .surg-table td:nth-child(8) { width: 12%; text-align: center; }
 
 .surg-table thead tr {
     border-bottom: 1px solid var(--soft-gray, #f0f0f0);
 }
 
 .surg-table thead th {
-    padding: 13px 14px;
+    padding: 10px 10px;
     text-align: left;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.9px;
     text-transform: uppercase;
@@ -292,20 +320,21 @@
 .surg-table tbody tr:hover { background: rgba(0,0,0,0.018); }
 
 .surg-table tbody td {
-    padding: 11px 14px;
+    padding: 9px 10px;
     vertical-align: middle;
     color: var(--dark-text);
-    font-size: 15px;
+    font-size: 13px;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
 }
 
 /* ── Surgery cell ────────────────────────────────────────────── */
 .surgery-name {
     font-weight: 600;
     color: var(--dark-text);
-    font-size: 15px;
+    font-size: 13px;
     line-height: 1.2;
 }
 
@@ -330,7 +359,7 @@
 /* ── Date chips ──────────────────────────────────────────────── */
 .date-chip {
     display: inline-block;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--dark-text);
     white-space: nowrap;
@@ -338,16 +367,16 @@
 
 /* ── Vet name ────────────────────────────────────────────────── */
 .vet-name {
-    font-size: 15px;
+    font-size: 13px;
     color: var(--dark-text);
 }
 
 /* ── Payment ─────────────────────────────────────────────────── */
 .status-badge {
     display: inline-block;
-    padding: 5px 12px;
+    padding: 4px 9px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.3px;
     white-space: nowrap;
@@ -373,7 +402,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
 }
 .action-group form { margin: 0; }
 
@@ -381,13 +410,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     border-radius: 9px;
     border: 1px solid rgba(0,0,0,0.08);
     background: var(--white, #fff);
     color: var(--dark-text);
-    font-size: 13px;
+    font-size: 12px;
     text-decoration: none;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s, transform 0.12s;

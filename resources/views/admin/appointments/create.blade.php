@@ -127,17 +127,29 @@
 
                     <div class="form-group">
                         <label for="veterinarian_id">Assigned Staff</label>
-                        <select name="veterinarian_id" id="veterinarian_id">
-                            <option value="">Select staff</option>
-                            @foreach($assignableStaff as $staff)
-                                <option value="{{ $staff->id }}"
-                                        data-role="{{ $staff->role }}"
-                                        {{ old('veterinarian_id') == $staff->id ? 'selected' : '' }}>
-                                    {{ $staff->first_name }} {{ $staff->last_name }} ({{ ucfirst($staff->role) }})
-                                </option>
-                            @endforeach
-                        </select>
-                        <div class="inline-hint" id="assignee_hint">Staff options are filtered by visit type.</div>
+                        @if(isset($isVeterinarian) && $isVeterinarian)
+                            {{-- Veterinarian sees their own name, read-only --}}
+                            <input type="text" 
+                                   value="{{ auth()->user()->first_name }} {{ auth()->user()->last_name }} (Veterinarian)" 
+                                   class="form-control" 
+                                   readonly 
+                                   style="background-color: #f5f5f5; cursor: not-allowed;">
+                            <input type="hidden" name="veterinarian_id" value="{{ auth()->user()->id }}">
+                            <div class="inline-hint">You are automatically assigned to this appointment.</div>
+                        @else
+                            {{-- Other users see dropdown --}}
+                            <select name="veterinarian_id" id="veterinarian_id">
+                                <option value="">Select staff</option>
+                                @foreach($assignableStaff as $staff)
+                                    <option value="{{ $staff->id }}"
+                                            data-role="{{ $staff->role }}"
+                                            {{ old('veterinarian_id') == $staff->id ? 'selected' : '' }}>
+                                        {{ $staff->first_name }} {{ $staff->last_name }} ({{ ucfirst($staff->role) }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="inline-hint" id="assignee_hint">Staff options are filtered by visit type.</div>
+                        @endif
                         @error('veterinarian_id')
                             <div class="inline-hint">{{ $message }}</div>
                         @enderror

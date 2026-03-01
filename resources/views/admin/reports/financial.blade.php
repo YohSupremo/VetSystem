@@ -41,6 +41,11 @@
         border: 1px solid #e2e8f0;
         padding: 0.6rem 0.75rem;
     }
+
+    .chart-wrapper {
+        position: relative;
+        height: 320px;
+    }
 </style>
 
 <div class="content-header report-hero">
@@ -92,7 +97,7 @@
             <div class="h4 mb-0">PHP {{ number_format($totalRevenue ?? 0, 2) }}</div>
         </div>
         <div class="stat-card">
-            <div class="text-muted small">Paid Amount</div>
+            <div class="text-muted small">Paid Amount (Applied)</div>
             <div class="h4 mb-0">PHP {{ number_format($paidAmount ?? 0, 2) }}</div>
         </div>
         <div class="stat-card">
@@ -100,6 +105,10 @@
             <div class="h4 mb-0">PHP {{ number_format($outstandingAmount ?? 0, 2) }}</div>
         </div>
     </div>
+</div>
+
+<div class="text-muted small mb-3">
+    Paid and payment-method totals are based on applied payments per invoice and are capped at each invoice total to avoid overcounting.
 </div>
 
 <div class="report-card border-danger" style="border-left: 4px solid #dc3545;">
@@ -118,6 +127,32 @@
             <div class="text-muted small">Amount Cancelled</div>
             <div class="h4 mb-0 text-danger">PHP {{ number_format($cancelledAmount ?? 0, 2) }}</div>
         </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="report-card">
+            <h5 class="mb-3">Revenue Trend</h5>
+            <div class="chart-wrapper">
+                {!! $revenueByMonthChart->container() !!}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="report-card">
+            <h5 class="mb-3">Payments Distribution</h5>
+            <div class="chart-wrapper">
+                {!! $paymentMethodsChart->container() !!}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="report-card">
+    <h5 class="mb-3">Top Services by Revenue</h5>
+    <div class="chart-wrapper">
+        {!! $topServicesChart->container() !!}
     </div>
 </div>
 
@@ -149,7 +184,7 @@
     </div>
     <div class="col-lg-6">
         <div class="report-card">
-            <h5 class="mb-3">Payment Methods</h5>
+            <h5 class="mb-3">Payment Methods (Applied)</h5>
             <div class="table-responsive">
                 <table class="table table-sm">
                     <thead>
@@ -232,4 +267,9 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+{!! $revenueByMonthChart->script() !!}
+{!! $paymentMethodsChart->script() !!}
+{!! $topServicesChart->script() !!}
 @endsection

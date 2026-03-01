@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Models\ClinicSetting;
+use App\Models\Pet;
+use App\Models\User;
+use App\Models\Appointment;
 
 // Include test routes
 require __DIR__.'/test-db.php';
@@ -32,6 +36,11 @@ use App\Http\Controllers\Admin\PetAllergyController;
 // Welcome Page with Dynamic Carousel
 Route::get('/', function () {
     $carouselImages = [];
+    $landingStats = [
+        'pets' => 0,
+        'veterinarians' => 0,
+        'appointments' => 0,
+    ];
     $carouselDir = public_path('images/carousel');
 
     if (is_dir($carouselDir)) {
@@ -46,8 +55,21 @@ Route::get('/', function () {
         $carouselImages = array_values(array_unique($carouselImages));
     }
 
-    return view('welcome', compact('carouselImages'));
+    try {
+        $landingStats['pets'] = Pet::count();
+        $landingStats['veterinarians'] = User::where('role', 'veterinarian')->count();
+        $landingStats['appointments'] = Appointment::count();
+    } catch (\Throwable $e) {
+    }
+
+    return view('welcome', compact('carouselImages', 'landingStats'));
 });
+
+Route::get('/learn-more', function () {
+    $clinicSetting = ClinicSetting::current();
+
+    return view('learn-more', compact('clinicSetting'));
+})->name('learn-more');
 
 // Authentication Routes
 Route::get('/register', function(){
@@ -75,7 +97,7 @@ Route::get('/reports', function () {
 });
 
 // Customer Routes
-Route::prefix('customer')->name('customer.')->group(function () {
+Route::prefix('customer')->name('customer.')->middleware(['auth.flash'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Customer\CustomerDashboardController::class, 'index'])->name('dashboard');
     
     // Pet Management
@@ -147,7 +169,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
 });
 
 // Veterinarian Routes
-Route::prefix('veterinarian')->name('veterinarian.')->group(function () {
+Route::prefix('veterinarian')->name('veterinarian.')->middleware(['auth.flash'])->group(function () {
     Route::get('/test', function() {
         return view('veterinarian.test');
     });
@@ -196,11 +218,11 @@ Route::prefix('veterinarian')->name('veterinarian.')->group(function () {
         Route::get('/settings', [App\Http\Controllers\Veterinarian\NotificationController::class, 'settings'])->name('settings');
         Route::post('/settings/update', [App\Http\Controllers\Veterinarian\NotificationController::class, 'updateSettings'])->name('settings-update');
     });
-    Route::get('/unread-count', [App\Http\Controllers\Veterinarian\NotificationController::class, 'getUnreadCount']);
+    Route::get('/unread-count', [App\Http\Controllers\Veterinarian\NotificationController::class, 'getUnreadCount'])->name('unread-count');
 });
 
 // Admin Routes
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

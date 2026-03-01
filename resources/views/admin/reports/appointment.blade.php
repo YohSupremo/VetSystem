@@ -41,6 +41,11 @@
         border: 1px solid #e2e8f0;
         padding: 0.6rem 0.75rem;
     }
+
+    .chart-wrapper {
+        position: relative;
+        height: 320px;
+    }
 </style>
 
 <div class="content-header report-hero">
@@ -95,6 +100,44 @@
         <div class="stat-card">
             <div class="text-muted small">No Shows</div>
             <div class="h4 mb-0">{{ $noShowAppointments }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="report-card">
+            <h5 class="mb-3">Appointment Status Distribution</h5>
+            <div class="chart-wrapper">
+                {!! $appointmentStatusChart->container() !!}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="report-card">
+            <h5 class="mb-3">Appointments by Type</h5>
+            <div class="chart-wrapper">
+                {!! $appointmentsByTypeChart->container() !!}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="report-card">
+            <h5 class="mb-3">Daily Appointment Trend</h5>
+            <div class="chart-wrapper">
+                {!! $dailyTrendsChart->container() !!}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="report-card">
+            <h5 class="mb-3">Peak Hours Chart</h5>
+            <div class="chart-wrapper">
+                {!! $peakHoursChart->container() !!}
+            </div>
         </div>
     </div>
 </div>
@@ -175,4 +218,10 @@
         </table>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+{!! $appointmentStatusChart->script() !!}
+{!! $appointmentsByTypeChart->script() !!}
+{!! $dailyTrendsChart->script() !!}
+{!! $peakHoursChart->script() !!}
 @endsection

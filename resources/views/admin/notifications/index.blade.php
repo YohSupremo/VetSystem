@@ -43,11 +43,11 @@
                                     </div>
                                     <div class="flex gap-2 ml-4">
                                         @if(!$notification->is_read)
-                                            <button class="btn btn-xs btn-ghost" onclick="markAsRead({{ $notification->id }})">
+                                            <button class="btn btn-xs btn-ghost" onclick="markAsRead('{{ route(str_replace('.notifications.index', '.notifications.mark-read', Route::currentRouteName()), ['id' => $notification->id]) }}', {{ $notification->id }})">
                                                 <i class="fas fa-check"></i>
                                             </button>
                                         @endif
-                                        <button class="btn btn-xs btn-ghost text-error" onclick="deleteNotification({{ $notification->id }})">
+                                        <button class="btn btn-xs btn-ghost text-error" onclick="deleteNotification('{{ route(str_replace('.notifications.index', '.notifications.delete', Route::currentRouteName()), ['id' => $notification->id]) }}', {{ $notification->id }})">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -100,60 +100,114 @@
 </div>
 
 <script>
-function markAsRead(notificationId) {
-    fetch(`{{ route('admin.notifications.mark-read', '') }}/${notificationId}`, {
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token());
+const unreadCountUrl = @json(
+    route(
+        Route::has(str_replace('.notifications.index', '.notifications.unread-count', Route::currentRouteName()))
+            ? str_replace('.notifications.index', '.notifications.unread-count', Route::currentRouteName())
+            : str_replace('.notifications.index', '.unread-count', Route::currentRouteName())
+    )
+);
+
+function showFlashMessage(message, type = 'success') {
+    const existing = document.getElementById('notification-flash-message');
+    if (existing) {
+        existing.remove();
+    }
+
+    const flash = document.createElement('div');
+    flash.id = 'notification-flash-message';
+    flash.textContent = message;
+    flash.style.position = 'fixed';
+    flash.style.top = '20px';
+    flash.style.right = '20px';
+    flash.style.zIndex = '9999';
+    flash.style.padding = '12px 16px';
+    flash.style.borderRadius = '8px';
+    flash.style.color = '#fff';
+    flash.style.fontWeight = '600';
+    flash.style.boxShadow = '0 8px 20px rgba(0,0,0,0.2)';
+    flash.style.backgroundColor = type === 'success' ? '#16a34a' : '#dc2626';
+
+    document.body.appendChild(flash);
+
+    setTimeout(() => {
+        flash.remove();
+    }, 2500);
+}
+
+function markAsRead(url, notificationId) {
+    fetch(url, {
         method: 'POST',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-CSRF-TOKEN': csrfToken,
             'Content-Type': 'application/json'
         }
     })
-    .then(response => response.json())
+    .then(response => response.ok ? response.json() : Promise.reject(response))
     .then(data => {
         if (data.success) {
             document.querySelector(`[data-id="${notificationId}"]`).remove();
             updateUnreadCount();
+            showFlashMessage('Notification marked as read.');
+        } else {
+            alert('Unable to mark notification as read.');
         }
-    });
+    })
+    .catch(() => alert('Unable to mark notification as read.'));
 }
 
 function markAllAsRead() {
-    fetch(`{{ route('admin.notifications.mark-all-read') }}`, {
+    const url = '{{ route(str_replace('.notifications.index', '.notifications.mark-all-read', Route::currentRouteName())) }}';
+    fetch(url, {
         method: 'POST',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-CSRF-TOKEN': csrfToken,
             'Content-Type': 'application/json'
         }
     })
-    .then(response => response.json())
+    .then(response => response.ok ? response.json() : Promise.reject(response))
     .then(data => {
         if (data.success) {
-            location.reload();
+            const unreadBadges = document.querySelectorAll('.notification-item .badge.badge-primary.badge-sm');
+            unreadBadges.forEach((badge) => badge.remove());
+
+            const markReadButtons = document.querySelectorAll('.notification-item button[onclick*="markAsRead("]');
+            markReadButtons.forEach((button) => button.remove());
+
+            updateUnreadCount();
+            showFlashMessage('All notifications marked as read.');
+        } else {
+            alert('Unable to mark all notifications as read.');
         }
-    });
+    })
+    .catch(() => alert('Unable to mark all notifications as read.'));
 }
 
-function deleteNotification(notificationId) {
+function deleteNotification(url, notificationId) {
     if (confirm('Are you sure you want to delete this notification?')) {
-        fetch(`{{ route('admin.notifications.delete', '') }}/${notificationId}`, {
+        fetch(url, {
             method: 'DELETE',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-CSRF-TOKEN': csrfToken,
                 'Content-Type': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => response.ok ? response.json() : Promise.reject(response))
         .then(data => {
             if (data.success) {
                 document.querySelector(`[data-id="${notificationId}"]`).remove();
                 updateUnreadCount();
+            } else {
+                alert('Unable to delete notification.');
             }
-        });
+        })
+        .catch(() => alert('Unable to delete notification.'));
     }
 }
 
 function updateUnreadCount() {
-    fetch(`{{ route('admin.notifications.unread-count') }}`)
+    fetch(unreadCountUrl)
         .then(response => response.json())
         .then(data => {
             document.getElementById('unread-count').textContent = data.count;

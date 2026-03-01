@@ -4,10 +4,10 @@
 @section('page-description', 'View and manage pet prescriptions')
 
 @section('content')
-<div class="card">
-    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="margin:0;"><i class="fas fa-prescription"></i> Prescriptions</h3>
-        <a href="{{ route('admin.prescriptions.create') }}" class="btn btn-primary">
+<div class="card prescriptions-card">
+    <div class="card-header prescriptions-header">
+        <h3><i class="fas fa-prescription"></i> Prescriptions</h3>
+        <a href="{{ route('admin.prescriptions.create') }}" class="btn btn-primary prescriptions-create-btn">
             <i class="fas fa-plus"></i> Create Prescription
         </a>
     </div>
@@ -67,7 +67,8 @@
                     <div class="group-summary">
                         <div class="pet-info">
                             <div class="pet-avatar">
-                                <i class="fas fa-paw"></i>
+                                <img src="{{ $group['medical_record']->pet->photo_url }}" alt="{{ $group['medical_record']->pet->name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <i class="fas fa-paw" style="display:none;"></i>
                             </div>
                             <div class="pet-details">
                                 <h4>{{ $group['medical_record']->pet->name }}</h4>
@@ -119,6 +120,46 @@
 </div>
 
 <style>
+.prescriptions-card {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(251, 146, 60, 0.18);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+}
+
+.prescriptions-header {
+    background: linear-gradient(135deg, rgba(255, 247, 237, 0.95), rgba(253, 242, 248, 0.95));
+    border-bottom: 1px solid rgba(251, 146, 60, 0.2);
+    padding: 1.05rem 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+}
+
+.prescriptions-header h3 {
+    margin: 0;
+    font-weight: 800;
+    background: linear-gradient(135deg, #FB923C 0%, #EC4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.prescriptions-create-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 0.58rem 1rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #FB923C 0%, #EC4899 100%);
+    box-shadow: 0 10px 20px rgba(236, 72, 153, 0.24);
+}
+
+.prescriptions-create-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 24px rgba(236, 72, 153, 0.3);
+}
+
 .filters-section {
     background: #f8f9fa;
     padding: 1.5rem;
@@ -202,6 +243,23 @@
     color: white;
     font-size: 24px;
     flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+}
+
+.pet-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.pet-avatar i {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .pet-details h4 {

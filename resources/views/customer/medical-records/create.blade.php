@@ -200,7 +200,7 @@
         <div class="logo-section">
             <a href="{{ route('customer.dashboard') }}" class="d-flex align-items-center text-decoration-none">
                 <i class="fas fa-paw paw-icon text-primary"></i>
-                <h1 class="ms-3 mb-0">PawCare</h1>
+                <h1 class="ms-3 mb-0">{{ $clinicName ?? 'PawCare' }}</h1>
             </a>
         </div>
         <div class="user-section">

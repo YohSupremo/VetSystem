@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\ClinicSetting;
 use App\Models\InventoryItem;
 use App\Models\Pet;
 use App\Models\Vaccination;
@@ -445,14 +446,16 @@ class VaccinationController extends Controller
         $issueDate = $vaccination->administered_date
             ? Carbon::parse($vaccination->administered_date)->toDateString()
             : now()->toDateString();
+        $prefix = ClinicSetting::invoicePrefix();
+        $defaultTaxRate = ClinicSetting::defaultTaxRate();
 
         $invoice = new Invoice([
             'owner_id' => $ownerId,
             'pet_id' => $vaccination->pet_id,
-            'invoice_prefix' => 'INV',
+            'invoice_prefix' => $prefix,
             'issue_date' => $issueDate,
             'due_date' => $issueDate,
-            'tax_rate' => 0,
+            'tax_rate' => $defaultTaxRate,
             'discount_amount' => 0,
             'status' => 'pending',
             'notes' => 'Vaccination invoice for record #' . $vaccination->id . ' ' . $this->vaccinationInvoiceTag($vaccination->id),

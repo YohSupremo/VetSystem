@@ -314,7 +314,7 @@
                                             <div class="items-more">+{{ $order->items->count() - 2 }} more</div>
                                         @endif
                                     </td>
-                                    <td class="fw-bold">₱{{ number_format($order->items->sum('total'), 2) }}</td>
+                                    <td class="fw-bold">₱{{ number_format($order->billing_total ?? $order->items->sum('total'), 2) }}</td>
                                     <td>
                                         @if($order->status === 'completed' || $order->status === 'fulfilled')
                                             <span class="status-badge status-completed">Completed</span>

@@ -118,6 +118,7 @@
                 <th>Medication</th>
                 <th>Quantity</th>
                 <th>Total Amount</th>
+                <th>Tax</th>
                 <th>Dispensed By</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -135,6 +136,10 @@
                         $ownerUser = $pet?->owner?->user;
                         $displayDate = $record->dispensed_at ?? $record->transaction_date ?? $record->created_at;
                         $invoice = $isDispensingTable ? $record->invoice : null;
+                        $displayTotalAmount = $invoice
+                            ? (float) $invoice->total_amount
+                            : ((float) $quantity * $unitPrice);
+                        $displayTaxAmount = $invoice ? (float) $invoice->tax_amount : 0;
                         $paymentStatus = 'unpaid';
                         if ($invoice) {
                             $paymentStatus = $invoice->is_paid
@@ -173,8 +178,15 @@
                         <span class="badge bg-info">{{ $quantity }}</span>
                     </td>
                     <td>
-                        @if($unitPrice > 0)
-                            <span class="amount-badge">₱{{ number_format($quantity * $unitPrice, 2) }}</span>
+                        @if($displayTotalAmount > 0)
+                            <span class="amount-badge">₱{{ number_format($displayTotalAmount, 2) }}</span>
+                        @else
+                            <span class="text-muted">—</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($displayTaxAmount > 0)
+                            <span class="amount-badge">₱{{ number_format($displayTaxAmount, 2) }}</span>
                         @else
                             <span class="text-muted">—</span>
                         @endif
@@ -296,7 +308,7 @@ function printReceipt(dispensingId) {
         </head>
         <body>
             <div class="header">
-                <h2>VetSystem Pharmacy</h2>
+                <h2>{{ $clinicName ?? 'PawCare' }} Pharmacy</h2>
                 <p>Receipt #${dispensingId}</p>
             </div>
             <div class="receipt-details">

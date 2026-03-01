@@ -2,7 +2,7 @@
 
 @php($bodyClass = 'landing-body')
 
-@section('title', 'PawCare - Veterinary Care')
+@section('title', ($clinicName ?? 'PawCare') . ' - Veterinary Care')
 
 @section('content')
 <div class="landing-page">
@@ -10,7 +10,7 @@
         <div class="nav-container">
             <div class="logo">
                 <span class="paw">🐾</span>
-                <h1>PawCare</h1>
+                <h1>{{ $clinicName ?? 'PawCare' }}</h1>
             </div>
             <div class="nav-buttons">
                 <a href="/login" class="btn btn-login">Login</a>
@@ -37,21 +37,21 @@
                         Get Started
                         <span>&rarr;</span>
                     </a>
-                    <a href="#services" class="btn btn-secondary">Learn More</a>
+                    <a href="{{ route('learn-more') }}" class="btn btn-secondary">Learn More</a>
                 </div>
 
                 <div class="stats">
                     <div class="stat-item">
-                        <div class="stat-number">500+</div>
+                        <div class="stat-number">{{ number_format($landingStats['pets'] ?? 0) }}</div>
                         <div class="stat-label">Happy Pets</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number">50+</div>
+                        <div class="stat-number">{{ number_format($landingStats['veterinarians'] ?? 0) }}</div>
                         <div class="stat-label">Expert Vets</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number">24/7</div>
-                        <div class="stat-label">Support</div>
+                        <div class="stat-number">{{ number_format($landingStats['appointments'] ?? 0) }}</div>
+                        <div class="stat-label">Appointments</div>
                     </div>
                 </div>
             </div>

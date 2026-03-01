@@ -51,12 +51,6 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasColumn('notifications', 'is_read')) {
-            Schema::table('notifications', function (Blueprint $table) {
-                $table->boolean('is_read')->default(false);
-            });
-        }
-
         if (!Schema::hasColumn('notifications', 'action_url')) {
             Schema::table('notifications', function (Blueprint $table) {
                 $table->string('action_url')->nullable();

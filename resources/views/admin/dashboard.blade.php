@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - VetSystem</title>
+    <title>Admin Dashboard - {{ $clinicName ?? 'PawCare' }}</title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1393,7 +1393,7 @@
             </button>
             
             <div class="logo-section">
-                <h1>🐾 PawCare</h1>
+                <h1>🐾 {{ $clinicName ?? 'Clinic' }}</h1>
                 <p>Veterinary Admin Portal</p>
             </div>
 
@@ -1446,7 +1446,7 @@
                     @endif
                 </div>
 
-                @if($showMedical)
+                @if($showMedical ?? in_array(auth()->user()->role ?? null, ['admin', 'veterinarian']))
                 <div class="nav-section">
                     <div class="nav-section-title">Medical</div>
                     @if(in_array(auth()->user()->role, ['admin', 'veterinarian']))
@@ -1490,7 +1490,7 @@
                 </div>
                 @endif
 
-                @if($showServices)
+                @if($showServices ?? in_array(auth()->user()->role ?? null, ['admin', 'staff', 'boarding', 'groomer', 'pharmacy']))
                 <div class="nav-section">
                     <div class="nav-section-title">Services</div>
                     @if(in_array(auth()->user()->role, ['admin', 'staff', 'boarding']))
@@ -1517,16 +1517,11 @@
                         <span>Pharmacy</span>
                     </a>
                     @endif
-                    @if(auth()->user()->role === 'admin')
-                    <a href="{{ route('admin.laboratory.index') }}" class="nav-item {{ request()->routeIs('admin.laboratory.*') ? 'active' : '' }}">
-                        <i class="fas fa-flask"></i>
-                        <span>Laboratory</span>
-                    </a>
-                    @endif
+                  
                 </div>
                 @endif
 
-                @if($showManagement)
+                @if($showManagement ?? in_array(auth()->user()->role ?? null, ['admin', 'pharmacy', 'reception']))
                 <div class="nav-section">
                     <div class="nav-section-title">Management</div>
                     @if(in_array(auth()->user()->role, ['admin', 'pharmacy']))
@@ -1653,7 +1648,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('notificationsModal')">Close</button>
-                <button class="btn btn-primary">Mark All as Read</button>
+                <button class="btn btn-primary" onclick="markAllNotificationsRead()">Mark All as Read</button>
             </div>
         </div>
     </div>
@@ -1750,6 +1745,7 @@
         };
         const notificationsBase = notificationsBaseMap[currentRole] || '/admin/notifications';
         const unreadCountEndpoint = unreadCountBaseMap[currentRole] || '/admin/notifications/unread-count';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token());
 
         // Notifications Functions
         function openNotifications() {
@@ -1760,6 +1756,34 @@
         function loadNotifications() {
             const container = document.getElementById('notificationsContainer');
             container.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+            const resolveNotificationIcon = (icon, title = '', message = '') => {
+                if (typeof icon === 'string' && icon.trim().length > 0) {
+                    const faToken = icon.match(/fa-[a-z0-9-]+/i);
+                    if (faToken) {
+                        return faToken[0].toLowerCase();
+                    }
+
+                    const normalized = icon
+                        .trim()
+                        .toLowerCase()
+                        .replace(/^fa[srlbd]?\s+/, '')
+                        .replace(/^fa-/, '')
+                        .replace(/[^a-z0-9-]/g, '');
+
+                    if (normalized) {
+                        return `fa-${normalized}`;
+                    }
+                }
+
+                const context = `${title} ${message}`.toLowerCase();
+                if (context.includes('groom')) return 'fa-cut';
+                if (context.includes('appointment')) return 'fa-calendar-check';
+                if (context.includes('boarding') || context.includes('cage')) return 'fa-hotel';
+                if (context.includes('vaccine') || context.includes('vaccination')) return 'fa-syringe';
+                if (context.includes('invoice') || context.includes('payment')) return 'fa-file-invoice-dollar';
+                return 'fa-bell';
+            };
             
             fetch(`${notificationsBase}/get`)
                 .then(response => response.json())
@@ -1779,12 +1803,19 @@
                     notifications.forEach(notif => {
                         const item = document.createElement('div');
                         item.className = `notification-item ${notif.unread ? 'unread' : ''}`;
+                        if (notif.unread) {
+                            item.style.cursor = 'pointer';
+                            item.title = 'Click to mark as read';
+                            item.addEventListener('click', () => markNotificationAsRead(notif.id));
+                        }
+
+                        const iconClass = resolveNotificationIcon(notif.icon, notif.title, notif.message);
                         item.innerHTML = `
                             <div style="display: flex; gap: 10px;">
                                 <div style="width: 40px; height: 40px; background: rgba(255, 140, 66, 0.1); 
                                             border-radius: 8px; display: flex; align-items: center; 
                                             justify-content: center; color: var(--primary-orange); flex-shrink: 0;">
-                                    <i class="fas ${notif.icon}"></i>
+                                    <i class="fas ${iconClass}"></i>
                                 </div>
                                 <div style="flex: 1;">
                                     <div class="notification-title">${notif.title}</div>
@@ -1807,6 +1838,42 @@
                         </div>
                     `;
                 });
+        }
+
+        function markNotificationAsRead(notificationId) {
+            fetch(`${notificationsBase}/${notificationId}/read`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadNotifications();
+                        updateUnreadCounts();
+                    }
+                })
+                .catch(error => console.error('Error marking notification as read:', error));
+        }
+
+        function markAllNotificationsRead() {
+            fetch(`${notificationsBase}/read-all`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadNotifications();
+                        updateUnreadCounts();
+                    }
+                })
+                .catch(error => console.error('Error marking all notifications as read:', error));
         }
 
         // Messages Functions

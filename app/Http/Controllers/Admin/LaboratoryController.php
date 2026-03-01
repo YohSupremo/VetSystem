@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LabRequisition;
 use App\Models\LabTest;
 use App\Models\MedicalRecord;
+use App\Models\ClinicSetting;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
@@ -320,7 +321,8 @@ class LaboratoryController extends Controller
             throw new \RuntimeException('Cannot create laboratory invoice: linked pet owner is missing.');
         }
 
-        $prefix = 'INV';
+        $prefix = ClinicSetting::invoicePrefix();
+        $defaultTaxRate = ClinicSetting::defaultTaxRate();
         $year = now()->format('Y');
         $lastSequence = Invoice::where('invoice_prefix', $prefix)
             ->whereYear('issue_date', $year)
@@ -338,7 +340,7 @@ class LaboratoryController extends Controller
             'issue_date' => now()->toDateString(),
             'due_date' => now()->toDateString(),
             'status' => 'pending',
-            'tax_rate' => 0,
+            'tax_rate' => $defaultTaxRate,
             'discount_amount' => 0,
             'notes' => 'Laboratory requisition #' . $labRequisition->id,
         ]);

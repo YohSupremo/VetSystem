@@ -12,7 +12,7 @@ class OrderController extends BaseController
      */
     public function index(Request $request)
     {
-        $query = Order::with(['owner.user', 'pet', 'createdBy', 'items.inventoryItem'])
+        $query = Order::with(['owner.user', 'pet', 'createdBy', 'items.inventoryItem', 'invoice.invoiceItems'])
             ->orderByDesc('order_date')
             ->orderByDesc('created_at');
 
@@ -45,7 +45,7 @@ class OrderController extends BaseController
      */
     public function show($orderId)
     {
-        $order = Order::with(['owner.user', 'pet', 'createdBy', 'items.inventoryItem'])
+        $order = Order::with(['owner.user', 'pet', 'createdBy', 'items.inventoryItem', 'invoice.invoiceItems'])
             ->findOrFail($orderId);
         $statusOptions = ['draft', 'confirmed', 'shipped', 'fulfilled', 'cancelled'];
 
@@ -61,32 +61,32 @@ class OrderController extends BaseController
             'status' => 'required|in:draft,confirmed,shipped,fulfilled,cancelled',
         ]);
 
-        $order = Order::with('items')->findOrFail($orderId);
+        $order = Order::with(['items', 'invoice.invoiceItems', 'invoice.payments'])->findOrFail($orderId);
         
         // If transitioning to fulfilled and payment method is cash, create payment record
-        if ($data['status'] === 'fulfilled' && strpos($order->notes, 'Payment Method: Cash') !== false) {
-            // Find the associated invoice
-            $invoice = \App\Models\Invoice::where('order_id', $order->id)->first();
+        if ($data['status'] === 'fulfilled' && stripos((string) $order->notes, 'Payment Method: Cash') !== false) {
+            $invoice = $order->invoice;
             
             if ($invoice && $invoice->status !== 'paid') {
-                // Calculate total amount
-                $totalAmount = $order->items->sum(function($item) {
-                    return $item->quantity * $item->unit_price;
-                });
+                $balance = max(0, (float) $invoice->total_amount - (float) $invoice->paid_amount);
                 
-                // Create payment record
-                \App\Models\Payment::create([
-                    'invoice_id' => $invoice->id,
-                    'payment_date' => now(),
-                    'amount' => $totalAmount,
-                    'payment_method' => 'cash',
-                    'reference_number' => 'CASH-' . $order->id . '-' . time(),
-                    'received_by' => auth()->id(),
-                    'notes' => 'Cash payment received for Order #' . $order->id,
+                if ($balance > 0) {
+                    \App\Models\Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'payment_date' => now(),
+                        'amount' => $balance,
+                        'payment_method' => 'cash',
+                        'reference_number' => 'CASH-' . $order->id . '-' . time(),
+                        'received_by' => auth()->id(),
+                        'notes' => 'Cash payment received for Order #' . $order->id,
+                    ]);
+                }
+
+                $invoice->load('payments');
+                $paidAmount = (float) $invoice->payments->sum('amount');
+                $invoice->update([
+                    'status' => $paidAmount >= (float) $invoice->total_amount ? 'paid' : 'partial',
                 ]);
-                
-                // Mark invoice as paid
-                $invoice->update(['status' => 'paid']);
             }
         }
         

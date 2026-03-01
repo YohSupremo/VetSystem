@@ -7,6 +7,110 @@
     --bg-gradient-end: #FCE7F3;
 }
 
+.app-flash-alert {
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-width: 1px;
+}
+
+.app-flash-message {
+    flex: 1;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+}
+
+.app-flash-icon {
+    width: 1.6rem;
+    height: 1.6rem;
+    min-width: 1.6rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    background: rgba(147, 51, 234, 0.16);
+    color: #6d28d9;
+}
+
+.app-flash-close {
+    margin-left: auto;
+    opacity: 0.6;
+}
+
+.app-flash-close:hover {
+    opacity: 0.95;
+}
+
+body.auth-body .app-flash-inline {
+    margin: 0 0 1rem;
+}
+
+body.auth-body .app-flash-inline .app-flash-alert {
+    margin-bottom: 0.65rem;
+}
+
+body.auth-body .app-flash-inline .app-flash-alert:last-child {
+    margin-bottom: 0;
+}
+
+.app-flash-themed .app-flash-alert {
+    background: linear-gradient(145deg, rgba(250, 245, 255, 0.88), rgba(243, 232, 255, 0.9));
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(167, 139, 250, 0.35);
+    color: #4c1d95;
+    box-shadow: 0 10px 26px rgba(147, 51, 234, 0.16);
+    margin-bottom: 0.75rem;
+}
+
+.app-flash-themed .alert-warning {
+    background: linear-gradient(145deg, rgba(245, 243, 255, 0.9), rgba(243, 232, 255, 0.95));
+    border-color: rgba(168, 85, 247, 0.35);
+    color: #6b21a8;
+}
+
+.app-flash-themed .alert-danger {
+    background: linear-gradient(145deg, rgba(253, 242, 248, 0.9), rgba(252, 231, 243, 0.92));
+    border-color: rgba(236, 72, 153, 0.35);
+    color: #9d174d;
+}
+
+.app-flash-themed .alert-success {
+    background: linear-gradient(145deg, rgba(236, 253, 245, 0.9), rgba(220, 252, 231, 0.9));
+    border-color: rgba(34, 197, 94, 0.32);
+    color: #14532d;
+}
+
+.app-flash-themed .alert-info {
+    background: linear-gradient(145deg, rgba(239, 246, 255, 0.92), rgba(219, 234, 254, 0.9));
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #1e3a8a;
+}
+
+.app-flash-themed .alert-warning .app-flash-icon {
+    background: rgba(147, 51, 234, 0.18);
+    color: #6b21a8;
+}
+
+.app-flash-themed .alert-danger .app-flash-icon {
+    background: rgba(236, 72, 153, 0.18);
+    color: #9d174d;
+}
+
+.app-flash-themed .alert-success .app-flash-icon {
+    background: rgba(34, 197, 94, 0.18);
+    color: #166534;
+}
+
+.app-flash-themed .alert-info .app-flash-icon {
+    background: rgba(59, 130, 246, 0.18);
+    color: #1d4ed8;
+}
+
 body.auth-body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;

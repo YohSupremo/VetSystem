@@ -48,9 +48,15 @@ class MedicalRecordController extends Controller
             },
         ])->get();
         $veterinarians = User::where('role', 'veterinarian')->where('is_active', 1)->get();
-        $appointments = \App\Models\Appointment::where('status', '!=', 'completed')
-            ->orderBy('appointment_date', 'desc')
-            ->get();
+        
+        // Filter appointments for veterinarians
+        $appointmentsQuery = \App\Models\Appointment::where('status', '!=', 'completed');
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian()) {
+            $appointmentsQuery->where('veterinarian_id', $user->id);
+        }
+        $appointments = $appointmentsQuery->orderBy('appointment_date', 'desc')->get();
+        
         $selectedPetId = $request->get('pet_id');
         $allergyMap = $pets->mapWithKeys(function ($pet) {
             return [
@@ -236,7 +242,14 @@ class MedicalRecordController extends Controller
             },
         ]);
         $veterinarians = User::where('role', 'veterinarian')->where('is_active', 1)->get();
-        $appointments = \App\Models\Appointment::orderBy('appointment_date', 'desc')->get();
+        
+        // Filter appointments for veterinarians
+        $appointmentsQuery = \App\Models\Appointment::query();
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian()) {
+            $appointmentsQuery->where('veterinarian_id', $user->id);
+        }
+        $appointments = $appointmentsQuery->orderBy('appointment_date', 'desc')->get();
         
         // Parse BP if exists
         $bpSystolic = '';

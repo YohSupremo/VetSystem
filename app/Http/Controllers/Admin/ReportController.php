@@ -17,7 +17,9 @@ use App\Models\PetVaccination;
 use App\Models\Surgery;
 use App\Models\InventoryStock;
 use App\Models\InventoryTransaction;
+use ConsoleTVs\Charts\Classes\Chartjs\Chart;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 
 class ReportController extends BaseController
 {
@@ -31,11 +33,34 @@ class ReportController extends BaseController
         $totalMedicalRecords = MedicalRecord::count();
         $totalInventoryItems = InventoryItem::count();
 
+        $reportsOverviewChart = $this->makeChart(
+            'bar',
+            ['Invoices', 'Appointments', 'Medical Records', 'Inventory Items'],
+            [$totalInvoices, $totalAppointments, $totalMedicalRecords, $totalInventoryItems],
+            'Total Records',
+            [
+                'rgba(37, 99, 235, 0.35)',
+                'rgba(99, 102, 241, 0.35)',
+                'rgba(34, 197, 94, 0.35)',
+                'rgba(249, 115, 22, 0.35)',
+            ],
+            [
+                'rgba(37, 99, 235, 1)',
+                'rgba(99, 102, 241, 1)',
+                'rgba(34, 197, 94, 1)',
+                'rgba(249, 115, 22, 1)',
+            ],
+            [
+                'legend' => ['display' => false],
+            ]
+        );
+
         return view('admin.reports.index', compact(
             'totalInvoices',
             'totalAppointments',
             'totalMedicalRecords',
-            'totalInventoryItems'
+            'totalInventoryItems',
+            'reportsOverviewChart'
         ));
     }
     
@@ -44,7 +69,8 @@ class ReportController extends BaseController
      */
     public function financialReport(Request $request)
     {
-        $startDate = $request->input('start_date', now()->subMonth()->toDateString());
+        $defaultStartDate = Invoice::query()->min('issue_date') ?? now()->toDateString();
+        $startDate = $request->input('start_date', $defaultStartDate);
         $endDate = $request->input('end_date', now()->toDateString());
         $reportType = $request->input('report_type', 'summary');
         
@@ -57,12 +83,12 @@ class ReportController extends BaseController
             return (float) $invoice->total_amount;
         });
 
-        $paidAmount = Payment::query()
-            ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
-            ->whereDate('payments.payment_date', '>=', $startDate)
-            ->whereDate('payments.payment_date', '<=', $endDate)
-            ->where('invoices.status', '!=', 'cancelled')
-            ->sum('payments.amount');
+        $paidAmount = $invoices->sum(function ($invoice) {
+            $invoiceTotal = (float) $invoice->total_amount;
+            $invoicePaid = (float) $invoice->payments->sum('amount');
+
+            return min($invoicePaid, $invoiceTotal);
+        });
 
         $outstandingAmount = $invoices->sum(function ($invoice) {
             return (float) $invoice->balance;
@@ -89,14 +115,102 @@ class ReportController extends BaseController
             ->limit(10)
             ->get();
 
-        $paymentMethods = DB::table('payments')
-            ->select('payment_method', DB::raw('COUNT(*) as count, SUM(amount) as total'))
-            ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
-            ->whereDate('payments.payment_date', '>=', $startDate)
-            ->whereDate('payments.payment_date', '<=', $endDate)
-            ->where('invoices.status', '!=', 'cancelled')
-            ->groupBy('payment_method')
-            ->get();
+        $paymentMethods = collect();
+
+        foreach ($invoices as $invoice) {
+            $remaining = (float) $invoice->total_amount;
+
+            foreach ($invoice->payments->sortBy('payment_date') as $payment) {
+                if ($remaining <= 0) {
+                    break;
+                }
+
+                $appliedAmount = min((float) $payment->amount, $remaining);
+
+                if ($appliedAmount <= 0) {
+                    continue;
+                }
+
+                $method = (string) ($payment->payment_method ?: 'unknown');
+
+                if (! $paymentMethods->has($method)) {
+                    $paymentMethods->put($method, (object) [
+                        'payment_method' => $method,
+                        'count' => 0,
+                        'total' => 0,
+                    ]);
+                }
+
+                $row = $paymentMethods->get($method);
+                $row->count += 1;
+                $row->total += $appliedAmount;
+                $paymentMethods->put($method, $row);
+
+                $remaining -= $appliedAmount;
+            }
+        }
+
+        $paymentMethods = $paymentMethods
+            ->values()
+            ->sortByDesc('total')
+            ->values();
+
+        $revenueByMonthChart = $this->makeChart(
+            'line',
+            $revenueByMonth->map(function ($row) {
+                return Carbon::createFromFormat('Y-m', $row->month)->format('M Y');
+            })->all(),
+            $revenueByMonth->map(function ($row) {
+                return round((float) $row->revenue, 2);
+            })->all(),
+            'Revenue',
+            'rgba(37, 99, 235, 0.15)',
+            'rgba(37, 99, 235, 1)',
+            [
+                'legend' => ['display' => true],
+            ]
+        );
+
+        $paymentMethodsChart = $this->makeChart(
+            'doughnut',
+            $paymentMethods->map(function ($row) {
+                return ucfirst(str_replace('_', ' ', (string) data_get($row, 'payment_method')));
+            })->all(),
+            $paymentMethods->map(function ($row) {
+                return round((float) $row->total, 2);
+            })->all(),
+            'Payment Totals',
+            [
+                'rgba(37, 99, 235, 0.75)',
+                'rgba(249, 115, 22, 0.75)',
+                'rgba(34, 197, 94, 0.75)',
+                'rgba(236, 72, 153, 0.75)',
+                'rgba(99, 102, 241, 0.75)',
+            ],
+            [
+                'rgba(37, 99, 235, 1)',
+                'rgba(249, 115, 22, 1)',
+                'rgba(34, 197, 94, 1)',
+                'rgba(236, 72, 153, 1)',
+                'rgba(99, 102, 241, 1)',
+            ]
+        );
+
+        $topServicesChart = $this->makeChart(
+            'bar',
+            $topServices->pluck('item_type')->map(function ($value) {
+                return ucfirst(str_replace('_', ' ', (string) $value));
+            })->all(),
+            $topServices->pluck('total')->map(function ($value) {
+                return round((float) $value, 2);
+            })->all(),
+            'Service Revenue',
+            'rgba(99, 102, 241, 0.35)',
+            'rgba(99, 102, 241, 1)',
+            [
+                'legend' => ['display' => false],
+            ]
+        );
 
         $outstandingInvoices = Invoice::with(['pet', 'petOwner'])
             ->whereIn('status', ['pending', 'partial', 'overdue'])
@@ -127,7 +241,10 @@ class ReportController extends BaseController
             'revenueByMonth',
             'topServices',
             'paymentMethods',
-            'outstandingInvoices'
+            'outstandingInvoices',
+            'revenueByMonthChart',
+            'paymentMethodsChart',
+            'topServicesChart'
         ));
     }
 
@@ -228,6 +345,76 @@ class ReportController extends BaseController
             ->groupBy('species')
             ->orderBy('count', 'desc')
             ->get();
+
+        $medicalVolumeChart = $this->makeChart(
+            'bar',
+            ['Appointments', 'Completed', 'Medical Records', 'Prescriptions', 'Vaccinations', 'Surgeries'],
+            [
+                $totalAppointments,
+                $completedAppointments,
+                $totalMedicalRecords,
+                $totalPrescriptions,
+                $totalVaccinations,
+                $totalSurgeries,
+            ],
+            'Medical Activity',
+            [
+                'rgba(37, 99, 235, 0.35)',
+                'rgba(34, 197, 94, 0.35)',
+                'rgba(99, 102, 241, 0.35)',
+                'rgba(236, 72, 153, 0.35)',
+                'rgba(249, 115, 22, 0.35)',
+                'rgba(20, 184, 166, 0.35)',
+            ],
+            [
+                'rgba(37, 99, 235, 1)',
+                'rgba(34, 197, 94, 1)',
+                'rgba(99, 102, 241, 1)',
+                'rgba(236, 72, 153, 1)',
+                'rgba(249, 115, 22, 1)',
+                'rgba(20, 184, 166, 1)',
+            ],
+            [
+                'legend' => ['display' => false],
+            ]
+        );
+
+        $commonDiagnosesChart = $this->makeChart(
+            'bar',
+            $commonDiagnoses->pluck('diagnosis')->map(function ($value) {
+                return \Illuminate\Support\Str::limit($value, 28);
+            })->all(),
+            $commonDiagnoses->pluck('count')->all(),
+            'Diagnoses',
+            'rgba(249, 115, 22, 0.35)',
+            'rgba(249, 115, 22, 1)',
+            [
+                'legend' => ['display' => false],
+            ]
+        );
+
+        $petTypesChart = $this->makeChart(
+            'pie',
+            $petTypes->pluck('species')->map(function ($value) {
+                return $value ?: 'Unknown';
+            })->all(),
+            $petTypes->pluck('count')->all(),
+            'Species',
+            [
+                'rgba(37, 99, 235, 0.75)',
+                'rgba(34, 197, 94, 0.75)',
+                'rgba(249, 115, 22, 0.75)',
+                'rgba(99, 102, 241, 0.75)',
+                'rgba(236, 72, 153, 0.75)',
+            ],
+            [
+                'rgba(37, 99, 235, 1)',
+                'rgba(34, 197, 94, 1)',
+                'rgba(249, 115, 22, 1)',
+                'rgba(99, 102, 241, 1)',
+                'rgba(236, 72, 153, 1)',
+            ]
+        );
         
         return view('admin.reports.medical', compact(
             'startDate',
@@ -241,7 +428,10 @@ class ReportController extends BaseController
             'totalSurgeries',
             'commonDiagnoses',
             'commonTreatments',
-            'petTypes'
+            'petTypes',
+            'medicalVolumeChart',
+            'commonDiagnosesChart',
+            'petTypesChart'
         ));
     }
     
@@ -313,6 +503,58 @@ class ReportController extends BaseController
             ->limit(10)
             ->get();
 
+        $healthyItems = max($totalItems - $lowStockItems - $expiredItems - $expiringSoonItems, 0);
+
+        $inventoryStatusChart = $this->makeChart(
+            'doughnut',
+            ['Healthy', 'Low Stock', 'Expired', 'Expiring Soon'],
+            [$healthyItems, $lowStockItems, $expiredItems, $expiringSoonItems],
+            'Inventory Status',
+            [
+                'rgba(34, 197, 94, 0.75)',
+                'rgba(249, 115, 22, 0.75)',
+                'rgba(236, 72, 153, 0.75)',
+                'rgba(59, 130, 246, 0.75)',
+            ],
+            [
+                'rgba(34, 197, 94, 1)',
+                'rgba(249, 115, 22, 1)',
+                'rgba(236, 72, 153, 1)',
+                'rgba(59, 130, 246, 1)',
+            ]
+        );
+
+        $movementTrendsChart = new Chart();
+        $movementTrendsChart->labels($movementTrends->pluck('date')->all());
+        $movementTrendsChart
+            ->dataset('Movements', 'line', $movementTrends->pluck('count')->map(fn ($value) => (int) $value)->all())
+            ->color('rgba(37, 99, 235, 1)')
+            ->backgroundColor('rgba(37, 99, 235, 0.15)')
+            ->fill(false)
+            ->lineTension(0.2);
+        $movementTrendsChart
+            ->dataset('Quantity', 'line', $movementTrends->pluck('total_quantity')->map(fn ($value) => (float) $value)->all())
+            ->color('rgba(249, 115, 22, 1)')
+            ->backgroundColor('rgba(249, 115, 22, 0.15)')
+            ->fill(false)
+            ->lineTension(0.2);
+        $movementTrendsChart->options([
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+        ]);
+
+        $topMovedItemsChart = $this->makeChart(
+            'bar',
+            $topMovedItems->pluck('name')->all(),
+            $topMovedItems->pluck('total_quantity')->map(fn ($value) => (float) $value)->all(),
+            'Moved Quantity',
+            'rgba(99, 102, 241, 0.35)',
+            'rgba(99, 102, 241, 1)',
+            [
+                'legend' => ['display' => false],
+            ]
+        );
+
         return view('admin.reports.inventory', compact(
             'startDate',
             'endDate',
@@ -326,7 +568,10 @@ class ReportController extends BaseController
             'expiredList',
             'expiringSoonList',
             'movementTrends',
-            'topMovedItems'
+            'topMovedItems',
+            'inventoryStatusChart',
+            'movementTrendsChart',
+            'topMovedItemsChart'
         ));
     }
     
@@ -383,6 +628,47 @@ class ReportController extends BaseController
             ->groupBy('pet_count')
             ->orderBy('pet_count')
             ->get();
+
+        $clientStatsChart = $this->makeChart(
+            'bar',
+            ['Total Clients', 'New Clients', 'Active Clients'],
+            [$totalClients, $newClients, $activeClients],
+            'Clients',
+            [
+                'rgba(37, 99, 235, 0.35)',
+                'rgba(34, 197, 94, 0.35)',
+                'rgba(249, 115, 22, 0.35)',
+            ],
+            [
+                'rgba(37, 99, 235, 1)',
+                'rgba(34, 197, 94, 1)',
+                'rgba(249, 115, 22, 1)',
+            ],
+            [
+                'legend' => ['display' => false],
+            ]
+        );
+
+        $clientAcquisitionChart = $this->makeChart(
+            'line',
+            $clientAcquisition->pluck('month')->all(),
+            $clientAcquisition->pluck('count')->map(fn ($value) => (int) $value)->all(),
+            'New Clients',
+            'rgba(37, 99, 235, 0.15)',
+            'rgba(37, 99, 235, 1)'
+        );
+
+        $petsPerClientChart = $this->makeChart(
+            'bar',
+            $petsPerClient->pluck('pet_count')->map(fn ($value) => (string) $value)->all(),
+            $petsPerClient->pluck('client_count')->map(fn ($value) => (int) $value)->all(),
+            'Clients',
+            'rgba(99, 102, 241, 0.35)',
+            'rgba(99, 102, 241, 1)',
+            [
+                'legend' => ['display' => false],
+            ]
+        );
         
         return view('admin.reports.client', compact(
             'startDate',
@@ -393,7 +679,10 @@ class ReportController extends BaseController
             'activeClients',
             'topClients',
             'clientAcquisition',
-            'petsPerClient'
+            'petsPerClient',
+            'clientStatsChart',
+            'clientAcquisitionChart',
+            'petsPerClientChart'
         ));
     }
     
@@ -435,6 +724,60 @@ class ReportController extends BaseController
             ->groupBy('hour')
             ->orderBy('count', 'desc')
             ->get();
+
+        $otherAppointments = max($totalAppointments - ($completedAppointments + $cancelledAppointments + $noShowAppointments), 0);
+
+        $appointmentStatusChart = $this->makeChart(
+            'doughnut',
+            ['Completed', 'Cancelled', 'No Show', 'Other'],
+            [$completedAppointments, $cancelledAppointments, $noShowAppointments, $otherAppointments],
+            'Appointment Status',
+            [
+                'rgba(34, 197, 94, 0.75)',
+                'rgba(249, 115, 22, 0.75)',
+                'rgba(236, 72, 153, 0.75)',
+                'rgba(59, 130, 246, 0.75)',
+            ],
+            [
+                'rgba(34, 197, 94, 1)',
+                'rgba(249, 115, 22, 1)',
+                'rgba(236, 72, 153, 1)',
+                'rgba(59, 130, 246, 1)',
+            ]
+        );
+
+        $appointmentsByTypeChart = $this->makeChart(
+            'bar',
+            $appointmentsByType->pluck('type')->map(fn ($value) => ucfirst(str_replace('_', ' ', $value)))->all(),
+            $appointmentsByType->pluck('count')->map(fn ($value) => (int) $value)->all(),
+            'Appointments',
+            'rgba(99, 102, 241, 0.35)',
+            'rgba(99, 102, 241, 1)',
+            [
+                'legend' => ['display' => false],
+            ]
+        );
+
+        $dailyTrendsChart = $this->makeChart(
+            'line',
+            $dailyTrends->pluck('date')->all(),
+            $dailyTrends->pluck('count')->map(fn ($value) => (int) $value)->all(),
+            'Appointments per Day',
+            'rgba(37, 99, 235, 0.15)',
+            'rgba(37, 99, 235, 1)'
+        );
+
+        $peakHoursChart = $this->makeChart(
+            'bar',
+            $peakHours->pluck('hour')->map(fn ($value) => sprintf('%02d:00', (int) $value))->all(),
+            $peakHours->pluck('count')->map(fn ($value) => (int) $value)->all(),
+            'Peak Hours',
+            'rgba(249, 115, 22, 0.35)',
+            'rgba(249, 115, 22, 1)',
+            [
+                'legend' => ['display' => false],
+            ]
+        );
         
         return view('admin.reports.appointment', compact(
             'startDate',
@@ -446,8 +789,44 @@ class ReportController extends BaseController
             'noShowAppointments',
             'appointmentsByType',
             'dailyTrends',
-            'peakHours'
+            'peakHours',
+            'appointmentStatusChart',
+            'appointmentsByTypeChart',
+            'dailyTrendsChart',
+            'peakHoursChart'
         ));
+    }
+
+    private function makeChart(
+        string $type,
+        array $labels,
+        array $data,
+        string $datasetLabel,
+        array|string $backgroundColor,
+        array|string|null $borderColor = null,
+        array $options = []
+    ): Chart {
+        $chart = new Chart();
+        $chart->labels($labels);
+
+        $dataset = $chart
+            ->dataset($datasetLabel, $type, $data)
+            ->backgroundColor($backgroundColor);
+
+        if ($borderColor !== null) {
+            $dataset->color($borderColor);
+        }
+
+        if ($type === 'line') {
+            $dataset->fill(false)->lineTension(0.2);
+        }
+
+        $chart->options(array_replace_recursive([
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+        ], $options));
+
+        return $chart;
     }
     
     /**

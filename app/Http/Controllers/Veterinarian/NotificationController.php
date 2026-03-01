@@ -19,7 +19,7 @@ class NotificationController extends Controller
             ->latest()
             ->paginate(15);
 
-        return view('veterinarian.notifications.index', compact('notifications'));
+        return view('admin.notifications.index', compact('notifications'));
     }
 
     public function getNotifications(): JsonResponse
@@ -45,7 +45,7 @@ class NotificationController extends Controller
                         'icon' => $notif->icon,
                         'priority' => $notif->priority,
                         'time' => $notif->created_at->diffForHumans(),
-                        'unread' => !$notif->is_read,
+                        'unread' => $notif->status !== Notification::STATUS_READ,
                         'action_url' => $notif->action_url,
                     ];
                 });
@@ -59,12 +59,16 @@ class NotificationController extends Controller
     public function markAsRead($id): JsonResponse
     {
         try {
-            $notification = Notification::where('id', $id)
+            $updated = Notification::where('id', $id)
                 ->where('user_id', Auth::id())
-                ->visibleToRole(Auth::user()->role ?? null)
-                ->firstOrFail();
+                ->update([
+                    'status' => Notification::STATUS_READ,
+                    'read_at' => now(),
+                ]);
 
-            $notification->markAsRead();
+            if (!$updated) {
+                return response()->json(['error' => 'Notification not found'], 404);
+            }
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
@@ -74,16 +78,14 @@ class NotificationController extends Controller
 
     public function markAllAsRead(): JsonResponse
     {
-        Notification::forUser(Auth::id())
-            ->visibleToRole(Auth::user()->role ?? null)
+        $updated = Notification::forUser(Auth::id())
             ->unread()
             ->update([
-                'is_read' => true,
                 'read_at' => now(),
                 'status' => Notification::STATUS_READ,
             ]);
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'updated' => $updated]);
     }
 
     public function getUnreadCount(): JsonResponse
@@ -129,7 +131,7 @@ class NotificationController extends Controller
                 NotificationSetting::getDefaultSettings(Auth::id())
             );
 
-        return view('veterinarian.notifications.settings', compact('settings'));
+        return view('admin.notifications.settings', compact('settings'));
     }
 
     public function updateSettings(Request $request)

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
+use App\Models\ClinicSetting;
 use App\Models\InventoryItem;
 use App\Models\Prescription;
 use App\Models\User;
@@ -642,7 +643,8 @@ class PharmacyController extends BaseController
             throw new \RuntimeException('Cannot create pharmacy invoice: linked pet owner is missing.');
         }
 
-        $prefix = 'INV';
+        $prefix = ClinicSetting::invoicePrefix();
+        $defaultTaxRate = ClinicSetting::defaultTaxRate();
         $year = now()->format('Y');
         $lastSequence = Invoice::where('invoice_prefix', $prefix)
             ->whereYear('issue_date', $year)
@@ -660,7 +662,7 @@ class PharmacyController extends BaseController
             'issue_date' => now()->toDateString(),
             'due_date' => now()->toDateString(),
             'status' => 'pending',
-            'tax_rate' => 0,
+            'tax_rate' => $defaultTaxRate,
             'discount_amount' => 0,
             'notes' => 'Pharmacy dispensing for prescription #' . $prescription->id,
         ]);

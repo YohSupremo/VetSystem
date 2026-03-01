@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Veterinarian Dashboard - PawCare')</title>
+    @php($resolvedClinicName = $clinicName ?? 'PawCare')
+    @php($rawPageTitle = trim($__env->yieldContent('title')))
+    <title>{{ $rawPageTitle !== '' ? str_replace(['PawCare', 'VetSystem'], $resolvedClinicName, $rawPageTitle) : ('Veterinarian Dashboard - ' . $resolvedClinicName) }}</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -121,6 +123,35 @@
             function loadNotifications() {
                 if (!container) return;
                 container.innerHTML = '<div class="text-center text-muted">Loading...</div>';
+
+                const resolveNotificationIcon = (icon, title = '', message = '') => {
+                    if (typeof icon === 'string' && icon.trim().length > 0) {
+                        const faToken = icon.match(/fa-[a-z0-9-]+/i);
+                        if (faToken) {
+                            return faToken[0].toLowerCase();
+                        }
+
+                        const normalized = icon
+                            .trim()
+                            .toLowerCase()
+                            .replace(/^fa[srlbd]?\s+/, '')
+                            .replace(/^fa-/, '')
+                            .replace(/[^a-z0-9-]/g, '');
+
+                        if (normalized) {
+                            return `fa-${normalized}`;
+                        }
+                    }
+
+                    const context = `${title} ${message}`.toLowerCase();
+                    if (context.includes('groom')) return 'fa-cut';
+                    if (context.includes('appointment')) return 'fa-calendar-check';
+                    if (context.includes('boarding') || context.includes('cage')) return 'fa-hotel';
+                    if (context.includes('vaccine') || context.includes('vaccination')) return 'fa-syringe';
+                    if (context.includes('invoice') || context.includes('payment')) return 'fa-file-invoice-dollar';
+                    return 'fa-bell';
+                };
+
                 fetch('/veterinarian/notifications/get')
                     .then(response => response.json())
                     .then(notifications => {
@@ -131,11 +162,12 @@
 
                         container.innerHTML = '';
                         notifications.forEach(notif => {
+                            const iconClass = resolveNotificationIcon(notif.icon, notif.title, notif.message);
                             const item = document.createElement('div');
                             item.className = 'border rounded-3 p-3 mb-2 bg-light';
                             item.innerHTML = `
                                 <div class="d-flex gap-3 align-items-start">
-                                    <div class="text-primary"><i class="fas fa-${notif.icon || 'bell'}"></i></div>
+                                    <div class="text-primary"><i class="fas ${iconClass}"></i></div>
                                     <div>
                                         <div class="fw-semibold">${notif.title}</div>
                                         <div class="text-muted small">${notif.message}</div>

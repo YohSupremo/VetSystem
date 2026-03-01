@@ -30,7 +30,7 @@
                             </div>
                         </div>
                         <div class="text-end">
-                            <h5 class="fw-bold">PawCare Veterinary Clinic</h5>
+                            <h5 class="fw-bold">{{ $clinicName ?? 'PawCare' }} Veterinary Clinic</h5>
                             <p class="text-muted small mb-0">123 Vet Street, Animal City</p>
                             <p class="text-muted small mb-0">Phone: (123) 456-7890</p>
                             <p class="text-muted small">Date: {{ date('M d, Y', strtotime($invoice->issue_date)) }}</p>
@@ -77,10 +77,10 @@
                                     <td colspan="3" class="text-end pt-3 fw-bold">Subtotal</td>
                                     <td class="text-end pt-3 pe-4">₱{{ number_format($invoice->subtotal, 2) }}</td>
                                 </tr>
-                                @if($invoice->tax > 0)
+                                @if($invoice->tax_amount > 0)
                                     <tr>
                                         <td colspan="3" class="text-end fw-bold">Tax</td>
-                                        <td class="text-end pe-4">₱{{ number_format($invoice->tax, 2) }}</td>
+                                        <td class="text-end pe-4">₱{{ number_format($invoice->tax_amount, 2) }}</td>
                                     </tr>
                                 @endif
                                 <tr>

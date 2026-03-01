@@ -13,9 +13,11 @@
     <div class="auth-card">
         <div class="logo-section">
             <div class="paw-icon">🐾</div>
-            <h2>Join PawCare</h2>
+            <h2>Join {{ $clinicName ?? 'PawCare' }}</h2>
             <p>Create your account to get started</p>
         </div>
+
+        @include('partials.flash-messages', ['containerClass' => 'app-flash-inline app-flash-themed'])
 
         <form action="/register/create" method="POST">
             @csrf

@@ -113,8 +113,8 @@ class NotificationService
     public function markAllAsRead(User $user): void
     {
         $user->notifications()
-            ->where('is_read', false)
-            ->update(['is_read' => true, 'read_at' => now(), 'status' => Notification::STATUS_READ]);
+            ->where('status', '!=', Notification::STATUS_READ)
+            ->update(['read_at' => now(), 'status' => Notification::STATUS_READ]);
     }
 
     /**
@@ -123,7 +123,7 @@ class NotificationService
     public function getUnreadCount(User $user): int
     {
         return $user->notifications()
-            ->where('is_read', false)
+            ->where('status', '!=', Notification::STATUS_READ)
             ->count();
     }
 
@@ -156,7 +156,7 @@ class NotificationService
     public function deleteOld(int $days = 30): int
     {
         return Notification::where('created_at', '<', now()->subDays($days))
-            ->where('is_read', true)
+            ->where('status', Notification::STATUS_READ)
             ->delete();
     }
 

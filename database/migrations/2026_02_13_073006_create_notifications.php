@@ -31,7 +31,6 @@ return new class extends Migration
             $table->dateTime('scheduled_for');
             $table->dateTime('sent_at')->nullable();
             $table->dateTime('read_at')->nullable();
-            $table->boolean('is_read')->default(false);
             $table->string('action_url')->nullable();
             $table->enum('reference_type', [
                 'appointment',

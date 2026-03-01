@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use App\Models\Appointment;
+use App\Models\ClinicSetting;
 use App\Models\Pet;
 use App\Models\Surgery;
 use App\Models\SurgeryType;
@@ -143,6 +144,7 @@ class SurgeryController extends BaseController
     public function update(Request $request, $id)
     {
         $surgery = Surgery::findOrFail($id);
+        $previousStatus = (string) $surgery->status;
 
         $validated = $request->validate([
             'surgeon_id' => 'required|exists:users,id',
@@ -156,9 +158,21 @@ class SurgeryController extends BaseController
             'outcome' => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($surgery, $validated) {
+        DB::transaction(function () use ($surgery, $validated, $previousStatus) {
             $surgery->update($validated);
-            $this->ensureSurgeryInvoice($surgery);
+
+            $newStatus = (string) ($validated['status'] ?? $surgery->status);
+
+            if ($newStatus === 'cancelled') {
+                $this->cancelSurgeryInvoice($surgery);
+                return;
+            }
+
+            $invoice = $this->ensureSurgeryInvoice($surgery);
+
+            if ($previousStatus === 'cancelled' && $invoice->status === 'cancelled') {
+                $invoice->update(['status' => 'pending']);
+            }
         });
 
         return redirect()->route('admin.surgeries.show', $surgery->id)
@@ -307,14 +321,16 @@ class SurgeryController extends BaseController
         $issueDate = $surgery->scheduled_date
             ? Carbon::parse($surgery->scheduled_date)->toDateString()
             : now()->toDateString();
+        $prefix = ClinicSetting::invoicePrefix();
+        $defaultTaxRate = ClinicSetting::defaultTaxRate();
 
         $invoice = new Invoice([
             'owner_id' => $ownerId,
             'pet_id' => $surgery->pet_id,
-            'invoice_prefix' => 'INV',
+            'invoice_prefix' => $prefix,
             'issue_date' => $issueDate,
             'due_date' => $issueDate,
-            'tax_rate' => 0,
+            'tax_rate' => $defaultTaxRate,
             'discount_amount' => 0,
             'status' => 'pending',
             'notes' => 'Surgery invoice for record #' . $surgery->id . ' ' . $this->surgeryInvoiceTag($surgery->id),
@@ -427,6 +443,22 @@ class SurgeryController extends BaseController
         }
 
         return $invoice->load(['invoiceItems', 'payments']);
+    }
+
+    private function cancelSurgeryInvoice(Surgery $surgery): void
+    {
+        $invoice = $this->findSurgeryInvoice($surgery);
+
+        if (!$invoice || $invoice->status === 'cancelled') {
+            return;
+        }
+
+        $invoice->payments()->delete();
+
+        $invoice->update([
+            'status' => 'cancelled',
+            'notes' => trim((string) ($invoice->notes ?? '')) . "\n\nCancelled due to surgery cancellation on " . now()->format('Y-m-d H:i:s'),
+        ]);
     }
 
     private function surgeryUnitPrice(Surgery $surgery): float

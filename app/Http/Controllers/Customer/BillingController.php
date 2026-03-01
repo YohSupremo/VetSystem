@@ -353,6 +353,22 @@ class BillingController extends Controller
                 ->with(['items.inventoryItem', 'pet'])
                 ->orderBy('created_at', 'desc')
                 ->get();
+
+            if ($orders->isNotEmpty()) {
+                $orderIds = $orders->pluck('id')->all();
+
+                $invoicesByOrder = Invoice::where('owner_id', $petOwner->id)
+                    ->whereIn('order_id', $orderIds)
+                    ->with('invoiceItems')
+                    ->get()
+                    ->keyBy('order_id');
+
+                $orders->transform(function ($order) use ($invoicesByOrder) {
+                    $invoice = $invoicesByOrder->get($order->id);
+                    $order->billing_total = $invoice ? (float) $invoice->total_amount : (float) $order->items->sum('total');
+                    return $order;
+                });
+            }
         }
         
         return view('customer.billing.orders', compact('orders'));
@@ -379,8 +395,13 @@ class BillingController extends Controller
             ->where('id', $orderId)
             ->with(['items.inventoryItem', 'pet', 'createdBy'])
             ->firstOrFail();
+
+        $invoice = Invoice::where('owner_id', $petOwner->id)
+            ->where('order_id', $order->id)
+            ->with('invoiceItems')
+            ->first();
             
-        return view('customer.billing.order-details', compact('order'));
+        return view('customer.billing.order-details', compact('order', 'invoice'));
     }
 
     /**

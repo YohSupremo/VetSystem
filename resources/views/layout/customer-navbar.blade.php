@@ -263,8 +263,15 @@
                     <span class="text-muted d-none d-md-inline" style="font-size: 0.9rem;">
                         Hi, {{ $user->first_name }}
                     </span>
+                    <a href="{{ route('customer.profile') }}" class="btn btn-sm btn-outline-light" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); color: #000;">
+                        <i class="fas fa-user me-1"></i>Profile
+                    </a>
                     <div class="user-avatar-small">
-                        {{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}
+                        @if($user->profile_picture)
+                            <img src="{{ asset('storage/' . $user->profile_picture) }}?t={{ time() }}" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        @else
+                            {{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}
+                        @endif
                     </div>
                 @endisset
 

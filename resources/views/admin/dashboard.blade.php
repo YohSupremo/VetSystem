@@ -496,6 +496,176 @@
             margin-bottom: 20px;
         }
 
+        /* Mobile-friendly modal improvements */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                max-width: none;
+                margin: 10px;
+                padding: 20px;
+                border-radius: 16px;
+                max-height: 90vh;
+            }
+
+            .modal-header {
+                margin-bottom: 16px;
+                padding-bottom: 12px;
+            }
+
+            .modal-header h2 {
+                font-size: 20px;
+            }
+
+            .modal-close {
+                width: 36px;
+                height: 36px;
+                font-size: 24px;
+            }
+
+            .modal-body {
+                margin-bottom: 16px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .modal-content {
+                width: 98%;
+                margin: 5px;
+                padding: 16px;
+                border-radius: 12px;
+                max-height: 95vh;
+            }
+
+            .modal-header {
+                margin-bottom: 12px;
+                padding-bottom: 10px;
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+                text-align: center;
+            }
+
+            .modal-header h2 {
+                font-size: 18px;
+            }
+
+            .modal-close {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 32px;
+                height: 32px;
+                font-size: 20px;
+            }
+
+            .modal-body {
+                margin-bottom: 12px;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .modal-footer .btn {
+                width: 100%;
+                margin: 0;
+            }
+        }
+
+        /* Form improvements for mobile */
+        @media (max-width: 768px) {
+            .form-group {
+                margin-bottom: 16px;
+            }
+
+            .form-label {
+                font-size: 14px;
+                margin-bottom: 6px;
+                font-weight: 600;
+            }
+
+            .form-control {
+                padding: 12px 16px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                border-radius: 12px;
+                border: 2px solid var(--soft-gray);
+                transition: all 0.3s ease;
+            }
+
+            .form-control:focus {
+                border-color: var(--primary-orange);
+                box-shadow: 0 0 0 4px rgba(255, 140, 66, 0.1);
+                outline: none;
+            }
+
+            .form-select {
+                padding: 12px 16px;
+                font-size: 16px;
+                border-radius: 12px;
+                border: 2px solid var(--soft-gray);
+                background: var(--white);
+            }
+
+            .btn {
+                min-height: 48px; /* Better touch target */
+                padding: 12px 24px;
+                font-size: 16px;
+                border-radius: 12px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+
+            .btn-sm {
+                min-height: 40px;
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .form-group {
+                margin-bottom: 12px;
+            }
+
+            .form-label {
+                font-size: 13px;
+                margin-bottom: 4px;
+            }
+
+            .form-control {
+                padding: 10px 14px;
+                font-size: 16px;
+            }
+
+            .form-select {
+                padding: 10px 14px;
+                font-size: 16px;
+            }
+
+            .btn {
+                min-height: 44px;
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+
+            .btn-sm {
+                min-height: 36px;
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .row {
+                margin-left: -8px;
+                margin-right: -8px;
+            }
+
+            .row > * {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+        }
+
         .notification-item {
             padding: 15px;
             margin-bottom: 12px;
@@ -613,7 +783,7 @@
             display: block;
         }
 
-        /* Mobile & Responsive Design */
+        /* Enhanced Mobile & Responsive Design */
         @media (max-width: 1200px) {
             .sidebar {
                 width: 260px;
@@ -631,6 +801,7 @@
             }
         }
 
+        /* Tablet Styles */
         @media (max-width: 992px) {
             .dashboard-container {
                 flex-direction: column;
@@ -645,7 +816,7 @@
                 left: 0;
                 box-shadow: none;
                 border-radius: 0;
-                max-height: 60vh;
+                max-height: 50vh;
                 overflow-y: auto;
             }
             
@@ -673,8 +844,27 @@
             .search-box input:focus {
                 width: 240px;
             }
+
+            /* Tablet-specific improvements */
+            .nav-menu {
+                padding: 15px 0;
+            }
+
+            .nav-item {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .logo-section {
+                padding: 20px 20px;
+            }
+
+            .logo-section h1 {
+                font-size: 24px;
+            }
         }
 
+        /* Mobile Styles */
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
@@ -775,6 +965,43 @@
                 padding: 10px 20px;
                 font-size: 13px;
             }
+
+            /* Mobile-specific improvements */
+            .dashboard-container {
+                padding-top: 60px; /* Space for mobile menu toggle */
+            }
+
+            .mobile-menu-toggle {
+                top: 15px;
+                left: 15px;
+            }
+
+            /* Better mobile navigation */
+            .nav-section {
+                margin-bottom: 20px;
+            }
+
+            .nav-section-title {
+                font-size: 10px;
+                padding: 0 20px;
+                margin-bottom: 10px;
+            }
+
+            .nav-item {
+                padding: 15px 20px;
+                font-size: 15px;
+                min-height: 50px; /* Better touch target */
+            }
+
+            .nav-item i {
+                width: 22px;
+                font-size: 16px;
+            }
+
+            .nav-item .badge {
+                padding: 4px 8px;
+                font-size: 10px;
+            }
         }
 
         @media (max-width: 576px) {
@@ -827,6 +1054,103 @@
             .btn {
                 padding: 8px 16px;
                 font-size: 12px;
+            }
+
+            /* Enhanced small mobile styles */
+            .mobile-menu-toggle {
+                width: 45px;
+                height: 45px;
+                padding: 10px;
+            }
+
+            .mobile-close-btn {
+                width: 35px;
+                height: 35px;
+                top: 15px;
+                right: 15px;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .header-right {
+                width: 100%;
+            }
+
+            .icon-button, .user-avatar {
+                width: 40px;
+                height: 40px;
+            }
+
+            .user-avatar {
+                font-size: 14px;
+            }
+
+            /* Better touch targets */
+            .btn, .nav-item, .icon-button, .user-avatar {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+
+        /* Large mobile and small tablet improvements */
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 15px 10px;
+                margin-left: -10px;
+                margin-right: -10px;
+                margin-top: -10px;
+            }
+
+            .card {
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+
+            .card-header h3 {
+                font-size: 18px;
+            }
+
+            .btn {
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+
+            .logo-section h1 {
+                font-size: 22px;
+            }
+
+            .nav-item {
+                padding: 10px 15px;
+                font-size: 13px;
+            }
+        }
+
+        /* Landscape mobile improvements */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .sidebar {
+                max-height: 80vh;
+            }
+
+            .logo-section {
+                padding: 15px 20px;
+            }
+
+            .nav-menu {
+                padding: 10px 0;
+            }
+
+            .nav-item {
+                padding: 8px 20px;
+            }
+
+            .nav-section {
+                margin-bottom: 15px;
             }
         }
 
@@ -895,7 +1219,9 @@
             .nav-item,
             .btn,
             .icon-button,
-            .user-avatar {
+            .user-avatar,
+            .mobile-menu-toggle,
+            .mobile-close-btn {
                 min-height: 44px;
                 min-width: 44px;
             }
@@ -907,8 +1233,147 @@
                 transform: none;
             }
             
-            .nav-item:active {
-                background: var(--paw-medium);
+            .nav-item:active,
+            .btn:active,
+            .icon-button:active,
+            .user-avatar:active {
+                transform: scale(0.95);
+                transition: transform 0.1s ease;
+            }
+
+            /* Enhanced touch feedback */
+            .nav-item {
+                position: relative;
+                overflow: hidden;
+            }
+
+            .nav-item::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 0;
+                height: 0;
+                border-radius: 50%;
+                background: rgba(255, 140, 66, 0.3);
+                transform: translate(-50%, -50%);
+                transition: width 0.3s ease, height 0.3s ease;
+                pointer-events: none;
+            }
+
+            .nav-item:active::after {
+                width: 100px;
+                height: 100px;
+            }
+
+            /* Better touch targets for small screens */
+            .pet-card,
+            .appointment-item,
+            .user-item {
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                user-select: none;
+            }
+
+            /* Remove hover effects on touch devices */
+            .pet-card:hover,
+            .card:hover,
+            .btn:hover {
+                transform: none;
+            }
+
+            .pet-card:active,
+            .card:active {
+                transform: scale(0.98);
+                transition: transform 0.1s ease;
+            }
+        }
+
+        /* Additional touch optimizations */
+        @media (max-width: 768px) {
+            /* Prevent double-tap zoom */
+            .btn, .nav-item, .icon-button {
+                touch-action: manipulation;
+            }
+
+            /* Smooth scrolling for touch */
+            .sidebar {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+            }
+
+            .main-content {
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Better input handling */
+            input, textarea, select {
+                font-size: 16px !important; /* Prevents zoom on iOS */
+                -webkit-appearance: none;
+                -webkit-border-radius: 0;
+                border-radius: 12px;
+            }
+
+            /* Remove WebKit highlights */
+            * {
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+            /* Allow selection for text inputs */
+            input, textarea {
+                -webkit-user-select: text;
+                -khtml-user-select: text;
+                -moz-user-select: text;
+                -ms-user-select: text;
+                user-select: text;
+            }
+
+            /* Better scrolling for tables */
+            .table-wrapper {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+            }
+
+            /* Pagination improvements */
+            .pagination .page-link {
+                min-height: 44px;
+                min-width: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                touch-action: manipulation;
+            }
+        }
+
+        /* Landscape optimizations */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .sidebar {
+                max-height: 70vh;
+            }
+
+            .modal-content {
+                max-height: 85vh;
+            }
+
+            .nav-item {
+                padding: 8px 20px;
+                min-height: 40px;
+            }
+
+            .logo-section {
+                padding: 10px 20px;
+            }
+
+            .logo-section h1 {
+                font-size: 20px;
             }
         }
     </style>
@@ -1648,7 +2113,7 @@
             window.addEventListener('beforeunload', saveScroll);
         });
 
-        // Mobile Menu Functionality
+        // Enhanced Mobile Menu Functionality
         document.addEventListener('DOMContentLoaded', () => {
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
             const mobileCloseBtn = document.getElementById('mobileCloseBtn');
@@ -1656,46 +2121,106 @@
             
             if (!mobileMenuToggle || !mobileCloseBtn || !sidebar) return;
 
-            // Open mobile menu
+            // Touch feedback for menu toggle
+            const addTouchFeedback = (element) => {
+                element.addEventListener('touchstart', () => {
+                    element.style.transform = 'scale(0.95)';
+                });
+                element.addEventListener('touchend', () => {
+                    element.style.transform = 'scale(1)';
+                });
+            };
+
+            addTouchFeedback(mobileMenuToggle);
+            addTouchFeedback(mobileCloseBtn);
+
+            // Open mobile menu with animation
             mobileMenuToggle.addEventListener('click', () => {
                 sidebar.classList.add('active');
                 document.body.style.overflow = 'hidden';
+                
+                // Focus trap for accessibility
+                setTimeout(() => {
+                    mobileCloseBtn.focus();
+                }, 100);
             });
 
-            // Close mobile menu
-            mobileCloseBtn.addEventListener('click', () => {
+            // Close mobile menu with animation
+            const closeMobileMenu = () => {
                 sidebar.classList.remove('active');
                 document.body.style.overflow = 'auto';
-            });
+                mobileMenuToggle.focus();
+            };
 
-            // Close menu when clicking outside
+            mobileCloseBtn.addEventListener('click', closeMobileMenu);
+
+            // Enhanced swipe gesture support
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            document.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipeGesture();
+            }, { passive: true });
+
+            const handleSwipeGesture = () => {
+                const swipeThreshold = 50;
+                const diff = touchStartX - touchEndX;
+
+                // Swipe right to open menu (from left edge)
+                if (diff < -swipeThreshold && touchStartX < 50) {
+                    sidebar.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+                // Swipe left to close menu
+                else if (diff > swipeThreshold && sidebar.classList.contains('active')) {
+                    closeMobileMenu();
+                }
+            };
+
+            // Close menu when clicking outside with better touch handling
             document.addEventListener('click', (e) => {
                 if (window.innerWidth <= 768 && 
                     sidebar.classList.contains('active') && 
                     !sidebar.contains(e.target) && 
                     !mobileMenuToggle.contains(e.target)) {
-                    sidebar.classList.remove('active');
-                    document.body.style.overflow = 'auto';
+                    closeMobileMenu();
                 }
             });
 
-            // Close menu on window resize if above mobile breakpoint
+            // Close menu on window resize with debouncing
+            let resizeTimeout;
             window.addEventListener('resize', () => {
-                if (window.innerWidth > 768 && sidebar.classList.contains('active')) {
-                    sidebar.classList.remove('active');
-                    document.body.style.overflow = 'auto';
-                }
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    if (window.innerWidth > 768 && sidebar.classList.contains('active')) {
+                        closeMobileMenu();
+                    }
+                }, 250);
             });
 
             // Close menu when clicking on navigation links
             const navLinks = sidebar.querySelectorAll('.nav-item');
             navLinks.forEach(link => {
+                // Add touch feedback to nav items
+                addTouchFeedback(link);
+                
                 link.addEventListener('click', () => {
                     if (window.innerWidth <= 768) {
-                        sidebar.classList.remove('active');
-                        document.body.style.overflow = 'auto';
+                        setTimeout(closeMobileMenu, 150); // Small delay for visual feedback
                     }
                 });
+            });
+
+            // Handle escape key for accessibility
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    closeMobileMenu();
+                }
             });
         });
     </script>

@@ -126,6 +126,122 @@
 
         .table-wrapper {
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Mobile responsive improvements */
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .toolbar .filters {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .filter-select {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .appointments-table {
+                font-size: 12px;
+            }
+
+            .appointments-table thead th {
+                padding: 8px 10px;
+                font-size: 10px;
+            }
+
+            .appointments-table tbody td {
+                padding: 12px 8px;
+                font-size: 11px;
+            }
+
+            .actions {
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .btn-outline {
+                padding: 6px 10px;
+                font-size: 11px;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .badge-status {
+                font-size: 10px;
+                padding: 4px 8px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .toolbar {
+                margin-bottom: 16px;
+            }
+
+            .appointments-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            .appointments-table thead {
+                display: none;
+            }
+
+            .appointments-table tbody,
+            .appointments-table tr,
+            .appointments-table td {
+                display: block;
+                width: 100% !important;
+            }
+
+            .appointments-table tr {
+                margin-bottom: 16px;
+                border: 1px solid var(--soft-gray);
+                border-radius: 12px;
+                padding: 12px;
+                background: var(--white);
+                box-shadow: var(--shadow-soft);
+            }
+
+            .appointments-table td {
+                text-align: left !important;
+                padding: 8px 0 !important;
+                border: none !important;
+                position: relative;
+                padding-left: 35% !important;
+            }
+
+            .appointments-table td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 0;
+                width: 30%;
+                font-weight: 600;
+                color: var(--light-text);
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .actions {
+                flex-direction: row;
+                justify-content: space-between;
+                margin-top: 12px;
+                padding-top: 12px;
+                border-top: 1px solid var(--soft-gray);
+            }
+
+            .btn-outline {
+                flex: 1;
+                margin: 0 2px;
+            }
         }
     </style>
 
@@ -195,33 +311,33 @@
                 <tbody>
                     @foreach($appointments as $appointment)
                         <tr>
-                            <td>
+                            <td data-label="When">
                                 <strong>{{ $appointment->formatted_date }}</strong>
                                 <div style="font-size: 12px; color: var(--light-text); margin-top: 4px;">
                                     #{{ $appointment->id }}
                                 </div>
                             </td>
-                            <td>
+                            <td data-label="Pet">
                                 <strong>{{ $appointment->pet_name ?? 'Unnamed Pet' }}</strong>
                                 <div style="font-size: 12px; color: var(--light-text);">
                                     {{ ucfirst($appointment->pet_species ?? 'N/A') }}
                                 </div>
                             </td>
-                            <td>{{ $appointment->owner_name ?? 'N/A' }}</td>
-                            <td>
+                            <td data-label="Owner">{{ $appointment->owner_name ?? 'N/A' }}</td>
+                            <td data-label="Type">
                                 <span class="badge-status warning">
                                     <i class="fas fa-tag"></i>
                                     {{ $appointment->type_label }}
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="Status">
                                 <span class="badge-status {{ $appointment->status_badge }}">
                                     <i class="fas fa-info-circle"></i>
                                     {{ $appointment->status_label }}
                                 </span>
                             </td>
-                            <td>{{ $appointment->veterinarian_name ?? 'Unassigned' }}</td>
-                            <td>
+                            <td data-label="Veterinarian">{{ $appointment->veterinarian_name ?? 'Unassigned' }}</td>
+                            <td data-label="Actions">
                                 <div class="actions">
                                     <a href="{{ route('admin.appointments.show', $appointment->id) }}" class="btn-outline">
                                         <i class="fas fa-eye"></i> View

@@ -140,6 +140,10 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::get('/orders', [App\Http\Controllers\Customer\BillingController::class, 'orders'])->name('billing.orders');
     Route::get('/orders/{orderId}', [App\Http\Controllers\Customer\BillingController::class, 'orderDetails'])->name('billing.order-details');
     Route::post('/orders/{orderId}/cancel', [App\Http\Controllers\Customer\BillingController::class, 'cancelOrder'])->name('billing.cancel-order');
+    
+    // Profile Management
+    Route::get('/profile', [App\Http\Controllers\Customer\CustomerController::class, 'profile'])->name('profile');
+    Route::put('/profile', [App\Http\Controllers\Customer\CustomerController::class, 'updateProfile'])->name('profile.update');
 });
 
 // Veterinarian Routes

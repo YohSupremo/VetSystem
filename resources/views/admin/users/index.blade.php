@@ -269,21 +269,119 @@
         color: #718096;
     }
 
-    @media (max-width: 768px) {
-        .users-content-area .top-bar {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .users-content-area .btn-add-user {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .users-content-area .table-card {
+    .users-content-area .table-card {
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
-    }
+
+        /* Mobile responsive improvements */
+        @media (max-width: 768px) {
+            .users-content-area .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .users-content-area .btn-add-user {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .users-content-area .table-card {
+                overflow-x: auto;
+            }
+
+            .users-content-area .table {
+                font-size: 12px;
+            }
+
+            .users-content-area .table thead th {
+                padding: 12px 10px;
+                font-size: 11px;
+            }
+
+            .users-content-area .table tbody td {
+                padding: 12px 8px;
+                font-size: 11px;
+            }
+
+            .users-content-area .role-badge,
+            .users-content-area .status-badge {
+                font-size: 10px;
+                padding: 4px 8px;
+            }
+
+            .users-content-area .table tbody td:last-child {
+                white-space: nowrap;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .users-content-area .table-card {
+                border-radius: 12px;
+            }
+
+            .users-content-area .table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            .users-content-area .table thead {
+                display: none;
+            }
+
+            .users-content-area .table tbody,
+            .users-content-area .table tr,
+            .users-content-area .table td {
+                display: block;
+                width: 100% !important;
+            }
+
+            .users-content-area .table tr {
+                margin-bottom: 16px;
+                border: 1px solid #F1F3F5;
+                border-radius: 12px;
+                padding: 16px;
+                background: var(--white);
+                box-shadow: var(--shadow-soft);
+            }
+
+            .users-content-area .table td {
+                text-align: left !important;
+                padding: 8px 0 !important;
+                border: none !important;
+                position: relative;
+                padding-left: 40% !important;
+                white-space: normal !important;
+            }
+
+            .users-content-area .table td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 0;
+                width: 35%;
+                font-weight: 600;
+                color: #718096;
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .users-content-area .table td:last-child {
+                padding-top: 12px !important;
+                margin-top: 8px;
+                border-top: 1px solid #F1F3F5 !important;
+            }
+
+            .users-content-area .table td:last-child::before {
+                display: none;
+            }
+
+            .users-content-area .table td:last-child .btn {
+                margin: 0 4px;
+            }
+        }
 </style>
 
 <div class="users-content-area">
@@ -316,10 +414,10 @@
             <tbody>
                 @foreach($users as $user)
                     <tr>
-                        <td>{{ $user->id }}</td>
-                        <td class="user-name">{{ $user->first_name }} {{ $user->last_name }}</td>
-                        <td>{{ $user->email }}</td>
-                        <td>
+                        <td data-label="#">{{ $user->id }}</td>
+                        <td data-label="Name" class="user-name">{{ $user->first_name }} {{ $user->last_name }}</td>
+                        <td data-label="Email">{{ $user->email }}</td>
+                        <td data-label="Role">
                             <span class="role-badge {{ $user->role }}">
                                 @if($user->role === 'admin')
                                     <i class="fas fa-user-shield"></i>
@@ -333,17 +431,17 @@
                                 {{ ucfirst(str_replace('_', ' ', $user->role)) }}
                             </span>
                         </td>
-                        <td>{{ $user->contact_number ?? '—' }}</td>
-                        <td>
+                        <td data-label="Contact">{{ $user->contact_number ?? '—' }}</td>
+                        <td data-label="Status">
                             <span class="status-badge {{ $user->is_active ? 'active' : 'inactive' }}">
                                 <i class="fas fa-circle"></i>
                                 {{ $user->is_active ? 'Active' : 'Inactive' }}
                             </span>
                         </td>
-                        <td class="date-text">
+                        <td data-label="Created" class="date-text">
                             {{ $user->created_at ? $user->created_at->format('M d, Y') : '—' }}
                         </td>
-                        <td style="white-space:nowrap;">
+                        <td data-label="Actions" style="white-space:nowrap;">
                             <a href="{{ route('admin.users.show', $user) }}" class="btn btn-sm" title="View"><i class="fas fa-eye"></i></a>
                             <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm" title="Edit"><i class="fas fa-edit"></i></a>
                             <form action="{{ route('admin.users.destroy', $user) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Delete this user?')">

@@ -18,6 +18,7 @@ class User extends Authenticatable
         'last_name',
         'contact_number',
         'address',
+        'profile_picture',
         'is_active',
         'email_verified',
         'phone_verified',

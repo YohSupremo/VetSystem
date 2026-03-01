@@ -118,6 +118,124 @@
         font-weight: 600;
         margin-bottom: 8px;
     }
+
+    /* Mobile responsive improvements */
+    @media (max-width: 768px) {
+        .pets-container {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .top-bar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+
+        .pet-image {
+            height: 160px;
+            font-size: 48px;
+        }
+
+        .pet-info {
+            padding: 16px;
+        }
+
+        .pet-name {
+            font-size: 18px;
+        }
+
+        .pet-details {
+            font-size: 12px;
+        }
+
+        .card-actions {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card-actions .btn {
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .pets-container {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .pet-card {
+            border-radius: 12px;
+        }
+
+        .pet-image {
+            height: 140px;
+            font-size: 40px;
+        }
+
+        .pet-info {
+            padding: 12px;
+        }
+
+        .pet-name {
+            font-size: 16px;
+        }
+
+        .pet-details {
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+
+        .pet-owner {
+            padding: 8px;
+            margin-bottom: 12px;
+            font-size: 11px;
+        }
+
+        .species-badge {
+            font-size: 10px;
+            padding: 3px 10px;
+            margin-bottom: 6px;
+        }
+
+        .card-actions {
+            gap: 6px;
+        }
+
+        .card-actions .btn {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        .top-bar h3 {
+            font-size: 20px;
+        }
+
+        .top-bar p {
+            font-size: 13px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .pets-container {
+            gap: 10px;
+        }
+
+        .pet-image {
+            height: 120px;
+        }
+
+        .pet-info {
+            padding: 10px;
+        }
+
+        .card-actions .btn {
+            padding: 6px 8px;
+            font-size: 11px;
+        }
+    }
 </style>
 
 <div class="top-bar">

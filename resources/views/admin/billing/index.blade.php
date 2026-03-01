@@ -119,6 +119,136 @@
         margin-bottom: 20px;
         display: block;
     }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Mobile responsive improvements */
+    @media (max-width: 768px) {
+        .billing-hero {
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .stats-card {
+            padding: 0.75rem 0.85rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .stats-card h3 {
+            font-size: 1.2rem;
+        }
+
+        .table-card-header {
+            padding: 0.75rem 1rem;
+            flex-direction: column;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .table thead th {
+            font-size: 0.7rem;
+            padding: 8px 6px;
+        }
+
+        .table tbody td {
+            font-size: 0.8rem;
+            padding: 12px 6px;
+        }
+
+        .action-group {
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .action-group .btn {
+            min-width: auto;
+            width: 100%;
+        }
+
+        .status-badge {
+            font-size: 0.65rem;
+            padding: 0.25rem 0.5rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .billing-hero {
+            padding: 0.75rem 1rem;
+        }
+
+        .table-card {
+            border-radius: 12px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .table thead {
+            display: none;
+        }
+
+        .table tbody,
+        .table tr,
+        .table td {
+            display: block;
+            width: 100% !important;
+        }
+
+        .table tr {
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            background: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .table td {
+            text-align: left !important;
+            padding: 6px 0 !important;
+            border: none !important;
+            position: relative;
+            padding-left: 40% !important;
+            white-space: normal !important;
+        }
+
+        .table td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 0;
+            width: 35%;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .action-group {
+            flex-direction: row;
+            justify-content: space-between;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .action-group .btn {
+            flex: 1;
+            margin: 0 2px;
+            padding: 6px 8px;
+            font-size: 0.7rem;
+        }
+    }
 </style>
 
 <div class="content-header billing-hero">
@@ -242,17 +372,17 @@
                             };
                         @endphp
                         <tr>
-                            <td>
+                            <td data-label="Invoice">
                                 <strong>{{ $invoice->invoice_number }}</strong>
                                 <div class="text-muted small">{{ $invoice->invoice_date?->format('M d, Y') }}</div>
                             </td>
-                            <td>{{ $invoice->pet?->name ?? 'N/A' }}</td>
-                            <td>{{ $invoice->petOwner?->full_name ?? 'N/A' }}</td>
-                            <td>{{ number_format($invoice->total_amount, 2) }}</td>
-                            <td>{{ number_format($invoice->balance, 2) }}</td>
-                            <td>{{ $invoice->due_date?->format('M d, Y') }}</td>
-                            <td><span class="status-badge {{ $statusClass }}">{{ ucfirst($invoice->status) }}</span></td>
-                            <td>
+                            <td data-label="Pet">{{ $invoice->pet?->name ?? 'N/A' }}</td>
+                            <td data-label="Owner">{{ $invoice->petOwner?->full_name ?? 'N/A' }}</td>
+                            <td data-label="Total">{{ number_format($invoice->total_amount, 2) }}</td>
+                            <td data-label="Balance">{{ number_format($invoice->balance, 2) }}</td>
+                            <td data-label="Due Date">{{ $invoice->due_date?->format('M d, Y') }}</td>
+                            <td data-label="Status"><span class="status-badge {{ $statusClass }}">{{ ucfirst($invoice->status) }}</span></td>
+                            <td data-label="Actions">
                                 <div class="action-group">
                                     <a href="{{ route('admin.billing.show', $invoice->id) }}" class="btn btn-sm btn-outline-primary" title="View">
                                         <i class="fas fa-eye"></i>

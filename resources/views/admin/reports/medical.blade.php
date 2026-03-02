@@ -119,6 +119,10 @@
             <div class="chart-wrapper">
                 {!! $medicalVolumeChart->container() !!}
             </div>
+            <h5 class="mt-4 mb-3">Appointment Status Breakdown</h5>
+            <div class="chart-wrapper">
+                {!! $appointmentStatusChart->container() !!}
+            </div>
         </div>
     </div>
     <div class="col-lg-6">
@@ -217,6 +221,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
 {!! $medicalVolumeChart->script() !!}
+{!! $appointmentStatusChart->script() !!}
 {!! $commonDiagnosesChart->script() !!}
 {!! $petTypesChart->script() !!}
 @endsection

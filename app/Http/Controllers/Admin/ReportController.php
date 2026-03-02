@@ -346,12 +346,24 @@ class ReportController extends BaseController
             ->orderBy('count', 'desc')
             ->get();
 
+        $appointmentStatusCounts = Appointment::whereBetween('appointment_date', [$startDate, $endDate])
+            ->select('status', DB::raw('COUNT(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $appointmentStatuses = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'];
+        $appointmentStatusLabels = ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled', 'No Show'];
+        $appointmentStatusData = collect($appointmentStatuses)
+            ->map(function ($status) use ($appointmentStatusCounts) {
+                return (int) ($appointmentStatusCounts[$status] ?? 0);
+            })
+            ->all();
+
         $medicalVolumeChart = $this->makeChart(
             'bar',
-            ['Appointments', 'Completed', 'Medical Records', 'Prescriptions', 'Vaccinations', 'Surgeries'],
+            ['Appointments', 'Medical Records', 'Prescriptions', 'Vaccinations', 'Surgeries'],
             [
                 $totalAppointments,
-                $completedAppointments,
                 $totalMedicalRecords,
                 $totalPrescriptions,
                 $totalVaccinations,
@@ -360,7 +372,6 @@ class ReportController extends BaseController
             'Medical Activity',
             [
                 'rgba(37, 99, 235, 0.35)',
-                'rgba(34, 197, 94, 0.35)',
                 'rgba(99, 102, 241, 0.35)',
                 'rgba(236, 72, 153, 0.35)',
                 'rgba(249, 115, 22, 0.35)',
@@ -368,11 +379,36 @@ class ReportController extends BaseController
             ],
             [
                 'rgba(37, 99, 235, 1)',
-                'rgba(34, 197, 94, 1)',
                 'rgba(99, 102, 241, 1)',
                 'rgba(236, 72, 153, 1)',
                 'rgba(249, 115, 22, 1)',
                 'rgba(20, 184, 166, 1)',
+            ],
+            [
+                'legend' => ['display' => false],
+            ]
+        );
+
+        $appointmentStatusChart = $this->makeChart(
+            'bar',
+            $appointmentStatusLabels,
+            $appointmentStatusData,
+            'Appointment Status',
+            [
+                'rgba(59, 130, 246, 0.35)',
+                'rgba(16, 185, 129, 0.35)',
+                'rgba(168, 85, 247, 0.35)',
+                'rgba(34, 197, 94, 0.35)',
+                'rgba(239, 68, 68, 0.35)',
+                'rgba(245, 158, 11, 0.35)',
+            ],
+            [
+                'rgba(59, 130, 246, 1)',
+                'rgba(16, 185, 129, 1)',
+                'rgba(168, 85, 247, 1)',
+                'rgba(34, 197, 94, 1)',
+                'rgba(239, 68, 68, 1)',
+                'rgba(245, 158, 11, 1)',
             ],
             [
                 'legend' => ['display' => false],
@@ -430,6 +466,7 @@ class ReportController extends BaseController
             'commonTreatments',
             'petTypes',
             'medicalVolumeChart',
+            'appointmentStatusChart',
             'commonDiagnosesChart',
             'petTypesChart'
         ));

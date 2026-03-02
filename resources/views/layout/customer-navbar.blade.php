@@ -283,3 +283,5 @@
     </div>
 </nav>
 
+@include('partials.flash-messages', ['containerClass' => 'container mt-3 app-flash-themed'])
+

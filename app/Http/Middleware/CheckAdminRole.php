@@ -100,7 +100,11 @@ class CheckAdminRole
 
         // Check if user role has permissions
         if (!isset($rolePermissions[$user->role])) {
-            return $this->redirectToDefaultPage($user->role, 'You are not authorized to access admin modules.');
+            $message = in_array($user->role, ['pet_owner', 'registered_user', 'customer'], true)
+                ? 'Admin panel access is restricted. Please use the customer menu.'
+                : 'You are not authorized to access admin modules.';
+
+            return $this->redirectToDefaultPage($user->role, $message);
         }
 
         $allowedRoutes = $rolePermissions[$user->role];
@@ -124,7 +128,11 @@ class CheckAdminRole
         }
 
         // If not allowed, redirect to default page
-        return $this->redirectToDefaultPage($user->role, 'You are not authorized to access this page.');
+        $message = in_array($user->role, ['pet_owner', 'registered_user', 'customer'], true)
+            ? 'Admin panel access is restricted. Please use the customer menu.'
+            : 'You are not authorized to access this page.';
+
+        return $this->redirectToDefaultPage($user->role, $message);
     }
 
     /**

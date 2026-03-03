@@ -43,7 +43,6 @@ class SettingController extends BaseController
             'default_tax_rate' => 'required|numeric|min:0|max:100',
             'appointment_slot_minutes' => 'required|integer|min:1|max:480',
             'appointment_buffer_minutes' => 'required|integer|min:0|max:240',
-            'low_stock_threshold' => 'required|integer|min:0|max:100000',
         ]);
 
         $payload = [
@@ -57,7 +56,6 @@ class SettingController extends BaseController
             'default_tax_rate' => $validated['default_tax_rate'],
             'appointment_slot_minutes' => $validated['appointment_slot_minutes'],
             'appointment_buffer_minutes' => $validated['appointment_buffer_minutes'],
-            'low_stock_threshold' => $validated['low_stock_threshold'],
             'updated_by' => Auth::id(),
         ];
 

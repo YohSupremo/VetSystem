@@ -58,10 +58,20 @@ class SurgeryController extends BaseController
     {
         $pets = Pet::with('owner.user')->get();
         
-        // Get scheduled surgeons for current day/time
-        $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
+        $selectedDate = request()->query('scheduled_date', date('Y-m-d'));
+        $dayOfWeek = \Carbon\Carbon::parse($selectedDate)->format('l');
+        
+        // Get surgeons scheduled for the selected date
+        $scheduledStaffIds = StaffSchedule::where('is_active', true)
+            ->where('day_of_week', $dayOfWeek)
+            ->pluck('user_id')
+            ->unique()
+            ->toArray();
+        
         $surgeons = User::where('role', 'veterinarian')
+            ->where('is_active', true)
             ->whereIn('id', $scheduledStaffIds)
+            ->orderBy('first_name')
             ->get();
         
         $surgeryTypes = SurgeryType::where('is_active', true)->orderBy('name')->get();
@@ -127,15 +137,58 @@ class SurgeryController extends BaseController
         $surgery = Surgery::findOrFail($id);
         $pets = Pet::with('owner.user')->get();
         
-        // Get scheduled surgeons for current day/time
-        $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
+        // Get surgeons scheduled for the surgery date
+        $dayOfWeek = \Carbon\Carbon::parse($surgery->scheduled_date)->format('l');
+        $scheduledStaffIds = StaffSchedule::where('is_active', true)
+            ->where('day_of_week', $dayOfWeek)
+            ->pluck('user_id')
+            ->unique()
+            ->toArray();
+        
         $surgeons = User::where('role', 'veterinarian')
+            ->where('is_active', true)
             ->whereIn('id', $scheduledStaffIds)
+            ->orderBy('first_name')
             ->get();
         
         $surgeryTypes = SurgeryType::where('is_active', true)->orderBy('name')->get();
 
         return view('admin.surgeries.edit', compact('surgery', 'pets', 'surgeons', 'surgeryTypes'));
+    }
+
+    /**
+     * Get available surgeons for a specific date
+     */
+    public function getAvailableSurgeons(Request $request)
+    {
+        $date = $request->query('date', date('Y-m-d'));
+        
+        try {
+            $dayOfWeek = \Carbon\Carbon::parse($date)->format('l');
+        } catch (\Exception $e) {
+            return response()->json(['surgeons' => []], 400);
+        }
+        
+        // Get surgeons scheduled for the selected date
+        $scheduledStaffIds = StaffSchedule::where('is_active', true)
+            ->where('day_of_week', $dayOfWeek)
+            ->pluck('user_id')
+            ->unique()
+            ->toArray();
+        
+        $surgeons = User::where('role', 'veterinarian')
+            ->where('is_active', true)
+            ->whereIn('id', $scheduledStaffIds)
+            ->orderBy('first_name')
+            ->get()
+            ->map(function ($surgeon) {
+                return [
+                    'id' => $surgeon->id,
+                    'name' => 'Dr. ' . $surgeon->first_name . ' ' . $surgeon->last_name,
+                ];
+            });
+        
+        return response()->json(['surgeons' => $surgeons]);
     }
 
     /**

@@ -341,6 +341,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
     Route::prefix('vaccinations')->name('vaccinations.')->group(function () {
         Route::get('/', [VaccinationController::class, 'index'])->name('index');
         Route::get('/create', [VaccinationController::class, 'create'])->name('create');
+        Route::get('/available-veterinarians', [VaccinationController::class, 'getAvailableVeterinarians'])->name('available-veterinarians');
         Route::post('/appointments/{appointment}/accept', [VaccinationController::class, 'acceptAppointment'])->name('appointments.accept');
         Route::post('/', [VaccinationController::class, 'store'])->name('store');
         Route::post('/{vaccination}/payment', [VaccinationController::class, 'processPayment'])->name('payment.process');
@@ -492,6 +493,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
     Route::prefix('surgeries')->name('surgeries.')->group(function () {
         Route::get('/', [SurgeryController::class, 'index'])->name('index');
         Route::get('/create', [SurgeryController::class, 'create'])->name('create');
+        Route::get('/available-surgeons', [SurgeryController::class, 'getAvailableSurgeons'])->name('available-surgeons');
         Route::post('/', [SurgeryController::class, 'store'])->name('store');
         Route::post('/{surgery}/payment', [SurgeryController::class, 'processPayment'])->name('payment.process');
         Route::get('/{surgery}', [SurgeryController::class, 'show'])->name('show');

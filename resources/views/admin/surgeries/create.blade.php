@@ -139,6 +139,8 @@
                     document.addEventListener('DOMContentLoaded', function() {
                         const surgerySelect = document.getElementById('surgery-type-select');
                         const surgeryInfo = document.getElementById('surgery-info');
+                        const scheduledDateInput = document.querySelector('input[name="scheduled_date"]');
+                        const surgeonSelect = document.querySelector('select[name="surgeon_id"]');
                         
                         if (surgerySelect && surgeryInfo) {
                             surgerySelect.addEventListener('change', function() {
@@ -159,6 +161,55 @@
                             // Trigger on page load if there's a selected value
                             if (surgerySelect.value) {
                                 surgerySelect.dispatchEvent(new Event('change'));
+                            }
+                        }
+
+                        // Handle surgeon dropdown update when date changes
+                        if (scheduledDateInput && surgeonSelect) {
+                            function updateSurgeons(dateStr) {
+                                fetch(`{{ route('admin.surgeries.available-surgeons') }}?date=${dateStr}`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        const currentValue = surgeonSelect.value;
+                                        
+                                        // Clear all options except the first
+                                        surgeonSelect.innerHTML = '<option value="">Choose surgeon...</option>';
+                                        
+                                        if (!data.surgeons || data.surgeons.length === 0) {
+                                            const option = document.createElement('option');
+                                            option.value = '';
+                                            option.textContent = 'No surgeons available for this date';
+                                            option.disabled = true;
+                                            surgeonSelect.appendChild(option);
+                                            return;
+                                        }
+                                        
+                                        data.surgeons.forEach(surgeon => {
+                                            const option = document.createElement('option');
+                                            option.value = surgeon.id;
+                                            option.textContent = surgeon.name;
+                                            if (currentValue && surgeon.id == currentValue) {
+                                                option.selected = true;
+                                            }
+                                            surgeonSelect.appendChild(option);
+                                        });
+                                    })
+                                    .catch(error => {
+                                        console.error('Error fetching surgeons:', error);
+                                    });
+                            }
+
+                            scheduledDateInput.addEventListener('change', function() {
+                                if (this.value) {
+                                    const dateOnly = this.value.split('T')[0];
+                                    updateSurgeons(dateOnly);
+                                }
+                            });
+
+                            // Load initial surgeons on page load
+                            if (scheduledDateInput.value) {
+                                const dateOnly = scheduledDateInput.value.split('T')[0];
+                                updateSurgeons(dateOnly);
                             }
                         }
                     });

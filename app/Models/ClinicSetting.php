@@ -18,7 +18,6 @@ class ClinicSetting extends Model
         'default_tax_rate',
         'appointment_slot_minutes',
         'appointment_buffer_minutes',
-        'low_stock_threshold',
         'updated_by',
     ];
 
@@ -26,7 +25,6 @@ class ClinicSetting extends Model
         'default_tax_rate' => 'decimal:2',
         'appointment_slot_minutes' => 'integer',
         'appointment_buffer_minutes' => 'integer',
-        'low_stock_threshold' => 'integer',
     ];
 
     public static function defaults(): array
@@ -42,7 +40,6 @@ class ClinicSetting extends Model
             'default_tax_rate' => 0,
             'appointment_slot_minutes' => 30,
             'appointment_buffer_minutes' => 10,
-            'low_stock_threshold' => 10,
             'updated_by' => null,
         ];
     }

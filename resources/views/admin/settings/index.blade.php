@@ -140,17 +140,6 @@
                     >
                 </div>
 
-                <div class="col-md-4">
-                    <label class="form-label">Low Stock Threshold</label>
-                    <input
-                        type="number"
-                        min="0"
-                        name="low_stock_threshold"
-                        class="form-control"
-                        value="{{ old('low_stock_threshold', $clinicSettings->low_stock_threshold) }}"
-                        required
-                    >
-                </div>
             </div>
 
             <div class="d-flex justify-content-between border-top pt-3 mt-3">

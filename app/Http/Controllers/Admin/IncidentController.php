@@ -126,6 +126,7 @@ class IncidentController extends Controller
 
         $status = $validated['status'];
         $resolvedDate = in_array($status, ['resolved', 'closed'], true) ? now() : null;
+        $reportedById = $validated['reported_by'] ?? auth()->id();
 
         $incident = Incident::create([
             'incident_number' => $validated['incident_number'] ?: $this->generateIncidentNumber(),
@@ -133,7 +134,7 @@ class IncidentController extends Controller
             'incident_type' => $validated['incident_type'],
             'severity' => $validated['severity'],
             'pet_id' => $validated['pet_id'] ?? null,
-            'affected_user_id' => $validated['affected_user_id'] ?? null,
+            'affected_user_id' => $reportedById,
             'location' => $validated['location'],
             'cage_id' => $validated['cage_id'] ?? null,
             'description' => $validated['description'],
@@ -142,7 +143,7 @@ class IncidentController extends Controller
             'corrective_action' => $validated['corrective_action'] ?? null,
             'status' => $status,
             'resolved_date' => $resolvedDate,
-            'reported_by' => $validated['reported_by'] ?? auth()->id(),
+            'reported_by' => $reportedById,
             'reported_at' => now(),
         ]);
 
@@ -187,7 +188,7 @@ class IncidentController extends Controller
             'incident_type' => $validated['incident_type'],
             'severity' => $validated['severity'],
             'pet_id' => $validated['pet_id'] ?? null,
-            'affected_user_id' => $validated['affected_user_id'] ?? null,
+            'affected_user_id' => $incident->affected_user_id,
             'location' => $validated['location'],
             'cage_id' => $validated['cage_id'] ?? null,
             'description' => $validated['description'],
@@ -196,7 +197,7 @@ class IncidentController extends Controller
             'corrective_action' => $validated['corrective_action'] ?? null,
             'status' => $status,
             'resolved_date' => $resolvedDate,
-            'reported_by' => $validated['reported_by'] ?? $incident->reported_by,
+            'reported_by' => $incident->reported_by,
         ]);
 
         return redirect()->route('admin.incidents.show', $incident->id)

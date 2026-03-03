@@ -18,6 +18,14 @@
         font-weight: 600;
         color: var(--dark-text);
     }
+    
+    .badge.bg-primary {
+        background-color: #0d6efd !important;
+    }
+    
+    .badge.bg-secondary {
+        background-color: #6c757d !important;
+    }
 </style>
 
 <div class="card">
@@ -56,12 +64,22 @@
                 <div class="detail-value text-capitalize">{{ str_replace('_', ' ', $incident->incident_type) }}</div>
             </div>
             <div class="col-md-4">
-                <div class="detail-label">Reported By</div>
-                <div class="detail-value">{{ $incident->reportedBy->first_name ?? 'N/A' }} {{ $incident->reportedBy->last_name ?? '' }}</div>
+                <div class="detail-label">Reported By (Filed By)</div>
+                <div class="detail-value">
+                    {{ $incident->reportedBy->first_name ?? 'N/A' }} {{ $incident->reportedBy->last_name ?? '' }}
+                    @if($incident->reportedBy)
+                        <span class="badge bg-primary ms-2">{{ ucfirst($incident->reportedBy->role) }}</span>
+                    @endif
+                </div>
             </div>
             <div class="col-md-4">
                 <div class="detail-label">Affected User</div>
-                <div class="detail-value">{{ $incident->affectedUser->first_name ?? 'N/A' }} {{ $incident->affectedUser->last_name ?? '' }}</div>
+                <div class="detail-value">
+                    {{ $incident->affectedUser->first_name ?? 'N/A' }} {{ $incident->affectedUser->last_name ?? '' }}
+                    @if($incident->affectedUser)
+                        <span class="badge bg-secondary ms-2">{{ ucfirst($incident->affectedUser->role) }}</span>
+                    @endif
+                </div>
             </div>
             <div class="col-md-4">
                 <div class="detail-label">Cage</div>
@@ -146,9 +164,16 @@
             <ul class="list-group list-group-flush">
                 @foreach($incident->incidentNotes as $note)
                     <li class="list-group-item">
-                        <div class="small text-muted">{{ optional($note->added_at)->format('M d, Y h:i A') }}</div>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <small class="text-muted"><i class="fas fa-clock me-1"></i>{{ optional($note->added_at)->format('M d, Y h:i A') }}</small>
+                            @if($note->addedBy)
+                                <span class="badge bg-info text-dark">
+                                    <i class="fas fa-user me-1"></i>
+                                    {{ $note->addedBy->first_name }} {{ $note->addedBy->last_name }}
+                                </span>
+                            @endif
+                        </div>
                         <div class="fw-semibold">{{ $note->note }}</div>
-                        <div class="small text-muted">Added by: {{ $note->addedBy->first_name ?? 'System' }}</div>
                     </li>
                 @endforeach
             </ul>

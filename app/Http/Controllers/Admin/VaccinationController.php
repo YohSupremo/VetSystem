@@ -72,10 +72,19 @@ class VaccinationController extends Controller
             ->orderBy('name')
             ->get();
         
-        // Get scheduled veterinarians for current day/time
-        $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
+        $selectedAdministeredDate = request()->query('administered_date', date('Y-m-d'));
+        $dayOfWeek = \Carbon\Carbon::parse($selectedAdministeredDate)->format('l');
+        
+        // Get veterinarians scheduled for the selected date
+        $scheduledVetIds = StaffSchedule::where('is_active', true)
+            ->where('day_of_week', $dayOfWeek)
+            ->pluck('user_id')
+            ->unique()
+            ->toArray();
+        
         $veterinarians = User::where('role', 'veterinarian')
-            ->whereIn('id', $scheduledStaffIds)
+            ->where('is_active', true)
+            ->whereIn('id', $scheduledVetIds)
             ->orderBy('first_name')
             ->get();
         
@@ -146,6 +155,41 @@ class VaccinationController extends Controller
             'administered_date' => optional($appointment->appointment_date)->format('Y-m-d'),
             'administered_by' => $appointment->veterinarian_id,
         ])->with('success', 'Appointment accepted. Continue by recording the vaccination details.');
+    }
+
+    /**
+     * Get available veterinarians for a specific date
+     */
+    public function getAvailableVeterinarians(Request $request)
+    {
+        $date = $request->query('date', date('Y-m-d'));
+        
+        try {
+            $dayOfWeek = \Carbon\Carbon::parse($date)->format('l');
+        } catch (\Exception $e) {
+            return response()->json(['veterinarians' => []], 400);
+        }
+        
+        // Get veterinarians scheduled for the selected date
+        $scheduledVetIds = StaffSchedule::where('is_active', true)
+            ->where('day_of_week', $dayOfWeek)
+            ->pluck('user_id')
+            ->unique()
+            ->toArray();
+        
+        $veterinarians = User::where('role', 'veterinarian')
+            ->where('is_active', true)
+            ->whereIn('id', $scheduledVetIds)
+            ->orderBy('first_name')
+            ->get()
+            ->map(function ($vet) {
+                return [
+                    'id' => $vet->id,
+                    'name' => 'Dr. ' . $vet->first_name . ' ' . $vet->last_name,
+                ];
+            });
+        
+        return response()->json(['veterinarians' => $veterinarians]);
     }
 
     /**
@@ -289,10 +333,17 @@ class VaccinationController extends Controller
             ->orderBy('name')
             ->get();
         
-        // Get scheduled veterinarians for current day/time
-        $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
+        // Get veterinarians scheduled for the vaccination date
+        $dayOfWeek = \Carbon\Carbon::parse($vaccination->administered_date)->format('l');
+        $scheduledVetIds = StaffSchedule::where('is_active', true)
+            ->where('day_of_week', $dayOfWeek)
+            ->pluck('user_id')
+            ->unique()
+            ->toArray();
+        
         $veterinarians = User::where('role', 'veterinarian')
-            ->whereIn('id', $scheduledStaffIds)
+            ->where('is_active', true)
+            ->whereIn('id', $scheduledVetIds)
             ->orderBy('first_name')
             ->get();
         

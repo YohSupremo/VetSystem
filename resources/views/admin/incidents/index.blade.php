@@ -239,7 +239,12 @@
                                 <td>
                                     <span class="status-badge status-{{ $statusClass }}">{{ $incident->status }}</span>
                                 </td>
-                                <td>{{ $incident->reportedBy->first_name ?? 'N/A' }} {{ $incident->reportedBy->last_name ?? '' }}</td>
+                                <td>
+                                    {{ $incident->reportedBy->first_name ?? 'N/A' }} {{ $incident->reportedBy->last_name ?? '' }}
+                                    @if($incident->reportedBy)
+                                        <span class="badge bg-info ms-1 text-capitalize">{{ $incident->reportedBy->role }}</span>
+                                    @endif
+                                </td>
                                 <td class="text-end incident-actions">
                                     <a href="{{ route('admin.incidents.show', $incident->id) }}" class="btn btn-sm btn-outline-primary">
                                         View

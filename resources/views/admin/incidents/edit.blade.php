@@ -64,16 +64,12 @@
                         @error('status')<span class="text-danger">{{ $message }}</span>@enderror
                     </div>
                     <div class="form-group">
-                        <label>Reported By</label>
-                        <select name="reported_by" class="form-control">
-                            <option value="">Keep current reporter</option>
-                            @foreach($users as $user)
-                                <option value="{{ $user->id }}" {{ old('reported_by', $incident->reported_by) == $user->id ? 'selected' : '' }}>
-                                    {{ trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: $user->username }} ({{ $user->role }})
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('reported_by')<span class="text-danger">{{ $message }}</span>@enderror
+                        <label>Filed By (Reported By) <span class="text-muted small">(Read-only)</span></label>
+                        <input type="text" class="form-control" 
+                               value="{{ $incident->reportedBy ? trim(($incident->reportedBy->first_name ?? '') . ' ' . ($incident->reportedBy->last_name ?? '')) . ' (' . ucfirst($incident->reportedBy->role) . ')' : 'N/A' }}" 
+                               disabled>
+                        <input type="hidden" name="reported_by" value="{{ $incident->reported_by }}">
+                        <small class="text-muted">Original reporter of this incident.</small>
                     </div>
                 </div>
             </div>
@@ -95,16 +91,12 @@
                         @error('pet_id')<span class="text-danger">{{ $message }}</span>@enderror
                     </div>
                     <div class="form-group">
-                        <label>Affected User</label>
-                        <select name="affected_user_id" class="form-control">
-                            <option value="">None</option>
-                            @foreach($users as $user)
-                                <option value="{{ $user->id }}" {{ old('affected_user_id', $incident->affected_user_id) == $user->id ? 'selected' : '' }}>
-                                    {{ trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: $user->username }} ({{ $user->role }})
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('affected_user_id')<span class="text-danger">{{ $message }}</span>@enderror
+                        <label>Affected User <span class="text-muted small">(Read-only - The Filer)</span></label>
+                        <input type="text" class="form-control" 
+                               value="{{ $incident->reportedBy ? trim(($incident->reportedBy->first_name ?? '') . ' ' . ($incident->reportedBy->last_name ?? '')) . ' (' . ucfirst($incident->reportedBy->role) . ')' : 'N/A' }}" 
+                               disabled>
+                        <input type="hidden" name="affected_user_id" value="{{ $incident->affected_user_id }}">
+                        <small class="text-muted">The affected user is the person who filed this incident and cannot be changed.</small>
                     </div>
                 </div>
 

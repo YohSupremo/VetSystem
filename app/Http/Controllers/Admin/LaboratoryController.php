@@ -147,7 +147,12 @@ class LaboratoryController extends Controller
 
         $labTests = LabTest::orderBy('test_name')->get();
 
-        $requesters = User::orderBy('first_name')->orderBy('last_name')->get();
+        // Only show active veterinarians, admins, and customers/users
+        $requesters = User::where('is_active', true)
+            ->whereIn('role', ['veterinarian', 'admin', 'customer', 'user'])
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
 
         return view('admin.laboratory.requisitions.create', compact('medicalRecords', 'labTests', 'requesters'));
     }
@@ -200,7 +205,13 @@ class LaboratoryController extends Controller
         $labRequisition->load(['medicalRecord.pet.owner.user', 'test', 'requestedBy']);
 
         $labTests = LabTest::orderBy('test_name')->get();
-        $requesters = User::orderBy('first_name')->orderBy('last_name')->get();
+        
+        // Only show active veterinarians, admins, and customers/users
+        $requesters = User::where('is_active', true)
+            ->whereIn('role', ['veterinarian', 'admin', 'customer', 'user'])
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
 
         return view('admin.laboratory.requisitions.edit', compact('labRequisition', 'labTests', 'requesters'));
     }

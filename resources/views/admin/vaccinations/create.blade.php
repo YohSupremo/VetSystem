@@ -154,6 +154,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const petSelect = document.querySelector('select[name="pet_id"]');
     const allergyAlertBox = document.getElementById('allergy-alert-box');
     const allergyMap = @json($allergyMap ?? []);
+    const administeredDateInput = document.querySelector('input[name="administered_date"]');
+    const veterinarianSelect = document.querySelector('select[name="administered_by"]');
 
     if (!petSelect || !allergyAlertBox) {
         return;
@@ -186,6 +188,55 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     renderAllergyAlert(petSelect.value);
+
+    // Handle veterinarian dropdown update when date changes
+    if (administeredDateInput && veterinarianSelect) {
+        function updateVeterinarians(dateStr) {
+            const currentValue = veterinarianSelect.value;
+            
+            fetch(`{{ route('admin.vaccinations.available-veterinarians') }}?date=${dateStr}`)
+                .then(response => response.json())
+                .then(data => {
+                    const selectedVetId = '{{ old("administered_by", $selectedVeterinarianId ?? "") }}';
+                    
+                    // Clear all options except the first
+                    veterinarianSelect.innerHTML = '<option value="">Select veterinarian...</option>';
+                    
+                    if (!data.veterinarians || data.veterinarians.length === 0) {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'No veterinarians available for this date';
+                        option.disabled = true;
+                        veterinarianSelect.appendChild(option);
+                        return;
+                    }
+                    
+                    data.veterinarians.forEach(vet => {
+                        const option = document.createElement('option');
+                        option.value = vet.id;
+                        option.textContent = vet.name;
+                        if (selectedVetId && vet.id == selectedVetId) {
+                            option.selected = true;
+                        }
+                        veterinarianSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching veterinarians:', error);
+                });
+        }
+
+        administeredDateInput.addEventListener('change', function () {
+            if (this.value) {
+                updateVeterinarians(this.value);
+            }
+        });
+
+        // Load initial veterinarians on page load
+        if (administeredDateInput.value) {
+            updateVeterinarians(administeredDateInput.value);
+        }
+    }
 });
 </script>
 

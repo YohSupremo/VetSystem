@@ -696,21 +696,36 @@ class PharmacyController extends BaseController
      */
     public function alerts()
     {
+        // Get low stock alerts for pharmacy items only (medicine, vaccine, food, supply with location set)
         $lowStockStocks = InventoryStock::with('inventoryItem')
             ->whereColumn('quantity', '<=', 'min_stock')
+            ->whereHas('inventoryItem', function ($query) {
+                $query->whereIn('category', ['medicine', 'vaccine', 'food', 'supply'])
+                    ->whereNotNull('location');
+            })
             ->get();
         $lowStockItems = $lowStockStocks->map(fn ($s) => $s->inventoryItem)->filter()->unique('id')->values();
 
+        // Get expired alerts for pharmacy items only (medicine, vaccine, food, supply with location set)
         $expiredStocks = InventoryStock::with('inventoryItem')
             ->whereNotNull('expiry_date')
             ->where('expiry_date', '<', now())
+            ->whereHas('inventoryItem', function ($query) {
+                $query->whereIn('category', ['medicine', 'vaccine', 'food', 'supply'])
+                    ->whereNotNull('location');
+            })
             ->get();
         $expiredItems = $expiredStocks->map(fn ($s) => $s->inventoryItem)->filter()->unique('id')->values();
 
+        // Get expiring soon alerts for pharmacy items only (medicine, vaccine, food, supply with location set)
         $expiringSoonStocks = InventoryStock::with('inventoryItem')
             ->whereNotNull('expiry_date')
             ->where('expiry_date', '>', now())
             ->where('expiry_date', '<=', now()->addDays(30))
+            ->whereHas('inventoryItem', function ($query) {
+                $query->whereIn('category', ['medicine', 'vaccine', 'food', 'supply'])
+                    ->whereNotNull('location');
+            })
             ->get();
         $expiringSoonItems = $expiringSoonStocks->map(fn ($s) => $s->inventoryItem)->filter()->unique('id')->values();
 

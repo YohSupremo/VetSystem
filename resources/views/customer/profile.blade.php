@@ -343,7 +343,8 @@
 
                     <div class="col-12">
                         <label class="form-label" for="username">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" value="{{ $user->username ?? '' }}" disabled>
+                        <input type="text" class="form-control" id="username" name="username" value="{{ $user->username ?? '' }}" disabled placeholder="Enter your username">
+                        <small class="text-muted d-block mt-1">Your unique username for login</small>
                     </div>
                 </div>
 

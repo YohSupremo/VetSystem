@@ -1724,7 +1724,7 @@
                                     </div>
                                 </div>
                                 <div class="pet-actions">
-                                    <a href="#" class="btn-view">View Details</a>
+                                    <a href="{{ route('customer.pets.show', $pet->id) }}" class="btn-view">View Details</a>
                                 </div>
                             </div>
                         @endforeach
@@ -1797,7 +1797,7 @@
                             <h4>{{ $appointment->type }} - {{ $appointment->pet->name }}</h4>
                             <p>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y') }}</p>
                         </div>
-                        <a href="#" class="btn-view">View Details</a>
+                        <a href="{{ route('customer.appointments.show', $appointment->id) }}" class="btn-view">View Details</a>
                     </div>
                 @endforeach
             </div>

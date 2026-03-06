@@ -1653,6 +1653,13 @@
                             <p>View your shopping cart</p>
                         </a>
                     </div>
+                    <div class="col-md-6 col-lg-3">
+                        <a href="{{ route('customer.pets.scan') }}" class="action-card text-decoration-none">
+                            <div class="action-icon">📱</div>
+                            <h3>Scan Pet QR</h3>
+                            <p>Scan caged pets for records</p>
+                        </a>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1693,6 +1700,10 @@
                     <a href="{{ route('customer.cart.index') }}" class="mobile-action-item">
                         <div class="mobile-action-icon">🛒</div>
                         <span class="mobile-action-text">Cart</span>
+                    </a>
+                    <a href="{{ route('customer.pets.scan') }}" class="mobile-action-item">
+                        <div class="mobile-action-icon">📱</div>
+                        <span class="mobile-action-label">Scan Pet QR</span>
                     </a>
                 </div>
             </div>

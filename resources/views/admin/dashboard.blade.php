@@ -1505,6 +1505,12 @@
                         <span>Cages</span>
                     </a>
                     @endif
+                    @if(auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.qr-scan-logs.index') }}" class="nav-item {{ request()->routeIs('admin.qr-scan-logs.*') ? 'active' : '' }}">
+                        <i class="fas fa-qrcode"></i>
+                        <span>QR Scan Logs</span>
+                    </a>
+                    @endif
                     @if(in_array(auth()->user()->role, ['admin', 'staff', 'groomer']))
                     <a href="{{ route('admin.grooming.index') }}" class="nav-item {{ request()->routeIs('admin.grooming.*') ? 'active' : '' }}">
                         <i class="fas fa-cut"></i>

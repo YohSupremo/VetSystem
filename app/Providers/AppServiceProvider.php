@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use App\Models\ClinicSetting;
+use App\Models\QrScanLog;
+use App\Policies\QrScanLogPolicy;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Gate;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register the QrScanLog policy
+        Gate::policy(QrScanLog::class, QrScanLogPolicy::class);
+
         $clinicName = 'PawCare';
 
         try {

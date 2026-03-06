@@ -256,6 +256,13 @@
                         Shop
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('customer.pets.scan*') ? 'active' : '' }}"
+                       href="{{ route('customer.pets.scan') }}"
+                       style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3)) !important; border: 1px solid rgba(168, 85, 247, 0.5) !important; font-weight: 600;">
+                        <i class="fas fa-qrcode me-1"></i> Scan Pet QR
+                    </a>
+                </li>
             </ul>
 
             <div class="d-flex align-items-center gap-2">

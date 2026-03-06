@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CustomerPetScanController;
 use App\Models\ClinicSetting;
 use App\Models\Pet;
 use App\Models\User;
@@ -103,6 +104,11 @@ Route::prefix('customer')->name('customer.')->middleware(['auth.flash'])->group(
     // Pet Management
     Route::get('/pets', [App\Http\Controllers\Customer\PetController::class, 'index'])->name('pets.index');
     Route::get('/pets/create', [App\Http\Controllers\Customer\PetController::class, 'create'])->name('pets.create');
+    
+    // QR Scan - MUST BE BEFORE {id} CATCH-ALL ROUTES
+    Route::get('/pets/scan', [CustomerPetScanController::class, 'index'])->name('pets.scan');
+    Route::get('/pets/scan/{regNumber}', [CustomerPetScanController::class, 'scan'])->name('pet-scan');
+    
     Route::post('/pets', [App\Http\Controllers\Customer\PetController::class, 'store'])->name('pets.store');
     Route::get('/pets/{id}', [App\Http\Controllers\Customer\PetController::class, 'show'])->name('pets.show');
     Route::get('/pets/{id}/edit', [App\Http\Controllers\Customer\PetController::class, 'edit'])->name('pets.edit');
@@ -507,6 +513,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
     Route::resource('cages', \App\Http\Controllers\Admin\CageController::class);
     Route::get('/cages/scan/{code}', [\App\Http\Controllers\Admin\CageController::class, 'scan'])->name('cages.scan');
     Route::post('/cages/{id}/release', [\App\Http\Controllers\Admin\CageController::class, 'release'])->name('cages.release');
+
+    // QR Scan Logs History
+    Route::get('/qr-scan-logs', [\App\Http\Controllers\Admin\QrScanLogController::class, 'index'])->name('qr-scan-logs.index');
 
 // Customer Routes
     Route::get('prescriptions/pet/{petId}', [PrescriptionController::class, 'byPet'])->name('prescriptions.pet');

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Cage;
 use App\Models\CageAssignment;
+use App\Models\QrScanLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CageController extends Controller
 {
@@ -82,6 +84,15 @@ class CageController extends Controller
             }])
             ->latest()
             ->first();
+
+        // Log the scan
+        QrScanLog::create([
+            'scan_type' => 'cage',
+            'cage_id' => $cage->id,
+            'pet_id' => $assignment?->pet_id,
+            'scanned_by' => Auth::id(),
+            'scan_timestamp' => now(),
+        ]);
 
         return view('admin.cages.scan', compact('cage', 'assignment'));
     }

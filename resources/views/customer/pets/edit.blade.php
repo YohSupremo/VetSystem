@@ -424,8 +424,13 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="dob" class="form-label">Date of Birth</label>
-                            <input type="date" class="form-input" id="dob" value="{{ old('dob', $pet->dob) }}" max="{{ date('Y-m-d') }}">
+                            <label for="birth_date" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-input" name="birth_date" id="birth_date" value="{{ old('birth_date', $pet->birth_date?->format('Y-m-d')) }}" max="{{ date('Y-m-d') }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="calculated_age" class="form-label">Age (Auto-calculated)</label>
+                            <input type="text" class="form-input" id="calculated_age" value="" readonly placeholder="Set a birth date">
                         </div>
 
                         <div class="form-group">
@@ -491,4 +496,43 @@ function previewImage(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
+
+function calculateAgeFromBirthDate(dateValue) {
+    if (!dateValue) return '';
+
+    const birthDate = new Date(dateValue);
+    const today = new Date();
+
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
+
+    if (today.getDate() < birthDate.getDate()) {
+        months--;
+    }
+
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+
+    if (years < 0) return '';
+    if (years === 0) return months + ' month' + (months === 1 ? '' : 's');
+
+    return years + ' year' + (years === 1 ? '' : 's');
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const birthDateInput = document.getElementById('birth_date');
+    const ageInput = document.getElementById('calculated_age');
+
+    if (!birthDateInput || !ageInput) return;
+
+    const updateAge = () => {
+        const ageText = calculateAgeFromBirthDate(birthDateInput.value);
+        ageInput.value = ageText || 'Set a birth date';
+    };
+
+    birthDateInput.addEventListener('change', updateAge);
+    updateAge();
+});
 </script>

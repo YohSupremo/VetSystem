@@ -225,6 +225,11 @@
                         <div class="error-message">{{ $errors->first('birth_date') }}</div>
                     @endif
                 </div>
+
+                <div class="form-group">
+                    <label for="calculated_age">Age (Auto-calculated)</label>
+                    <input type="text" id="calculated_age" value="" readonly placeholder="Set a birth date">
+                </div>
             </div>
         </div>
 
@@ -305,5 +310,43 @@
             }
         }
     });
+
+    function calculateAgeFromBirthDate(dateValue) {
+        if (!dateValue) return '';
+
+        const birthDate = new Date(dateValue);
+        const today = new Date();
+
+        let years = today.getFullYear() - birthDate.getFullYear();
+        let months = today.getMonth() - birthDate.getMonth();
+
+        if (today.getDate() < birthDate.getDate()) {
+            months--;
+        }
+
+        if (months < 0) {
+            years--;
+            months += 12;
+        }
+
+        if (years < 0) return '';
+        if (years === 0) return months + ' month' + (months === 1 ? '' : 's');
+
+        return years + ' year' + (years === 1 ? '' : 's');
+    }
+
+    const birthDateInput = document.getElementById('birth_date');
+    const ageInput = document.getElementById('calculated_age');
+
+    const updateAge = () => {
+        if (!birthDateInput || !ageInput) return;
+        const ageText = calculateAgeFromBirthDate(birthDateInput.value);
+        ageInput.value = ageText || 'Set a birth date';
+    };
+
+    if (birthDateInput) {
+        birthDateInput.addEventListener('change', updateAge);
+    }
+    updateAge();
 </script>
 @endsection

@@ -900,13 +900,13 @@
             }
 
             .main-content {
-                padding: 15px;
+                padding: 0px 15px 15px 15px; /* Remove top padding */
             }
 
             .header {
-                flex-direction: column;
+                flex-direction: row !important;
                 gap: 15px;
-                align-items: stretch;
+                align-items: center;
                 padding: 20px 15px;
                 margin-left: -15px;
                 margin-right: -15px;
@@ -922,8 +922,11 @@
             }
             
             .header-right {
-                flex-direction: column;
+                flex-direction: row !important;
+                flex-wrap: wrap;
                 gap: 10px;
+                align-items: center;
+                justify-content: flex-end;
             }
 
             .search-box input {
@@ -968,7 +971,7 @@
 
             /* Mobile-specific improvements */
             .dashboard-container {
-                padding-top: 60px; /* Space for mobile menu toggle */
+                padding-top: 0px; /* Remove space for mobile menu toggle */
             }
 
             .mobile-menu-toggle {
@@ -1293,36 +1296,129 @@
 
         /* Additional touch optimizations */
         @media (max-width: 768px) {
-            /* Prevent double-tap zoom */
+            /* Simple touch fixes only */
             .btn, .nav-item, .icon-button {
                 touch-action: manipulation;
-            }
-
-            /* Smooth scrolling for touch */
-            .sidebar {
-                -webkit-overflow-scrolling: touch;
-                scroll-behavior: smooth;
-            }
-
-            .main-content {
-                -webkit-overflow-scrolling: touch;
-            }
-
-            /* Better input handling */
-            input, textarea, select {
-                font-size: 16px !important; /* Prevents zoom on iOS */
-                -webkit-appearance: none;
-                -webkit-border-radius: 0;
-                border-radius: 12px;
-            }
-
-            /* Remove WebKit highlights */
-            * {
+                cursor: pointer;
                 -webkit-tap-highlight-color: transparent;
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                -khtml-user-select: none;
-                -moz-user-select: none;
+            }
+            
+            /* Fix mobile menu button */
+            .mobile-menu-toggle {
+                background: var(--primary-orange);
+                color: white;
+                border: none;
+                border-radius: 12px;
+                width: 44px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 1001;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+            }
+            
+            .mobile-menu-toggle:hover {
+                background: var(--accent-pink);
+            }
+            
+            /* Header buttons in row with auto-adjust */
+            .header-right {
+                position: relative;
+                z-index: 10;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                align-items: center;
+                justify-content: flex-end;
+                width: 100%;
+            }
+            
+            .search-box {
+                order: 1;
+                flex: 1;
+                min-width: 200px;
+                max-width: 300px;
+            }
+            
+            /* PERFECT CIRCLES - Override all conflicting styles */
+            .icon-button {
+                order: 2;
+                width: 40px !important;
+                height: 40px !important;
+                min-width: 40px !important;
+                min-height: 40px !important;
+                max-width: 40px !important;
+                max-height: 40px !important;
+                border-radius: 50% !important;
+                font-size: 14px;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-sizing: border-box !important;
+            }
+            
+            .user-avatar {
+                order: 3;
+                width: 40px !important;
+                height: 40px !important;
+                min-width: 40px !important;
+                min-height: 40px !important;
+                max-width: 40px !important;
+                max-height: 40px !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-sizing: border-box !important;
+            }
+            
+            /* Auto-adjust for smaller screens */
+            @media (max-width: 480px) {
+                .header-right {
+                    gap: 6px;
+                }
+                
+                .search-box {
+                    min-width: 150px;
+                    max-width: 200px;
+                }
+                
+                /* PERFECT SMALL CIRCLES */
+                .icon-button,
+                .user-avatar {
+                    width: 36px !important;
+                    height: 36px !important;
+                    min-width: 36px !important;
+                    min-height: 36px !important;
+                    max-width: 36px !important;
+                    max-height: 36px !important;
+                    font-size: 12px;
+                    border-radius: 50% !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    box-sizing: border-box !important;
+                }
+            }
+        }
+        
+        /* Remove WebKit highlights */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
                 -ms-user-select: none;
                 user-select: none;
             }
@@ -1506,16 +1602,20 @@
                     </a>
                     @endif
                     @if(auth()->user()->role === 'admin')
+                    @if(Route::has('admin.qr-scan-logs.index'))
                     <a href="{{ route('admin.qr-scan-logs.index') }}" class="nav-item {{ request()->routeIs('admin.qr-scan-logs.*') ? 'active' : '' }}">
                         <i class="fas fa-qrcode"></i>
                         <span>QR Scan Logs</span>
                     </a>
                     @endif
+                    @endif
                     @if(in_array(auth()->user()->role, ['admin', 'staff', 'groomer']))
+                    @if(Route::has('admin.grooming.index'))
                     <a href="{{ route('admin.grooming.index') }}" class="nav-item {{ request()->routeIs('admin.grooming.*') ? 'active' : '' }}">
                         <i class="fas fa-cut"></i>
                         <span>Grooming</span>
                     </a>
+                    @endif
                     @endif
                     @if(in_array(auth()->user()->role, ['admin', 'pharmacy']))
                     <a href="{{ route('admin.pharmacy.index') }}" class="nav-item {{ request()->routeIs('admin.pharmacy.*') ? 'active' : '' }}">
@@ -2295,6 +2395,54 @@
                     closeMobileMenu();
                 }
             });
+        });
+
+        // Simple Mobile Button Fix
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Mobile button fix loaded');
+            
+            function makeButtonsWork() {
+                // Target only specific clickable elements
+                const buttons = document.querySelectorAll('.icon-button, .user-avatar, .btn, .nav-item');
+                
+                buttons.forEach(function(btn) {
+                    // Skip if already fixed
+                    if (btn._mobileFixed) return;
+                    
+                    const href = btn.href;
+                    
+                    // Simple click handler
+                    btn.addEventListener('click', function(e) {
+                        console.log('Button clicked:', btn.tagName, btn.className, href);
+                        if (btn.tagName === 'A' && href && href !== '#') {
+                            e.preventDefault();
+                            window.location.href = href;
+                            return false;
+                        }
+                    }, true);
+                    
+                    // Touch handler for mobile
+                    btn.addEventListener('touchend', function(e) {
+                        console.log('Button touched:', btn.tagName, btn.className);
+                        // Let the click handler deal with it
+                    }, { passive: false });
+                    
+                    // Mark as fixed
+                    btn._mobileFixed = true;
+                    
+                    // Add touch feedback styles
+                    btn.style.touchAction = 'manipulation';
+                });
+            }
+            
+            // Initial fix
+            setTimeout(makeButtonsWork, 500);
+            
+            // Fix on DOM changes (less frequent)
+            const observer = new MutationObserver(() => {
+                setTimeout(makeButtonsWork, 100);
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
         });
     </script>
 </body>

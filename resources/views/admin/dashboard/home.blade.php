@@ -20,6 +20,37 @@
             margin-bottom: 30px;
         }
 
+        /* Mobile responsiveness - auto-adjusting columns */
+        @media (max-width: 1200px) {
+            .metric-grid {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .metric-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 18px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .metric-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                margin-bottom: 25px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .metric-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+        }
+
         .metric-card {
             border-radius: 18px;
             padding: 24px;
@@ -37,6 +68,21 @@
         .metric-card:hover {
             transform: translateY(-4px);
             box-shadow: var(--shadow-hover);
+        }
+
+        /* Mobile metric card adjustments */
+        @media (max-width: 768px) {
+            .metric-card {
+                padding: 20px;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .metric-card {
+                padding: 16px;
+                gap: 8px;
+            }
         }
 
         .metric-card::after {
@@ -84,6 +130,47 @@
             z-index: 1;
         }
 
+        /* Mobile metric adjustments */
+        @media (max-width: 768px) {
+            .metric-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+
+            .metric-label {
+                font-size: 12px;
+            }
+
+            .metric-value {
+                font-size: 28px;
+            }
+
+            .metric-subtext {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .metric-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+
+            .metric-label {
+                font-size: 11px;
+            }
+
+            .metric-value {
+                font-size: 24px;
+            }
+
+            .metric-subtext {
+                font-size: 10px;
+            }
+        }
+
         .dashboard-section {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -95,6 +182,37 @@
             height: 100%;
         }
 
+        /* Mobile dashboard sections - auto-adjusting columns */
+        @media (max-width: 1200px) {
+            .dashboard-section {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-section {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 18px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-section {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                margin-bottom: 20px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .dashboard-section {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 16px;
+            }
+        }
+
         .chart-container {
             min-height: 320px;
         }
@@ -104,6 +222,28 @@
             grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
             gap: 18px;
             align-items: stretch;
+        }
+
+        /* Mobile chart sections - auto-adjusting columns */
+        @media (max-width: 1200px) {
+            .chart-section {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .chart-section {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chart-section {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
         }
 
         .species-grid {

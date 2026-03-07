@@ -162,16 +162,28 @@ class AppointmentController extends Controller
         $petName = $pet->name ?? 'Pet';
         $appointmentLabel = ucfirst(str_replace('_', ' ', $validated['type']));
 
-        $notificationService->sendToAllStaff(
+        $requestingUsername = $user->username ?: ($ownerName !== '' ? $ownerName : 'customer');
+        $notificationService->sendToRole(
+            'admin',
             Notification::TYPE_APPOINTMENT,
-            'New Customer Appointment',
-            $ownerName !== ''
-                ? "$ownerName booked $petName for $appointmentLabel."
-                : "A customer booked $petName for $appointmentLabel.",
+            'Appointment Requested',
+            'An appointment has been requested by ' . $requestingUsername . '.',
             [
                 'reference_type' => 'appointment',
                 'reference_id' => $appointment->id,
                 'action_url' => route('admin.appointments.show', $appointment->id),
+            ]
+        );
+
+        $notificationService->send(
+            $user,
+            Notification::TYPE_APPOINTMENT,
+            'Appointment Booked',
+            "Your {$appointmentLabel} appointment for {$petName} is now pending confirmation.",
+            [
+                'reference_type' => 'appointment',
+                'reference_id' => $appointment->id,
+                'action_url' => route('customer.appointments.show', $appointment->id),
             ]
         );
         
@@ -240,7 +252,7 @@ class AppointmentController extends Controller
         return view('customer.appointments.edit', compact('appointment', 'pets', 'appointmentTypes'));
     }
     
-    public function update(Request $request, $id)
+    public function update(Request $request, NotificationService $notificationService, $id)
     {
         $user = $this->authenticateUser();
         if ($user instanceof \Illuminate\Http\RedirectResponse) {
@@ -279,12 +291,27 @@ class AppointmentController extends Controller
             'type' => $request->type,
             'notes' => $request->notes
         ]);
+
+        $updatedTypeLabel = ucfirst(str_replace('_', ' ', (string) $appointment->type));
+        $updatedPetName = $appointment->pet?->name ?? 'your pet';
+
+        $notificationService->send(
+            $user,
+            Notification::TYPE_APPOINTMENT,
+            'Appointment Updated',
+            "Your {$updatedTypeLabel} appointment for {$updatedPetName} was updated.",
+            [
+                'reference_type' => 'appointment',
+                'reference_id' => $appointment->id,
+                'action_url' => route('customer.appointments.show', $appointment->id),
+            ]
+        );
         
         return redirect()->route('customer.appointments.show', $appointment->id)
             ->with('success', 'Appointment updated successfully!');
     }
     
-    public function cancel($id)
+    public function cancel(NotificationService $notificationService, $id)
     {
         $user = $this->authenticateUser();
         if ($user instanceof \Illuminate\Http\RedirectResponse) {
@@ -305,6 +332,21 @@ class AppointmentController extends Controller
             ->findOrFail($id);
         
         $appointment->update(['status' => 'cancelled']);
+
+        $cancelledTypeLabel = ucfirst(str_replace('_', ' ', (string) $appointment->type));
+        $cancelledPetName = $appointment->pet?->name ?? 'your pet';
+
+        $notificationService->send(
+            $user,
+            Notification::TYPE_APPOINTMENT,
+            'Appointment Cancelled',
+            "Your {$cancelledTypeLabel} appointment for {$cancelledPetName} has been cancelled.",
+            [
+                'reference_type' => 'appointment',
+                'reference_id' => $appointment->id,
+                'action_url' => route('customer.appointments.show', $appointment->id),
+            ]
+        );
         
         return redirect()->route('customer.appointments.index')
             ->with('success', 'Appointment cancelled successfully.');

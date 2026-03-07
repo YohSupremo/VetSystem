@@ -328,6 +328,13 @@ class BillingController extends BaseController
             } else {
                 $invoice->update(['status' => 'partial']);
             }
+
+            $this->notifyCustomerInvoiceStatus(
+                $invoice,
+                Notification::TYPE_PAYMENT,
+                'Invoice Payment Updated',
+                'Payment was posted to invoice ' . $invoice->invoice_number . '. Current status: ' . ucfirst((string) $invoice->status) . '.'
+            );
             
             DB::commit();
             
@@ -401,6 +408,13 @@ class BillingController extends BaseController
         
         $invoice->status = 'pending';
         $invoice->save();
+
+        $this->notifyCustomerInvoiceStatus(
+            $invoice,
+            Notification::TYPE_PAYMENT,
+            'New Invoice Available',
+            'Invoice ' . $invoice->invoice_number . ' is now available and pending payment.'
+        );
         
         return redirect()->route('admin.billing.show', $invoice->id)
             ->with('success', 'Invoice sent to client successfully.');
@@ -428,9 +442,38 @@ class BillingController extends BaseController
                     'action_url' => route('admin.billing.show', $invoice->id),
                 ]
             );
+
+            $this->notifyCustomerInvoiceStatus(
+                $invoice,
+                Notification::TYPE_PAYMENT_OVERDUE,
+                'Invoice Overdue',
+                'Invoice ' . $invoice->invoice_number . ' is now overdue. Please settle payment as soon as possible.'
+            );
         }
         
         return redirect()->route('admin.billing.show', $invoice->id)
             ->with('success', 'Invoice marked as overdue.');
+    }
+
+    private function notifyCustomerInvoiceStatus(BillingInvoice $invoice, string $type, string $title, string $message): void
+    {
+        $invoice->loadMissing('owner.user');
+        $customer = $invoice->owner?->user;
+
+        if (!$customer) {
+            return;
+        }
+
+        app(NotificationService::class)->send(
+            $customer,
+            $type,
+            $title,
+            $message,
+            [
+                'reference_type' => 'invoice',
+                'reference_id' => $invoice->id,
+                'action_url' => route('customer.billing.show', $invoice->id),
+            ]
+        );
     }
 }

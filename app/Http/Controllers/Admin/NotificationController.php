@@ -202,7 +202,11 @@ class NotificationController extends Controller
         if ($role === 'admin') {
             return Notification::query()
                 ->adminOverview()
-                ->where('title', '!=', 'New Appointment Assigned');
+                ->where('title', '!=', 'New Appointment Assigned')
+                ->where(function ($query) {
+                    $query->where('title', 'not like', 'Order%')
+                        ->where('message', 'not like', 'Your order #%');
+                });
         }
 
         return Notification::forUser(Auth::id())

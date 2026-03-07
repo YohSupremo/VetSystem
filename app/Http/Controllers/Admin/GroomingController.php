@@ -363,10 +363,11 @@ class GroomingController extends BaseController
     /**
      * Update the specified grooming appointment.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, NotificationService $notificationService, $id)
     {
         $groomingAppointment = GroomingAppointment::findOrFail($id);
         $appointment = $groomingAppointment->appointment;
+        $previousGroomerId = $groomingAppointment->groomer_id;
 
         $data = $request->validate([
             'service_id' => 'required|exists:grooming_services,id',
@@ -394,6 +395,9 @@ class GroomingController extends BaseController
                 'status' => $data['status'],
             ]);
 
+            $newGroomerId = $data['groomer_id'] ?? null;
+            $shouldNotifyAssignedGroomer = !empty($newGroomerId) && (int) $newGroomerId !== (int) $previousGroomerId;
+
             if ($data['status'] === 'completed') {
                 $this->ensureGroomingInvoice($groomingAppointment);
             }
@@ -403,6 +407,27 @@ class GroomingController extends BaseController
             }
 
             DB::commit();
+
+            if ($shouldNotifyAssignedGroomer) {
+                $assignedGroomer = User::find($newGroomerId);
+
+                if ($assignedGroomer) {
+                    $appointment->loadMissing('pet');
+                    $petName = $appointment->pet?->name ?? 'Pet';
+
+                    $notificationService->send(
+                        $assignedGroomer,
+                        Notification::TYPE_APPOINTMENT,
+                        'Grooming Assignment Updated',
+                        'You have been assigned to a grooming appointment for ' . $petName . '.',
+                        [
+                            'reference_type' => 'appointment',
+                            'reference_id' => $appointment->id,
+                            'action_url' => route('admin.grooming.show', $groomingAppointment->id),
+                        ]
+                    );
+                }
+            }
 
             return redirect()->route('admin.grooming.show', $groomingAppointment->id)
                 ->with('success', 'Grooming appointment updated successfully.');

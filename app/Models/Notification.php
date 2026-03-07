@@ -94,17 +94,51 @@ class Notification extends Model
 
     public function scopeAdminOverview($query)
     {
+        $adminVisibleFilter = static function ($builder) {
+            $builder->where('type', '!=', self::TYPE_APPOINTMENT)
+                ->orWhere(function ($appointmentBuilder) {
+                    $appointmentBuilder->where('type', self::TYPE_APPOINTMENT)
+                        ->where('title', 'Appointment Requested');
+                });
+        };
+
         $subquery = self::query()
             ->selectRaw('MAX(id) as id')
+            ->where($adminVisibleFilter)
             ->groupBy('type', 'reference_type', 'reference_id', 'title', 'message');
 
-        return $query->whereIn('id', $subquery);
+        return $query->whereIn('id', $subquery)->where($adminVisibleFilter);
     }
 
     public function scopeVisibleToRole($query, ?string $role)
     {
-        if (!$role || $role === 'admin') {
+        if (!$role) {
             return $query;
+        }
+
+        if ($role === 'groomer') {
+            return $query->where(function ($groomerQuery) {
+                $groomerQuery->where('title', 'New Grooming Appointment')
+                    ->orWhere(function ($appointmentQuery) {
+                        $appointmentQuery->where('type', self::TYPE_APPOINTMENT)
+                            ->where('reference_type', 'appointment')
+                            ->whereIn('reference_id', function ($appointments) {
+                                $appointments->select('id')
+                                    ->from('appointments')
+                                    ->where('type', 'grooming');
+                            });
+                    });
+            });
+        }
+
+        if ($role === 'admin') {
+            return $query->where(function ($adminQuery) {
+                $adminQuery->where('type', '!=', self::TYPE_APPOINTMENT)
+                    ->orWhere(function ($appointmentQuery) {
+                        $appointmentQuery->where('type', self::TYPE_APPOINTMENT)
+                            ->where('title', 'Appointment Requested');
+                    });
+            });
         }
 
         $allowedTypes = self::allowedTypesForRole($role);
@@ -151,8 +185,16 @@ class Notification extends Model
             'groomer' => [self::TYPE_APPOINTMENT],
             'staff' => [self::TYPE_APPOINTMENT, self::TYPE_BOARDING],
             'pharmacy' => [self::TYPE_PRESCRIPTION, self::TYPE_INVENTORY, self::TYPE_EXPIRY],
-            default => [
+            'pet_owner', 'registered_user' => [
                 self::TYPE_APPOINTMENT,
+                self::TYPE_VACCINATION,
+                self::TYPE_PAYMENT,
+                self::TYPE_PAYMENT_OVERDUE,
+                self::TYPE_LAB_TEST,
+                self::TYPE_PRESCRIPTION,
+                self::TYPE_BOARDING,
+            ],
+            default => [
                 self::TYPE_VACCINATION,
                 self::TYPE_PAYMENT,
                 self::TYPE_PAYMENT_OVERDUE,

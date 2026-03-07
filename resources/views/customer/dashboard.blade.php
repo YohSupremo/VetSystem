@@ -802,6 +802,67 @@
     display: none;
 }
 
+.notifications-header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.btn-mark-all-read {
+    border: none;
+    border-radius: 999px;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    box-shadow: 0 8px 18px rgba(34, 197, 94, 0.28);
+    transition: var(--transition-smooth);
+}
+
+.btn-mark-all-read:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.btn-mark-all-read:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.notification-item.notification-unread {
+    border-left: 4px solid #f59e0b;
+}
+
+.notification-item.notification-read {
+    opacity: 0.9;
+}
+
+.notification-status {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.76rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    margin-top: 0.2rem;
+}
+
+.notification-status.is-unread {
+    background: rgba(245, 158, 11, 0.15);
+    color: #b45309;
+}
+
+.notification-status.is-read {
+    background: rgba(16, 185, 129, 0.15);
+    color: #047857;
+}
+
+.notification-actions {
+    display: flex;
+    align-items: center;
+}
+
 .mobile-actions-container {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(25px);
@@ -1653,13 +1714,7 @@
                             <p>View your shopping cart</p>
                         </a>
                     </div>
-                    <div class="col-md-6 col-lg-3">
-                        <a href="{{ route('customer.pets.scan') }}" class="action-card text-decoration-none">
-                            <div class="action-icon">📱</div>
-                            <h3>Scan Pet QR</h3>
-                            <p>Scan caged pets for records</p>
-                        </a>
-                    </div>
+
                 </div>
             </div>
         </section>
@@ -1701,11 +1756,76 @@
                         <div class="mobile-action-icon">🛒</div>
                         <span class="mobile-action-text">Cart</span>
                     </a>
-                    <a href="{{ route('customer.pets.scan') }}" class="mobile-action-item">
-                        <div class="mobile-action-icon">📱</div>
-                        <span class="mobile-action-label">Scan Pet QR</span>
-                    </a>
+
                 </div>
+            </div>
+        </section>
+
+        <section class="recent-activity mb-4">
+            <div class="section-header d-flex justify-content-between align-items-center mb-3">
+                <h2 class="mb-0">Notifications</h2>
+                <div class="notifications-header-actions">
+                    <button
+                        type="button"
+                        class="btn-mark-all-read"
+                        id="customerMarkAllReadBtn"
+                        {{ $unreadNotificationCount > 0 ? '' : 'disabled' }}
+                    >
+                        Mark All as Read
+                    </button>
+                    <span
+                        class="status-badge {{ $unreadNotificationCount > 0 ? 'pending' : 'completed' }}"
+                        id="customerUnreadBadge"
+                        data-unread-count="{{ $unreadNotificationCount }}"
+                    >
+                        {{ $unreadNotificationCount }} unread
+                    </span>
+                </div>
+            </div>
+            <div class="activity-list" id="customerNotificationsList">
+                @forelse($notifications as $notification)
+                    @php($isUnread = $notification->status !== \App\Models\Notification::STATUS_READ)
+                    <div
+                        class="activity-item notification-item {{ $isUnread ? 'notification-unread' : 'notification-read' }}"
+                        data-notification-id="{{ $notification->id }}"
+                    >
+                        <div class="activity-icon">🔔</div>
+                        <div class="activity-content">
+                            <h4>{{ $notification->title }}</h4>
+                            <p>{{ $notification->message }}</p>
+                            <span class="notification-status {{ $isUnread ? 'is-unread' : 'is-read' }}">
+                                {{ $isUnread ? 'Unread' : 'Read' }}
+                            </span>
+                            <p class="text-muted small mb-0">{{ $notification->created_at?->diffForHumans() }}</p>
+                        </div>
+                        <div class="notification-actions">
+                            @if($notification->action_url)
+                                <a
+                                    href="{{ $notification->action_url }}"
+                                    class="btn-view notification-view-link"
+                                    data-notification-id="{{ $notification->id }}"
+                                >
+                                    View
+                                </a>
+                            @else
+                                <button
+                                    type="button"
+                                    class="btn-view notification-mark-read-btn"
+                                    data-notification-id="{{ $notification->id }}"
+                                    {{ $isUnread ? '' : 'disabled' }}
+                                >
+                                    {{ $isUnread ? 'Mark as Read' : 'Read' }}
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="empty-state">
+                        <div class="empty-icon">🔔</div>
+                        <h3>No notifications yet</h3>
+                        <p>Status updates for your account will appear here.</p>
+                    </div>
+                @endforelse
             </div>
         </section>
 
@@ -1817,3 +1937,143 @@
     </main>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const unreadBadge = document.getElementById('customerUnreadBadge');
+    const markAllButton = document.getElementById('customerMarkAllReadBtn');
+    const csrfToken = @json(csrf_token());
+
+    if (!unreadBadge) {
+        return;
+    }
+
+    function getUnreadCount() {
+        const current = parseInt(unreadBadge.dataset.unreadCount || '0', 10);
+        return Number.isNaN(current) ? 0 : current;
+    }
+
+    function setUnreadCount(nextCount) {
+        const safeCount = Math.max(0, nextCount);
+        unreadBadge.dataset.unreadCount = String(safeCount);
+        unreadBadge.textContent = `${safeCount} unread`;
+        unreadBadge.classList.remove('pending', 'completed');
+        unreadBadge.classList.add(safeCount > 0 ? 'pending' : 'completed');
+
+        if (markAllButton) {
+            markAllButton.disabled = safeCount === 0;
+        }
+    }
+
+    function updateNotificationItemAsRead(notificationId) {
+        const item = document.querySelector(`.notification-item[data-notification-id="${notificationId}"]`);
+        if (!item) {
+            return false;
+        }
+
+        const statusEl = item.querySelector('.notification-status');
+        const markReadButton = item.querySelector('.notification-mark-read-btn');
+        const wasUnread = item.classList.contains('notification-unread');
+
+        item.classList.remove('notification-unread');
+        item.classList.add('notification-read');
+
+        if (statusEl) {
+            statusEl.classList.remove('is-unread');
+            statusEl.classList.add('is-read');
+            statusEl.textContent = 'Read';
+        }
+
+        if (markReadButton) {
+            markReadButton.disabled = true;
+            markReadButton.textContent = 'Read';
+        }
+
+        return wasUnread;
+    }
+
+    async function markNotificationAsRead(notificationId) {
+        const response = await fetch(`{{ route('customer.notifications.mark-read', ['id' => '__ID__']) }}`.replace('__ID__', notificationId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            return false;
+        }
+
+        const payload = await response.json();
+        const wasUnread = updateNotificationItemAsRead(notificationId);
+
+        if (typeof payload.unread_count === 'number') {
+            setUnreadCount(payload.unread_count);
+        } else if (wasUnread) {
+            setUnreadCount(getUnreadCount() - 1);
+        }
+
+        return true;
+    }
+
+    document.querySelectorAll('.notification-view-link').forEach((link) => {
+        link.addEventListener('click', async function (event) {
+            const notificationId = this.dataset.notificationId;
+
+            if (!notificationId) {
+                return;
+            }
+
+            event.preventDefault();
+            await markNotificationAsRead(notificationId);
+            window.location.href = this.href;
+        });
+    });
+
+    document.querySelectorAll('.notification-mark-read-btn').forEach((button) => {
+        button.addEventListener('click', async function () {
+            const notificationId = this.dataset.notificationId;
+
+            if (!notificationId || this.disabled) {
+                return;
+            }
+
+            await markNotificationAsRead(notificationId);
+        });
+    });
+
+    if (markAllButton) {
+        markAllButton.addEventListener('click', async function () {
+            if (this.disabled) {
+                return;
+            }
+
+            const response = await fetch(`{{ route('customer.notifications.mark-all-read') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            document.querySelectorAll('.notification-item').forEach((item) => {
+                const notificationId = item.dataset.notificationId;
+                if (notificationId) {
+                    updateNotificationItemAsRead(notificationId);
+                }
+            });
+
+            setUnreadCount(0);
+        });
+    }
+});
+</script>
+@endpush

@@ -10,6 +10,8 @@ use App\Models\Pet;
 use App\Models\MedicalRecord;
 use App\Models\Vaccination;
 use App\Models\LaboratoryTest;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 
 class VeterinarianController extends Controller
@@ -122,7 +124,7 @@ class VeterinarianController extends Controller
         return view('veterinarian.appointments.show', compact('appointment'));
     }
 
-    public function updateAppointmentStatus(Request $request, $id)
+    public function updateAppointmentStatus(Request $request, NotificationService $notificationService, $id)
     {
         // Get authenticated veterinarian from session
         $username = session('username');
@@ -134,6 +136,7 @@ class VeterinarianController extends Controller
 
         // Temporarily simplified query for debugging
         $appointment = Appointment::findOrFail($id);
+        $previousStatus = $appointment->status;
 
         // Debug: Log appointment found
         \Log::info('Appointment found: ' . $appointment->id . ' Status: ' . $appointment->status . ' Vet ID: ' . $veterinarian->id . ' Appt Vet ID: ' . ($appointment->veterinarian_id ?: 'null'));
@@ -160,6 +163,27 @@ class VeterinarianController extends Controller
         }
 
         $appointment->save();
+
+        if ($previousStatus !== $appointment->status) {
+            $appointment->loadMissing('pet.owner.user');
+            $customer = $appointment->pet?->owner?->user;
+
+            if ($customer) {
+                $vetUser = auth()->user();
+                $vetName = $vetUser ? 'Dr. ' . trim($vetUser->first_name . ' ' . $vetUser->last_name) : 'Veterinarian';
+                $notificationService->send(
+                    $customer,
+                    Notification::TYPE_APPOINTMENT,
+                    'Appointment Status Updated',
+                    'Your appointment status changed from ' . ucfirst(str_replace('_', ' ', (string) $previousStatus)) . ' to ' . ucfirst(str_replace('_', ' ', (string) $appointment->status)) . ' by ' . $vetName . '.',
+                    [
+                        'reference_type' => 'appointment',
+                        'reference_id' => $appointment->id,
+                        'action_url' => route('customer.appointments.show', $appointment->id),
+                    ]
+                );
+            }
+        }
 
         // Debug: Log final status
         \Log::info('Final appointment status: ' . $appointment->status);
@@ -256,7 +280,7 @@ class VeterinarianController extends Controller
         return view('veterinarian.patients.show', compact('pet'));
     }
 
-    public function cancelAppointment($id)
+    public function cancelAppointment(NotificationService $notificationService, $id)
     {
         // Get authenticated veterinarian from session
         $username = session('username');
@@ -277,6 +301,25 @@ class VeterinarianController extends Controller
         $appointment->status = 'cancelled';
         $appointment->notes = ($appointment->notes ?? '') . "\n\nCancelled on: " . now()->format('Y-m-d H:i');
         $appointment->save();
+
+        $appointment->loadMissing('pet.owner.user');
+        $customer = $appointment->pet?->owner?->user;
+
+        if ($customer) {
+            $vetUser = auth()->user();
+            $vetName = $vetUser ? 'Dr. ' . trim($vetUser->first_name . ' ' . $vetUser->last_name) : 'Veterinarian';
+            $notificationService->send(
+                $customer,
+                Notification::TYPE_APPOINTMENT,
+                'Appointment Cancelled',
+                'Your appointment has been cancelled by ' . $vetName . '.',
+                [
+                    'reference_type' => 'appointment',
+                    'reference_id' => $appointment->id,
+                    'action_url' => route('customer.appointments.show', $appointment->id),
+                ]
+            );
+        }
 
         return redirect()->route('veterinarian.appointments.index')
             ->with('success', 'Appointment cancelled successfully!');

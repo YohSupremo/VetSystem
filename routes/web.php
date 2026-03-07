@@ -99,6 +99,13 @@ Route::get('/reports', function () {
 // Customer Routes
 Route::prefix('customer')->name('customer.')->middleware(['auth.flash'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Customer\CustomerDashboardController::class, 'index'])->name('dashboard');
+
+    // Notifications
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::post('/{id}/read', [App\Http\Controllers\Customer\NotificationController::class, 'markAsRead'])->name('mark-read');
+        Route::post('/read-all', [App\Http\Controllers\Customer\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+        Route::get('/unread-count', [App\Http\Controllers\Customer\NotificationController::class, 'getUnreadCount'])->name('unread-count');
+    });
     
     // Pet Management
     Route::get('/pets', [App\Http\Controllers\Customer\PetController::class, 'index'])->name('pets.index');

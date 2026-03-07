@@ -226,6 +226,8 @@
             const typeSelect = document.getElementById('type');
             const assigneeSelect = document.getElementById('veterinarian_id');
             const assigneeHint = document.getElementById('assignee_hint');
+            const statusSelect = document.getElementById('status');
+            const form = document.querySelector('form');
 
             const roleMap = {
                 consultation: 'veterinarian',
@@ -266,8 +268,50 @@
                 assigneeHint.textContent = requiredRole ? hintMap[requiredRole] : hintMap.all;
             };
 
+            // Function to toggle form fields based on cancelled status
+            const toggleFieldsForCancelled = () => {
+                const isCancelled = '{{ $appointment->status }}' === 'cancelled';
+                const currentStatus = statusSelect.value;
+                const shouldDisable = isCancelled && currentStatus === 'cancelled';
+
+                // Get all form inputs except status
+                const formInputs = form.querySelectorAll('input:not([type="hidden"]), select:not(#status), textarea');
+                
+                formInputs.forEach(input => {
+                    if (shouldDisable) {
+                        input.disabled = true;
+                        input.style.backgroundColor = '#f5f5f5';
+                        input.style.cursor = 'not-allowed';
+                    } else {
+                        input.disabled = false;
+                        input.style.backgroundColor = '';
+                        input.style.cursor = '';
+                    }
+                });
+
+                // Show/hide info message
+                let infoMessage = document.getElementById('cancelled-info-message');
+                if (shouldDisable) {
+                    if (!infoMessage) {
+                        infoMessage = document.createElement('div');
+                        infoMessage.id = 'cancelled-info-message';
+                        infoMessage.style.cssText = 'background: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107; padding: 12px 16px; margin-bottom: 20px; border-radius: 8px; font-size: 13px; color: #856404;';
+                        infoMessage.innerHTML = '<i class="fas fa-info-circle"></i> <strong>Note:</strong> This appointment is cancelled. Only the status can be changed to reactivate the appointment.';
+                        form.parentElement.insertBefore(infoMessage, form);
+                    }
+                } else {
+                    if (infoMessage) {
+                        infoMessage.remove();
+                    }
+                }
+            };
+
+            // Listen to status changes
+            statusSelect.addEventListener('change', toggleFieldsForCancelled);
+            
             typeSelect.addEventListener('change', filterAssignees);
             filterAssignees();
+            toggleFieldsForCancelled();
         });
     </script>
 @endsection

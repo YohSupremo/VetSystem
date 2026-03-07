@@ -12,6 +12,8 @@ use App\Models\Payment;
 use App\Models\Appointment;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Notification;
+use App\Services\NotificationService;
 
 class BillingController extends Controller
 {
@@ -252,7 +254,7 @@ class BillingController extends Controller
         return view('customer.billing.pay', compact('invoice', 'paymentMethods'));
     }
     
-    public function processPayment(Request $request, $id)
+    public function processPayment(Request $request, NotificationService $notificationService, $id)
     {
         $user = $this->authenticateUser();
         if ($user instanceof \Illuminate\Http\RedirectResponse) {
@@ -304,6 +306,18 @@ class BillingController extends Controller
         }
         
         $invoice->save();
+
+        $notificationService->send(
+            $user,
+            Notification::TYPE_PAYMENT,
+            'Payment Recorded',
+            'Your payment for invoice ' . $invoice->invoice_number . ' was recorded. Current invoice status: ' . ucfirst($invoice->status) . '.',
+            [
+                'reference_type' => 'invoice',
+                'reference_id' => $invoice->id,
+                'action_url' => route('customer.billing.show', $invoice->id),
+            ]
+        );
         
         return redirect()->route('customer.billing.show', $invoice->id)
             ->with('success', 'Payment processed successfully!');
@@ -407,7 +421,7 @@ class BillingController extends Controller
     /**
      * Cancel an order.
      */
-    public function cancelOrder($orderId)
+    public function cancelOrder(NotificationService $notificationService, $orderId)
     {
         $user = $this->authenticateUser();
         if ($user instanceof \Illuminate\Http\RedirectResponse) {
@@ -478,6 +492,18 @@ class BillingController extends Controller
             'status' => 'cancelled',
             'notes' => ($order->notes ?? '') . "\n\nCancelled by customer on " . now()->format('Y-m-d H:i:s')
         ]);
+
+        $notificationService->send(
+            $user,
+            Notification::TYPE_PAYMENT,
+            'Order Cancelled',
+            'Order #' . $order->id . ' has been cancelled successfully.',
+            [
+                'reference_type' => 'invoice',
+                'reference_id' => $order->id,
+                'action_url' => route('customer.billing.order-details', $order->id),
+            ]
+        );
         
         $message = 'Order cancelled successfully.';
         if ($refundedAmount > 0) {

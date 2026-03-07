@@ -11,6 +11,8 @@ use App\Models\OrderItem;
 use App\Models\PetOwner;
 use App\Models\ShoppingCart;
 use App\Models\User;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -201,7 +203,7 @@ class CartController extends Controller
     /**
      * Checkout - convert cart to order.
      */
-    public function checkout(Request $request): RedirectResponse
+    public function checkout(Request $request, NotificationService $notificationService): RedirectResponse
     {
         $user = $this->authenticateUser();
         if ($user instanceof RedirectResponse) {
@@ -354,6 +356,18 @@ class CartController extends Controller
         } else {
             $successMessage .= ' Please pay ₱' . number_format($invoiceTotalAmount, 2) . ' upon pickup.';
         }
+
+        $notificationService->send(
+            $user,
+            Notification::TYPE_PAYMENT,
+            'Order Placed',
+            'Your order #' . $order->id . ' has been placed. Invoice ' . $invoice->invoice_number . ' is currently ' . ucfirst($invoice->status) . '.',
+            [
+                'reference_type' => 'invoice',
+                'reference_id' => $invoice->id,
+                'action_url' => route('customer.billing.order-details', $order->id),
+            ]
+        );
 
         return redirect()->route('customer.billing.orders')
             ->with('success', $successMessage);

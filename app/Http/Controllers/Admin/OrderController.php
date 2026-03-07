@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Order;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class OrderController extends BaseController
@@ -55,13 +57,14 @@ class OrderController extends BaseController
     /**
      * Update order status.
      */
-    public function updateStatus(Request $request, $orderId)
+    public function updateStatus(Request $request, NotificationService $notificationService, $orderId)
     {
         $data = $request->validate([
             'status' => 'required|in:draft,confirmed,shipped,fulfilled,cancelled',
         ]);
 
-        $order = Order::with(['items', 'invoice.invoiceItems', 'invoice.payments'])->findOrFail($orderId);
+        $order = Order::with(['items', 'invoice.invoiceItems', 'invoice.payments', 'owner.user'])->findOrFail($orderId);
+        $previousStatus = $order->status;
         
         // If transitioning to fulfilled and payment method is cash, create payment record
         if ($data['status'] === 'fulfilled' && stripos((string) $order->notes, 'Payment Method: Cash') !== false) {
@@ -93,6 +96,24 @@ class OrderController extends BaseController
         $order->update([
             'status' => $data['status'],
         ]);
+
+        if ($previousStatus !== $order->status) {
+            $customer = $order->owner?->user;
+
+            if ($customer) {
+                $notificationService->send(
+                    $customer,
+                    Notification::TYPE_PAYMENT,
+                    'Order Status Updated',
+                    'Your order #' . $order->id . ' status changed from ' . ucfirst(str_replace('_', ' ', (string) $previousStatus)) . ' to ' . ucfirst(str_replace('_', ' ', (string) $order->status)) . '.',
+                    [
+                        'reference_type' => 'invoice',
+                        'reference_id' => $order->id,
+                        'action_url' => route('customer.billing.order-details', $order->id),
+                    ]
+                );
+            }
+        }
 
         return back()->with('success', 'Order status updated successfully.');
     }

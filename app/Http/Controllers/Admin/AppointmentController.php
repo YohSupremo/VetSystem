@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\Notification;
 use App\Models\Pet;
 use App\Models\User;
 use App\Models\StaffSchedule;
@@ -268,7 +269,7 @@ class AppointmentController extends Controller
     /**
      * Update the specified appointment.
      */
-    public function update(Request $request, Appointment $appointment)
+    public function update(Request $request, Appointment $appointment, NotificationService $notificationService)
     {
         // If the user is a veterinarian, ensure they can only update their assigned appointments
         $user = auth()->user();
@@ -278,6 +279,44 @@ class AppointmentController extends Controller
         
         $isVeterinarian = $user && $user->isVeterinarian();
         
+        // If appointment is currently cancelled, only allow status to be updated
+        if ($appointment->status === 'cancelled') {
+            $validated = $request->validate([
+                'status' => 'required|in:pending,confirmed,in_progress,completed,cancelled,no_show',
+            ]);
+            
+            // Only update status if it changed
+            if ($validated['status'] !== $appointment->status) {
+                $oldStatus = $appointment->status;
+                $appointment->update(['status' => $validated['status']]);
+                
+                // Send notification to customer about status change
+                $appointment->loadMissing('pet.owner.user');
+                $customer = $appointment->pet?->owner?->user;
+
+                if ($customer) {
+                    $staffName = $user ? trim($user->first_name . ' ' . $user->last_name) : 'Clinic Staff';
+                    $staffRole = $user ? ucfirst($user->role) : '';
+                    $staffInfo = $staffRole ? $staffName . ' (' . $staffRole . ')' : $staffName;
+                    $notificationService->send(
+                        $customer,
+                        Notification::TYPE_APPOINTMENT,
+                        'Appointment Status Updated',
+                        'Your appointment status changed from ' . ucfirst(str_replace('_', ' ', (string) $oldStatus)) . ' to ' . ucfirst(str_replace('_', ' ', (string) $appointment->status)) . ' by ' . $staffInfo . '.',
+                        [
+                            'reference_type' => 'appointment',
+                            'reference_id' => $appointment->id,
+                            'action_url' => route('customer.appointments.show', $appointment->id),
+                        ]
+                    );
+                }
+            }
+            
+            return redirect()->route('admin.appointments.show', $appointment)
+                ->with('success', 'Appointment status updated successfully.');
+        }
+        
+        // Normal validation for non-cancelled appointments
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
             'veterinarian_id' => 'nullable|exists:users,id',
@@ -311,7 +350,55 @@ class AppointmentController extends Controller
         // Parse the datetime-local format to proper DateTime
         $validated['appointment_date'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['appointment_date']);
 
+        $oldStatus = $appointment->status;
+        $oldAssigneeId = $appointment->veterinarian_id;
         $appointment->update($validated);
+
+        if (!empty($appointment->veterinarian_id) && (int) $appointment->veterinarian_id !== (int) $oldAssigneeId) {
+            $assignee = User::find($appointment->veterinarian_id);
+
+            if ($assignee) {
+                $assigneeActionUrl = match ($assignee->role) {
+                    'groomer' => route('admin.grooming.index'),
+                    'boarding' => route('admin.boarding.index'),
+                    default => route('veterinarian.appointments.show', $appointment->id),
+                };
+
+                $notificationService->send(
+                    $assignee,
+                    Notification::TYPE_APPOINTMENT,
+                    'Appointment Assigned',
+                    'An appointment has been assigned to you.',
+                    [
+                        'reference_type' => 'appointment',
+                        'reference_id' => $appointment->id,
+                        'action_url' => $assigneeActionUrl,
+                    ]
+                );
+            }
+        }
+
+        if ($oldStatus !== $appointment->status) {
+            $appointment->loadMissing('pet.owner.user');
+            $customer = $appointment->pet?->owner?->user;
+
+            if ($customer) {
+                $staffName = $user ? trim($user->first_name . ' ' . $user->last_name) : 'Clinic Staff';
+                $staffRole = $user ? ucfirst($user->role) : '';
+                $staffInfo = $staffRole ? $staffName . ' (' . $staffRole . ')' : $staffName;
+                $notificationService->send(
+                    $customer,
+                    Notification::TYPE_APPOINTMENT,
+                    'Appointment Status Updated',
+                    'Your appointment status changed from ' . ucfirst(str_replace('_', ' ', (string) $oldStatus)) . ' to ' . ucfirst(str_replace('_', ' ', (string) $appointment->status)) . ' by ' . $staffInfo . '.',
+                    [
+                        'reference_type' => 'appointment',
+                        'reference_id' => $appointment->id,
+                        'action_url' => route('customer.appointments.show', $appointment->id),
+                    ]
+                );
+            }
+        }
 
         return redirect()->route('admin.appointments.show', $appointment)
             ->with('success', 'Appointment updated successfully!');
@@ -337,7 +424,7 @@ class AppointmentController extends Controller
     /**
      * Cancel an appointment (changes status to cancelled).
      */
-    public function cancel(Appointment $appointment)
+    public function cancel(Appointment $appointment, NotificationService $notificationService)
     {
         // If the user is a veterinarian, ensure they can only cancel their assigned appointments
         $user = auth()->user();
@@ -346,6 +433,25 @@ class AppointmentController extends Controller
         }
         
         $appointment->update(['status' => 'cancelled']);
+
+        $appointment->loadMissing('pet.owner.user');
+        $customer = $appointment->pet?->owner?->user;
+        if ($customer) {
+            $staffName = $user ? trim($user->first_name . ' ' . $user->last_name) : 'Clinic Staff';
+            $staffRole = $user ? ucfirst($user->role) : '';
+            $staffInfo = $staffRole ? $staffName . ' (' . $staffRole . ')' : $staffName;
+            $notificationService->send(
+                $customer,
+                Notification::TYPE_APPOINTMENT,
+                'Appointment Cancelled',
+                'Your appointment has been cancelled by ' . $staffInfo . '.',
+                [
+                    'reference_type' => 'appointment',
+                    'reference_id' => $appointment->id,
+                    'action_url' => route('customer.appointments.show', $appointment->id),
+                ]
+            );
+        }
         
         return redirect()->route('admin.appointments.show', $appointment)
             ->with('success', 'Appointment has been cancelled successfully!');
@@ -396,6 +502,12 @@ class AppointmentController extends Controller
             $notificationService = app(NotificationService::class);
             $assignee = User::find($appointment->veterinarian_id);
             if ($assignee) {
+                $assigneeActionUrl = match ($assignee->role) {
+                    'groomer' => route('admin.grooming.index'),
+                    'boarding' => route('admin.boarding.index'),
+                    default => route('veterinarian.appointments.show', $appointment->id),
+                };
+
                 $notificationService->send(
                     $assignee,
                     \App\Models\Notification::TYPE_APPOINTMENT,
@@ -404,7 +516,7 @@ class AppointmentController extends Controller
                     [
                         'reference_type' => 'appointment',
                         'reference_id' => $appointment->id,
-                        'action_url' => route('veterinarian.appointments.show', $appointment->id),
+                        'action_url' => $assigneeActionUrl,
                     ]
                 );
             }

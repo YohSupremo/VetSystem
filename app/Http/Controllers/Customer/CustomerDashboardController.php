@@ -9,6 +9,7 @@ use App\Models\Pet;
 use App\Models\Appointment;
 use App\Models\InventoryItem;
 use App\Models\ShoppingCart;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 
 class CustomerDashboardController extends Controller
@@ -55,6 +56,19 @@ class CustomerDashboardController extends Controller
 
         // Get user's cart information
         $cart = ShoppingCart::getOrCreateForUser($user->id);
+
+        $notifications = Notification::query()
+            ->forUser($user->id)
+            ->visibleToRole($user->role)
+            ->latest()
+            ->take(8)
+            ->get();
+
+        $unreadNotificationCount = Notification::query()
+            ->forUser($user->id)
+            ->visibleToRole($user->role)
+            ->unread()
+            ->count();
         
         return view('customer.dashboard', compact(
             'user',
@@ -63,7 +77,9 @@ class CustomerDashboardController extends Controller
             'recentAppointments',
             'petCount',
             'upcomingCount',
-            'cart'
+            'cart',
+            'notifications',
+            'unreadNotificationCount'
         ));
     }
 }

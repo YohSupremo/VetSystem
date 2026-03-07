@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\NotificationCreated;
 use App\Models\Notification;
 use App\Models\NotificationSetting;
 use App\Models\User;
@@ -47,7 +48,11 @@ class NotificationService
             'scheduled_for' => $data['scheduled_for'] ?? now(),
         ];
 
-        return Notification::create($notificationData);
+        $notification = Notification::create($notificationData);
+
+        event(new NotificationCreated($notification));
+
+        return $notification;
     }
 
     /**

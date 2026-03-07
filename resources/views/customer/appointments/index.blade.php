@@ -741,13 +741,6 @@
             <p class="hero-subtitle">Manage your pet care schedule</p>
         </div>
 
-        @if(session('success'))
-            <div class="alert">
-                <span style="font-size: 1.25rem;">✓</span>
-                <span>{{ session('success') }}</span>
-            </div>
-        @endif
-
         <!-- Action Bar -->
         <div class="action-bar">
             <form class="filter-form" method="GET" action="{{ route('customer.appointments.index') }}">

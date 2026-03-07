@@ -893,10 +893,12 @@
                 z-index: -1;
                 opacity: 0;
                 transition: opacity 0.3s ease;
+                pointer-events: none;
             }
             
             .sidebar.active::before {
                 opacity: 1;
+                pointer-events: auto;
             }
 
             .main-content {
@@ -1732,7 +1734,7 @@
             @endif
 
             <!-- Main Content Area -->
-            <div class="content-wrapper">
+            <div class="content-wrapper" style="position: relative; z-index: 101;">
                 @yield('content')
             </div>
         </main>

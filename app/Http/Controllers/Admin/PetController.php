@@ -9,15 +9,42 @@ use App\Models\Pet;
 use App\Models\PetOwner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class PetController extends Controller
 {
     /**
      * Display a listing of pets.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $pets = Pet::with('owner.user')->get();
+        $pets = QueryBuilder::for(Pet::class)
+            ->with('owner.user')
+            ->allowedFilters([
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $term = trim((string) $value);
+
+                    if ($term === '') {
+                        return;
+                    }
+
+                    $query->where(function ($subQuery) use ($term) {
+                        $subQuery->where('name', 'like', '%' . $term . '%')
+                            ->orWhere('species', 'like', '%' . $term . '%')
+                            ->orWhere('breed', 'like', '%' . $term . '%')
+                            ->orWhere('registration_number', 'like', '%' . $term . '%')
+                            ->orWhereHas('owner.user', function ($ownerUserQuery) use ($term) {
+                                $ownerUserQuery->where('first_name', 'like', '%' . $term . '%')
+                                    ->orWhere('last_name', 'like', '%' . $term . '%')
+                                    ->orWhere('email', 'like', '%' . $term . '%');
+                            });
+                    });
+                }),
+            ])
+            ->orderByDesc('id')
+            ->get();
+
         return view('admin.pets.index', compact('pets'));
     }
 

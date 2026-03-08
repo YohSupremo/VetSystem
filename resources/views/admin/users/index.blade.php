@@ -60,6 +60,54 @@
         text-decoration: none;
     }
 
+    .users-content-area .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .users-content-area .search-form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .users-content-area .search-input {
+        min-width: 260px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 2px solid #E2E8F0;
+        font-size: 14px;
+        color: #2D3748;
+    }
+
+    .users-content-area .search-input:focus {
+        outline: none;
+        border-color: #FF8C42;
+        box-shadow: 0 0 0 4px rgba(255, 140, 66, 0.16);
+    }
+
+    .users-content-area .btn-search {
+        background: #fff;
+        color: #2D3748;
+        border: 2px solid #E2E8F0;
+        border-radius: 10px;
+        padding: 11px 14px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .users-content-area .btn-search:hover {
+        border-color: #FF8C42;
+        color: #2D3748;
+        text-decoration: none;
+    }
+
     .users-content-area .table-card {
         background: white;
         border-radius: 16px;
@@ -147,11 +195,6 @@
         gap: 6px;
     }
 
-    .users-content-area .role-badge.admin {
-        background: linear-gradient(135deg, #FEE2E2, #FECACA);
-        color: #DC2626;
-    }
-
     .users-content-area .role-badge.registered_user {
         background: linear-gradient(135deg, #28A745, #1E40AF);
         color: #FFFFFF;
@@ -160,16 +203,6 @@
     .users-content-area .role-badge.pet_owner {
         background: linear-gradient(135deg, #FEF3C7, #FDE68A);
         color: #92400E;
-    }
-
-    .users-content-area .role-badge.staff {
-        background: linear-gradient(135deg, #DBEAFE, #BFDBFE);
-        color: #1E40AF;
-    }
-
-    .users-content-area .role-badge.vet {
-        background: linear-gradient(135deg, #D1FAE5, #A7F3D0);
-        color: #065F46;
     }
 
     .users-content-area .status-badge {
@@ -282,6 +315,19 @@
                 gap: 12px;
             }
 
+            .users-content-area .top-actions {
+                width: 100%;
+            }
+
+            .users-content-area .search-form {
+                width: 100%;
+            }
+
+            .users-content-area .search-input {
+                width: 100%;
+                min-width: 0;
+            }
+
             .users-content-area .btn-add-user {
                 width: 100%;
                 justify-content: center;
@@ -390,10 +436,29 @@
             <h3>All Users</h3>
             <p>Total: {{ $users->total() }} user{{ $users->total() !== 1 ? 's' : '' }}</p>
         </div>
-        <a href="{{ route('admin.users.create') }}" class="btn-add-user">
-            <i class="fas fa-user-plus"></i>
-            Add New User
-        </a>
+        <div class="top-actions">
+            <form method="GET" action="{{ route('admin.users.index') }}" class="search-form">
+                <input
+                    type="text"
+                    name="filter[search]"
+                    class="search-input"
+                    placeholder="Search name, email, username, contact"
+                    value="{{ request('filter.search') }}"
+                >
+                <button type="submit" class="btn-search">
+                    <i class="fas fa-search"></i>
+                    Search
+                </button>
+                @if(request('filter.search'))
+                    <a href="{{ route('admin.users.index') }}" class="btn-search">Clear</a>
+                @endif
+            </form>
+
+            <a href="{{ route('admin.users.create') }}" class="btn-add-user">
+                <i class="fas fa-user-plus"></i>
+                Add New User
+            </a>
+        </div>
     </div>
 
     @if($users->count() > 0)
@@ -413,22 +478,24 @@
             </thead>
             <tbody>
                 @foreach($users as $user)
+                    @php
+                        $hasAnchoredPets = optional($user->petOwner)->pets && $user->petOwner->pets->isNotEmpty();
+                        $displayRole = $hasAnchoredPets ? 'pet_owner' : 'registered_user';
+                    @endphp
                     <tr>
                         <td data-label="#">{{ $user->id }}</td>
                         <td data-label="Name" class="user-name">{{ $user->first_name }} {{ $user->last_name }}</td>
                         <td data-label="Email">{{ $user->email }}</td>
                         <td data-label="Role">
-                            <span class="role-badge {{ $user->role }}">
-                                @if($user->role === 'admin')
-                                    <i class="fas fa-user-shield"></i>
-                                @elseif($user->role === 'registered_user')
+                            <span class="role-badge {{ $displayRole }}">
+                                @if($displayRole === 'registered_user')
                                     <i class="fas fa-user"></i>
-                                @elseif($user->role === 'vet')
-                                    <i class="fas fa-user-md"></i>
+                                @elseif($displayRole === 'pet_owner')
+                                    <i class="fas fa-paw"></i>
                                 @else
                                     <i class="fas fa-user"></i>
                                 @endif
-                                {{ ucfirst(str_replace('_', ' ', $user->role)) }}
+                                {{ ucfirst(str_replace('_', ' ', $displayRole)) }}
                             </span>
                         </td>
                         <td data-label="Contact">{{ $user->contact_number ?? '—' }}</td>

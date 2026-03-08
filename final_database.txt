@@ -25,6 +25,7 @@
 -- ✅ Normalized notification read state to avoid redundancy:
 --    use status + read_at as source of truth (removed is_read)
 
+DROP DATABASE IF EXISTS vet_clinic_final;
 CREATE DATABASE IF NOT EXISTS vet_clinic_final;
 USE vet_clinic_final;
 
@@ -207,8 +208,6 @@ CREATE TABLE medication_dispensing (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (prescription_id) REFERENCES prescriptions(id) ON DELETE CASCADE,
-    FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE SET NULL,
-    FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE RESTRICT,
     FOREIGN KEY (dispensed_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_prescription (prescription_id),
     INDEX idx_invoice (invoice_id),
@@ -265,7 +264,6 @@ CREATE TABLE pet_vaccinations (
     reminder_sent TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE CASCADE,
-    FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE RESTRICT,
     FOREIGN KEY (administered_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_pet (pet_id),
     INDEX idx_inventory_item (inventory_item_id),
@@ -353,7 +351,6 @@ CREATE TABLE lab_requisitions (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (medical_record_id) REFERENCES medical_records(id) ON DELETE CASCADE,
     FOREIGN KEY (test_id) REFERENCES lab_tests(id) ON DELETE RESTRICT,
-    FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE SET NULL,
     FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_medical_record (medical_record_id),
     INDEX idx_test (test_id),
@@ -665,6 +662,21 @@ CREATE TABLE payments (
     INDEX idx_method (payment_method),
     CONSTRAINT chk_payment_amount CHECK (amount > 0)
 ) ENGINE=InnoDB;
+
+-- Add deferred foreign keys that depend on tables created later in this script
+ALTER TABLE medication_dispensing
+    ADD CONSTRAINT fk_med_disp_invoice
+        FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_med_disp_inventory_item
+        FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE RESTRICT;
+
+ALTER TABLE pet_vaccinations
+    ADD CONSTRAINT fk_pet_vacc_inventory_item
+        FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE RESTRICT;
+
+ALTER TABLE lab_requisitions
+    ADD CONSTRAINT fk_lab_req_invoice
+        FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE SET NULL;
 
 -- =============================
 -- STAFF MANAGEMENT

@@ -1853,7 +1853,9 @@
         };
         const notificationsBase = notificationsBaseMap[currentRole] || '/admin/notifications';
         const unreadCountEndpoint = unreadCountBaseMap[currentRole] || '/admin/notifications/unread-count';
+        const globalSearchEndpoint = @json(route('admin.global-search'));
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token());
+        let searchRequestId = 0;
 
         // Notifications Functions
         function openNotifications() {
@@ -2060,108 +2062,72 @@
                 return;
             }
 
-            // Sample search results data
-            const allResults = [
-                // Pets
-                {
-                    type: 'Pet',
-                    icon: 'fa-paw',
-                    title: 'Max',
-                    subtitle: 'Golden Retriever - Owner: John Doe',
-                    category: 'Pets Registry'
-                },
-                {
-                    type: 'Pet',
-                    icon: 'fa-paw',
-                    title: 'Bella',
-                    subtitle: 'Cat - Owner: Jane Smith',
-                    category: 'Pets Registry'
-                },
-                // Owners
-                {
-                    type: 'Owner',
-                    icon: 'fa-user',
-                    title: 'John Doe',
-                    subtitle: 'Owner of: Max, Buddy',
-                    category: 'Pet Owners'
-                },
-                {
-                    type: 'Owner',
-                    icon: 'fa-user',
-                    title: 'Jane Smith',
-                    subtitle: 'Owner of: Bella, Whiskers',
-                    category: 'Pet Owners'
-                },
-                // Appointments
-                {
-                    type: 'Appointment',
-                    icon: 'fa-calendar',
-                    title: 'Vaccination - Max',
-                    subtitle: 'Jan 20, 2026 - 10:00 AM',
-                    category: 'Appointments'
-                },
-                {
-                    type: 'Appointment',
-                    icon: 'fa-calendar',
-                    title: 'Check-up - Bella',
-                    subtitle: 'Jan 21, 2026 - 2:00 PM',
-                    category: 'Appointments'
-                },
-                // Medical Records
-                {
-                    type: 'Medical Record',
-                    icon: 'fa-file-medical',
-                    title: 'Dental Cleaning - Max',
-                    subtitle: 'Completed on Jan 10, 2026',
-                    category: 'Medical Records'
-                }
-            ];
+            const currentRequestId = ++searchRequestId;
+            container.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
 
-            // Filter results based on query
-            const filteredResults = allResults.filter(result => 
-                result.title.toLowerCase().includes(query.toLowerCase()) ||
-                result.subtitle.toLowerCase().includes(query.toLowerCase())
-            );
+            fetch(`${globalSearchEndpoint}?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (currentRequestId !== searchRequestId) {
+                        return;
+                    }
 
-            container.innerHTML = '';
+                    const filteredResults = Array.isArray(data.results) ? data.results : [];
+                    container.innerHTML = '';
 
-            if (filteredResults.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-search"></i>
-                        <p>No results found for "${query}"</p>
-                    </div>
-                `;
-                return;
-            }
-
-            filteredResults.forEach(result => {
-                const item = document.createElement('div');
-                item.className = 'search-result-item';
-                item.innerHTML = `
-                    <div style="display: flex; gap: 12px;">
-                        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, 
-                                    var(--primary-orange), var(--accent-pink)); border-radius: 8px; 
-                                    display: flex; align-items: center; justify-content: center; 
-                                    color: white; flex-shrink: 0;">
-                            <i class="fas ${result.icon}"></i>
-                        </div>
-                        <div style="flex: 1;">
-                            <div class="search-result-title">${result.title}</div>
-                            <div style="font-size: 12px; opacity: 0.8; margin-bottom: 3px;">
-                                ${result.subtitle}
+                    if (filteredResults.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-search"></i>
+                                <p>No results found for "${query}"</p>
                             </div>
-                            <div class="search-result-type">${result.category}</div>
+                        `;
+                        return;
+                    }
+
+                    filteredResults.forEach(result => {
+                        const item = document.createElement('div');
+                        item.className = 'search-result-item';
+                        item.innerHTML = `
+                            <div style="display: flex; gap: 12px;">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg,
+                                            var(--primary-orange), var(--accent-pink)); border-radius: 8px;
+                                            display: flex; align-items: center; justify-content: center;
+                                            color: white; flex-shrink: 0;">
+                                    <i class="fas ${result.icon || 'fa-search'}"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div class="search-result-title">${result.title || 'Result'}</div>
+                                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 3px;">
+                                        ${result.subtitle || ''}
+                                    </div>
+                                    <div class="search-result-type">${result.category || result.type || ''}</div>
+                                </div>
+                            </div>
+                        `;
+
+                        if (result.url) {
+                            item.style.cursor = 'pointer';
+                            item.addEventListener('click', function() {
+                                window.location.href = result.url;
+                            });
+                        }
+
+                        container.appendChild(item);
+                    });
+                })
+                .catch(() => {
+                    if (currentRequestId !== searchRequestId) {
+                        return;
+                    }
+
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Unable to load search results right now.</p>
                         </div>
-                    </div>
-                `;
-                item.addEventListener('click', function() {
-                    alert('Navigating to: ' + result.title);
-                    // Here you can add actual navigation logic
-                    closeModal('searchModal');
+                    `;
                 });
-                container.appendChild(item);
-            });
         }
 
         function updateUnreadCounts() {

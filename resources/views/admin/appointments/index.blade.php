@@ -252,6 +252,13 @@
 
         <div class="filters">
             <form method="GET" action="{{ route('admin.appointments.index') }}" class="filters">
+                <input
+                    type="text"
+                    name="filter[search]"
+                    class="filter-select"
+                    value="{{ request('filter.search') }}"
+                    placeholder="Search pet, owner, staff"
+                >
                 <select name="pet_id" class="filter-select" onchange="this.form.submit()">
                     <option value="">All Pets</option>
                     @foreach($pets as $pet)
@@ -278,6 +285,10 @@
                         </option>
                     @endforeach
                 </select>
+                <button type="submit" class="btn-outline">Search</button>
+                @if(request('filter.search') || ($filters['pet_id'] ?? null) || ($filters['status'] ?? null) || ($filters['type'] ?? null))
+                    <a href="{{ route('admin.appointments.index') }}" class="btn-outline">Clear</a>
+                @endif
             </form>
         </div>
     </div>

@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmailContract
 {
     use Notifiable;
 
@@ -31,10 +33,32 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'email_verified' => 'boolean',
         'last_login' => 'datetime',
         'is_active' => 'boolean',
     ];
+
+    public function hasVerifiedEmail(): bool
+    {
+        return (bool) $this->email_verified;
+    }
+
+    public function markEmailAsVerified(): bool
+    {
+        return $this->forceFill([
+            'email_verified' => true,
+        ])->save();
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmail());
+    }
+
+    public function getEmailForVerification(): string
+    {
+        return (string) $this->email;
+    }
 
     public function petOwner()
     {

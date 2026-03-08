@@ -7,15 +7,43 @@ use App\Models\PetOwner;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class PetOwnerController extends Controller
 {
     /**
      * Display a listing of pet owners.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $owners = PetOwner::with(['user', 'pets'])->get();
+        $owners = QueryBuilder::for(PetOwner::class)
+            ->with(['user', 'pets'])
+            ->allowedFilters([
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $term = trim((string) $value);
+
+                    if ($term === '') {
+                        return;
+                    }
+
+                    $query->where(function ($subQuery) use ($term) {
+                        $subQuery->whereHas('user', function ($userQuery) use ($term) {
+                            $userQuery->where('first_name', 'like', '%' . $term . '%')
+                                ->orWhere('last_name', 'like', '%' . $term . '%')
+                                ->orWhere('email', 'like', '%' . $term . '%')
+                                ->orWhere('username', 'like', '%' . $term . '%')
+                                ->orWhere('contact_number', 'like', '%' . $term . '%');
+                        })
+                        ->orWhere('emergency_contact_name', 'like', '%' . $term . '%')
+                        ->orWhere('emergency_contact_phone', 'like', '%' . $term . '%')
+                        ->orWhere('emergency_contact_relationship', 'like', '%' . $term . '%');
+                    });
+                }),
+            ])
+            ->orderByDesc('id')
+            ->get();
+
         return view('admin.pet-owners.index', compact('owners'));
     }
 

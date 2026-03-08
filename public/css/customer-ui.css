@@ -1082,6 +1082,30 @@
     border-radius: 12px;
 }
 
+.customer-body .alert-success {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.35);
+    color: #14532d;
+}
+
+.customer-body .alert-danger {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #991b1b;
+}
+
+.customer-body .alert-warning {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.35);
+    color: #92400e;
+}
+
+.customer-body .alert-info {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #1e3a8a;
+}
+
 .customer-body .text-primary {
     color: #000 !important;
     text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);

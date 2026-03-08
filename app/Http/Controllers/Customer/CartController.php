@@ -15,7 +15,9 @@ use App\Models\Notification;
 use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Throwable;
 
 class CartController extends Controller
 {
@@ -233,129 +235,143 @@ class CartController extends Controller
             }
         }
 
-        // Ensure pet owner record exists
-        $petOwner = PetOwner::firstOrCreate(
-            ['user_id' => $user->id],
-            ['notes' => null]
-        );
+        try {
+            $result = DB::transaction(function () use ($user, $validated, $cart) {
+                // Ensure pet owner record exists
+                $petOwner = PetOwner::firstOrCreate(
+                    ['user_id' => $user->id],
+                    ['notes' => null]
+                );
 
-        // Determine if this is online payment (not cash)
-        $isOnlinePayment = $validated['payment_method'] !== 'cash';
+                // Determine if this is online payment (not cash)
+                $isOnlinePayment = $validated['payment_method'] !== 'cash';
 
-        // Create order
-        $order = Order::create([
-            'appointment_id' => null,
-            'pet_id' => null,
-            'owner_id' => $petOwner->id,
-            'created_by' => $user->id,
-            'order_type' => 'online',
-            'status' => 'confirmed',
-            'order_date' => now(),
-            'notes' => ($validated['notes'] ? $validated['notes'] . "\n" : '') . 'Payment Method: ' . ucfirst(str_replace('_', ' ', $validated['payment_method'])),
-        ]);
-
-        $subtotalAmount = 0;
-
-        // Add order items and update stock
-        foreach ($cart->cartItems as $cartItem) {
-            OrderItem::create([
-                'order_id' => $order->id,
-                'inventory_item_id' => $cartItem->inventory_item_id,
-                'description' => $cartItem->inventoryItem->name,
-                'quantity' => $cartItem->quantity,
-                'unit_price' => $cartItem->unit_price,
-            ]);
-
-            $subtotalAmount += $cartItem->quantity * $cartItem->unit_price;
-
-            // Update inventory stock using the model helper
-            $cartItem->inventoryItem->decrementStock($cartItem->quantity);
-
-            // Create transaction record for audit (linking to the first available stock for reference, or generic)
-            // Ideally transactions should be created per stock deduction in the decrementStock method, 
-            // but for now we log a generic transaction for the order.
-            $inventoryStock = \App\Models\InventoryStock::where('item_id', $cartItem->inventory_item_id)
-                ->where('quantity', '>', 0)
-                ->first();
-            
-            // Fallback to any stock if none has quantity (just for logging)
-            if (!$inventoryStock) {
-                $inventoryStock = \App\Models\InventoryStock::where('item_id', $cartItem->inventory_item_id)->first();
-            }
-
-            if ($inventoryStock) {
-                \App\Models\InventoryTransaction::create([
-                    'stock_id' => $inventoryStock->id,
-                    'type' => 'out',
-                    'quantity' => $cartItem->quantity,
-                    'reference' => 'Order #' . $order->id,
-                    'notes' => 'Sold to ' . $user->first_name . ' ' . $user->last_name,
+                // Create order
+                $order = Order::create([
+                    'appointment_id' => null,
+                    'pet_id' => null,
+                    'owner_id' => $petOwner->id,
+                    'created_by' => $user->id,
+                    'order_type' => 'online',
+                    'status' => 'confirmed',
+                    'order_date' => now(),
+                    'notes' => ($validated['notes'] ? $validated['notes'] . "\n" : '') . 'Payment Method: ' . ucfirst(str_replace('_', ' ', $validated['payment_method'])),
                 ]);
-            }
+
+                // Add order items and update stock
+                foreach ($cart->cartItems as $cartItem) {
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'inventory_item_id' => $cartItem->inventory_item_id,
+                        'description' => $cartItem->inventoryItem->name,
+                        'quantity' => $cartItem->quantity,
+                        'unit_price' => $cartItem->unit_price,
+                    ]);
+
+                    // Update inventory stock using the model helper
+                    $cartItem->inventoryItem->decrementStock($cartItem->quantity);
+
+                    // Create transaction record for audit (linking to the first available stock for reference, or generic)
+                    // Ideally transactions should be created per stock deduction in the decrementStock method,
+                    // but for now we log a generic transaction for the order.
+                    $inventoryStock = \App\Models\InventoryStock::where('item_id', $cartItem->inventory_item_id)
+                        ->where('quantity', '>', 0)
+                        ->first();
+
+                    // Fallback to any stock if none has quantity (just for logging)
+                    if (!$inventoryStock) {
+                        $inventoryStock = \App\Models\InventoryStock::where('item_id', $cartItem->inventory_item_id)->first();
+                    }
+
+                    if ($inventoryStock) {
+                        \App\Models\InventoryTransaction::create([
+                            'stock_id' => $inventoryStock->id,
+                            'type' => 'out',
+                            'quantity' => $cartItem->quantity,
+                            'reference' => 'Order #' . $order->id,
+                            'notes' => 'Sold to ' . $user->first_name . ' ' . $user->last_name,
+                        ]);
+                    }
+                }
+
+                // Generate invoice number
+                $prefix = ClinicSetting::invoicePrefix();
+                $defaultTaxRate = ClinicSetting::defaultTaxRate();
+                $year = date('Y');
+                $lastInvoice = \App\Models\Invoice::where('invoice_prefix', $prefix)
+                    ->whereYear('created_at', $year)
+                    ->orderBy('invoice_sequence', 'desc')
+                    ->first();
+                $sequence = $lastInvoice ? $lastInvoice->invoice_sequence + 1 : 1;
+                $invoiceNumber = sprintf('%s-%s-%06d', $prefix, $year, $sequence);
+
+                // Create invoice
+                $invoice = \App\Models\Invoice::create([
+                    'order_id' => $order->id,
+                    'owner_id' => $petOwner->id,
+                    'invoice_prefix' => $prefix,
+                    'invoice_sequence' => $sequence,
+                    'invoice_number' => $invoiceNumber,
+                    'issue_date' => now()->toDateString(),
+                    'due_date' => now()->addDays(7)->toDateString(),
+                    'tax_rate' => $defaultTaxRate,
+                    'discount_amount' => 0,
+                    'status' => $isOnlinePayment ? 'paid' : 'pending',
+                    'notes' => 'Order #' . $order->id . ' - Payment Method: ' . ucfirst(str_replace('_', ' ', $validated['payment_method'])),
+                ]);
+
+                // Create invoice items
+                foreach ($cart->cartItems as $cartItem) {
+                    \App\Models\InvoiceItem::create([
+                        'invoice_id' => $invoice->id,
+                        'item_type' => 'product',
+                        'description' => $cartItem->inventoryItem->name,
+                        'quantity' => $cartItem->quantity,
+                        'unit_price' => $cartItem->unit_price,
+                    ]);
+                }
+
+                $invoice->load('invoiceItems');
+                $invoiceTotalAmount = (float) $invoice->total_amount;
+
+                // If online payment, create payment record (auto-record as income)
+                if ($isOnlinePayment) {
+                    \App\Models\Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'payment_date' => now(),
+                        'amount' => $invoiceTotalAmount,
+                        'payment_method' => $validated['payment_method'],
+                        'reference_number' => 'ONLINE-' . $order->id . '-' . time(),
+                        'received_by' => null, // System generated
+                        'notes' => 'Online payment for Order #' . $order->id,
+                    ]);
+                }
+
+                // Clear cart after successful checkout
+                $cart->cartItems()->delete();
+
+                $successMessage = 'Order placed successfully!';
+                if ($isOnlinePayment) {
+                    $successMessage .= ' Payment of ₱' . number_format($invoiceTotalAmount, 2) . ' has been recorded.';
+                } else {
+                    $successMessage .= ' Please pay ₱' . number_format($invoiceTotalAmount, 2) . ' upon pickup.';
+                }
+
+                return [
+                    'order' => $order,
+                    'invoice' => $invoice,
+                    'successMessage' => $successMessage,
+                ];
+            });
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Unable to complete checkout right now. Please try again.');
         }
 
-        // Generate invoice number
-        $prefix = ClinicSetting::invoicePrefix();
-        $defaultTaxRate = ClinicSetting::defaultTaxRate();
-        $year = date('Y');
-        $lastInvoice = \App\Models\Invoice::where('invoice_prefix', $prefix)
-            ->whereYear('created_at', $year)
-            ->orderBy('invoice_sequence', 'desc')
-            ->first();
-        $sequence = $lastInvoice ? $lastInvoice->invoice_sequence + 1 : 1;
-        $invoiceNumber = sprintf('%s-%s-%06d', $prefix, $year, $sequence);
-
-        // Create invoice
-        $invoice = \App\Models\Invoice::create([
-            'order_id' => $order->id,
-            'owner_id' => $petOwner->id,
-            'invoice_prefix' => $prefix,
-            'invoice_sequence' => $sequence,
-            'invoice_number' => $invoiceNumber,
-            'issue_date' => now()->toDateString(),
-            'due_date' => now()->addDays(7)->toDateString(),
-            'tax_rate' => $defaultTaxRate,
-            'discount_amount' => 0,
-            'status' => $isOnlinePayment ? 'paid' : 'pending',
-            'notes' => 'Order #' . $order->id . ' - Payment Method: ' . ucfirst(str_replace('_', ' ', $validated['payment_method'])),
-        ]);
-
-        // Create invoice items
-        foreach ($cart->cartItems as $cartItem) {
-            \App\Models\InvoiceItem::create([
-                'invoice_id' => $invoice->id,
-                'item_type' => 'product',
-                'description' => $cartItem->inventoryItem->name,
-                'quantity' => $cartItem->quantity,
-                'unit_price' => $cartItem->unit_price,
-            ]);
-        }
-
-        $invoice->load('invoiceItems');
-        $invoiceTotalAmount = (float) $invoice->total_amount;
-
-        // If online payment, create payment record (auto-record as income)
-        if ($isOnlinePayment) {
-            \App\Models\Payment::create([
-                'invoice_id' => $invoice->id,
-                'payment_date' => now(),
-                'amount' => $invoiceTotalAmount,
-                'payment_method' => $validated['payment_method'],
-                'reference_number' => 'ONLINE-' . $order->id . '-' . time(),
-                'received_by' => null, // System generated
-                'notes' => 'Online payment for Order #' . $order->id,
-            ]);
-        }
-
-        // Clear cart after successful checkout
-        $cart->cartItems()->delete();
-
-        $successMessage = 'Order placed successfully!';
-        if ($isOnlinePayment) {
-            $successMessage .= ' Payment of ₱' . number_format($invoiceTotalAmount, 2) . ' has been recorded.';
-        } else {
-            $successMessage .= ' Please pay ₱' . number_format($invoiceTotalAmount, 2) . ' upon pickup.';
-        }
+        $order = $result['order'];
+        $invoice = $result['invoice'];
+        $successMessage = $result['successMessage'];
 
         $notificationService->send(
             $user,

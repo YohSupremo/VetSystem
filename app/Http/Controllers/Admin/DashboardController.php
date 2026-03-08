@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
+use App\Models\Order;
 use App\Models\Pet;
 use App\Models\PetOwner;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -327,6 +330,132 @@ class DashboardController extends Controller
             'lowStockItems' => $lowStockItems,
             'lowStockCount' => $lowStockCount,
             'recentPets' => $recentPets,
+        ]);
+    }
+
+    public function globalSearch(Request $request)
+    {
+        $term = trim((string) $request->query('q', ''));
+
+        if ($term === '' || strlen($term) < 2) {
+            return response()->json(['results' => []]);
+        }
+
+        $like = '%' . $term . '%';
+        $results = collect();
+
+        $pets = Pet::with('owner.user')
+            ->where(function ($query) use ($like) {
+                $query->where('name', 'like', $like)
+                    ->orWhere('species', 'like', $like)
+                    ->orWhere('breed', 'like', $like)
+                    ->orWhere('registration_number', 'like', $like)
+                    ->orWhereHas('owner.user', function ($ownerUser) use ($like) {
+                        $ownerUser->where('first_name', 'like', $like)
+                            ->orWhere('last_name', 'like', $like)
+                            ->orWhere('email', 'like', $like);
+                    });
+            })
+            ->limit(5)
+            ->get();
+
+        foreach ($pets as $pet) {
+            $ownerName = trim((string) ($pet->owner?->user?->first_name . ' ' . $pet->owner?->user?->last_name));
+            $results->push([
+                'type' => 'Pet',
+                'icon' => 'fa-paw',
+                'title' => (string) $pet->name,
+                'subtitle' => trim((string) (($pet->species ? ucfirst($pet->species) : 'Unknown') . ' - Owner: ' . ($ownerName !== '' ? $ownerName : 'N/A'))),
+                'category' => 'Pets Registry',
+                'url' => route('admin.pets.show', $pet->id),
+            ]);
+        }
+
+        $owners = PetOwner::with('user')
+            ->whereHas('user', function ($query) use ($like) {
+                $query->where('first_name', 'like', $like)
+                    ->orWhere('last_name', 'like', $like)
+                    ->orWhere('email', 'like', $like)
+                    ->orWhere('username', 'like', $like);
+            })
+            ->limit(5)
+            ->get();
+
+        foreach ($owners as $owner) {
+            $fullName = trim((string) (($owner->user?->first_name ?? '') . ' ' . ($owner->user?->last_name ?? '')));
+            $results->push([
+                'type' => 'Owner',
+                'icon' => 'fa-user',
+                'title' => $fullName !== '' ? $fullName : ('Owner #' . $owner->id),
+                'subtitle' => (string) ($owner->user?->email ?? 'No email'),
+                'category' => 'Pet Owners',
+                'url' => route('admin.pet-owners.show', $owner->id),
+            ]);
+        }
+
+        $appointments = Appointment::with(['pet', 'pet.owner.user'])
+            ->where(function ($query) use ($like) {
+                $query->where('type', 'like', $like)
+                    ->orWhere('status', 'like', $like)
+                    ->orWhereHas('pet', function ($petQuery) use ($like) {
+                        $petQuery->where('name', 'like', $like);
+                    })
+                    ->orWhereHas('pet.owner.user', function ($ownerUser) use ($like) {
+                        $ownerUser->where('first_name', 'like', $like)
+                            ->orWhere('last_name', 'like', $like)
+                            ->orWhere('email', 'like', $like);
+                    });
+            })
+            ->orderByDesc('appointment_date')
+            ->limit(5)
+            ->get();
+
+        foreach ($appointments as $appointment) {
+            $petName = (string) ($appointment->pet?->name ?? 'Unknown pet');
+            $dateText = $appointment->appointment_date
+                ? Carbon::parse($appointment->appointment_date)->format('M d, Y g:i A')
+                : 'TBD';
+
+            $results->push([
+                'type' => 'Appointment',
+                'icon' => 'fa-calendar-check',
+                'title' => ucfirst(str_replace('_', ' ', (string) $appointment->type)) . ' - ' . $petName,
+                'subtitle' => $dateText,
+                'category' => 'Appointments',
+                'url' => route('admin.appointments.show', $appointment->id),
+            ]);
+        }
+
+        $orders = Order::with(['owner.user'])
+            ->where(function ($query) use ($like) {
+                $query->where('id', 'like', $like)
+                    ->orWhere('status', 'like', $like)
+                    ->orWhere('order_type', 'like', $like)
+                    ->orWhereHas('owner.user', function ($ownerUser) use ($like) {
+                        $ownerUser->where('first_name', 'like', $like)
+                            ->orWhere('last_name', 'like', $like)
+                            ->orWhere('email', 'like', $like);
+                    });
+            })
+            ->orderByDesc('id')
+            ->limit(5)
+            ->get();
+
+        foreach ($orders as $order) {
+            $ownerName = trim((string) (($order->owner?->user?->first_name ?? '') . ' ' . ($order->owner?->user?->last_name ?? '')));
+
+            $results->push([
+                'type' => 'Order',
+                'icon' => 'fa-shopping-bag',
+                'title' => 'Order #' . $order->id,
+                'subtitle' => ($ownerName !== '' ? $ownerName : 'Unknown owner') . ' - ' . ucfirst(str_replace('_', ' ', (string) $order->status)),
+                'category' => 'Orders',
+                'url' => route('admin.orders.show', $order->id),
+            ]);
+        }
+
+        return response()->json([
+            'results' => $results->take(20)->values(),
         ]);
     }
 }

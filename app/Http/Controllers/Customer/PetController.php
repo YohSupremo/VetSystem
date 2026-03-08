@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Pet;
 use App\Models\PetOwner;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class PetController extends Controller
@@ -59,8 +60,11 @@ class PetController extends Controller
         }
         
         view()->share('user', $user);
-        
-        return view('customer.pets.create');
+
+        $submissionToken = (string) Str::uuid();
+        session(['pet_create_submission_token' => $submissionToken]);
+
+        return view('customer.pets.create', compact('submissionToken'));
     }
     
     public function store(Request $request)
@@ -70,51 +74,77 @@ class PetController extends Controller
             return $user;
         }
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'species' => 'required|in:Dog,Cat,Bird,Reptile,Other',
-            'breed' => 'nullable|string|max:255',
-            'gender' => 'required|in:Male,Female',
-            'birth_date' => 'nullable|date|before_or_equal:today',
-            'weight' => 'required|numeric|min:0.01|max:999.99',
-            'color' => 'nullable|string|max:255',
-            'registration_number' => 'nullable|string|max:255|unique:pets,registration_number',
-            'photo' => 'nullable|image|max:2048', // 2MB max
-            'medical_history' => 'nullable|string',
-        ]);
-        
-        $petOwner = PetOwner::where('user_id', $user->id)->first();
-        if (!$petOwner) {
-            $petOwner = PetOwner::create([
-                'user_id' => $user->id,
-                'notes' => null
+        $sessionToken = session('pet_create_submission_token');
+        $requestToken = (string) $request->input('submission_token');
+
+        if (!$sessionToken || !$requestToken || !hash_equals($sessionToken, $requestToken)) {
+            return redirect()->route('customer.pets.create')
+                ->with('error', 'Your form session expired. Please fill in the pet details again.');
+        }
+
+        $submissionLock = Cache::lock('pet-create:' . $user->id . ':' . $requestToken, 10);
+        if (!$submissionLock->get()) {
+            return redirect()->route('customer.pets.index')
+                ->with('info', 'Pet registration is already being processed.');
+        }
+
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'species' => 'required|in:Dog,Cat,Bird,Reptile,Other',
+                'breed' => 'nullable|string|max:255',
+                'gender' => 'required|in:Male,Female',
+                'birth_date' => 'nullable|date|before_or_equal:today',
+                'weight' => 'required|numeric|min:0.01|max:999.99',
+                'color' => 'nullable|string|max:255',
+                'photo' => 'nullable|image|max:2048', // 2MB max
+                'medical_history' => 'nullable|string',
             ]);
-        }
-        
-        $petData = $request->except('photo');
-        $petData['owner_id'] = $petOwner->id;
-        
-        // Handle photo upload
-        if ($request->hasFile('photo')) {
-            \Log::info('Customer Pet update: photo file detected', ['pet_id' => $pet->id ?? null, 'user_id' => $user->id ?? null]);
-            $photo = $request->file('photo');
-            \Log::info('Customer Pet update: uploaded file info', ['originalName' => $photo->getClientOriginalName(), 'size' => $photo->getSize(), 'mime' => $photo->getMimeType()]);
-            $filename = Str::random(40) . '.' . $photo->getClientOriginalExtension();
-            $directory = public_path('uploads/pets');
-            if (!File::exists($directory)) {
-                File::makeDirectory($directory, 0755, true);
+
+            $petOwner = PetOwner::where('user_id', $user->id)->first();
+            if (!$petOwner) {
+                $petOwner = PetOwner::create([
+                    'user_id' => $user->id,
+                    'notes' => null
+                ]);
             }
-            $photo->move($directory, $filename);
-            $petData['photo_path'] = 'uploads/pets/' . $filename;
+
+            $petData = $request->only([
+                'name',
+                'species',
+                'breed',
+                'gender',
+                'birth_date',
+                'weight',
+                'color',
+                'medical_history',
+            ]);
+            $petData['owner_id'] = $petOwner->id;
+
+            // Handle photo upload
+            if ($request->hasFile('photo')) {
+                $photo = $request->file('photo');
+                $filename = Str::random(40) . '.' . $photo->getClientOriginalExtension();
+                $directory = public_path('uploads/pets');
+                if (!File::exists($directory)) {
+                    File::makeDirectory($directory, 0755, true);
+                }
+                $photo->move($directory, $filename);
+                $petData['photo_path'] = 'uploads/pets/' . $filename;
+            }
+
+            Pet::create($petData);
+
+            // Automatically change user role to pet_owner since they now have pets
+            $user->update(['role' => 'pet_owner']);
+
+            session()->forget('pet_create_submission_token');
+
+            return redirect()->route('customer.pets.index')
+                ->with('success', 'Pet registered successfully!');
+        } finally {
+            optional($submissionLock)->release();
         }
-        
-        $pet = Pet::create($petData);
-        
-        // Automatically change user role to pet_owner since they now have pets
-        $user->update(['role' => 'pet_owner']);
-        
-        return redirect()->route('customer.pets.index')
-            ->with('success', 'Pet registered successfully!');
     }
     
     public function show($id)
@@ -168,12 +198,20 @@ class PetController extends Controller
             'birth_date' => 'nullable|date|before_or_equal:today',
             'weight' => 'required|numeric|min:0.01|max:999.99',
             'color' => 'nullable|string|max:255',
-            'registration_number' => 'nullable|string|max:255|unique:pets,registration_number,' . $pet->id,
             'photo' => 'nullable|image|max:2048',
             'medical_history' => 'nullable|string',
         ]);
 
-        $petData = $request->except('photo');
+        $petData = $request->only([
+            'name',
+            'species',
+            'breed',
+            'gender',
+            'birth_date',
+            'weight',
+            'color',
+            'medical_history',
+        ]);
         
         // Handle photo upload
         if ($request->hasFile('photo')) {

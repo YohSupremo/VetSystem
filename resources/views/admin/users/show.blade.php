@@ -184,24 +184,9 @@
         gap: 6px;
     }
 
-    .user-details-area .role-badge.admin {
-        background: linear-gradient(135deg, #FEE2E2, #FECACA);
-        color: #DC2626;
-    }
-
     .user-details-area .role-badge.pet_owner {
         background: linear-gradient(135deg, #FEF3C7, #FDE68A);
         color: #92400E;
-    }
-
-    .user-details-area .role-badge.staff {
-        background: linear-gradient(135deg, #DBEAFE, #BFDBFE);
-        color: #1E40AF;
-    }
-
-    .user-details-area .role-badge.vet {
-        background: linear-gradient(135deg, #D1FAE5, #A7F3D0);
-        color: #065F46;
     }
 
     .user-details-area .status-badge {
@@ -319,17 +304,19 @@
             <div class="detail-row">
                 <div class="detail-label">Role</div>
                 <div class="detail-value">
-                    <span class="role-badge {{ $user->role }}">
-                        @if($user->role === 'admin')
-                            <i class="fas fa-user-shield"></i>
-                        @elseif($user->role === 'registered_user')
+                    @php
+                        $hasAnchoredPets = optional($user->petOwner)->pets && $user->petOwner->pets->isNotEmpty();
+                        $displayRole = $hasAnchoredPets ? 'pet_owner' : 'registered_user';
+                    @endphp
+                    <span class="role-badge {{ $displayRole }}">
+                        @if($displayRole === 'registered_user')
                             <i class="fas fa-user"></i>
-                        @elseif($user->role === 'vet')
-                            <i class="fas fa-user-md"></i>
+                        @elseif($displayRole === 'pet_owner')
+                            <i class="fas fa-paw"></i>
                         @else
                             <i class="fas fa-user"></i>
                         @endif
-                        {{ ucfirst(str_replace('_', ' ', $user->role)) }}
+                        {{ ucfirst(str_replace('_', ' ', $displayRole)) }}
                     </span>
                 </div>
             </div>

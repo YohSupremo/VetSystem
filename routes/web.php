@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Auth\Events\Verified;
 use App\Http\Controllers\UserController;
 use App\Models\ClinicSetting;
 use App\Models\Pet;
@@ -82,6 +84,91 @@ Route::get('/login', function(){
 
 Route::post('/register/create', [UserController::class, 'register']);
 Route::post('/login-success', [UserController::class,'login']);
+
+Route::get('/email/verify', function (Request $request) {
+    $email = (string) $request->session()->get('verification_email', '');
+
+    return view('verify-email', compact('email'));
+})->name('verification.notice');
+
+Route::post('/email/verification-notification', function (Request $request) {
+    $validated = $request->validate([
+        'email' => 'required|email',
+    ]);
+
+    $user = User::where('email', $validated['email'])->first();
+
+    $request->session()->put('verification_email', $validated['email']);
+
+    if (! $user) {
+        return back()->withErrors([
+            'email' => 'We could not find an account for that email address.',
+        ]);
+    }
+
+    if ($user->hasVerifiedEmail()) {
+        return redirect('/login')->with('success', 'This email is already verified. You can log in now.');
+    }
+
+    $mailUsername = (string) env('MAIL_USERNAME', '');
+    $mailPassword = (string) env('MAIL_PASSWORD', '');
+    if (
+        str_contains($mailUsername, 'your_gmail@gmail.com') ||
+        str_contains($mailPassword, 'your_gmail_app_password') ||
+        $mailUsername === '' ||
+        $mailPassword === ''
+    ) {
+        return back()->withErrors([
+            'email' => 'Mail server is not configured yet. Replace MAIL_USERNAME and MAIL_PASSWORD in .env with your real Gmail and Google App Password.',
+        ]);
+    }
+
+    try {
+        $user->sendEmailVerificationNotification();
+    } catch (\Throwable $e) {
+        report($e);
+
+        $errorText = $e->getMessage();
+        $isAuthFailure = str_contains($errorText, 'BadCredentials') || str_contains($errorText, 'Failed to authenticate on SMTP server');
+
+        $fallbackLink = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            [
+                'id' => $user->id,
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+
+        return back()
+            ->withErrors([
+                'email' => $isAuthFailure
+                    ? 'Gmail SMTP login failed. Generate a new Google App Password for the sender account and update MAIL_PASSWORD.'
+                    : 'Unable to send verification email right now. Please check SMTP credentials in .env and try again.',
+            ])
+            ->with('verification_link', $fallbackLink);
+    }
+
+    return back()->with('success', 'A new verification link has been sent to your email.');
+})->middleware('throttle:6,1')->name('verification.send');
+
+Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
+    $user = User::findOrFail($id);
+
+    if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+        abort(403, 'Invalid verification link.');
+    }
+
+    if (! $user->hasVerifiedEmail()) {
+        $user->markEmailAsVerified();
+        event(new Verified($user));
+    }
+
+    $request->session()->forget('verification_email');
+
+    return redirect('/login')->with('success', 'Email verified successfully. You may now log in.');
+})->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+
 Route::get('/dashboard', function(){
     return view('dashboard');
 });
@@ -173,6 +260,7 @@ Route::prefix('customer')->name('customer.')->middleware(['auth.flash'])->group(
     // Profile Management
     Route::get('/profile', [App\Http\Controllers\Customer\CustomerController::class, 'profile'])->name('profile');
     Route::put('/profile', [App\Http\Controllers\Customer\CustomerController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/profile/deactivate', [App\Http\Controllers\Customer\CustomerController::class, 'deactivateAccount'])->name('profile.deactivate');
 });
 
 // Veterinarian Routes
@@ -232,6 +320,7 @@ Route::prefix('veterinarian')->name('veterinarian.')->middleware(['auth.flash'])
 Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/global-search', [DashboardController::class, 'globalSearch'])->name('global-search');
 
     // Notifications
     Route::prefix('notifications')->name('notifications.')->group(function () {

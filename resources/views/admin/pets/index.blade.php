@@ -247,9 +247,25 @@
             Total: {{ count($pets) }} pets registered
         </p>
     </div>
-    <a href="{{ route('admin.pets.create') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add New Pet
-    </a>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <form method="GET" action="{{ route('admin.pets.index') }}" style="display:flex; gap:8px; align-items:center;">
+            <input
+                type="text"
+                name="filter[search]"
+                value="{{ request('filter.search') }}"
+                placeholder="Search pet, species, owner"
+                style="padding:10px 12px; border-radius:10px; border:2px solid #E2E8F0; min-width:240px;"
+            >
+            <button type="submit" class="btn btn-secondary">Search</button>
+            @if(request('filter.search'))
+                <a href="{{ route('admin.pets.index') }}" class="btn btn-secondary">Clear</a>
+            @endif
+        </form>
+
+        <a href="{{ route('admin.pets.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Pet
+        </a>
+    </div>
 </div>
 
 

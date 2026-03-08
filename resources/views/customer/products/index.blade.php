@@ -278,7 +278,7 @@
     font-size: 1rem;
     transition: var(--transition-smooth);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -310,18 +310,22 @@
 
 .cart-badge {
     position: absolute;
-    top: -8px;
-    right: -8px;
+    top: -10px;
+    right: -10px;
     background: linear-gradient(135deg, var(--primary-purple), var(--pink));
     color: white;
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-weight: 700;
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 12px rgba(147, 51, 234, 0.35);
+    z-index: 2;
 }
 
 .empty-state {

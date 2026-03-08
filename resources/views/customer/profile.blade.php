@@ -187,6 +187,11 @@
     margin-bottom: 0.5rem;
 }
 
+.emergency-contact-section {
+    margin-top: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
 .btn-primary {
     background: linear-gradient(135deg, var(--primary-purple), var(--pink));
     border: none;
@@ -218,6 +223,28 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(31, 38, 135, 0.3);
     color: #000;
+}
+
+.deactivate-section {
+    margin-top: 1.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.btn-deactivate {
+    background: rgba(220, 38, 38, 0.12);
+    border: 1px solid rgba(220, 38, 38, 0.35);
+    color: #991b1b;
+    border-radius: 1rem;
+    padding: 0.65rem 1.25rem;
+    font-weight: 700;
+    transition: var(--transition-smooth);
+}
+
+.btn-deactivate:hover {
+    background: rgba(220, 38, 38, 0.2);
+    color: #7f1d1d;
+    transform: translateY(-1px);
 }
 
 .alert-success {
@@ -346,6 +373,34 @@
                         <input type="text" class="form-control" id="username" name="username" value="{{ $user->username ?? '' }}" disabled placeholder="Enter your username">
                         <small class="text-muted d-block mt-1">Your unique username for login</small>
                     </div>
+
+                    <div class="col-12 emergency-contact-section">
+                        <h5 class="mb-1" style="color:#000; font-weight:700;">Emergency Contact</h5>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="emergency_contact_name">Contact Name</label>
+                        <input type="text" class="form-control" id="emergency_contact_name" name="emergency_contact_name" value="{{ old('emergency_contact_name', $petOwner->emergency_contact_name ?? '') }}" disabled placeholder="Enter emergency contact name">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="emergency_contact_phone">Contact Number</label>
+                        <input type="tel" class="form-control" id="emergency_contact_phone" name="emergency_contact_phone" value="{{ old('emergency_contact_phone', $petOwner->emergency_contact_phone ?? '') }}" disabled placeholder="Enter emergency contact number">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="emergency_contact_relationship">Relationship</label>
+                        <select class="form-select" id="emergency_contact_relationship" name="emergency_contact_relationship" disabled>
+                            <option value="">Select relationship</option>
+                            <option value="spouse" {{ old('emergency_contact_relationship', $petOwner->emergency_contact_relationship ?? '') === 'spouse' ? 'selected' : '' }}>Spouse</option>
+                            <option value="parent" {{ old('emergency_contact_relationship', $petOwner->emergency_contact_relationship ?? '') === 'parent' ? 'selected' : '' }}>Parent</option>
+                            <option value="sibling" {{ old('emergency_contact_relationship', $petOwner->emergency_contact_relationship ?? '') === 'sibling' ? 'selected' : '' }}>Sibling</option>
+                            <option value="relative" {{ old('emergency_contact_relationship', $petOwner->emergency_contact_relationship ?? '') === 'relative' ? 'selected' : '' }}>Relative</option>
+                            <option value="friend" {{ old('emergency_contact_relationship', $petOwner->emergency_contact_relationship ?? '') === 'friend' ? 'selected' : '' }}>Friend</option>
+                            <option value="neighbor" {{ old('emergency_contact_relationship', $petOwner->emergency_contact_relationship ?? '') === 'neighbor' ? 'selected' : '' }}>Neighbor</option>
+                            <option value="other" {{ old('emergency_contact_relationship', $petOwner->emergency_contact_relationship ?? '') === 'other' ? 'selected' : '' }}>Other</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Action Buttons -->
@@ -355,6 +410,16 @@
                     </button>
                 </div>
             </form>
+
+            <div class="text-center deactivate-section">
+                <form action="{{ route('customer.profile.deactivate') }}" method="POST" onsubmit="return confirm('Are you sure you want to deactivate your account? You will be logged out immediately.');">
+                    @csrf
+                    <button type="submit" class="btn btn-deactivate">
+                        <i class="fas fa-user-slash me-2"></i>Deactivate Account
+                    </button>
+                </form>
+                <small class="text-muted d-block mt-2">This will disable your login until an administrator reactivates your account.</small>
+            </div>
         </div>
     </main>
 </div>
@@ -362,7 +427,7 @@
 <script>
 function enableEditMode() {
     const form = document.getElementById('profileForm');
-    const inputs = form.querySelectorAll('input, textarea');
+    const inputs = form.querySelectorAll('input, textarea, select');
     const editBtn = document.getElementById('editBtn');
     const cancelBtn = document.getElementById('cancelBtn');
     const saveSection = document.getElementById('saveSection');
@@ -382,7 +447,7 @@ function enableEditMode() {
 
 function disableEditMode() {
     const form = document.getElementById('profileForm');
-    const inputs = form.querySelectorAll('input, textarea');
+    const inputs = form.querySelectorAll('input, textarea, select');
     const editBtn = document.getElementById('editBtn');
     const cancelBtn = document.getElementById('cancelBtn');
     const saveSection = document.getElementById('saveSection');
@@ -458,18 +523,27 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
         body: formData,
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest',
             'Accept': 'application/json'
         }
     })
-    .then(response => {
+    .then(async response => {
+        const contentType = response.headers.get('content-type') || '';
+        const isJson = contentType.includes('application/json');
+        const payload = isJson ? await response.json() : { message: await response.text() };
+
         if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.message || 'Network response was not ok');
-            });
+            const errors = payload.errors || {};
+            const firstError = Object.values(errors).flat()[0];
+            throw new Error(firstError || payload.message || 'Error updating profile. Please try again.');
         }
-        return response.json();
+
+        return payload;
     })
     .then(data => {
+        const existingAlerts = document.querySelectorAll('.profile-card .alert');
+        existingAlerts.forEach(el => el.remove());
+
         if (data.success) {
             // Show success message
             const alert = document.createElement('div');
@@ -514,6 +588,10 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
     })
     .catch(error => {
         console.error('Error:', error);
+
+        const existingAlerts = document.querySelectorAll('.profile-card .alert');
+        existingAlerts.forEach(el => el.remove());
+
         // Show error message
         const alert = document.createElement('div');
         alert.className = 'alert alert-danger alert-dismissible fade show';

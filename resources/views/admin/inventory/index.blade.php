@@ -377,6 +377,13 @@
         </div>
         <div class="table-card-header-actions">
             <form method="GET" class="table-card-filters">
+                <input
+                    type="text"
+                    name="filter[search]"
+                    class="filter-select"
+                    value="{{ request('filter.search') }}"
+                    placeholder="Search item, SKU, category"
+                >
                 <select name="category" class="filter-select" onchange="this.form.submit()">
                     <option value="">All Categories</option>
                     @foreach($categories as $category)
@@ -391,6 +398,7 @@
                     <option value="expiring_soon" {{ request('status') == 'expiring_soon' ? 'selected' : '' }}>Expiring Soon</option>
                     <option value="expired" {{ request('status') == 'expired' ? 'selected' : '' }}>Expired</option>
                 </select>
+                <button type="submit" class="btn btn-outline-primary btn-sm">Search</button>
                 <a href="{{ route('admin.inventory.index') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
             </form>
         </div>

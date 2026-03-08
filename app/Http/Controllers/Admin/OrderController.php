@@ -6,6 +6,8 @@ use App\Models\Order;
 use App\Models\Notification;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class OrderController extends BaseController
 {
@@ -14,7 +16,32 @@ class OrderController extends BaseController
      */
     public function index(Request $request)
     {
-        $query = Order::with(['owner.user', 'pet', 'createdBy', 'items.inventoryItem', 'invoice.invoiceItems'])
+        $query = QueryBuilder::for(Order::class)
+            ->with(['owner.user', 'pet', 'createdBy', 'items.inventoryItem', 'invoice.invoiceItems'])
+            ->allowedFilters([
+                AllowedFilter::callback('search', function ($builder, $value) {
+                    $term = trim((string) $value);
+
+                    if ($term === '') {
+                        return;
+                    }
+
+                    $builder->where(function ($sub) use ($term) {
+                        $sub->where('id', 'like', '%' . $term . '%')
+                            ->orWhere('order_type', 'like', '%' . $term . '%')
+                            ->orWhere('status', 'like', '%' . $term . '%')
+                            ->orWhereHas('pet', function ($petQuery) use ($term) {
+                                $petQuery->where('name', 'like', '%' . $term . '%');
+                            })
+                            ->orWhereHas('owner.user', function ($ownerUserQuery) use ($term) {
+                                $ownerUserQuery->where('first_name', 'like', '%' . $term . '%')
+                                    ->orWhere('last_name', 'like', '%' . $term . '%')
+                                    ->orWhere('email', 'like', '%' . $term . '%')
+                                    ->orWhere('username', 'like', '%' . $term . '%');
+                            });
+                    });
+                }),
+            ])
             ->orderByDesc('order_date')
             ->orderByDesc('created_at');
 

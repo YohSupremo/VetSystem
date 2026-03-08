@@ -165,6 +165,7 @@
             <p class="text-muted">Track orders across all customers and update their status.</p>
         </div>
         <form class="orders-filters" method="GET" action="{{ route('admin.orders.index') }}">
+            <input type="text" name="filter[search]" placeholder="Global search" value="{{ request('filter.search') }}">
             <input type="text" name="order_id" placeholder="Order ID" value="{{ request('order_id') }}">
             <input type="text" name="owner" placeholder="Owner name or email" value="{{ request('owner') }}">
             <select name="status">

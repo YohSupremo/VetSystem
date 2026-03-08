@@ -1,17 +1,125 @@
 @extends('layout.base')
 
+@php($bodyClass = 'customer-body')
+
+@section('title', 'Shopping Cart - PawCare')
+
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/customer-ui.css') }}">
+<style>
+.customer-container {
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+    z-index: 2;
+}
+
+.customer-main {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.cart-title {
+    font-size: 2.4rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+.continue-shopping-link {
+    color: #111827;
+    text-decoration: none;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.cart-glass-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 10px 30px rgba(31, 38, 135, 0.22);
+    overflow: hidden;
+}
+
+.cart-glass-card .table {
+    margin-bottom: 0;
+}
+
+.cart-glass-card thead th {
+    background: rgba(255, 255, 255, 0.18);
+    color: #111827;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    font-weight: 700;
+}
+
+.cart-glass-card tbody td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    color: #111827;
+}
+
+.cart-glass-card tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.cart-item-thumb {
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 0.8rem;
+}
+
+.checkout-btn {
+    background: linear-gradient(135deg, var(--primary-purple), var(--pink));
+    border: none;
+    border-radius: 1rem;
+    font-weight: 700;
+}
+
+.checkout-btn:hover {
+    filter: brightness(1.05);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+}
+
+.empty-state .btn {
+    border-radius: 999px;
+    padding: 0.7rem 1.4rem;
+}
+</style>
+@endpush
+
 @section('content')
 @include('layout.customer-navbar')
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h2 mb-0">Shopping Cart</h1>
-        <a href="{{ route('customer.products.index') }}" class="text-decoration-none">
+<div class="floating-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+</div>
+
+<div class="customer-container">
+    <main class="customer-main">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h1 class="cart-title">Shopping Cart</h1>
+        <a href="{{ route('customer.products.index') }}" class="continue-shopping-link">
             <i class="fas fa-arrow-left me-1"></i> Continue Shopping
         </a>
     </div>
 
     @if($cart->cartItems->isEmpty())
-        <div class="text-center py-5">
+        <div class="cart-glass-card empty-state">
             <div class="mb-3">
                 <i class="fas fa-shopping-cart fa-3x text-muted"></i>
             </div>
@@ -25,11 +133,11 @@
         <div class="row g-4">
             <!-- Cart Items -->
             <div class="col-lg-8">
-                <div class="card border-0 shadow-sm">
+                <div class="cart-glass-card">
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table align-middle mb-0">
-                                <thead class="table-light">
+                                <thead>
                                     <tr>
                                         <th class="ps-4 py-3">Product</th>
                                         <th class="py-3">Price</th>
@@ -43,7 +151,7 @@
                                         <tr>
                                             <td class="ps-4 py-3">
                                                 <div class="d-flex align-items-center">
-                                                    <div class="bg-light rounded p-2 me-3 border" style="width: 60px; height: 60px; display:flex; align-items:center; justify-content:center;">
+                                                    <div class="cart-item-thumb rounded p-2 me-3" style="width: 60px; height: 60px; display:flex; align-items:center; justify-content:center;">
                                                         @if($item->inventoryItem && $item->inventoryItem->image_path)
                                                             <img src="{{ asset($item->inventoryItem->image_path) }}" alt="{{ $item->inventoryItem->name }}" style="max-width: 100%; max-height: 100%;">
                                                         @else
@@ -85,7 +193,7 @@
 
             <!-- Summary & Checkout -->
             <div class="col-lg-4">
-                <div class="card border-0 shadow-sm">
+                <div class="cart-glass-card">
                     <div class="card-body p-4">
                         <h5 class="card-title fw-bold mb-4">Order Summary</h5>
                         
@@ -135,7 +243,7 @@
                                 @enderror
                             </div>
                             
-                            <button type="submit" class="btn btn-primary w-100 btn-lg shadow-sm" onclick="return confirm('Place order now?')">
+                            <button type="submit" class="btn checkout-btn text-white w-100 btn-lg shadow-sm" onclick="return confirm('Place order now?')">
                                 Proceed to Checkout
                             </button>
                         </form>
@@ -153,5 +261,6 @@
             </div>
         </div>
     @endif
+    </main>
 </div>
 @endsection

@@ -322,7 +322,7 @@
 
     <form action="{{ route('admin.users.store') }}" method="POST">
         @csrf
-        <input type="hidden" name="role" value="pet_owner">
+        <input type="hidden" name="role" value="registered_user">
         
         <div class="form-card">
             <!-- Account Information Section -->
@@ -384,7 +384,7 @@
                             User Role
                         </label>
                         <div class="role-badge">
-                            <i class="fas fa-paw"></i>
+                            <i class="fas fa-user"></i>
                             Registered User
                         </div>
                     </div>
@@ -426,7 +426,7 @@
                             <i class="fas fa-phone"></i>
                             Contact Number
                         </label>
-                        <input type="tel" name="contact_number" value="{{ old('contact_number') }}" placeholder="+1 (555) 000-0000" />
+                        <input type="tel" name="contact_number" value="{{ old('contact_number') }}" placeholder="+63 (912) 000-0000" />
                         @error('contact_number')
                             <div style="color:#d73a49; margin-top:6px; font-size:13px;">{{ $message }}</div>
                         @enderror

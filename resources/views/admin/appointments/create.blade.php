@@ -91,6 +91,23 @@
             color: var(--light-text);
             margin-top: 6px;
         }
+
+        .error-hint {
+            margin-top: 8px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #fecaca;
+            border-left: 4px solid #dc2626;
+            background: #fee2e2;
+            color: #991b1b;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .input-error {
+            border-color: #dc2626 !important;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15) !important;
+        }
     </style>
 
     @if(!$pets->count())
@@ -138,7 +155,7 @@
                             <div class="inline-hint">You are automatically assigned to this appointment.</div>
                         @else
                             {{-- Other users see dropdown --}}
-                            <select name="veterinarian_id" id="veterinarian_id">
+                            <select name="veterinarian_id" id="veterinarian_id" class="@error('veterinarian_id') input-error @enderror">
                                 <option value="">Select staff</option>
                                 @foreach($assignableStaff as $staff)
                                     <option value="{{ $staff->id }}"
@@ -151,7 +168,7 @@
                             <div class="inline-hint" id="assignee_hint">Staff options are filtered by visit type.</div>
                         @endif
                         @error('veterinarian_id')
-                            <div class="inline-hint">{{ $message }}</div>
+                            <div class="error-hint">{{ $message }}</div>
                         @enderror
                     </div>
                 </div>
@@ -164,7 +181,7 @@
                         <input type="datetime-local" name="appointment_date" id="appointment_date"
                                value="{{ old('appointment_date') }}" required>
                         @error('appointment_date')
-                            <div class="inline-hint">{{ $message }}</div>
+                            <div class="error-hint">{{ $message }}</div>
                         @enderror
                     </div>
 

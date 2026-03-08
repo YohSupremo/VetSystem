@@ -10,9 +10,52 @@ use App\Models\User;
 use App\Models\StaffSchedule;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class AppointmentController extends Controller
 {
+    private function isWithinWorkingHours(Carbon $dateTime): bool
+    {
+        $hour = (int) $dateTime->hour;
+
+        // Working hours: 9:00 AM to 11:59 PM.
+        return $hour >= 9;
+    }
+
+    private function validateWorkingHours(Carbon $appointmentDate)
+    {
+        if (!$this->isWithinWorkingHours($appointmentDate)) {
+            return back()->withInput()->withErrors([
+                'appointment_date' => 'Selected time is outside working hours. Please choose a time between 9:00 AM and 11:59 PM.',
+            ]);
+        }
+
+        return null;
+    }
+
+    private function resolveShiftFromDateTime(Carbon $dateTime): string
+    {
+        $hour = (int) $dateTime->hour;
+
+        return ($hour >= 9 && $hour < 17) ? 'morning' : 'night';
+    }
+
+    private function validateAssigneeSchedule(int $assigneeId, Carbon $appointmentDate)
+    {
+        $dayOfWeek = $appointmentDate->format('l');
+        $shift = $this->resolveShiftFromDateTime($appointmentDate);
+
+        if (!StaffSchedule::isUserScheduled($assigneeId, $dayOfWeek, $shift)) {
+            return back()->withInput()->withErrors([
+                'veterinarian_id' => 'Selected staff is not scheduled on ' . $dayOfWeek . ' (' . ucfirst($shift) . ' shift) at the appointment time.',
+            ]);
+        }
+
+        return null;
+    }
+
     /**
      * Display a listing of appointments.
      */
@@ -49,7 +92,37 @@ class AppointmentController extends Controller
             $query->whereDate('appointment_date', '<=', $request->date_to);
         }
         
-        $appointments = $query->orderBy('appointment_date', 'desc')->paginate(20);
+        $query = QueryBuilder::for($query)
+            ->allowedFilters([
+                AllowedFilter::callback('search', function ($builder, $value) {
+                    $term = trim((string) $value);
+
+                    if ($term === '') {
+                        return;
+                    }
+
+                    $builder->where(function ($sub) use ($term) {
+                        $sub->where('type', 'like', '%' . $term . '%')
+                            ->orWhere('status', 'like', '%' . $term . '%')
+                            ->orWhereHas('pet', function ($petQuery) use ($term) {
+                                $petQuery->where('name', 'like', '%' . $term . '%')
+                                    ->orWhere('species', 'like', '%' . $term . '%');
+                            })
+                            ->orWhereHas('pet.owner.user', function ($ownerUserQuery) use ($term) {
+                                $ownerUserQuery->where('first_name', 'like', '%' . $term . '%')
+                                    ->orWhere('last_name', 'like', '%' . $term . '%')
+                                    ->orWhere('email', 'like', '%' . $term . '%');
+                            })
+                            ->orWhereHas('veterinarian', function ($staffQuery) use ($term) {
+                                $staffQuery->where('first_name', 'like', '%' . $term . '%')
+                                    ->orWhere('last_name', 'like', '%' . $term . '%')
+                                    ->orWhere('email', 'like', '%' . $term . '%');
+                            });
+                    });
+                }),
+            ]);
+
+        $appointments = $query->orderBy('appointment_date', 'desc')->paginate(20)->appends($request->query());
         
         // Add formatted properties for the view
         $appointments->getCollection()->transform(function ($appointment) {
@@ -177,7 +250,17 @@ class AppointmentController extends Controller
         }
 
         // Parse the datetime-local format to proper DateTime
-        $validated['appointment_date'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['appointment_date']);
+        $validated['appointment_date'] = Carbon::createFromFormat('Y-m-d\TH:i', $validated['appointment_date']);
+
+        if ($workingHoursError = $this->validateWorkingHours($validated['appointment_date'])) {
+            return $workingHoursError;
+        }
+
+        if (!empty($validated['veterinarian_id'])) {
+            if ($scheduleError = $this->validateAssigneeSchedule((int) $validated['veterinarian_id'], $validated['appointment_date'])) {
+                return $scheduleError;
+            }
+        }
 
         $appointment = Appointment::create($validated);
 
@@ -348,7 +431,17 @@ class AppointmentController extends Controller
         }
 
         // Parse the datetime-local format to proper DateTime
-        $validated['appointment_date'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['appointment_date']);
+        $validated['appointment_date'] = Carbon::createFromFormat('Y-m-d\TH:i', $validated['appointment_date']);
+
+        if ($workingHoursError = $this->validateWorkingHours($validated['appointment_date'])) {
+            return $workingHoursError;
+        }
+
+        if (!empty($validated['veterinarian_id'])) {
+            if ($scheduleError = $this->validateAssigneeSchedule((int) $validated['veterinarian_id'], $validated['appointment_date'])) {
+                return $scheduleError;
+            }
+        }
 
         $oldStatus = $appointment->status;
         $oldAssigneeId = $appointment->veterinarian_id;
@@ -491,6 +584,18 @@ class AppointmentController extends Controller
             return back()->withInput()->withErrors([
                 'veterinarian_id' => 'Selected staff must have role: ' . ucfirst($requiredRole) . '.',
             ]);
+        }
+
+        $appointmentDate = $appointment->appointment_date instanceof Carbon
+            ? $appointment->appointment_date
+            : Carbon::parse($appointment->appointment_date);
+
+        if ($workingHoursError = $this->validateWorkingHours($appointmentDate)) {
+            return $workingHoursError;
+        }
+
+        if ($scheduleError = $this->validateAssigneeSchedule((int) $validated['veterinarian_id'], $appointmentDate)) {
+            return $scheduleError;
         }
 
         $oldVeterinarianId = $appointment->veterinarian_id;

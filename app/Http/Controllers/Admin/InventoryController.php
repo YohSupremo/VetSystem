@@ -8,6 +8,8 @@ use App\Models\InventoryStock;
 use App\Models\Notification;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\File;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class InventoryController extends BaseController
 {
@@ -47,7 +49,25 @@ class InventoryController extends BaseController
             });
         }
 
-        $inventoryItems = $query->paginate(15);
+        $query = QueryBuilder::for($query)
+            ->allowedFilters([
+                AllowedFilter::callback('search', function ($builder, $value) {
+                    $term = trim((string) $value);
+
+                    if ($term === '') {
+                        return;
+                    }
+
+                    $builder->where(function ($sub) use ($term) {
+                        $sub->where('name', 'like', '%' . $term . '%')
+                            ->orWhere('sku', 'like', '%' . $term . '%')
+                            ->orWhere('description', 'like', '%' . $term . '%')
+                            ->orWhere('category', 'like', '%' . $term . '%');
+                    });
+                }),
+            ]);
+
+        $inventoryItems = $query->paginate(15)->appends($request->query());
 
         // Get summary statistics
         $totalItems = InventoryItem::count();

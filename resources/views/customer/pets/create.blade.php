@@ -175,6 +175,35 @@
     flex-direction: column;
 }
 
+.medical-history-group {
+    margin-top: 1rem;
+}
+
+.dob-with-age {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.dob-with-age .form-input {
+    flex: 1;
+}
+
+.age-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 110px;
+    padding: 0.45rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.2);
+    color: #222;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
 /* Submit Button */
 .btn-submit {
     background: linear-gradient(135deg, var(--primary-purple), var(--pink));
@@ -283,6 +312,14 @@
     .btn-submit {
         width: 100%;
     }
+
+    .dob-with-age {
+        flex-wrap: wrap;
+    }
+
+    .age-indicator {
+        min-width: unset;
+    }
 }
 </style>
 @endpush
@@ -314,8 +351,9 @@
             </div>
             
             <div class="form-body">
-                <form action="{{ route('customer.pets.store') }}" method="POST" enctype="multipart/form-data">
+                <form id="pet-create-form" action="{{ route('customer.pets.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
+                    <input type="hidden" name="submission_token" value="{{ $submissionToken ?? '' }}">
                     
                     <!-- Photo Upload -->
                     <div class="photo-upload-section">
@@ -353,12 +391,10 @@
 
                         <div class="form-group">
                             <label for="birth_date" class="form-label">Date of Birth</label>
-                            <input type="date" class="form-input" name="birth_date" id="birth_date" value="{{ old('birth_date') }}" max="{{ date('Y-m-d') }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="calculated_age" class="form-label">Age (Auto-calculated)</label>
-                            <input type="text" class="form-input" id="calculated_age" value="" readonly placeholder="Set a birth date">
+                            <div class="dob-with-age">
+                                <input type="date" class="form-input" name="birth_date" id="birth_date" value="{{ old('birth_date') }}" max="{{ date('Y-m-d') }}">
+                                <span id="calculated_age" class="age-indicator">Age: --</span>
+                            </div>
                         </div>
 
                         <div class="form-group">
@@ -382,22 +418,15 @@
                             @enderror
                         </div>
 
-                        <div class="form-group">
-                            <label for="registration_number" class="form-label">Microchip/Reg #</label>
-                            <input type="text" class="form-input @error('registration_number') is-invalid @enderror" name="registration_number" id="registration_number" value="{{ old('registration_number') }}">
-                            @error('registration_number')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group medical-history-group">
                         <label for="medical_history" class="form-label">Previous Medical History</label>
                         <textarea name="medical_history" id="medical_history" class="form-textarea" rows="3">{{ old('medical_history') }}</textarea>
                     </div>
 
                     <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn-submit">Add Pet</button>
+                        <button type="submit" class="btn-submit" id="pet-create-submit">Add Pet</button>
                     </div>
                 </form>
             </div>
@@ -444,15 +473,24 @@ function calculateAgeFromBirthDate(dateValue) {
 document.addEventListener('DOMContentLoaded', function () {
     const birthDateInput = document.getElementById('birth_date');
     const ageInput = document.getElementById('calculated_age');
+    const createForm = document.getElementById('pet-create-form');
+    const submitButton = document.getElementById('pet-create-submit');
 
-    if (!birthDateInput || !ageInput) return;
+    if (birthDateInput && ageInput) {
+        const updateAge = () => {
+            const ageText = calculateAgeFromBirthDate(birthDateInput.value);
+            ageInput.textContent = ageText ? `Age: ${ageText}` : 'Age: --';
+        };
 
-    const updateAge = () => {
-        const ageText = calculateAgeFromBirthDate(birthDateInput.value);
-        ageInput.value = ageText || 'Set a birth date';
-    };
+        birthDateInput.addEventListener('change', updateAge);
+        updateAge();
+    }
 
-    birthDateInput.addEventListener('change', updateAge);
-    updateAge();
+    if (createForm && submitButton) {
+        createForm.addEventListener('submit', function () {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Saving...';
+        });
+    }
 });
 </script>

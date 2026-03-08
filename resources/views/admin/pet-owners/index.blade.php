@@ -295,15 +295,24 @@
         <h3 style="margin: 0; font-family: 'Fredoka', sans-serif; font-size: 24px; color: var(--dark-text);">All Pet Owners</h3>
         <p style="margin: 5px 0 0 0; color: var(--light-text); font-size: 14px;">Total: {{ $owners->count() }} owners</p>
     </div>
-    <div style="display:flex; gap:10px; align-items:center;">
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <form method="GET" action="{{ route('admin.pet-owners.index') }}" style="display:flex; gap:8px; align-items:center;">
+            <input
+                type="text"
+                name="filter[search]"
+                value="{{ request('filter.search') }}"
+                placeholder="Search owner, email, contact"
+                style="padding:10px 12px; border-radius:10px; border:2px solid #E2E8F0; min-width:250px;"
+            >
+            <button type="submit" class="btn btn-outline-primary" style="padding:10px 14px;">Search</button>
+            @if(request('filter.search'))
+                <a href="{{ route('admin.pet-owners.index') }}" class="btn btn-outline-secondary" style="padding:10px 14px;">Clear</a>
+            @endif
+        </form>
         <a href="{{ route('admin.users.create') }}" class="btn btn-outline-secondary"><i class="fas fa-user-plus"></i> Add User</a>
         <a href="{{ route('admin.pet-owners.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Add New Owner</a>
     </div>
 </div>
-
-@if(session('success'))
-    <div class="alert alert-success"><i class="fas fa-check-circle"></i> {{ session('success') }}</div>
-@endif
 
 <div class="table-responsive">
     <table class="table table-striped table-hover">

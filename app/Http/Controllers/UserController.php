@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Hash;
+use Throwable;
+
 class UserController extends Controller
 {
     public function register(Request $request){
@@ -22,11 +25,36 @@ class UserController extends Controller
             'password.confirmed' => 'Password does not match'
         ]);
 
-       
+             $getData['password'] = bcrypt($getData['password']);
+             $user = User::create($getData);
 
-       $getData['password'] = bcrypt($getData['password']);
-       User::create($getData);
-       return redirect('/login');
+             $request->session()->put('verification_email', $user->email);
+
+             $flash = [
+                 'verification_email' => $user->email,
+             ];
+
+             try {
+                 event(new Registered($user));
+                 $flash['success'] = 'Registration successful. Please verify your email to continue.';
+             } catch (Throwable $e) {
+                 report($e);
+                 $errorText = $e->getMessage();
+                 $isAuthFailure = str_contains($errorText, 'BadCredentials') || str_contains($errorText, 'Failed to authenticate on SMTP server');
+                 $flash['warning'] = $isAuthFailure
+                     ? 'Registration successful, but Gmail rejected SMTP login. Regenerate Google App Password for MAIL_USERNAME and try resend.'
+                     : 'Registration successful, but we could not send the verification email yet. Please update mail settings and use resend.';
+                 $flash['verification_link'] = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                     'verification.verify',
+                     now()->addMinutes(60),
+                     [
+                         'id' => $user->id,
+                         'hash' => sha1($user->getEmailForVerification()),
+                     ]
+                 );
+             }
+
+             return redirect()->route('verification.notice')->with($flash);
     }
 
     public function login(Request $request)
@@ -40,6 +68,45 @@ class UserController extends Controller
     $user = User::where('username', $username)->first();
 
     if ($user && Hash::check($credentials['password'], $user->password)) {
+        if (! $user->is_active) {
+            return back()->withErrors([
+                'username' => 'Your account is deactivated. Please contact the clinic administrator.',
+            ])->withInput(['username' => $username]);
+        }
+
+        // Admin accounts can log in without email verification.
+        $requiresEmailVerification = $user->role !== 'admin';
+
+        if ($requiresEmailVerification && ! $user->hasVerifiedEmail()) {
+            try {
+                $user->sendEmailVerificationNotification();
+                $message = 'Please verify your email before logging in. A new verification link has been sent.';
+            } catch (Throwable $e) {
+                report($e);
+                $errorText = $e->getMessage();
+                $isAuthFailure = str_contains($errorText, 'BadCredentials') || str_contains($errorText, 'Failed to authenticate on SMTP server');
+                $message = $isAuthFailure
+                    ? 'Please verify your email before logging in. Gmail SMTP authentication failed. Regenerate app password and try resend.'
+                    : 'Please verify your email before logging in. We could not send the verification email right now. Check mail settings and try resend.';
+
+                session([
+                    'verification_email' => $user->email,
+                    'verification_link' => \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                        'verification.verify',
+                        now()->addMinutes(60),
+                        [
+                            'id' => $user->id,
+                            'hash' => sha1($user->getEmailForVerification()),
+                        ]
+                    ),
+                ]);
+            }
+
+            return back()->withErrors([
+                'username' => $message,
+            ])->withInput(['username' => $username]);
+        }
+
         // Log the user in using Laravel's Auth
         \Illuminate\Support\Facades\Auth::login($user);
         

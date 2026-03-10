@@ -24,25 +24,37 @@ class SurgeryController extends BaseController
     /**
      * Display a listing of surgeries.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $showTrash = $request->boolean('trash');
+
         $pets = Pet::with([
             'owner',
-            'surgeries',
+            'surgeries' => function ($query) use ($showTrash) {
+                if ($showTrash) {
+                    $query->onlyTrashed();
+                }
+            },
             'appointments' => function ($query) {
                 $query->where('type', 'surgery');
             },
         ])
-            ->where(function ($query) {
-                $query->has('surgeries')
-                    ->orWhereHas('appointments', function ($appointmentQuery) {
-                        $appointmentQuery->where('type', 'surgery');
+            ->where(function ($query) use ($showTrash) {
+                if ($showTrash) {
+                    $query->whereHas('surgeries', function ($surgeryQuery) {
+                        $surgeryQuery->onlyTrashed();
                     });
+                } else {
+                    $query->has('surgeries')
+                        ->orWhereHas('appointments', function ($appointmentQuery) {
+                            $appointmentQuery->where('type', 'surgery');
+                        });
+                }
             })
             ->paginate(10);
 
-        $pets->getCollection()->transform(function ($pet) {
-            $appointmentCount = $pet->appointments ? $pet->appointments->count() : 0;
+        $pets->getCollection()->transform(function ($pet) use ($showTrash) {
+            $appointmentCount = $showTrash ? 0 : ($pet->appointments ? $pet->appointments->count() : 0);
             $pet->surgery_appointment_count = $appointmentCount;
             $pet->surgery_total_count = $pet->surgeries->count() + $appointmentCount;
             return $pet;
@@ -247,18 +259,27 @@ class SurgeryController extends BaseController
     /**
      * Display surgeries for a specific pet.
      */
-    public function byPet($petId)
+    public function byPet($petId, Request $request)
     {
+        $showTrash = $request->boolean('trash');
+
         $pet = Pet::with(['surgeries.surgeon', 'surgeries.surgeryType'])->findOrFail($petId);
         $surgeries = $pet->surgeries()
+            ->when($showTrash, function ($query) {
+                $query->onlyTrashed();
+            })
             ->with(['surgeon', 'surgeryType'])
+            ->orderByDesc('deleted_at')
             ->orderBy('scheduled_date', 'desc')
             ->get();
 
-        $appointmentSurgeries = $pet->appointments()
-            ->where('type', 'surgery')
-            ->orderBy('appointment_date', 'desc')
-            ->get();
+        $appointmentSurgeries = collect();
+        if (!$showTrash) {
+            $appointmentSurgeries = $pet->appointments()
+                ->where('type', 'surgery')
+                ->orderBy('appointment_date', 'desc')
+                ->get();
+        }
 
         $virtualSurgeries = $appointmentSurgeries->map(function ($appointment) {
             $surgery = new Surgery();
@@ -306,6 +327,14 @@ class SurgeryController extends BaseController
         );
 
         return view('admin.surgeries.pet', compact('pet', 'surgeries'));
+    }
+
+    public function restore(int $id)
+    {
+        $surgery = Surgery::onlyTrashed()->findOrFail($id);
+        $surgery->restore();
+
+        return redirect()->back()->with('success', 'Surgery record restored successfully.');
     }
 
     /**

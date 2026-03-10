@@ -43,24 +43,43 @@ class ChronicConditionController extends Controller
 
     public function index(Request $request)
     {
+        $showTrash = $request->boolean('trash');
+
         $query = Pet::with(['owner.user'])
             ->withCount([
-                'chronicConditions as chronic_total_count',
-                'chronicConditions as chronic_active_count' => function ($sub) {
+                'chronicConditions as chronic_total_count' => function ($sub) use ($showTrash) {
+                    if ($showTrash) {
+                        $sub->onlyTrashed();
+                    }
+                },
+                'chronicConditions as chronic_active_count' => function ($sub) use ($showTrash) {
+                    if ($showTrash) {
+                        $sub->onlyTrashed();
+                    }
                     $sub->where('is_active', 1);
                 },
-            ])
-            ->whereHas('chronicConditions');
+            ]);
+
+        if ($showTrash) {
+            $query->whereHas('chronicConditions', function ($sub) {
+                $sub->onlyTrashed();
+            });
+        } else {
+            $query->whereHas('chronicConditions');
+        }
 
         if ($request->filled('q')) {
             $q = trim((string) $request->q);
-            $query->where(function ($sub) use ($q) {
+            $query->where(function ($sub) use ($q, $showTrash) {
                 $sub->where('name', 'like', '%' . $q . '%')
                     ->orWhereHas('owner.user', function ($userQuery) use ($q) {
                         $userQuery->where('first_name', 'like', '%' . $q . '%')
                             ->orWhere('last_name', 'like', '%' . $q . '%');
                     })
-                    ->orWhereHas('chronicConditions', function ($conditionQuery) use ($q) {
+                    ->orWhereHas('chronicConditions', function ($conditionQuery) use ($q, $showTrash) {
+                        if ($showTrash) {
+                            $conditionQuery->onlyTrashed();
+                        }
                         $conditionQuery->where('condition_name', 'like', '%' . $q . '%');
                     });
             });
@@ -69,6 +88,9 @@ class ChronicConditionController extends Controller
         if ($request->filled('status') && in_array($request->status, ['active', 'inactive'], true)) {
             $statusValue = $request->status === 'active' ? 1 : 0;
             $query->whereHas('chronicConditions', function ($conditionQuery) use ($statusValue) {
+                if (request()->boolean('trash')) {
+                    $conditionQuery->onlyTrashed();
+                }
                 $conditionQuery->where('is_active', $statusValue);
             });
         }
@@ -80,7 +102,9 @@ class ChronicConditionController extends Controller
             'filters' => [
                 'q' => $request->q,
                 'status' => $request->status,
+                'trash' => $showTrash,
             ],
+            'showTrash' => $showTrash,
         ]);
     }
 
@@ -88,16 +112,24 @@ class ChronicConditionController extends Controller
     {
         $pet->load(['owner.user']);
 
-        $conditions = $pet->chronicConditions()
+        $showTrash = request()->boolean('trash');
+
+        $conditionsQuery = $pet->chronicConditions()
             ->with(['medicalRecord:id,visit_date'])
             ->orderByDesc('is_active')
             ->orderByDesc('diagnosed_date')
-            ->orderByDesc('id')
-            ->get();
+            ->orderByDesc('id');
+
+        if ($showTrash) {
+            $conditionsQuery->onlyTrashed()->orderByDesc('deleted_at');
+        }
+
+        $conditions = $conditionsQuery->get();
 
         return view('admin.chronic-conditions.pet', [
             'pet' => $pet,
             'conditions' => $conditions,
+            'showTrash' => $showTrash,
         ]);
     }
 
@@ -151,5 +183,14 @@ class ChronicConditionController extends Controller
         return redirect()
             ->route('admin.chronic-conditions.index')
             ->with('success', 'Chronic condition deleted successfully.');
+    }
+
+    public function restore(int $id)
+    {
+        $condition = ChronicCondition::onlyTrashed()->findOrFail($id);
+        $condition->restore();
+
+        return redirect()->route('admin.chronic-conditions.index', ['trash' => 1])
+            ->with('success', 'Chronic condition restored successfully.');
     }
 }

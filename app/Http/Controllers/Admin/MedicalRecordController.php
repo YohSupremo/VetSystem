@@ -15,20 +15,41 @@ class MedicalRecordController extends Controller
     /**
      * Display a listing of medical records - one latest record per pet.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $showTrash = $request->boolean('trash');
+
         // Get IDs of the latest record for each pet
-        $latestIds = MedicalRecord::selectRaw('MAX(id) as id')
+        $latestIdsQuery = MedicalRecord::query();
+        if ($showTrash) {
+            $latestIdsQuery->onlyTrashed();
+        }
+
+        $latestIds = $latestIdsQuery->selectRaw('MAX(id) as id')
             ->groupBy('pet_id')
             ->pluck('id');
 
         // Fetch the full records for these IDs
-        $records = MedicalRecord::whereIn('id', $latestIds)
+        $recordsQuery = MedicalRecord::query();
+        if ($showTrash) {
+            $recordsQuery->onlyTrashed();
+        }
+
+        $records = $recordsQuery->whereIn('id', $latestIds)
             ->with(['pet.owner.user', 'veterinarian'])
             ->orderBy('visit_date', 'desc')
             ->paginate(15);
         
-        return view('admin.medical-records.index', compact('records'));
+        return view('admin.medical-records.index', compact('records', 'showTrash'));
+    }
+
+    public function restore(int $id)
+    {
+        $record = MedicalRecord::onlyTrashed()->findOrFail($id);
+        $record->restore();
+
+        return redirect()->route('admin.medical-records.index', ['trash' => 1])
+            ->with('success', 'Medical record restored successfully.');
     }
 
     public function create(Request $request)

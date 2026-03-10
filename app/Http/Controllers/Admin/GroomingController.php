@@ -22,13 +22,19 @@ class GroomingController extends BaseController
     /**
      * Display a listing of grooming appointments.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $showTrash = $request->boolean('trash');
+
         $groomingAppointments = GroomingAppointment::with([
             'appointment.pet.owner.user',
             'service',
             'groomer'
         ])
+            ->when($showTrash, function ($query) {
+                $query->onlyTrashed();
+            })
+            ->orderByDesc('deleted_at')
             ->orderByDesc('created_at')
             ->get();
 
@@ -37,14 +43,17 @@ class GroomingController extends BaseController
             ->filter()
             ->all();
 
-        $appointmentGroomings = Appointment::with(['pet.owner.user', 'veterinarian'])
-            ->where('type', 'grooming')
-            ->whereIn('status', ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'])
-            ->when(!empty($linkedAppointmentIds), function ($query) use ($linkedAppointmentIds) {
-                $query->whereNotIn('id', $linkedAppointmentIds);
-            })
-            ->orderByDesc('appointment_date')
-            ->get();
+        $appointmentGroomings = collect();
+        if (!$showTrash) {
+            $appointmentGroomings = Appointment::with(['pet.owner.user', 'veterinarian'])
+                ->where('type', 'grooming')
+                ->whereIn('status', ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'])
+                ->when(!empty($linkedAppointmentIds), function ($query) use ($linkedAppointmentIds) {
+                    $query->whereNotIn('id', $linkedAppointmentIds);
+                })
+                ->orderByDesc('appointment_date')
+                ->get();
+        }
 
         $virtualGroomings = $appointmentGroomings->map(function ($appointment) {
             $groomingAppointment = new GroomingAppointment();
@@ -452,6 +461,19 @@ class GroomingController extends BaseController
             ->with('success', 'Grooming appointment deleted successfully.');
     }
 
+    public function restore(int $id)
+    {
+        $groomingAppointment = GroomingAppointment::onlyTrashed()->withTrashed()->findOrFail($id);
+        $groomingAppointment->restore();
+
+        $appointment = Appointment::withTrashed()->find($groomingAppointment->appointment_id);
+        if ($appointment && method_exists($appointment, 'trashed') && $appointment->trashed()) {
+            $appointment->restore();
+        }
+
+        return redirect()->back()->with('success', 'Grooming appointment restored successfully.');
+    }
+
     public function markPaid($id)
     {
         $groomingAppointment = GroomingAppointment::with(['appointment.pet', 'service'])->findOrFail($id);
@@ -514,7 +536,7 @@ class GroomingController extends BaseController
             ->first();
 
         if ($invoice instanceof Invoice) {
-            return $invoice;
+            return $this->syncGroomingInvoice($groomingAppointment, $invoice);
         }
 
         $ownerId = optional($appointment->pet)->owner_id;
@@ -552,6 +574,67 @@ class GroomingController extends BaseController
             'quantity' => 1,
             'unit_price' => (float) ($groomingAppointment->service->price ?? 0),
         ]);
+
+        return $this->syncGroomingInvoice($groomingAppointment, $invoice->load(['invoiceItems', 'payments']));
+    }
+
+    private function syncGroomingInvoice(GroomingAppointment $groomingAppointment, Invoice $invoice): Invoice
+    {
+        $groomingAppointment->loadMissing(['appointment', 'service']);
+        $invoice->loadMissing(['invoiceItems', 'payments']);
+
+        $unitPrice = round((float) ($groomingAppointment->service->price ?? 0), 2);
+        $description = $groomingAppointment->service->service_name ?? 'Grooming Service';
+
+        $item = $invoice->invoiceItems->firstWhere('item_type', 'grooming')
+            ?? $invoice->invoiceItems->first();
+
+        if ($item) {
+            $updates = [];
+
+            if ((string) $item->item_type !== 'grooming') {
+                $updates['item_type'] = 'grooming';
+            }
+
+            if ((int) $item->quantity !== 1) {
+                $updates['quantity'] = 1;
+            }
+
+            if ((float) $item->unit_price !== $unitPrice) {
+                $updates['unit_price'] = $unitPrice;
+            }
+
+            if ((string) $item->description !== (string) $description) {
+                $updates['description'] = $description;
+            }
+
+            if (!empty($updates)) {
+                $item->update($updates);
+            }
+        } else {
+            InvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'item_type' => 'grooming',
+                'description' => $description,
+                'quantity' => 1,
+                'unit_price' => $unitPrice,
+            ]);
+        }
+
+        $invoice->load(['invoiceItems', 'payments']);
+
+        if ($invoice->status !== 'cancelled') {
+            $targetStatus = $invoice->total_amount <= 0
+                ? 'pending'
+                : ($invoice->balance <= 0
+                    ? 'paid'
+                    : ($invoice->paid_amount > 0 ? 'partial' : 'pending'));
+
+            if ($invoice->status !== $targetStatus) {
+                $invoice->update(['status' => $targetStatus]);
+                $invoice->refresh();
+            }
+        }
 
         return $invoice->load(['invoiceItems', 'payments']);
     }

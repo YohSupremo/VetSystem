@@ -454,6 +454,12 @@
                 @endif
             </form>
 
+            @if($showTrash)
+                <a href="{{ route('admin.users.index', request()->except('trash', 'page')) }}" class="btn-search">Back To Active</a>
+            @else
+                <a href="{{ route('admin.users.index', array_merge(request()->query(), ['trash' => 1])) }}" class="btn-search">View Trash</a>
+            @endif
+
             <a href="{{ route('admin.users.create') }}" class="btn-add-user">
                 <i class="fas fa-user-plus"></i>
                 Add New User
@@ -507,15 +513,25 @@
                         </td>
                         <td data-label="Created" class="date-text">
                             {{ $user->created_at ? $user->created_at->format('M d, Y') : '—' }}
+                            @if($showTrash && $user->deleted_at)
+                                <div style="font-size:11px;color:#B45309;">Deleted {{ $user->deleted_at->format('M d, Y') }}</div>
+                            @endif
                         </td>
                         <td data-label="Actions" style="white-space:nowrap;">
-                            <a href="{{ route('admin.users.show', $user) }}" class="btn btn-sm" title="View"><i class="fas fa-eye"></i></a>
-                            <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm" title="Edit"><i class="fas fa-edit"></i></a>
-                            <form action="{{ route('admin.users.destroy', $user) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Delete this user?')">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-sm" title="Delete"><i class="fas fa-trash"></i></button>
-                            </form>
+                            @if($showTrash)
+                                <form action="{{ route('admin.users.restore', $user->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Restore this user?')">
+                                    @csrf
+                                    <button class="btn btn-sm" title="Restore"><i class="fas fa-undo"></i></button>
+                                </form>
+                            @else
+                                <a href="{{ route('admin.users.show', $user) }}" class="btn btn-sm" title="View"><i class="fas fa-eye"></i></a>
+                                <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm" title="Edit"><i class="fas fa-edit"></i></a>
+                                <form action="{{ route('admin.users.destroy', $user) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Delete this user?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-sm" title="Delete"><i class="fas fa-trash"></i></button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @endforeach

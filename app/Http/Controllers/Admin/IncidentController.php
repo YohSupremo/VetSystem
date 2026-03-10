@@ -106,13 +106,20 @@ class IncidentController extends Controller
         ];
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $incidents = Incident::with(['pet', 'reportedBy'])
+        $showTrash = $request->boolean('trash');
+
+        $query = Incident::with(['pet', 'reportedBy']);
+        if ($showTrash) {
+            $query->onlyTrashed();
+        }
+
+        $incidents = $query
             ->orderBy('incident_date', 'desc')
             ->paginate(15);
 
-        return view('admin.incidents.index', compact('incidents'));
+        return view('admin.incidents.index', compact('incidents', 'showTrash'));
     }
 
     public function create()
@@ -251,5 +258,14 @@ class IncidentController extends Controller
 
         return redirect()->route('admin.incidents.index')
             ->with('success', 'Incident deleted successfully.');
+    }
+
+    public function restore(int $id)
+    {
+        $incident = Incident::onlyTrashed()->findOrFail($id);
+        $incident->restore();
+
+        return redirect()->route('admin.incidents.index', ['trash' => 1])
+            ->with('success', 'Incident restored successfully.');
     }
 }

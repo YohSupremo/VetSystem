@@ -113,12 +113,21 @@
                                     </div>
                                     
                                     <div class="prescription-actions">
-                                        <a href="{{ route('admin.prescriptions.show', $prescription->id) }}" class="btn btn-sm btn-secondary">
-                                            <i class="fas fa-eye"></i> View
-                                        </a>
-                                        <a href="{{ route('admin.prescriptions.edit', $prescription->id) }}" class="btn btn-sm btn-secondary">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </a>
+                                        @if($showTrash ?? false)
+                                            <form action="{{ route('admin.prescriptions.restore', $prescription->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Restore this prescription?');">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-secondary">
+                                                    <i class="fas fa-undo"></i> Restore
+                                                </button>
+                                            </form>
+                                        @else
+                                            <a href="{{ route('admin.prescriptions.show', $prescription->id) }}" class="btn btn-sm btn-secondary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            <a href="{{ route('admin.prescriptions.edit', $prescription->id) }}" class="btn btn-sm btn-secondary">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach

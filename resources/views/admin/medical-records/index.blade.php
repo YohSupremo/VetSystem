@@ -11,6 +11,15 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title"><i class="fas fa-file-medical"></i> Medical Records</h3>
                     <div class="d-flex gap-2">
+                        @if($showTrash ?? false)
+                            <a href="{{ route('admin.medical-records.index', request()->except('trash', 'page')) }}" class="btn btn-secondary btn-medical-secondary">
+                                <i class="fas fa-arrow-left"></i> Back To Active
+                            </a>
+                        @else
+                            <a href="{{ route('admin.medical-records.index', array_merge(request()->query(), ['trash' => 1])) }}" class="btn btn-secondary btn-medical-secondary">
+                                <i class="fas fa-trash-restore"></i> View Trash
+                            </a>
+                        @endif
                         <a href="{{ route('admin.chronic-conditions.index') }}" class="btn btn-secondary btn-medical-secondary">
                             <i class="fas fa-notes-medical"></i> Chronic Conditions
                         </a>
@@ -68,28 +77,40 @@
                                         <td>{{ $record->diagnosis ? Str::limit($record->diagnosis, 40) : '-' }}</td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <a href="{{ route('admin.medical-records.pet', $record->pet_id) }}" 
-                                                   class="btn btn-sm btn-primary" title="View Full History">
-                                                    <i class="fas fa-history"></i>
-                                                </a>
-                                                <a href="{{ route('admin.medical-records.show', $record->id) }}" 
-                                                   class="btn btn-sm btn-info" title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{{ route('admin.medical-records.edit', $record->id) }}" 
-                                                   class="btn btn-sm btn-warning" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form action="{{ route('admin.medical-records.destroy', $record->id) }}" 
-                                                      method="POST" 
-                                                      style="display: inline;"
-                                                      onsubmit="return confirm('Are you sure you want to delete this medical record? This action cannot be undone.');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
+                                                @if($showTrash ?? false)
+                                                    <form action="{{ route('admin.medical-records.restore', $record->id) }}" 
+                                                          method="POST" 
+                                                          style="display: inline;"
+                                                          onsubmit="return confirm('Restore this medical record?');">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-success" title="Restore">
+                                                            <i class="fas fa-undo"></i>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <a href="{{ route('admin.medical-records.pet', $record->pet_id) }}" 
+                                                       class="btn btn-sm btn-primary" title="View Full History">
+                                                        <i class="fas fa-history"></i>
+                                                    </a>
+                                                    <a href="{{ route('admin.medical-records.show', $record->id) }}" 
+                                                       class="btn btn-sm btn-info" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{{ route('admin.medical-records.edit', $record->id) }}" 
+                                                       class="btn btn-sm btn-warning" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <form action="{{ route('admin.medical-records.destroy', $record->id) }}" 
+                                                          method="POST" 
+                                                          style="display: inline;"
+                                                          onsubmit="return confirm('Are you sure you want to delete this medical record? This action cannot be undone.');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>

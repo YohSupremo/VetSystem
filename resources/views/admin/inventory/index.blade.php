@@ -292,6 +292,25 @@
         background: #f8fafc;
         font-size: 1rem;
     }
+
+    .inventory-pagination .pagination {
+        margin-bottom: 0;
+    }
+
+    .inventory-pagination .page-link {
+        min-width: 38px;
+        text-align: center;
+        border-radius: 8px;
+    }
+
+    .inventory-pagination .page-link svg,
+    .inventory-pagination .page-link i {
+        width: 14px;
+        height: 14px;
+        max-width: 14px;
+        max-height: 14px;
+        vertical-align: middle;
+    }
 </style>
 @endpush
 
@@ -376,6 +395,11 @@
             <small class="text-muted">Showing {{ $inventoryItems->count() }} of {{ $inventoryItems->total() }}</small>
         </div>
         <div class="table-card-header-actions">
+            @if($showTrash)
+                <a href="{{ route('admin.inventory.index', request()->except('trash', 'page')) }}" class="btn btn-outline-secondary btn-sm">Back To Active</a>
+            @else
+                <a href="{{ route('admin.inventory.index', array_merge(request()->query(), ['trash' => 1])) }}" class="btn btn-outline-secondary btn-sm">View Trash</a>
+            @endif
             <form method="GET" class="table-card-filters">
                 <input
                     type="text"
@@ -511,19 +535,28 @@
                             </td>
                             <td>
                                 <div class="btn-group action-group" role="group">
-                                    <a href="{{ route('admin.inventory.show', $item->id) }}" class="btn btn-sm btn-outline-primary" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.inventory.edit', $item->id) }}" class="btn btn-sm btn-outline-secondary" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.inventory.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this item?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if($showTrash)
+                                        <form action="{{ route('admin.inventory.restore', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Restore this item?');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Restore">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('admin.inventory.show', $item->id) }}" class="btn btn-sm btn-outline-primary" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.inventory.edit', $item->id) }}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.inventory.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this item?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -536,8 +569,8 @@
 
 <!-- Pagination -->
 @if($inventoryItems->hasPages())
-    <div class="d-flex justify-content-center mt-4">
-        {{ $inventoryItems->appends(request()->query())->links() }}
+    <div class="d-flex justify-content-center mt-4 inventory-pagination">
+        {{ $inventoryItems->appends(request()->query())->links('pagination::bootstrap-5') }}
     </div>
 @endif
 @endsection

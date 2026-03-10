@@ -17,7 +17,13 @@ class PrescriptionController extends BaseController
      */
     public function index(Request $request)
     {
+        $showTrash = $request->boolean('trash');
+
         $query = Prescription::with(['medicalRecord.pet.owner.user', 'medicalRecord.veterinarian']);
+
+        if ($showTrash) {
+            $query->onlyTrashed();
+        }
         
         // Apply filters
         if ($request->filled('pet_id')) {
@@ -60,7 +66,7 @@ class PrescriptionController extends BaseController
             ->orderBy('name')
             ->get();
         
-        return view('admin.prescriptions.index', compact('groupedPrescriptions', 'pets'));
+        return view('admin.prescriptions.index', compact('groupedPrescriptions', 'pets', 'showTrash'));
     }
 
     /**
@@ -218,14 +224,29 @@ class PrescriptionController extends BaseController
             ->with('success', 'Prescription deleted successfully!');
     }
 
+    public function restore(int $id)
+    {
+        $prescription = Prescription::onlyTrashed()->findOrFail($id);
+        $prescription->restore();
+
+        return redirect()->route('admin.prescriptions.index', ['trash' => 1])
+            ->with('success', 'Prescription restored successfully.');
+    }
+
     /**
      * Display prescriptions for a specific pet grouped by medical records.
      */
     public function byPet($petId)
     {
+        $showTrash = request()->boolean('trash');
         $pet = Pet::with('owner.user')->findOrFail($petId);
         
-        $prescriptions = Prescription::whereHas('medicalRecord', function($query) use ($petId) {
+        $prescriptionsQuery = Prescription::query();
+        if ($showTrash) {
+            $prescriptionsQuery->onlyTrashed();
+        }
+
+        $prescriptions = $prescriptionsQuery->whereHas('medicalRecord', function($query) use ($petId) {
                 $query->where('pet_id', $petId);
             })
             ->with(['medicalRecord.veterinarian'])
@@ -243,6 +264,6 @@ class PrescriptionController extends BaseController
             return $group['prescriptions']->first()->created_at;
         });
 
-        return view('admin.prescriptions.pet', compact('pet', 'groupedPrescriptions'));
+        return view('admin.prescriptions.pet', compact('pet', 'groupedPrescriptions', 'showTrash'));
     }
 }

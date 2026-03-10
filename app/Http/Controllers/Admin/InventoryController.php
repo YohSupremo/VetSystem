@@ -18,7 +18,12 @@ class InventoryController extends BaseController
      */
     public function index(Request $request)
     {
+        $showTrash = $request->boolean('trash');
         $query = InventoryItem::with('inventoryStocks');
+
+        if ($showTrash) {
+            $query->onlyTrashed();
+        }
 
         // Filter by category
         if ($request->filled('category')) {
@@ -92,8 +97,18 @@ class InventoryController extends BaseController
             'lowStockItems',
             'expiringSoonItems',
             'expiredItems',
-            'categories'
+            'categories',
+            'showTrash'
         ));
+    }
+
+    public function restore(int $id)
+    {
+        $item = InventoryItem::onlyTrashed()->findOrFail($id);
+        $item->restore();
+
+        return redirect()->route('admin.inventory.index', ['trash' => 1])
+            ->with('success', 'Inventory item restored successfully.');
     }
 
     /**

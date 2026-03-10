@@ -338,9 +338,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
     // Pet Owners
     Route::resource('pet-owners', PetOwnerController::class);
     Route::get('/pet-owners/search', [PetOwnerController::class, 'search'])->name('pet-owners.search');
+    Route::post('/pet-owners/{id}/restore', [PetOwnerController::class, 'restore'])->name('pet-owners.restore');
 
     // Admin Users
     Route::resource('users', App\Http\Controllers\Admin\UserController::class);
+    Route::post('/users/{id}/restore', [App\Http\Controllers\Admin\UserController::class, 'restore'])->name('users.restore');
     
     // Staff Schedules
     Route::prefix('staff-schedules')->name('staff-schedules.')->group(function () {
@@ -353,14 +355,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
     // Pets
     Route::resource('pets', PetController::class);
     Route::get('/pets/search', [PetController::class, 'search'])->name('pets.search');
+    Route::post('/pets/{id}/restore', [PetController::class, 'restore'])->name('pets.restore');
 
     // Appointments
     Route::resource('appointments', AppointmentController::class);
     Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
     Route::post('/appointments/{appointment}/assign', [AppointmentController::class, 'assign'])->name('appointments.assign');
+    Route::post('/appointments/{id}/restore', [AppointmentController::class, 'restore'])->name('appointments.restore');
     
     // Inventory Management
     Route::resource('inventory', InventoryController::class);
+    Route::post('/inventory/{id}/restore', [InventoryController::class, 'restore'])->name('inventory.restore');
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
@@ -394,6 +399,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
         Route::get('/{medicalRecord}/edit', [MedicalRecordController::class, 'edit'])->name('edit');
         Route::put('/{medicalRecord}', [MedicalRecordController::class, 'update'])->name('update');
         Route::delete('/{medicalRecord}', [MedicalRecordController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [MedicalRecordController::class, 'restore'])->name('restore');
         Route::get('/pet/{pet}', [MedicalRecordController::class, 'byPet'])->name('pet');
     });
 
@@ -407,6 +413,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
         Route::get('/{chronicCondition}/edit', [ChronicConditionController::class, 'edit'])->name('edit');
         Route::put('/{chronicCondition}', [ChronicConditionController::class, 'update'])->name('update');
         Route::delete('/{chronicCondition}', [ChronicConditionController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [ChronicConditionController::class, 'restore'])->name('restore');
     });
 
     // Pet Allergies
@@ -419,6 +426,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
         Route::get('/{petAllergy}/edit', [PetAllergyController::class, 'edit'])->name('edit');
         Route::put('/{petAllergy}', [PetAllergyController::class, 'update'])->name('update');
         Route::delete('/{petAllergy}', [PetAllergyController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [PetAllergyController::class, 'restore'])->name('restore');
     });
 
     // Incident Reports
@@ -431,6 +439,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
         Route::put('/{id}', [IncidentController::class, 'update'])->name('update');
         Route::put('/{id}/status', [IncidentController::class, 'updateStatus'])->name('status-update');
         Route::delete('/{id}', [IncidentController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [IncidentController::class, 'restore'])->name('restore');
     });
 
     // Vaccinations
@@ -445,6 +454,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
         Route::get('/{vaccination}/edit', [VaccinationController::class, 'edit'])->name('edit');
         Route::put('/{vaccination}', [VaccinationController::class, 'update'])->name('update');
         Route::delete('/{vaccination}', [VaccinationController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [VaccinationController::class, 'restore'])->name('restore');
         Route::get('/pet/{pet}', [VaccinationController::class, 'byPet'])->name('pet');
     });
 
@@ -458,6 +468,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
         Route::get('/{prescription}/edit', [PrescriptionController::class, 'edit'])->name('edit');
         Route::put('/{prescription}', [PrescriptionController::class, 'update'])->name('update');
         Route::delete('/{prescription}', [PrescriptionController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [PrescriptionController::class, 'restore'])->name('restore');
     });
 
     // Laboratory (schema-based: lab_tests + lab_requisitions)
@@ -474,6 +485,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
             Route::get('/{labTest}/edit', [LaboratoryController::class, 'testsEdit'])->name('edit');
             Route::put('/{labTest}', [LaboratoryController::class, 'testsUpdate'])->name('update');
             Route::delete('/{labTest}', [LaboratoryController::class, 'testsDestroy'])->name('destroy');
+            Route::post('/{id}/restore', [LaboratoryController::class, 'testsRestore'])->name('restore');
         });
 
         // Lab Requisitions (Requests / Results)
@@ -485,6 +497,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
             Route::get('/{labRequisition}/edit', [LaboratoryController::class, 'requisitionsEdit'])->name('edit');
             Route::put('/{labRequisition}', [LaboratoryController::class, 'requisitionsUpdate'])->name('update');
             Route::delete('/{labRequisition}', [LaboratoryController::class, 'requisitionsDestroy'])->name('destroy');
+            Route::post('/{id}/restore', [LaboratoryController::class, 'requisitionsRestore'])->name('restore');
         });
     });
 
@@ -503,6 +516,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
         Route::get('/{boarding}/edit', [BoardingController::class, 'edit'])->name('edit');
         Route::put('/{boarding}', [BoardingController::class, 'update'])->name('update');
         Route::delete('/{boarding}', [BoardingController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [BoardingController::class, 'restore'])->name('restore');
 
         // Boarding Notifications
         Route::prefix('notifications')->name('notifications.')->group(function () {
@@ -529,6 +543,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
         Route::get('/{grooming}/edit', [GroomingController::class, 'edit'])->name('edit');
         Route::put('/{grooming}', [GroomingController::class, 'update'])->name('update');
         Route::delete('/{grooming}', [GroomingController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [GroomingController::class, 'restore'])->name('restore');
 
         // Grooming Notifications
         Route::prefix('notifications')->name('notifications.')->group(function () {
@@ -571,6 +586,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
         Route::get('/{id}/edit', [PharmacyController::class, 'edit'])->name('edit');
         Route::put('/{id}', [PharmacyController::class, 'update'])->name('update');
         Route::delete('/{id}', [PharmacyController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [PharmacyController::class, 'restore'])->name('restore');
 
         // Pharmacy Notifications
         Route::prefix('notifications')->name('notifications.')->group(function () {
@@ -596,6 +612,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
         Route::get('/{surgery}/edit', [SurgeryController::class, 'edit'])->name('edit');
         Route::put('/{surgery}', [SurgeryController::class, 'update'])->name('update');
         Route::delete('/{surgery}', [SurgeryController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [SurgeryController::class, 'restore'])->name('restore');
         Route::get('/pet/{pet}', [SurgeryController::class, 'byPet'])->name('pet');
     });
 
@@ -609,6 +626,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
 
     // Billing
     Route::resource('billing', BillingController::class);
+    Route::post('/billing/{id}/restore', [BillingController::class, 'restore'])->name('billing.restore');
     Route::prefix('billing')->name('billing.')->group(function () {
         Route::get('/{id}/payment', [BillingController::class, 'paymentForm'])->name('payment');
         Route::post('/{id}/payment', [BillingController::class, 'processPayment'])->name('payment.process');
@@ -643,6 +661,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
             Route::put('/{id}/update', [StaffController::class, 'update'])->name('update');
             Route::get('/{id}/info', [StaffController::class, 'show'])->name('info');
             Route::delete('/destroy/{id}', [StaffController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/restore', [StaffController::class, 'restore'])->name('restore');
             Route::get('/filter', [StaffController::class, 'filter'])->name('filter');
 
             // Staff Notifications

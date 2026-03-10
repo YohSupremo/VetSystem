@@ -25,8 +25,14 @@ class PharmacyController extends BaseController
      */
     public function index(Request $request)
     {
+        $showTrash = $request->boolean('trash');
+
         $query = InventoryItem::whereIn('category', ['medicine', 'vaccine', 'food', 'supply'])
             ->with('inventoryStocks')
+            ->when($showTrash, function ($q) {
+                $q->onlyTrashed();
+            })
+            ->orderByDesc('deleted_at')
             ->orderBy('name');
         
         // Apply category filter if provided
@@ -37,9 +43,9 @@ class PharmacyController extends BaseController
         $medications = $query->get();
         
         $totalMedications = $medications->count();
-        $lowStockCount = $medications->filter(fn($item) => $item->isLowStock())->count();
-        $expiredCount = $medications->filter(fn($item) => $item->isExpired())->count();
-        $expiringSoonCount = $medications->filter(fn($item) => $item->isExpiringSoon())->count();
+        $lowStockCount = $medications->filter(fn(InventoryItem $item) => $item->isLowStock())->count();
+        $expiredCount = $medications->filter(fn(InventoryItem $item) => $item->isExpired())->count();
+        $expiringSoonCount = $medications->filter(fn(InventoryItem $item) => $item->isExpiringSoon())->count();
         
         $categories = ['medicine', 'vaccine', 'food', 'supply'];
         $selectedCategory = $request->category;
@@ -345,13 +351,25 @@ class PharmacyController extends BaseController
      */
     public function destroy($id)
     {
-        $medication = InventoryItem::where('category', 'medicine')
+        $medication = InventoryItem::whereIn('category', ['medicine', 'vaccine', 'food', 'supply'])
             ->findOrFail($id);
         
         $medication->delete();
 
         return redirect()->route('admin.pharmacy.index')
             ->with('success', 'Medication deleted successfully.');
+    }
+
+    public function restore(int $id)
+    {
+        $medication = InventoryItem::onlyTrashed()
+            ->whereIn('category', ['medicine', 'vaccine', 'food', 'supply'])
+            ->findOrFail($id);
+
+        $medication->restore();
+
+        return redirect()->route('admin.pharmacy.index', ['trash' => 1])
+            ->with('success', 'Medication restored successfully.');
     }
     
     /**

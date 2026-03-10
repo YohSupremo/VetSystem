@@ -177,18 +177,30 @@
 @endpush
 
 @section('content')
+@php $showTrash = request()->boolean('trash'); @endphp
 <div class="content-header">
     <div class="header-title">
         <h1><i class="fas fa-flask"></i> Laboratory Management</h1>
         <p>Manage lab tests and lab requisitions (schema-based).</p>
     </div>
     <div class="header-actions">
+        @if($showTrash)
+            <a href="{{ route('admin.laboratory.index') }}" class="btn btn-secondary lab-header-btn">
+                <i class="fas fa-arrow-left"></i> Back To Active
+            </a>
+        @else
+            <a href="{{ route('admin.laboratory.index', ['trash' => 1]) }}" class="btn btn-secondary lab-header-btn">
+                <i class="fas fa-trash-restore"></i> View Trash
+            </a>
+        @endif
         <a href="{{ route('admin.laboratory.tests.index') }}" class="btn btn-primary lab-header-btn lab-tests-btn">
             <i class="fas fa-vials"></i> Lab Tests
         </a>
-        <a href="{{ route('admin.laboratory.requisitions.create') }}" class="btn btn-primary lab-header-btn lab-new-btn">
-            <i class="fas fa-plus"></i> New Requisition
-        </a>
+        @unless($showTrash)
+            <a href="{{ route('admin.laboratory.requisitions.create') }}" class="btn btn-primary lab-header-btn lab-new-btn">
+                <i class="fas fa-plus"></i> New Requisition
+            </a>
+        @endunless
     </div>
 </div>
 
@@ -303,7 +315,7 @@
                         </td>
                         <td>{{ optional($req->requested_date)->format('M d, Y') ?? 'N/A' }}</td>
                         <td class="actions">
-                            @if($req->status !== 'cancelled' && in_array($paymentStatus, ['unpaid', 'partial']))
+                            @if(!$showTrash && $req->status !== 'cancelled' && in_array($paymentStatus, ['unpaid', 'partial']))
                                 <form action="{{ route('admin.laboratory.requisitions.mark-paid', $req->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Mark this laboratory requisition as paid?');">
                                     @csrf
                                     <button type="submit" class="btn-icon" title="Mark Paid" style="color:#15803d;" aria-label="Mark Paid">
@@ -314,16 +326,25 @@
                             <a href="{{ route('admin.laboratory.requisitions.show', $req->id) }}" class="btn-icon" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ route('admin.laboratory.requisitions.edit', $req->id) }}" class="btn-icon" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form action="{{ route('admin.laboratory.requisitions.destroy', $req->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this requisition?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-icon" title="Delete" style="color: #dc3545;">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            @if($showTrash)
+                                <form action="{{ route('admin.laboratory.requisitions.restore', $req->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Restore this requisition?');">
+                                    @csrf
+                                    <button type="submit" class="btn-icon" title="Restore" style="color:#0f766e;">
+                                        <i class="fas fa-trash-restore"></i>
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ route('admin.laboratory.requisitions.edit', $req->id) }}" class="btn-icon" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ route('admin.laboratory.requisitions.destroy', $req->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this requisition?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-icon" title="Delete" style="color: #dc3545;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @empty

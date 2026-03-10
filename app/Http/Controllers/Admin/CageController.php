@@ -11,6 +11,68 @@ use Illuminate\Support\Facades\Auth;
 
 class CageController extends Controller
 {
+    private function isLoopbackHost(string $host): bool
+    {
+        return in_array(strtolower($host), ['127.0.0.1', 'localhost', '::1'], true);
+    }
+
+    private function detectLanIp(): ?string
+    {
+        $candidates = gethostbynamel(gethostname()) ?: [];
+
+        foreach ($candidates as $ip) {
+            if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                continue;
+            }
+
+            if (str_starts_with($ip, '127.')) {
+                continue;
+            }
+
+            $isPrivate = preg_match('/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/', $ip) === 1;
+            if ($isPrivate) {
+                return $ip;
+            }
+        }
+
+        return null;
+    }
+
+    private function resolveScanBaseUrl(): string
+    {
+        $request = request();
+        $scheme = $request->getScheme();
+        $host = $request->getHost();
+        $port = (int) $request->getPort();
+
+        if ($this->isLoopbackHost($host)) {
+            $detectedIp = $this->detectLanIp();
+            if ($detectedIp) {
+                $host = $detectedIp;
+            } else {
+                $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+                if (is_string($appHost) && $appHost !== '') {
+                    $host = $appHost;
+                }
+            }
+        }
+
+        $base = $scheme . '://' . $host;
+        if (!in_array($port, [80, 443], true)) {
+            $base .= ':' . $port;
+        }
+
+        return rtrim($base, '/');
+    }
+
+    private function sharedScanUrl(string $cageCode): string
+    {
+        $baseUrl = $this->resolveScanBaseUrl();
+        $path = route('admin.cages.scan', ['code' => $cageCode], false);
+
+        return $baseUrl . $path;
+    }
+
     private function activeAssignmentQuery(int $cageId)
     {
         $now = now();
@@ -40,7 +102,9 @@ class CageController extends Controller
         }
         
         $cages = Cage::orderBy('cage_code')->paginate(10);
-        return view('admin.cages.index', compact('cages'));
+        $scanBaseUrl = $this->resolveScanBaseUrl();
+
+        return view('admin.cages.index', compact('cages', 'scanBaseUrl'));
     }
 
     /**
@@ -59,9 +123,8 @@ class CageController extends Controller
             ->latest()
             ->first();
 
-        // Calculate QR Code URL
-        // We use the route('admin.cages.scan', $cage->cage_code) to generate the URL
-        $scanUrl = route('admin.cages.scan', ['code' => $cage->cage_code]);
+        // Use shared app base URL (APP_URL) so phone scans resolve on LAN.
+        $scanUrl = $this->sharedScanUrl($cage->cage_code);
 
         return view('admin.cages.show', compact('cage', 'assignment', 'scanUrl'));
     }
@@ -86,7 +149,7 @@ class CageController extends Controller
             ->first();
 
         // Log the scan
-        QrScanLog::create([
+        QrScanLog::safeLog([
             'scan_type' => 'cage',
             'cage_id' => $cage->id,
             'pet_id' => $assignment?->pet_id,

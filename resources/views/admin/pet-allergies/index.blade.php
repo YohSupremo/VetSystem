@@ -10,6 +10,15 @@
         <div class="card-header d-flex justify-content-between align-items-center allergy-header">
             <h3 class="card-title"><i class="fas fa-allergies"></i> Pet Allergies</h3>
             <div class="d-flex gap-2 allergy-actions">
+                @if($showTrash ?? false)
+                    <a href="{{ route('admin.pet-allergies.index', request()->except('trash', 'page')) }}" class="btn btn-secondary allergy-secondary-btn">
+                        <i class="fas fa-arrow-left"></i> Back To Active
+                    </a>
+                @else
+                    <a href="{{ route('admin.pet-allergies.index', array_merge(request()->query(), ['trash' => 1])) }}" class="btn btn-secondary allergy-secondary-btn">
+                        <i class="fas fa-trash-restore"></i> View Trash
+                    </a>
+                @endif
                 <a href="{{ route('admin.pet-allergies.create') }}" class="btn btn-primary allergy-primary-btn">
                     <i class="fas fa-plus"></i> Add Allergy
                 </a>
@@ -74,7 +83,7 @@
                                     </div>
                                 </div>
                                 <div class="mt-auto">
-                                    <a href="{{ route('admin.pet-allergies.pet', $pet) }}" class="btn-preview-view">
+                                    <a href="{{ route('admin.pet-allergies.pet', ['pet' => $pet, 'trash' => (int)($showTrash ?? false)]) }}" class="btn-preview-view">
                                         <i class="fas fa-eye"></i> View
                                     </a>
                                 </div>

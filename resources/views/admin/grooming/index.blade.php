@@ -191,18 +191,30 @@
 @endpush
 
 @section('content')
+@php $showTrash = request()->boolean('trash'); @endphp
 <div class="content-header">
     <div class="header-title">
         <h1><i class="fas fa-cut"></i> Grooming Appointments</h1>
         <p>Manage all grooming visits in one place</p>
     </div>
     <div style="display: flex; gap: 0.75rem;">
+        @if($showTrash)
+            <a href="{{ route('admin.grooming.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back To Active
+            </a>
+        @else
+            <a href="{{ route('admin.grooming.index', ['trash' => 1]) }}" class="btn btn-secondary">
+                <i class="fas fa-trash-restore"></i> View Trash
+            </a>
+        @endif
         <a href="{{ route('admin.grooming-services.index') }}" class="btn btn-primary" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">
             <i class="fas fa-spa"></i> Manage Services
         </a>
-        <a href="{{ route('admin.grooming.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> New Grooming
-        </a>
+        @unless($showTrash)
+            <a href="{{ route('admin.grooming.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Grooming
+            </a>
+        @endunless
     </div>
 </div>
 
@@ -342,24 +354,33 @@
                                 <a href="{{ route('admin.grooming.show', $groomingAppointment->id) }}" class="btn-icon" title="View">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{{ route('admin.grooming.edit', $groomingAppointment->id) }}" class="btn-icon" title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                @if(($groomingAppointment->getAttribute('payment_status') ?? 'unbilled') !== 'paid')
-                                    <form method="POST" action="{{ route('admin.grooming.mark-paid', $groomingAppointment->id) }}">
+                                @if($showTrash)
+                                    <form method="POST" action="{{ route('admin.grooming.restore', $groomingAppointment->id) }}" onsubmit="return confirm('Restore this grooming appointment?');">
                                         @csrf
-                                        <button type="submit" class="btn-icon" title="Mark Paid">
-                                            <i class="fas fa-hand-holding-usd"></i>
+                                        <button type="submit" class="btn-icon" title="Restore" style="color:#0f766e;">
+                                            <i class="fas fa-trash-restore"></i>
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('admin.grooming.edit', $groomingAppointment->id) }}" class="btn-icon" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    @if(($groomingAppointment->getAttribute('payment_status') ?? 'unbilled') !== 'paid')
+                                        <form method="POST" action="{{ route('admin.grooming.mark-paid', $groomingAppointment->id) }}">
+                                            @csrf
+                                            <button type="submit" class="btn-icon" title="Mark Paid">
+                                                <i class="fas fa-hand-holding-usd"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+                                    <form method="POST" action="{{ route('admin.grooming.destroy', $groomingAppointment->id) }}" class="delete-form">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn-icon text-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
                                 @endif
-                                <form method="POST" action="{{ route('admin.grooming.destroy', $groomingAppointment->id) }}" class="delete-form">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn-icon text-danger" title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
                             @elseif($appointment)
                                 <a href="{{ route('admin.appointments.show', $appointment->id) }}" class="btn-icon" title="View Appointment">
                                     <i class="fas fa-calendar-check"></i>

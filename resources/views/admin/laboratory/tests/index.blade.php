@@ -144,18 +144,28 @@
 @endpush
 
 @section('content')
+@php $showTrash = request()->boolean('trash'); @endphp
 <div class="content-header">
     <div class="header-title">
         <h1><i class="fas fa-vials"></i> Lab Tests</h1>
         <p>Manage the list of available laboratory tests and prices.</p>
     </div>
     <div style="display:flex; gap:.75rem; flex-wrap:wrap;">
-        <a href="{{ route('admin.laboratory.index') }}" class="btn btn-secondary">
+        <a href="{{ route('admin.laboratory.index', ['trash' => $showTrash ? 1 : null]) }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to Laboratory
         </a>
-        <a href="{{ route('admin.laboratory.tests.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add Lab Test
-        </a>
+        @if($showTrash)
+            <a href="{{ route('admin.laboratory.tests.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back To Active
+            </a>
+        @else
+            <a href="{{ route('admin.laboratory.tests.index', ['trash' => 1]) }}" class="btn btn-secondary">
+                <i class="fas fa-trash-restore"></i> View Trash
+            </a>
+            <a href="{{ route('admin.laboratory.tests.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Lab Test
+            </a>
+        @endif
     </div>
 </div>
 
@@ -184,16 +194,25 @@
                             <a href="{{ route('admin.laboratory.tests.show', $test->id) }}" class="btn-icon" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ route('admin.laboratory.tests.edit', $test->id) }}" class="btn-icon" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form method="POST" action="{{ route('admin.laboratory.tests.destroy', $test->id) }}" class="delete-form">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-icon text-danger" title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            @if($showTrash)
+                                <form method="POST" action="{{ route('admin.laboratory.tests.restore', $test->id) }}" class="delete-form" onsubmit="return confirm('Restore this lab test?');">
+                                    @csrf
+                                    <button type="submit" class="btn-icon" title="Restore" style="color:#0f766e;">
+                                        <i class="fas fa-trash-restore"></i>
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ route('admin.laboratory.tests.edit', $test->id) }}" class="btn-icon" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST" action="{{ route('admin.laboratory.tests.destroy', $test->id) }}" class="delete-form">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-icon text-danger" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @empty

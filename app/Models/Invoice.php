@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'invoices';
 
     protected $fillable = [
@@ -75,14 +78,16 @@ class Invoice extends Model
 
     public function getSubtotalAttribute()
     {
-        return $this->invoiceItems->sum(function ($item) {
+        $subtotal = $this->invoiceItems()->get()->sum(function ($item) {
             return $item->quantity * (float) $item->unit_price;
         });
+
+        return round((float) $subtotal, 2);
     }
 
     public function getTaxAmountAttribute()
     {
-        return $this->subtotal * ((float) $this->tax_rate / 100);
+        return round((float) $this->subtotal * ((float) $this->tax_rate / 100), 2);
     }
 
     public function getTaxAttribute()
@@ -92,17 +97,17 @@ class Invoice extends Model
 
     public function getTotalAmountAttribute()
     {
-        return $this->subtotal + $this->tax_amount - (float) $this->discount_amount;
+        return round((float) $this->subtotal + (float) $this->tax_amount - (float) $this->discount_amount, 2);
     }
 
     public function getPaidAmountAttribute()
     {
-        return $this->payments->sum('amount');
+        return round((float) $this->payments->sum('amount'), 2);
     }
 
     public function getBalanceAttribute()
     {
-        return max(0, (float) $this->total_amount - (float) $this->paid_amount);
+        return round(max(0, (float) $this->total_amount - (float) $this->paid_amount), 2);
     }
 
     public function getIsPaidAttribute()

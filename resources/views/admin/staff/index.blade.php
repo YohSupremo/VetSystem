@@ -4,15 +4,27 @@
 @section('page-description', 'Manage staff members and schedules')
 
 @section('content')
+@php $showTrash = request()->boolean('trash'); @endphp
 <div class="content-header d-flex justify-content-between align-items-center mb-4">
     <div class="header-title">
         <h1 class="mb-2"><i class="fas fa-user-md"></i> Staff Management</h1>
         <p class="text-muted mb-0">Manage veterinarians, technicians, and staff members</p>
     </div>
     <div class="header-actions">
-        <a href="{{ route('admin.staff.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add Staff Member
-        </a>
+        <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+            @if($showTrash)
+                <a href="{{ route('admin.staff.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back To Active
+                </a>
+            @else
+                <a href="{{ route('admin.staff.index', ['trash' => 1]) }}" class="btn btn-secondary">
+                    <i class="fas fa-trash-restore"></i> View Trash
+                </a>
+                <a href="{{ route('admin.staff.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Staff Member
+                </a>
+            @endif
+        </div>
     </div>
 </div>
 
@@ -114,16 +126,25 @@
                                 <a href="{{ route('admin.staff.info', ['id' => $member->id])}}" class="btn btn-sm btn-outline-primary" title="View">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{{ route('admin.staff.edit', ['id' => $member->id])}}" class="btn btn-sm btn-outline-secondary" title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form method="POST" action="{{ route('admin.staff.destroy', $member->id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this staff member?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </form>
+                                @if($showTrash)
+                                    <form method="POST" action="{{ route('admin.staff.restore', $member->id) }}" class="d-inline" onsubmit="return confirm('Restore this staff member?');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Restore">
+                                            <i class="fas fa-trash-restore"></i>
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('admin.staff.edit', ['id' => $member->id])}}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="POST" action="{{ route('admin.staff.destroy', $member->id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this staff member?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

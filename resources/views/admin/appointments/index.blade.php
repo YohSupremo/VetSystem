@@ -250,6 +250,12 @@
             <i class="fas fa-plus"></i> Schedule Appointment
         </a>
 
+        @if($showTrash)
+            <a href="{{ route('admin.appointments.index', request()->except('trash', 'page')) }}" class="btn-outline">Back To Active</a>
+        @else
+            <a href="{{ route('admin.appointments.index', array_merge(request()->query(), ['trash' => 1])) }}" class="btn-outline">View Trash</a>
+        @endif
+
         <div class="filters">
             <form method="GET" action="{{ route('admin.appointments.index') }}" class="filters">
                 <input
@@ -350,12 +356,21 @@
                             <td data-label="Veterinarian">{{ $appointment->veterinarian_name ?? 'Unassigned' }}</td>
                             <td data-label="Actions">
                                 <div class="actions">
-                                    <a href="{{ route('admin.appointments.show', $appointment->id) }}" class="btn-outline">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
-                                    <a href="{{ route('admin.appointments.edit', $appointment->id) }}" class="btn-outline">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
+                                    @if($showTrash)
+                                        <form action="{{ route('admin.appointments.restore', $appointment->id) }}" method="POST" onsubmit="return confirm('Restore this appointment?')">
+                                            @csrf
+                                            <button type="submit" class="btn-outline">
+                                                <i class="fas fa-undo"></i> Restore
+                                            </button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('admin.appointments.show', $appointment->id) }}" class="btn-outline">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{{ route('admin.appointments.edit', $appointment->id) }}" class="btn-outline">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

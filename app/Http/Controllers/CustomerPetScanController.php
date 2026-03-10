@@ -64,7 +64,7 @@ class CustomerPetScanController extends Controller
             ->first();
 
         // Log the scan
-        QrScanLog::create([
+        QrScanLog::safeLog([
             'scan_type' => 'pet',
             'cage_id' => $assignment?->cage_id,
             'pet_id' => $pet->id,

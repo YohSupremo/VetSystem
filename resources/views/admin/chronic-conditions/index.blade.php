@@ -10,6 +10,15 @@
         <div class="card-header d-flex justify-content-between align-items-center chronic-header">
             <h3 class="card-title"><i class="fas fa-notes-medical"></i> Chronic Conditions</h3>
             <div class="d-flex gap-2 chronic-actions">
+                @if($showTrash ?? false)
+                    <a href="{{ route('admin.chronic-conditions.index', request()->except('trash', 'page')) }}" class="btn btn-secondary chronic-secondary-btn">
+                        <i class="fas fa-arrow-left"></i> Back To Active
+                    </a>
+                @else
+                    <a href="{{ route('admin.chronic-conditions.index', array_merge(request()->query(), ['trash' => 1])) }}" class="btn btn-secondary chronic-secondary-btn">
+                        <i class="fas fa-trash-restore"></i> View Trash
+                    </a>
+                @endif
                 <a href="{{ route('admin.chronic-conditions.create') }}" class="btn btn-primary chronic-primary-btn">
                     <i class="fas fa-plus"></i> Add Condition
                 </a>
@@ -74,7 +83,7 @@
                                     </div>
                                 </div>
                                 <div class="mt-auto">
-                                    <a href="{{ route('admin.chronic-conditions.pet', $pet) }}" class="btn-preview-view">
+                                    <a href="{{ route('admin.chronic-conditions.pet', ['pet' => $pet, 'trash' => (int)($showTrash ?? false)]) }}" class="btn-preview-view">
                                         <i class="fas fa-eye"></i> View
                                     </a>
                                 </div>

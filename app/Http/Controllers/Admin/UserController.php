@@ -38,8 +38,16 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $users = QueryBuilder::for(User::class)
-            ->whereIn('role', ['registered_user', 'pet_owner'])
+        $showTrash = $request->boolean('trash');
+
+        $baseQuery = User::query()
+            ->whereIn('role', ['registered_user', 'pet_owner']);
+
+        if ($showTrash) {
+            $baseQuery->onlyTrashed();
+        }
+
+        $users = QueryBuilder::for($baseQuery)
             ->with(['petOwner.pets'])
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value) {
@@ -62,7 +70,21 @@ class UserController extends Controller
             ->paginate(25)
             ->appends($request->query());
 
-        return view('admin.users.index', compact('users'));
+        return view('admin.users.index', compact('users', 'showTrash'));
+    }
+
+    public function restore(int $id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+
+        if ($redirect = $this->denyIfNotCustomerRole($user)) {
+            return $redirect;
+        }
+
+        $user->restore();
+
+        return redirect()->route('admin.users.index', ['trash' => 1])
+            ->with('success', 'User restored successfully.');
     }
 
     public function create()

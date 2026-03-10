@@ -262,6 +262,12 @@
             @endif
         </form>
 
+        @if($showTrash)
+            <a href="{{ route('admin.pets.index', request()->except('trash', 'page')) }}" class="btn btn-secondary">Back To Active</a>
+        @else
+            <a href="{{ route('admin.pets.index', array_merge(request()->query(), ['trash' => 1])) }}" class="btn btn-secondary">View Trash</a>
+        @endif
+
         <a href="{{ route('admin.pets.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Add New Pet
         </a>
@@ -313,19 +319,28 @@
                     </div>
 
                     <div class="card-actions">
-                        <a href="{{ route('admin.pets.show', $pet) }}" class="btn btn-secondary">
-                            <i class="fas fa-eye"></i> View
-                        </a>
-                        <a href="{{ route('admin.pets.edit', $pet) }}" class="btn btn-secondary">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
-                        <form action="{{ route('admin.pets.destroy', $pet) }}" method="POST" style="flex: 1;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-secondary" style="width: 100%; background: #ff6b6b; color: white;" onclick="return confirm('Are you sure?')">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </form>
+                        @if($showTrash)
+                            <form action="{{ route('admin.pets.restore', $pet->id) }}" method="POST" style="flex: 1;">
+                                @csrf
+                                <button type="submit" class="btn btn-secondary" style="width: 100%;" onclick="return confirm('Restore this pet?')">
+                                    <i class="fas fa-undo"></i> Restore
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('admin.pets.show', $pet) }}" class="btn btn-secondary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            <a href="{{ route('admin.pets.edit', $pet) }}" class="btn btn-secondary">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <form action="{{ route('admin.pets.destroy', $pet) }}" method="POST" style="flex: 1;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-secondary" style="width: 100%; background: #ff6b6b; color: white;" onclick="return confirm('Are you sure?')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 </div>
             </div>

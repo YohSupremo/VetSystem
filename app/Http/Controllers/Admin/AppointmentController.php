@@ -62,8 +62,13 @@ class AppointmentController extends Controller
     public function index(Request $request)
     {
         $this->normalizeVaccinationUnacceptedStatuses();
+        $showTrash = $request->boolean('trash');
 
         $query = Appointment::with(['pet.owner.user', 'veterinarian']);
+
+        if ($showTrash) {
+            $query->onlyTrashed();
+        }
         
         // If the user is a veterinarian, only show their assigned appointments
         $user = auth()->user();
@@ -176,7 +181,21 @@ class AppointmentController extends Controller
         
         $hasAppointments = true; // Table exists since we're using Eloquent
         
-        return view('admin.appointments.index', compact('appointments', 'pets', 'types', 'statuses', 'filters', 'hasAppointments'));
+        return view('admin.appointments.index', compact('appointments', 'pets', 'types', 'statuses', 'filters', 'hasAppointments', 'showTrash'));
+    }
+
+    public function restore(int $id)
+    {
+        $user = auth()->user();
+        if ($user && $user->isVeterinarian()) {
+            abort(403, 'Veterinarians are not authorized to restore appointments.');
+        }
+
+        $appointment = Appointment::onlyTrashed()->findOrFail($id);
+        $appointment->restore();
+
+        return redirect()->route('admin.appointments.index', ['trash' => 1])
+            ->with('success', 'Appointment restored successfully.');
     }
 
     /**

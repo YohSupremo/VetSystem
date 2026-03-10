@@ -19,7 +19,15 @@ class PetController extends Controller
      */
     public function index(Request $request)
     {
-        $pets = QueryBuilder::for(Pet::class)
+        $showTrash = $request->boolean('trash');
+
+        $baseQuery = Pet::query();
+
+        if ($showTrash) {
+            $baseQuery->onlyTrashed();
+        }
+
+        $pets = QueryBuilder::for($baseQuery)
             ->with('owner.user')
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value) {
@@ -45,7 +53,16 @@ class PetController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        return view('admin.pets.index', compact('pets'));
+        return view('admin.pets.index', compact('pets', 'showTrash'));
+    }
+
+    public function restore(int $id)
+    {
+        $pet = Pet::onlyTrashed()->findOrFail($id);
+        $pet->restore();
+
+        return redirect()->route('admin.pets.index', ['trash' => 1])
+            ->with('success', 'Pet restored successfully.');
     }
 
     /**

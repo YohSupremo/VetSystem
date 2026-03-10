@@ -20,27 +20,41 @@ class BillingController extends BaseController
     /**
      * Display a listing of billing records.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $invoices = BillingInvoice::with(['pet', 'petOwner', 'invoiceItems', 'payments'])
-            ->where('status', '!=', 'cancelled')
+        $showTrash = $request->boolean('trash');
+
+        $invoicesQuery = BillingInvoice::with(['pet', 'petOwner', 'invoiceItems', 'payments']);
+
+        if ($showTrash) {
+            $invoicesQuery->onlyTrashed();
+        } else {
+            $invoicesQuery->where('status', '!=', 'cancelled');
+        }
+
+        $invoices = $invoicesQuery
             ->orderByDesc('issue_date')
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->paginate(20);
 
-        $totalInvoices = BillingInvoice::where('status', '!=', 'cancelled')->count();
-        $paidInvoices = BillingInvoice::where('status', 'paid')->count();
-        $overdueInvoices = BillingInvoice::where('status', 'overdue')->count();
-        $totalRevenue = BillingInvoice::with('invoiceItems')
-            ->where('status', '!=', 'cancelled')
+        $statsQuery = BillingInvoice::query();
+        if ($showTrash) {
+            $statsQuery->onlyTrashed();
+        } else {
+            $statsQuery->where('status', '!=', 'cancelled');
+        }
+
+        $totalInvoices = (clone $statsQuery)->count();
+        $paidInvoices = (clone $statsQuery)->where('status', 'paid')->count();
+        $overdueInvoices = (clone $statsQuery)->where('status', 'overdue')->count();
+        $totalRevenue = (clone $statsQuery)->with('invoiceItems')
             ->get()
             ->sum(function ($invoice) {
                 return (float) $invoice->total_amount;
             });
 
-        $paidAmount = BillingInvoice::with(['invoiceItems', 'payments'])
-            ->where('status', '!=', 'cancelled')
+        $paidAmount = (clone $statsQuery)->with(['invoiceItems', 'payments'])
             ->get()
             ->sum(function ($invoice) {
                 $invoiceTotal = (float) $invoice->total_amount;
@@ -55,8 +69,18 @@ class BillingController extends BaseController
             'paidInvoices',
             'overdueInvoices',
             'totalRevenue',
-            'paidAmount'
+            'paidAmount',
+            'showTrash'
         ));
+    }
+
+    public function restore(int $id)
+    {
+        $invoice = BillingInvoice::onlyTrashed()->findOrFail($id);
+        $invoice->restore();
+
+        return redirect()->route('admin.billing.index', ['trash' => 1])
+            ->with('success', 'Invoice restored successfully.');
     }
 
     /**

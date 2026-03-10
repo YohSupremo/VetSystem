@@ -187,7 +187,7 @@ class NotificationController extends Controller
 
         $count = Notification::where('created_at', '<', now()->subDays($validated['days']))
             ->where('status', Notification::STATUS_READ)
-            ->delete();
+            ->forceDelete();
 
         return response()->json([
             'success' => true,

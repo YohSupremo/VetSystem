@@ -196,9 +196,20 @@
 <div class="card incident-card">
     <div class="card-header">
         <h3>Incident Reports</h3>
-        <a href="{{ route('admin.incidents.create') }}" class="btn btn-primary incident-add-btn">
-            <i class="fas fa-plus me-2"></i>New Incident
-        </a>
+        <div class="d-flex gap-2">
+            @if($showTrash ?? false)
+                <a href="{{ route('admin.incidents.index', request()->except('trash', 'page')) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back To Active
+                </a>
+            @else
+                <a href="{{ route('admin.incidents.index', array_merge(request()->query(), ['trash' => 1])) }}" class="btn btn-secondary">
+                    <i class="fas fa-trash-restore me-2"></i>View Trash
+                </a>
+            @endif
+            <a href="{{ route('admin.incidents.create') }}" class="btn btn-primary incident-add-btn">
+                <i class="fas fa-plus me-2"></i>New Incident
+            </a>
+        </div>
     </div>
     <div class="card-body p-0">
         @if($incidents->isEmpty())
@@ -246,17 +257,24 @@
                                     @endif
                                 </td>
                                 <td class="text-end incident-actions">
-                                    <a href="{{ route('admin.incidents.show', $incident->id) }}" class="btn btn-sm btn-outline-primary">
-                                        View
-                                    </a>
-                                    <a href="{{ route('admin.incidents.edit', $incident->id) }}" class="btn btn-sm btn-outline-secondary">
-                                        Edit
-                                    </a>
-                                    <form action="{{ route('admin.incidents.destroy', $incident->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this incident?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                                    </form>
+                                    @if($showTrash ?? false)
+                                        <form action="{{ route('admin.incidents.restore', $incident->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Restore this incident?');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Restore</button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('admin.incidents.show', $incident->id) }}" class="btn btn-sm btn-outline-primary">
+                                            View
+                                        </a>
+                                        <a href="{{ route('admin.incidents.edit', $incident->id) }}" class="btn btn-sm btn-outline-secondary">
+                                            Edit
+                                        </a>
+                                        <form action="{{ route('admin.incidents.destroy', $incident->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this incident?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

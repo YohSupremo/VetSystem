@@ -5,10 +5,11 @@
 
 @section('content')
 <div class="surg-wrapper">
+    @php $showTrash = request()->boolean('trash'); @endphp
     {{-- Page Header --}}
     <div class="surg-header">
         <div class="surg-header-left">
-            <a href="{{ route('admin.surgeries.index') }}" class="back-link">
+            <a href="{{ route('admin.surgeries.index', ['trash' => $showTrash ? 1 : null]) }}" class="back-link">
                 <span class="back-arrow"><i class="fas fa-arrow-left"></i></span>
                 <span>All Surgeries</span>
             </a>
@@ -20,10 +21,23 @@
                 </div>
             </div>
         </div>
-        <a href="{{ route('admin.surgeries.create', ['pet_id' => $pet->id]) }}" class="btn-new">
-            <i class="fas fa-plus"></i>
-            <span>Schedule New Surgery</span>
-        </a>
+        <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
+            @if($showTrash)
+                <a href="{{ route('admin.surgeries.pet', ['pet' => $pet->id]) }}" class="btn-new" style="background:#6b7280;">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back To Active</span>
+                </a>
+            @else
+                <a href="{{ route('admin.surgeries.pet', ['pet' => $pet->id, 'trash' => 1]) }}" class="btn-new" style="background:#64748b;">
+                    <i class="fas fa-trash-restore"></i>
+                    <span>View Trash</span>
+                </a>
+                <a href="{{ route('admin.surgeries.create', ['pet_id' => $pet->id]) }}" class="btn-new">
+                    <i class="fas fa-plus"></i>
+                    <span>Schedule New Surgery</span>
+                </a>
+            @endif
+        </div>
     </div>
 
     {{-- Table Card --}}
@@ -129,7 +143,7 @@
                                     @if(!$isVirtual)
                                         <div class="action-group">
                                             @php $invoice = $surgery->getAttribute('billing_invoice'); @endphp
-                                            @if($invoice && !$invoice->is_paid && $invoice->status !== 'cancelled')
+                                            @if(!$showTrash && $invoice && !$invoice->is_paid && $invoice->status !== 'cancelled')
                                                 <form action="{{ route('admin.surgeries.payment.process', $surgery->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Mark this invoice as paid?');">
                                                     @csrf
                                                     <button type="submit" class="action-btn action-btn--pay" title="Mark as Paid">
@@ -140,16 +154,25 @@
                                             <a href="{{ route('admin.surgeries.show', $surgery->id) }}" class="action-btn" title="View">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{{ route('admin.surgeries.edit', $surgery->id) }}" class="action-btn" title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <form action="{{ route('admin.surgeries.destroy', $surgery->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this surgery record?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="action-btn action-btn--danger" title="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            @if($showTrash)
+                                                <form action="{{ route('admin.surgeries.restore', $surgery->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Restore this surgery record?');">
+                                                    @csrf
+                                                    <button type="submit" class="action-btn" title="Restore" style="color:#0f766e;">
+                                                        <i class="fas fa-trash-restore"></i>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <a href="{{ route('admin.surgeries.edit', $surgery->id) }}" class="action-btn" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <form action="{{ route('admin.surgeries.destroy', $surgery->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this surgery record?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="action-btn action-btn--danger" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     @elseif($surgery->appointment)
                                         <div class="action-group">

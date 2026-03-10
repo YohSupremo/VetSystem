@@ -7,9 +7,20 @@
 <div class="card prescriptions-card">
     <div class="card-header prescriptions-header">
         <h3><i class="fas fa-prescription"></i> Prescriptions</h3>
-        <a href="{{ route('admin.prescriptions.create') }}" class="btn btn-primary prescriptions-create-btn">
-            <i class="fas fa-plus"></i> Create Prescription
-        </a>
+        <div class="d-flex gap-2">
+            @if($showTrash ?? false)
+                <a href="{{ route('admin.prescriptions.index', request()->except('trash', 'page')) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back To Active
+                </a>
+            @else
+                <a href="{{ route('admin.prescriptions.index', array_merge(request()->query(), ['trash' => 1])) }}" class="btn btn-secondary">
+                    <i class="fas fa-trash-restore"></i> View Trash
+                </a>
+            @endif
+            <a href="{{ route('admin.prescriptions.create') }}" class="btn btn-primary prescriptions-create-btn">
+                <i class="fas fa-plus"></i> Create Prescription
+            </a>
+        </div>
     </div>
 
     <div class="card-body">
@@ -103,7 +114,7 @@
                         </div>
                         
                         <div class="action-buttons">
-                            <a href="{{ route('admin.prescriptions.pet', $group['medical_record']->pet->id) }}" class="btn btn-primary">
+                            <a href="{{ route('admin.prescriptions.pet', ['pet' => $group['medical_record']->pet->id, 'trash' => (int)($showTrash ?? false)]) }}" class="btn btn-primary">
                                 <i class="fas fa-eye"></i> View All
                             </a>
                         </div>

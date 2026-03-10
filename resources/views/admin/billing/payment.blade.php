@@ -50,6 +50,7 @@
 
 <form action="{{ route('admin.billing.payment.process', $invoice->id) }}" method="POST">
     @csrf
+    @php $balanceForInput = number_format((float) $invoice->balance, 2, '.', ''); @endphp
     <div class="payment-card">
         <div class="row">
             <div class="col-md-6 mb-3">
@@ -66,7 +67,7 @@
             </div>
             <div class="col-md-6 mb-3">
                 <label for="amount" class="form-label">Amount</label>
-                <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" max="{{ $invoice->balance }}" value="{{ old('amount', $invoice->balance) }}" required>
+                <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" max="{{ $balanceForInput }}" value="{{ old('amount', $balanceForInput) }}" required>
                 @error('amount')<div class="text-danger small">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-6 mb-3">

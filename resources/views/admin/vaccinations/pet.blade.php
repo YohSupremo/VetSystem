@@ -117,7 +117,16 @@
                                     @endif
                                 </td>
                                 <td class="col-actions">
-                                    @if(!$isVirtual)
+                                    @if(($showTrash ?? false) && !$isVirtual)
+                                        <div class="action-group">
+                                            <form action="{{ route('admin.vaccinations.restore', $vaccination->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Restore this vaccination record?');">
+                                                @csrf
+                                                <button type="submit" class="action-btn action-btn--accept" title="Restore">
+                                                    <i class="fas fa-undo"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @elseif(!$isVirtual)
                                         <div class="action-group">
                                             @php $invoice = $vaccination->getAttribute('billing_invoice'); @endphp
                                             @if($invoice && !$invoice->is_paid && $invoice->status !== 'cancelled')

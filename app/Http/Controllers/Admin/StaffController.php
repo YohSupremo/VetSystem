@@ -10,10 +10,17 @@ class StaffController extends BaseController
     /**
      * Display a listing of staff members.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $showTrash = $request->boolean('trash');
 
-        $staff = User::whereIn('role', ['admin', 'veterinarian', 'staff', 'reception', 'pharmacy'])->get();
+        $staff = User::whereIn('role', ['admin', 'veterinarian', 'staff', 'reception', 'pharmacy'])
+            ->when($showTrash, function ($query) {
+                $query->onlyTrashed();
+            })
+            ->orderByDesc('deleted_at')
+            ->orderBy('first_name')
+            ->get();
 
         return view('admin.staff.index', compact('staff'));
     }
@@ -121,6 +128,15 @@ class StaffController extends BaseController
        $user = User::findOrFail($id);
        $user->delete();
         return redirect()->route('admin.staff.index')->with('success', 'Staff member deleted successfully.');
+    }
+
+    public function restore(int $id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $user->restore();
+
+        return redirect()->route('admin.staff.index', ['trash' => 1])
+            ->with('success', 'Staff member restored successfully.');
     }
 
     public function filter(Request $request){

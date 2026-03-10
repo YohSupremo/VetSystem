@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ChronicCondition extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'pet_id',
         'medical_record_id',

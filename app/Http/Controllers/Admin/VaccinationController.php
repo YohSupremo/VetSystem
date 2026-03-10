@@ -30,26 +30,43 @@ class VaccinationController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $pets = Pet::with([
-            'owner.user',
-            'vaccinations' => function($query) {
-                $query->orderBy('administered_date', 'desc');
-            },
-            'appointments' => function ($query) {
-                $query->where('type', 'vaccination')
-                    ->whereNotIn('status', ['completed', 'cancelled', 'no_show']);
-            },
-        ])
-            ->where(function ($query) {
-                $query->has('vaccinations')
-                    ->orWhereHas('appointments', function ($appointmentQuery) {
-                        $appointmentQuery->where('type', 'vaccination')
-                            ->whereNotIn('status', ['completed', 'cancelled', 'no_show']);
-                    });
-            })
-            ->paginate(10);
+        $showTrash = $request->boolean('trash');
+
+        if ($showTrash) {
+            $pets = Pet::with([
+                'owner.user',
+                'vaccinations' => function ($query) {
+                    $query->onlyTrashed()
+                        ->orderByDesc('deleted_at')
+                        ->orderBy('administered_date', 'desc');
+                },
+            ])
+                ->whereHas('vaccinations', function ($query) {
+                    $query->onlyTrashed();
+                })
+                ->paginate(10);
+        } else {
+            $pets = Pet::with([
+                'owner.user',
+                'vaccinations' => function($query) {
+                    $query->orderBy('administered_date', 'desc');
+                },
+                'appointments' => function ($query) {
+                    $query->where('type', 'vaccination')
+                        ->whereNotIn('status', ['completed', 'cancelled', 'no_show']);
+                },
+            ])
+                ->where(function ($query) {
+                    $query->has('vaccinations')
+                        ->orWhereHas('appointments', function ($appointmentQuery) {
+                            $appointmentQuery->where('type', 'vaccination')
+                                ->whereNotIn('status', ['completed', 'cancelled', 'no_show']);
+                        });
+                })
+                ->paginate(10);
+        }
 
         $pets->getCollection()->transform(function ($pet) {
             $appointmentCount = $pet->appointments ? $pet->appointments->count() : 0;
@@ -58,7 +75,7 @@ class VaccinationController extends Controller
             return $pet;
         });
 
-        return view('admin.vaccinations.index', compact('pets'));
+        return view('admin.vaccinations.index', compact('pets', 'showTrash'));
     }
 
     /**
@@ -414,12 +431,35 @@ class VaccinationController extends Controller
             ->with('success', 'Vaccination deleted successfully!');
     }
 
+    public function restore(int $id)
+    {
+        $vaccination = Vaccination::onlyTrashed()->findOrFail($id);
+        $vaccination->restore();
+
+        return redirect()->route('admin.vaccinations.index', ['trash' => 1])
+            ->with('success', 'Vaccination restored successfully.');
+    }
+
     /**
      * Display vaccinations for a specific pet.
      */
     public function byPet($petId)
     {
+        $showTrash = request()->boolean('trash');
         $pet = Pet::findOrFail($petId);
+
+        if ($showTrash) {
+            $vaccinations = Vaccination::onlyTrashed()
+                ->where('pet_id', $petId)
+                ->with(['inventoryItem', 'administeredBy'])
+                ->orderByDesc('deleted_at')
+                ->orderBy('administered_date', 'desc')
+                ->paginate(10)
+                ->withQueryString();
+
+            return view('admin.vaccinations.pet', compact('pet', 'vaccinations', 'showTrash'));
+        }
+
         $vaccinations = $pet->vaccinations()
             ->with(['inventoryItem', 'administeredBy'])
             ->orderBy('administered_date', 'desc')
@@ -477,7 +517,7 @@ class VaccinationController extends Controller
             ['path' => request()->url(), 'query' => request()->query()]
         );
 
-        return view('admin.vaccinations.pet', compact('pet', 'vaccinations'));
+        return view('admin.vaccinations.pet', compact('pet', 'vaccinations', 'showTrash'));
     }
 
     private function ensureVaccinationInvoice(Vaccination|PetVaccination $vaccination): Invoice

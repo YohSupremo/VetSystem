@@ -62,19 +62,28 @@
                                 </td>
                                 <td>
                                     <div class="d-flex gap-2 flex-wrap">
-                                        <a href="{{ route('admin.chronic-conditions.show', $condition) }}" class="btn btn-sm btn-info">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('admin.chronic-conditions.edit', $condition) }}" class="btn btn-sm btn-warning">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form action="{{ route('admin.chronic-conditions.destroy', $condition) }}" method="POST" onsubmit="return confirm('Delete this chronic condition record?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
+                                        @if($showTrash ?? false)
+                                            <form action="{{ route('admin.chronic-conditions.restore', $condition->id) }}" method="POST" onsubmit="return confirm('Restore this chronic condition record?');">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-undo"></i>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <a href="{{ route('admin.chronic-conditions.show', $condition) }}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ route('admin.chronic-conditions.edit', $condition) }}" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form action="{{ route('admin.chronic-conditions.destroy', $condition) }}" method="POST" onsubmit="return confirm('Delete this chronic condition record?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

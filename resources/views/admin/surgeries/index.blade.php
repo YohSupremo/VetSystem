@@ -5,11 +5,26 @@
 
 @section('content')
 <div class="container-fluid">
+    @php $showTrash = request()->boolean('trash'); @endphp
     <div class="surgeries-header mb-4">
         <h2 class="h4 mb-0"><i class="fas fa-scalpel me-2"></i>Surgical Records</h2>
-        <a href="{{ route('admin.surgeries.create') }}" class="btn btn-primary surgeries-create-btn">
-            <i class="fas fa-scalpel me-2"></i>Schedule Surgery
-        </a>
+        <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
+            @if($showTrash)
+                <a href="{{ route('admin.surgeries.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back To Active
+                </a>
+            @else
+                <a href="{{ route('admin.surgeries.index', ['trash' => 1]) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-trash-restore me-2"></i>View Trash
+                </a>
+            @endif
+
+            @unless($showTrash)
+                <a href="{{ route('admin.surgeries.create') }}" class="btn btn-primary surgeries-create-btn">
+                    <i class="fas fa-scalpel me-2"></i>Schedule Surgery
+                </a>
+            @endunless
+        </div>
     </div>
 
     <div class="pets-container">
@@ -35,12 +50,14 @@
                         </p>
                     </div>
                     <div class="pet-actions mt-3">
-                        <a href="{{ route('admin.surgeries.pet', $pet->id) }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ route('admin.surgeries.pet', ['pet' => $pet->id, 'trash' => $showTrash ? 1 : null]) }}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-eye me-1"></i> View All
                         </a>
-                        <a href="{{ route('admin.surgeries.create', ['pet_id' => $pet->id]) }}" class="btn btn-sm btn-outline-success">
-                            <i class="fas fa-plus-circle me-1"></i> Schedule New
-                        </a>
+                        @unless($showTrash)
+                            <a href="{{ route('admin.surgeries.create', ['pet_id' => $pet->id]) }}" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-plus-circle me-1"></i> Schedule New
+                            </a>
+                        @endunless
                     </div>
                 </div>
             </div>

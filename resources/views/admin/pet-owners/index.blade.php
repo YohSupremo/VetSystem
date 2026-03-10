@@ -309,6 +309,11 @@
                 <a href="{{ route('admin.pet-owners.index') }}" class="btn btn-outline-secondary" style="padding:10px 14px;">Clear</a>
             @endif
         </form>
+        @if($showTrash)
+            <a href="{{ route('admin.pet-owners.index', request()->except('trash', 'page')) }}" class="btn btn-outline-secondary">Back To Active</a>
+        @else
+            <a href="{{ route('admin.pet-owners.index', array_merge(request()->query(), ['trash' => 1])) }}" class="btn btn-outline-secondary">View Trash</a>
+        @endif
         <a href="{{ route('admin.users.create') }}" class="btn btn-outline-secondary"><i class="fas fa-user-plus"></i> Add User</a>
         <a href="{{ route('admin.pet-owners.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Add New Owner</a>
     </div>
@@ -364,13 +369,20 @@
                     </td>
                     <td>{{ $owner->created_at ? $owner->created_at->format('M d, Y') : '-' }}</td>
                     <td style="white-space:nowrap;">
-                        <a href="{{ route('admin.pet-owners.show', $owner) }}" class="btn btn-sm btn-outline-secondary">View</a>
-                        <a href="{{ route('admin.pet-owners.edit', $owner) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                        <form action="{{ route('admin.pet-owners.destroy', $owner) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Delete this owner?')">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn btn-sm btn-danger">Delete</button>
-                        </form>
+                        @if($showTrash)
+                            <form action="{{ route('admin.pet-owners.restore', $owner->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Restore this owner?')">
+                                @csrf
+                                <button class="btn btn-sm btn-outline-primary">Restore</button>
+                            </form>
+                        @else
+                            <a href="{{ route('admin.pet-owners.show', $owner) }}" class="btn btn-sm btn-outline-secondary">View</a>
+                            <a href="{{ route('admin.pet-owners.edit', $owner) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <form action="{{ route('admin.pet-owners.destroy', $owner) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Delete this owner?')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        @endif
                     </td>
                 </tr>
             @endforeach

@@ -46,7 +46,7 @@ class QrScanController extends Controller
         }
 
         // Create the scan log
-        $scanLog = QrScanLog::create([
+        $scanLog = QrScanLog::safeLog([
             'scan_type' => $request->scan_type,
             'cage_id' => $request->cage_id,
             'pet_id' => $request->pet_id,
@@ -55,6 +55,12 @@ class QrScanController extends Controller
             'location' => $request->location,
             'notes' => $request->notes,
         ]);
+
+        if (!$scanLog) {
+            return response()->json([
+                'message' => 'Scan processed, but logging table is not available yet.',
+            ], 202);
+        }
 
         // Load relationships
         $scanLog->load('cage', 'pet', 'scannedBy');

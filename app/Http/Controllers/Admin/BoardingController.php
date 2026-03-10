@@ -20,15 +20,20 @@ class BoardingController extends BaseController
     /**
      * Display a listing of boarding services.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $showTrash = $request->boolean('trash');
+
         // Sync all cage statuses to ensure accuracy
         $allCages = Cage::all();
         foreach ($allCages as $cage) {
             $cage->syncStatus();
         }
         
-        $query = CageAssignment::with(['pet.owner.user', 'cage']);
+        $query = CageAssignment::with(['pet.owner.user', 'cage'])
+            ->when($showTrash, function ($q) {
+                $q->onlyTrashed();
+            });
         
         // Search functionality
         if (request('search')) {
@@ -40,13 +45,19 @@ class BoardingController extends BaseController
             });
         }
         
-        $boardings = $query->orderBy('start_date', 'desc')->get();
-
-        $appointmentBoardings = Appointment::with(['pet.owner.user'])
-            ->where('type', 'boarding')
-            ->whereIn('status', ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'])
-            ->orderByDesc('appointment_date')
+        $boardings = $query
+            ->orderByDesc('deleted_at')
+            ->orderBy('start_date', 'desc')
             ->get();
+
+        $appointmentBoardings = collect();
+        if (!$showTrash) {
+            $appointmentBoardings = Appointment::with(['pet.owner.user'])
+                ->where('type', 'boarding')
+                ->whereIn('status', ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'])
+                ->orderByDesc('appointment_date')
+                ->get();
+        }
 
         $virtualBoardings = $appointmentBoardings->map(function ($appointment) {
             $boarding = new CageAssignment();
@@ -517,6 +528,19 @@ class BoardingController extends BaseController
         }
 
         return redirect()->route('admin.boarding.index')->with('success', 'Boarding deleted successfully.');
+    }
+
+    public function restore(int $id)
+    {
+        $boarding = CageAssignment::onlyTrashed()->findOrFail($id);
+        $boarding->restore();
+
+        $cage = Cage::find($boarding->cage_id);
+        if ($cage) {
+            $cage->syncStatus();
+        }
+
+        return redirect()->back()->with('success', 'Boarding record restored successfully.');
     }
 
     private function combineDateAndTime($date, ?string $time)

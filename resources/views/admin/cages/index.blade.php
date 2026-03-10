@@ -456,7 +456,7 @@
                 </div>
 
                 <div class="cage-actions">
-                    <button onclick="showQr('{{ $cage->cage_code }}', '{{ route('admin.cages.scan', $cage->cage_code) }}')" 
+                            <button onclick="showQr('{{ $cage->cage_code }}', '{{ $scanBaseUrl . route('admin.cages.scan', ['code' => $cage->cage_code], false) }}')" 
                             class="btn-qr">
                         <i class="fas fa-qrcode"></i>
                         QR Code

@@ -247,6 +247,7 @@
 @endpush
 
 @section('content')
+@php $showTrash = request()->boolean('trash'); @endphp
 <div class="card">
     <div class="content-header">
         <div class="header-title">
@@ -254,6 +255,15 @@
             <p class="mb-0">Manage clinic medications and inventory</p>
         </div>
         <div>
+            @if($showTrash)
+                <a href="{{ route('admin.pharmacy.index') }}" class="btn btn-secondary me-2">
+                    <i class="fas fa-arrow-left"></i> Back To Active
+                </a>
+            @else
+                <a href="{{ route('admin.pharmacy.index', ['trash' => 1]) }}" class="btn btn-secondary me-2">
+                    <i class="fas fa-trash-restore"></i> View Trash
+                </a>
+            @endif
             <a href="{{ route('admin.pharmacy.dispense') }}" class="btn btn-success me-2">
                 <i class="fas fa-pills"></i> Dispense Medication
             </a>
@@ -263,9 +273,11 @@
                     <span class="alert-badge">{{ $lowStockCount + $expiredCount }}</span>
                 @endif
             </a>
-            <a href="{{ route('admin.pharmacy.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Medication
-            </a>
+            @unless($showTrash)
+                <a href="{{ route('admin.pharmacy.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Medication
+                </a>
+            @endunless
         </div>
     </div>
 
@@ -395,16 +407,25 @@
                             <a href="{{ route('admin.pharmacy.show', $medication->id) }}" class="btn-icon" title="View Details">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ route('admin.pharmacy.edit', $medication->id) }}" class="btn-icon edit" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form method="POST" action="{{ route('admin.pharmacy.destroy', $medication->id) }}" onsubmit="return confirm('Are you sure you want to delete this medication?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-icon delete" title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            @if($showTrash)
+                                <form method="POST" action="{{ route('admin.pharmacy.restore', $medication->id) }}" onsubmit="return confirm('Restore this medication?')">
+                                    @csrf
+                                    <button type="submit" class="btn-icon" title="Restore" style="color:#0f766e;">
+                                        <i class="fas fa-trash-restore"></i>
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ route('admin.pharmacy.edit', $medication->id) }}" class="btn-icon edit" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST" action="{{ route('admin.pharmacy.destroy', $medication->id) }}" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this medication?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-icon delete" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @empty

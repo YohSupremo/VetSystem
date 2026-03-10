@@ -11,24 +11,43 @@ class PetAllergyController extends Controller
 {
     public function index(Request $request)
     {
+        $showTrash = $request->boolean('trash');
+
         $query = Pet::with(['owner.user'])
             ->withCount([
-                'petAllergies as allergy_total_count',
-                'petAllergies as allergy_active_count' => function ($sub) {
+                'petAllergies as allergy_total_count' => function ($sub) use ($showTrash) {
+                    if ($showTrash) {
+                        $sub->onlyTrashed();
+                    }
+                },
+                'petAllergies as allergy_active_count' => function ($sub) use ($showTrash) {
+                    if ($showTrash) {
+                        $sub->onlyTrashed();
+                    }
                     $sub->where('is_active', 1);
                 },
-            ])
-            ->whereHas('petAllergies');
+            ]);
+
+        if ($showTrash) {
+            $query->whereHas('petAllergies', function ($sub) {
+                $sub->onlyTrashed();
+            });
+        } else {
+            $query->whereHas('petAllergies');
+        }
 
         if ($request->filled('q')) {
             $q = trim((string) $request->q);
-            $query->where(function ($sub) use ($q) {
+            $query->where(function ($sub) use ($q, $showTrash) {
                 $sub->where('name', 'like', '%' . $q . '%')
                     ->orWhereHas('owner.user', function ($userQuery) use ($q) {
                         $userQuery->where('first_name', 'like', '%' . $q . '%')
                             ->orWhere('last_name', 'like', '%' . $q . '%');
                     })
-                    ->orWhereHas('petAllergies', function ($allergyQuery) use ($q) {
+                    ->orWhereHas('petAllergies', function ($allergyQuery) use ($q, $showTrash) {
+                        if ($showTrash) {
+                            $allergyQuery->onlyTrashed();
+                        }
                         $allergyQuery->where('allergen', 'like', '%' . $q . '%')
                             ->orWhere('reaction_type', 'like', '%' . $q . '%');
                     });
@@ -38,12 +57,18 @@ class PetAllergyController extends Controller
         if ($request->filled('status') && in_array($request->status, ['active', 'inactive'], true)) {
             $statusValue = $request->status === 'active' ? 1 : 0;
             $query->whereHas('petAllergies', function ($allergyQuery) use ($statusValue) {
+                if (request()->boolean('trash')) {
+                    $allergyQuery->onlyTrashed();
+                }
                 $allergyQuery->where('is_active', $statusValue);
             });
         }
 
         if ($request->filled('severity') && in_array($request->severity, ['mild', 'moderate', 'severe'], true)) {
             $query->whereHas('petAllergies', function ($allergyQuery) use ($request) {
+                if (request()->boolean('trash')) {
+                    $allergyQuery->onlyTrashed();
+                }
                 $allergyQuery->where('severity', $request->severity);
             });
         }
@@ -56,7 +81,9 @@ class PetAllergyController extends Controller
                 'q' => $request->q,
                 'status' => $request->status,
                 'severity' => $request->severity,
+                'trash' => $showTrash,
             ],
+            'showTrash' => $showTrash,
         ]);
     }
 
@@ -64,16 +91,24 @@ class PetAllergyController extends Controller
     {
         $pet->load(['owner.user']);
 
-        $allergies = $pet->petAllergies()
+        $showTrash = request()->boolean('trash');
+
+        $allergiesQuery = $pet->petAllergies()
             ->with(['medicalRecord:id,visit_date'])
             ->orderByDesc('is_active')
             ->orderByDesc('diagnosed_date')
-            ->orderByDesc('id')
-            ->get();
+            ->orderByDesc('id');
+
+        if ($showTrash) {
+            $allergiesQuery->onlyTrashed()->orderByDesc('deleted_at');
+        }
+
+        $allergies = $allergiesQuery->get();
 
         return view('admin.pet-allergies.pet-details', [
             'pet' => $pet,
             'allergies' => $allergies,
+            'showTrash' => $showTrash,
         ]);
     }
 
@@ -161,5 +196,14 @@ class PetAllergyController extends Controller
         return redirect()
             ->route('admin.pet-allergies.index')
             ->with('success', 'Pet allergy deleted successfully.');
+    }
+
+    public function restore(int $id)
+    {
+        $allergy = PetAllergy::onlyTrashed()->findOrFail($id);
+        $allergy->restore();
+
+        return redirect()->route('admin.pet-allergies.index', ['trash' => 1])
+            ->with('success', 'Pet allergy restored successfully.');
     }
 }

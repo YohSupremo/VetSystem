@@ -257,6 +257,15 @@
         <p>Manage client invoices and billing information</p>
     </div>
     <div class="header-actions">
+        @if($showTrash)
+            <a href="{{ route('admin.billing.index', request()->except('trash', 'page')) }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left"></i> Back To Active
+            </a>
+        @else
+            <a href="{{ route('admin.billing.index', array_merge(request()->query(), ['trash' => 1])) }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-trash-restore"></i> View Trash
+            </a>
+        @endif
         <a href="{{ route('admin.billing.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Create Invoice
         </a>
@@ -384,22 +393,31 @@
                             <td data-label="Status"><span class="status-badge {{ $statusClass }}">{{ ucfirst($invoice->status) }}</span></td>
                             <td data-label="Actions">
                                 <div class="action-group">
-                                    <a href="{{ route('admin.billing.show', $invoice->id) }}" class="btn btn-sm btn-outline-primary" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.billing.edit', $invoice->id) }}" class="btn btn-sm btn-outline-secondary" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="{{ route('admin.billing.payment', $invoice->id) }}" class="btn btn-sm btn-outline-success" title="Payment">
-                                        <i class="fas fa-credit-card"></i>
-                                    </a>
-                                    <form action="{{ route('admin.billing.destroy', $invoice->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this invoice?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if($showTrash)
+                                        <form action="{{ route('admin.billing.restore', $invoice->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Restore this invoice?');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Restore">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('admin.billing.show', $invoice->id) }}" class="btn btn-sm btn-outline-primary" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.billing.edit', $invoice->id) }}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ route('admin.billing.payment', $invoice->id) }}" class="btn btn-sm btn-outline-success" title="Payment">
+                                            <i class="fas fa-credit-card"></i>
+                                        </a>
+                                        <form action="{{ route('admin.billing.destroy', $invoice->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this invoice?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

@@ -167,15 +167,27 @@
 </style>
 @endpush
 @section('content')
+@php $showTrash = request()->boolean('trash'); @endphp
 <div class="content-header">
     <div class="header-title">
         <h1><i class="fas fa-home"></i> Pet Boarding Management</h1>
         <p>Manage all boarding activities and cage assignments in one place</p>
     </div>
     <div class="header-actions">
-        <a href="{{ route('admin.boarding.new-boarding') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> New Boarding
-        </a>
+        <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
+            @if($showTrash)
+                <a href="{{ route('admin.boarding.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back To Active
+                </a>
+            @else
+                <a href="{{ route('admin.boarding.index', ['trash' => 1]) }}" class="btn btn-secondary">
+                    <i class="fas fa-trash-restore"></i> View Trash
+                </a>
+                <a href="{{ route('admin.boarding.new-boarding') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Boarding
+                </a>
+            @endif
+        </div>
     </div>
 </div>
 
@@ -333,7 +345,7 @@
                             @php
                                 $invoice = $boardingBilling[$boarding->id] ?? null;
                             @endphp
-                            @if($invoice && !in_array($invoice->status, ['paid', 'cancelled']))
+                            @if(!$showTrash && $invoice && !in_array($invoice->status, ['paid', 'cancelled']))
                                 <form method="POST" action="{{ route('admin.boarding.payment.process', $boarding->id) }}" style="display:inline;" onsubmit="return confirm('Mark this boarding invoice as paid?');">
                                     @csrf
                                     <input type="hidden" name="payment_method" value="cash">
@@ -346,16 +358,25 @@
                             <a href="{{ route('admin.boarding.show', $boarding->id) }}" class="btn-icon" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ route('admin.boarding.edit', $boarding->id) }}" class="btn-icon" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id) }}" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this boarding record?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-icon text-danger" title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            @if($showTrash)
+                                <form method="POST" action="{{ route('admin.boarding.restore', $boarding->id) }}" class="delete-form" onsubmit="return confirm('Restore this boarding record?');">
+                                    @csrf
+                                    <button type="submit" class="btn-icon" title="Restore" style="color:#0f766e;">
+                                        <i class="fas fa-trash-restore"></i>
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ route('admin.boarding.edit', $boarding->id) }}" class="btn-icon" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST" action="{{ route('admin.boarding.destroy', $boarding->id) }}" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this boarding record?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-icon text-danger" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @endif
                         @elseif($boarding->appointment)
                             <a href="{{ route('admin.appointments.show', $boarding->appointment->id) }}" class="btn-icon" title="View Appointment">
                                 <i class="fas fa-calendar-check"></i>

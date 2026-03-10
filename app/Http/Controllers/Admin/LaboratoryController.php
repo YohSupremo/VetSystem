@@ -27,19 +27,34 @@ class LaboratoryController extends Controller
     /**
      * Schema-based Laboratory Dashboard (lab_requisitions + lab_tests)
      */
-    public function dashboard()
+    public function dashboard(Request $request)
     {
-        $pendingRequisitions = LabRequisition::where('status', 'pending')->count();
-        $completedRequisitions = LabRequisition::where('status', 'completed')->count();
-        $totalLabTests = LabTest::count();
+        $showTrash = $request->boolean('trash');
 
-        $requisitions = LabRequisition::with([
+        $pendingRequisitions = LabRequisition::query()
+            ->when($showTrash, fn ($q) => $q->onlyTrashed())
+            ->where('status', 'pending')
+            ->count();
+
+        $completedRequisitions = LabRequisition::query()
+            ->when($showTrash, fn ($q) => $q->onlyTrashed())
+            ->where('status', 'completed')
+            ->count();
+
+        $totalLabTests = LabTest::query()
+            ->when($showTrash, fn ($q) => $q->onlyTrashed())
+            ->count();
+
+        $requisitions = LabRequisition::query()
+            ->when($showTrash, fn ($q) => $q->onlyTrashed())
+            ->with([
             'medicalRecord.pet.owner.user',
             'test',
             'requestedBy',
             'invoice.invoiceItems',
             'invoice.payments',
         ])
+            ->orderByDesc('deleted_at')
             ->orderByDesc('requested_date')
             ->paginate(10);
 
@@ -68,9 +83,16 @@ class LaboratoryController extends Controller
     /**
      * Lab Tests (Catalog)
      */
-    public function testsIndex()
+    public function testsIndex(Request $request)
     {
-        $labTests = LabTest::orderBy('test_name')->paginate(15);
+        $showTrash = $request->boolean('trash');
+
+        $labTests = LabTest::query()
+            ->when($showTrash, fn ($q) => $q->onlyTrashed())
+            ->orderBy('test_name')
+            ->paginate(15)
+            ->appends($request->query());
+
         return view('admin.laboratory.tests.index', compact('labTests'));
     }
 
@@ -133,6 +155,15 @@ class LaboratoryController extends Controller
 
         return redirect()->route('admin.laboratory.tests.index')
             ->with('success', 'Lab test deleted successfully.');
+    }
+
+    public function testsRestore(int $id)
+    {
+        $labTest = LabTest::onlyTrashed()->findOrFail($id);
+        $labTest->restore();
+
+        return redirect()->route('admin.laboratory.tests.index', ['trash' => 1])
+            ->with('success', 'Lab test restored successfully.');
     }
 
     /**
@@ -269,7 +300,11 @@ class LaboratoryController extends Controller
             'invoice.payments',
             'medicalRecord.pet',
             'test',
-        ])->findOrFail($id);
+        ])->withTrashed()->findOrFail($id);
+
+        if (method_exists($labRequisition, 'trashed') && $labRequisition->trashed()) {
+            return back()->withErrors(['error' => 'Cannot process payment for a requisition in trash. Restore it first.']);
+        }
 
         if ($labRequisition->status === 'cancelled') {
             return back()->withErrors(['error' => 'Cancelled requisitions cannot be marked as paid.']);
@@ -410,6 +445,15 @@ class LaboratoryController extends Controller
 
         return redirect()->route('admin.laboratory.index')
             ->with('success', 'Lab requisition deleted successfully.');
+    }
+
+    public function requisitionsRestore(int $id)
+    {
+        $labRequisition = LabRequisition::onlyTrashed()->findOrFail($id);
+        $labRequisition->restore();
+
+        return redirect()->route('admin.laboratory.index', ['trash' => 1])
+            ->with('success', 'Lab requisition restored successfully.');
     }
 
     /**

@@ -8,6 +8,15 @@
     <div class="card-header vaccination-header">
         <h3><i class="fas fa-syringe"></i> Vaccination Records</h3>
         <div class="vaccination-actions">
+            @if($showTrash ?? false)
+            <a href="{{ route('admin.vaccinations.index', request()->except('trash', 'page')) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back To Active
+            </a>
+            @else
+            <a href="{{ route('admin.vaccinations.index', array_merge(request()->query(), ['trash' => 1])) }}" class="btn btn-secondary">
+                <i class="fas fa-trash-restore"></i> View Trash
+            </a>
+            @endif
             @if(auth()->user()->role !== 'veterinarian')
             <a href="{{ route('admin.inventory.index') }}" class="btn btn-success btn-vaccination-inventory">
                 <i class="fas fa-vial"></i> Manage Vaccines (Inventory)
@@ -36,12 +45,18 @@
                             <div><strong>Vaccinations:</strong> {{ $pet->vaccination_total_count ?? $pet->vaccinations->count() }}</div>
                         </div>
                         <div class="pet-actions">
-                            <a href="{{ route('admin.vaccinations.pet', $pet->id) }}" class="btn btn-secondary btn-sm">
-                                <i class="fas fa-eye"></i> View
-                            </a>
-                            <a href="{{ route('admin.vaccinations.create', ['pet_id' => $pet->id]) }}" class="btn btn-secondary btn-sm">
-                                <i class="fas fa-plus"></i> Add
-                            </a>
+                            @if($showTrash ?? false)
+                                <a href="{{ route('admin.vaccinations.pet', ['pet' => $pet->id, 'trash' => 1]) }}" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-eye"></i> View Trash
+                                </a>
+                            @else
+                                <a href="{{ route('admin.vaccinations.pet', $pet->id) }}" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="{{ route('admin.vaccinations.create', ['pet_id' => $pet->id]) }}" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-plus"></i> Add
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>

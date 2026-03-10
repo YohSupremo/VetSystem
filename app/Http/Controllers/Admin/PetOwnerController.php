@@ -17,7 +17,15 @@ class PetOwnerController extends Controller
      */
     public function index(Request $request)
     {
-        $owners = QueryBuilder::for(PetOwner::class)
+        $showTrash = $request->boolean('trash');
+
+        $baseQuery = PetOwner::query();
+
+        if ($showTrash) {
+            $baseQuery->onlyTrashed();
+        }
+
+        $owners = QueryBuilder::for($baseQuery)
             ->with(['user', 'pets'])
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value) {
@@ -44,7 +52,16 @@ class PetOwnerController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        return view('admin.pet-owners.index', compact('owners'));
+        return view('admin.pet-owners.index', compact('owners', 'showTrash'));
+    }
+
+    public function restore(int $id)
+    {
+        $owner = PetOwner::onlyTrashed()->findOrFail($id);
+        $owner->restore();
+
+        return redirect()->route('admin.pet-owners.index', ['trash' => 1])
+            ->with('success', 'Pet owner restored successfully.');
     }
 
     /**
@@ -52,7 +69,12 @@ class PetOwnerController extends Controller
      */
     public function create()
     {
-        $users = User::where('role', 'registered_user')->doesntHave('petOwner')->get();
+        $users = User::where('role', 'registered_user')
+            ->whereDoesntHave('petOwner', function ($query) {
+                $query->withTrashed();
+            })
+            ->get();
+
         return view('admin.pet-owners.create', compact('users'));
     }
 
@@ -62,7 +84,11 @@ class PetOwnerController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => [
+                'required',
+                'exists:users,id',
+                Rule::unique('pet_owners', 'user_id'),
+            ],
             'notes' => 'nullable|string',
             'preferred_contact_method' => 'nullable|in:email,sms',
             // Single emergency contact fields stored on pet_owners
@@ -80,8 +106,8 @@ class PetOwnerController extends Controller
             'emergency_contact_relationship' => $validated['emergency_contact_relationship'] ?? null,
         ]);
 
-        // Automatically change user role to pet_owner if they have pets
-        if ($owner->user && $owner->user->pets->count() > 0) {
+        // Automatically change user role to pet_owner if this owner already has pets.
+        if ($owner->user && $owner->pets()->count() > 0) {
             $owner->user->update(['role' => 'pet_owner']);
         }
 
@@ -107,7 +133,9 @@ class PetOwnerController extends Controller
         
         // Get users with registered_user role who are not already assigned as pet owners
         $unassignedUsers = User::where('role', 'registered_user')
-            ->whereDoesntHave('petOwner')
+            ->whereDoesntHave('petOwner', function ($query) {
+                $query->withTrashed();
+            })
             ->where('id', '!=', $petOwner->user_id) // Exclude current assigned user
             ->get();
             

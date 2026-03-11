@@ -114,33 +114,51 @@
                 </div>
             </div>
 
-            <h5 class="mb-3">Operational Defaults</h5>
+            <h5 class="mb-3">Working Operations Time</h5>
+            <p class="text-muted mb-3" style="font-size: 13px;">These hours define the Morning and Night shifts used in Staff Scheduling.</p>
             <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <label class="form-label">Appointment Slot (minutes)</label>
+                <div class="col-md-3">
+                    <label class="form-label">Morning Shift Start</label>
                     <input
-                        type="number"
-                        min="1"
-                        name="appointment_slot_minutes"
+                        type="time"
+                        name="morning_shift_start"
                         class="form-control"
-                        value="{{ old('appointment_slot_minutes', $clinicSettings->appointment_slot_minutes) }}"
+                        value="{{ old('morning_shift_start', substr($clinicSettings->morning_shift_start ?? '09:00', 0, 5)) }}"
                         required
                     >
                 </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Appointment Buffer (minutes)</label>
+                <div class="col-md-3">
+                    <label class="form-label">Morning Shift End</label>
                     <input
-                        type="number"
-                        min="0"
-                        name="appointment_buffer_minutes"
+                        type="time"
+                        name="morning_shift_end"
                         class="form-control"
-                        value="{{ old('appointment_buffer_minutes', $clinicSettings->appointment_buffer_minutes) }}"
+                        value="{{ old('morning_shift_end', substr($clinicSettings->morning_shift_end ?? '17:00', 0, 5)) }}"
                         required
                     >
                 </div>
-
+                <div class="col-md-3">
+                    <label class="form-label">Night Shift Start</label>
+                    <input
+                        type="time"
+                        name="night_shift_start"
+                        class="form-control"
+                        value="{{ old('night_shift_start', substr($clinicSettings->night_shift_start ?? '17:00', 0, 5)) }}"
+                        required
+                    >
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Night Shift End</label>
+                    <input
+                        type="time"
+                        name="night_shift_end"
+                        class="form-control"
+                        value="{{ old('night_shift_end', substr($clinicSettings->night_shift_end ?? '00:00', 0, 5)) }}"
+                        required
+                    >
+                </div>
             </div>
+
 
             <div class="d-flex justify-content-between border-top pt-3 mt-3">
                 <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>

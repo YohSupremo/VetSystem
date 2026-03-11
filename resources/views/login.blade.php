@@ -19,7 +19,6 @@
 
         @include('partials.flash-messages', [
             'containerClass' => 'app-flash-inline app-flash-themed',
-            'showSuccess' => false,
         ])
 
         <form action="/login-success" method="POST">

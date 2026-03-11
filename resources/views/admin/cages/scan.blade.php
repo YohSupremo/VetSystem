@@ -574,38 +574,59 @@
     /* Responsive */
     @media (max-width: 768px) {
         .scan-container {
-            padding: 1rem;
+            padding: 0.75rem;
         }
 
         .scan-title {
-            font-size: 1.5rem;
+            font-size: 1.35rem;
+        }
+
+        .cage-code-display {
+            font-size: 0.95rem;
+            padding: 0.4rem 1.1rem;
         }
 
         .status-header {
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.75rem;
             text-align: center;
+            padding: 1.25rem;
+        }
+
+        .status-info h2 {
+            font-size: 1.2rem;
+        }
+
+        .pet-card {
+            padding: 1.25rem;
         }
 
         .pet-header {
             flex-direction: column;
             align-items: center;
             text-align: center;
+            gap: 1.25rem;
         }
 
         .pet-avatar {
-            width: 100px;
-            height: 100px;
-            font-size: 2.5rem;
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+            border-radius: 16px;
+        }
+
+        .pet-avatar::after {
+            border-radius: 18px;
         }
 
         .pet-name {
-            font-size: 1.5rem;
+            font-size: 1.35rem;
         }
 
         .pet-meta {
-            flex-direction: column;
-            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.4rem 0.75rem;
         }
 
         .pet-meta-divider {
@@ -614,6 +635,114 @@
 
         .info-grid {
             grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .info-card {
+            padding: 1rem;
+        }
+
+        .notes-section {
+            padding: 1.1rem;
+            margin-top: 1.25rem;
+        }
+
+        /* Nursing Care */
+        .nursing-care-section {
+            padding: 1.25rem;
+        }
+
+        .care-header {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .care-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .care-card {
+            padding: 1.15rem;
+        }
+
+        .care-card-header {
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.6rem;
+            gap: 0.6rem;
+        }
+
+        .care-icon {
+            width: 36px;
+            height: 36px;
+            font-size: 1rem;
+            border-radius: 9px;
+        }
+
+        .care-title {
+            font-size: 0.92rem;
+        }
+
+        .care-content {
+            font-size: 0.88rem;
+        }
+
+        .care-times {
+            gap: 0.4rem;
+        }
+
+        .time-badge {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+        }
+
+        /* Medical Records */
+        .medical-section {
+            padding: 1.25rem;
+        }
+
+        .medical-header {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .medical-record {
+            padding: 1rem;
+        }
+
+        .medical-record-header {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .record-date {
+            align-self: flex-start;
+        }
+
+        .diagnosis {
+            font-size: 0.92rem;
+        }
+
+        .treatment {
+            font-size: 0.82rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 2.5rem 1.25rem;
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+        }
+
+        .empty-icon i {
+            font-size: 2rem;
+        }
+
+        .empty-title {
+            font-size: 1.2rem;
         }
     }
 </style>

@@ -16,15 +16,15 @@ class ClinicSetting extends Model
         'currency_code',
         'invoice_prefix',
         'default_tax_rate',
-        'appointment_slot_minutes',
-        'appointment_buffer_minutes',
+        'morning_shift_start',
+        'morning_shift_end',
+        'night_shift_start',
+        'night_shift_end',
         'updated_by',
     ];
 
     protected $casts = [
         'default_tax_rate' => 'decimal:2',
-        'appointment_slot_minutes' => 'integer',
-        'appointment_buffer_minutes' => 'integer',
     ];
 
     public static function defaults(): array
@@ -38,10 +38,41 @@ class ClinicSetting extends Model
             'currency_code' => 'PHP',
             'invoice_prefix' => 'INV',
             'default_tax_rate' => 0,
-            'appointment_slot_minutes' => 30,
-            'appointment_buffer_minutes' => 10,
+            'morning_shift_start' => '09:00',
+            'morning_shift_end' => '17:00',
+            'night_shift_start' => '17:00',
+            'night_shift_end' => '00:00',
             'updated_by' => null,
         ];
+    }
+
+    /**
+     * Get formatted shift label for display.
+     */
+    public static function shiftLabel(string $shift): string
+    {
+        $settings = static::current();
+        if ($shift === 'morning') {
+            return static::formatTime($settings->morning_shift_start) . ' - ' . static::formatTime($settings->morning_shift_end);
+        }
+        return static::formatTime($settings->night_shift_start) . ' - ' . static::formatTime($settings->night_shift_end);
+    }
+
+    /**
+     * Determine which shift a given hour falls into.
+     */
+    public static function shiftForHour(int $hour): string
+    {
+        $settings = static::current();
+        $morningStart = (int) substr($settings->morning_shift_start, 0, 2);
+        $morningEnd = (int) substr($settings->morning_shift_end, 0, 2);
+
+        return ($hour >= $morningStart && $hour < $morningEnd) ? 'morning' : 'night';
+    }
+
+    protected static function formatTime(string $time): string
+    {
+        return \Carbon\Carbon::createFromFormat('H:i', substr($time, 0, 5))->format('g:i A');
     }
 
     public function updatedBy()

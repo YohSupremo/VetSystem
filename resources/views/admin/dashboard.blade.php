@@ -872,82 +872,137 @@
                 top: 0;
                 width: 280px;
                 height: 100vh;
+                max-height: none;
                 z-index: 1000;
                 transition: left 0.3s ease;
                 background: var(--white);
                 box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+                order: unset;
             }
 
             .sidebar.active {
                 left: 0;
             }
-            
-            .sidebar::before {
-                content: '';
+
+            /* Hide burger when sidebar is open */
+            .sidebar.active ~ .mobile-menu-toggle,
+            .sidebar.active + .mobile-menu-toggle {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            /* Overlay */
+            .sidebar-overlay {
+                display: block;
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
                 background: rgba(0, 0, 0, 0.5);
-                z-index: -1;
+                z-index: 999;
                 opacity: 0;
-                transition: opacity 0.3s ease;
                 pointer-events: none;
+                transition: opacity 0.3s ease;
             }
-            
-            .sidebar.active::before {
+
+            .sidebar-overlay.active {
                 opacity: 1;
                 pointer-events: auto;
             }
 
             .main-content {
                 padding: 0px 15px 15px 15px; /* Remove top padding */
+                animation: none;
             }
 
             .header {
-                flex-direction: row !important;
-                gap: 15px;
-                align-items: center;
-                padding: 20px 15px;
+                display: grid !important;
+                grid-template-columns: 1fr auto;
+                grid-template-rows: auto auto;
+                gap: 8px 12px;
+                padding: 12px 15px 14px 15px;
                 margin-left: -15px;
                 margin-right: -15px;
-                margin-top: -15px;
+                margin-top: 0;
+                position: sticky;
+                top: 0;
+                z-index: 998;
+                animation: none;
             }
-            
-            .header-left {
-                text-align: center;
-            }
-            
-            .header-left h2 {
-                font-size: 24px;
-            }
-            
+
+            /* Row 1: Search bar spans full width (burger overlaps left) */
             .header-right {
+                grid-column: 1 / -1;
+                grid-row: 1;
+                display: flex !important;
                 flex-direction: row !important;
-                flex-wrap: wrap;
-                gap: 10px;
+                flex-wrap: nowrap;
+                gap: 8px;
                 align-items: center;
-                justify-content: flex-end;
+                padding-left: 50px;
+            }
+
+            .header-right .search-box {
+                flex: 1;
+                min-width: 0;
+            }
+
+            /* Hide icons from row 1 — they'll be in the mobile grid */
+            .header-right .icon-button,
+            .header-right .user-avatar {
+                display: none !important;
             }
 
             .search-box input {
                 width: 100%;
+                font-size: 13px;
             }
             
             .search-box input:focus {
                 width: 100%;
             }
-            
-            .icon-button {
-                width: 44px;
-                height: 44px;
+
+            /* Row 2 left: Module title */
+            .header-left {
+                grid-column: 1;
+                grid-row: 2;
+                text-align: left;
+                align-self: center;
             }
             
-            .user-avatar {
-                width: 44px;
-                height: 44px;
-                font-size: 16px;
+            .header-left h2 {
+                font-size: 20px;
+                line-height: 1.2;
+                margin-bottom: 2px;
+            }
+            
+            .header-left p {
+                font-size: 11px;
+            }
+
+            /* Row 2 right: 2x2 icon grid */
+            .header-icons-mobile {
+                grid-column: 2;
+                grid-row: 2;
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                align-self: center;
+            }
+
+            .header-icons-mobile .icon-button {
+                width: 36px !important;
+                height: 36px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            
+            .header-icons-mobile .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 13px;
             }
             
             .card {
@@ -977,8 +1032,8 @@
             }
 
             .mobile-menu-toggle {
-                top: 15px;
-                left: 15px;
+                top: 13px;
+                left: 12px;
             }
 
             /* Better mobile navigation */
@@ -1063,9 +1118,8 @@
 
             /* Enhanced small mobile styles */
             .mobile-menu-toggle {
-                width: 45px;
-                height: 45px;
-                padding: 10px;
+                width: 40px;
+                height: 40px;
             }
 
             .mobile-close-btn {
@@ -1102,14 +1156,18 @@
         /* Large mobile and small tablet improvements */
         @media (max-width: 480px) {
             .main-content {
-                padding: 10px;
+                padding: 0px 10px 10px 10px;
             }
 
             .header {
-                padding: 15px 10px;
+                padding: 12px 10px 14px 10px;
                 margin-left: -10px;
                 margin-right: -10px;
-                margin-top: -10px;
+                margin-top: 0;
+            }
+
+            .header-right {
+                padding-left: 48px;
             }
 
             .card {
@@ -1159,49 +1217,62 @@
             }
         }
 
+        /* Sidebar Overlay - hidden by default, shown on mobile via media query */
+        .sidebar-overlay {
+            display: none;
+        }
+
         /* Mobile Menu Toggle */
         .mobile-menu-toggle {
             display: none;
             position: fixed;
-            top: 20px;
-            left: 20px;
+            top: 15px;
+            left: 14px;
             z-index: 1001;
-            background: var(--primary-orange);
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             color: var(--white);
-            border: none;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 12px;
-            padding: 12px;
+            width: 42px;
+            height: 42px;
+            padding: 0;
             cursor: pointer;
-            box-shadow: var(--shadow-soft);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
         }
         
-        .mobile-menu-toggle:hover {
+        .mobile-menu-toggle:hover,
+        .mobile-menu-toggle:active {
+            background: rgba(255, 255, 255, 0.4);
             transform: scale(1.05);
-            box-shadow: var(--shadow-hover);
         }
         
         .mobile-menu-toggle i {
-            font-size: 18px;
+            font-size: 17px;
         }
         
         .mobile-close-btn {
             display: none;
             position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--accent-pink);
+            top: 22px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.25);
             color: var(--white);
-            border: none;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             cursor: pointer;
             z-index: 1002;
             transition: all 0.3s ease;
+            font-size: 16px;
         }
         
-        .mobile-close-btn:hover {
+        .mobile-close-btn:hover,
+        .mobile-close-btn:active {
+            background: rgba(255, 255, 255, 0.4);
             transform: rotate(90deg);
         }
 
@@ -1307,43 +1378,40 @@
             
             /* Fix mobile menu button */
             .mobile-menu-toggle {
-                background: var(--primary-orange);
+                background: rgba(255, 255, 255, 0.25);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
                 color: white;
-                border: none;
+                border: 2px solid rgba(255, 255, 255, 0.3);
                 border-radius: 12px;
-                width: 44px;
-                height: 44px;
+                width: 42px;
+                height: 42px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
                 z-index: 1001;
                 position: fixed;
-                top: 20px;
-                left: 20px;
+                top: 13px;
+                left: 12px;
             }
             
-            .mobile-menu-toggle:hover {
-                background: var(--accent-pink);
+            .mobile-menu-toggle:hover,
+            .mobile-menu-toggle:active {
+                background: rgba(255, 255, 255, 0.4);
             }
             
             /* Header buttons in row with auto-adjust */
             .header-right {
                 position: relative;
                 z-index: 10;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-                align-items: center;
-                justify-content: flex-end;
-                width: 100%;
             }
             
             .search-box {
                 order: 1;
                 flex: 1;
-                min-width: 200px;
-                max-width: 300px;
+                min-width: 0;
+                max-width: none;
             }
             
             /* PERFECT CIRCLES - Override all conflicting styles */
@@ -1389,8 +1457,8 @@
                 }
                 
                 .search-box {
-                    min-width: 150px;
-                    max-width: 200px;
+                    min-width: 0;
+                    max-width: none;
                 }
                 
                 /* PERFECT SMALL CIRCLES */
@@ -1477,6 +1545,9 @@
     </style>
 </head>
 <body>
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
     <!-- Mobile Menu Toggle -->
     <button class="mobile-menu-toggle" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
@@ -1702,9 +1773,25 @@
                         {{ strtoupper(substr(Auth::user()->first_name ?? 'A', 0, 1)) }}{{ strtoupper(substr(Auth::user()->last_name ?? 'D', 0, 1)) }}
                     </div>
                 </div>
+                {{-- Mobile 2x2 icon grid (hidden on desktop, shown on mobile) --}}
+                <div class="header-icons-mobile" style="display:none;">
+                    <button class="icon-button" onclick="document.getElementById('notificationsBtn').click()">
+                        <i class="fas fa-bell"></i>
+                        @if(isset($unreadNotifications) && $unreadNotifications > 0)
+                            <span class="notification-dot"></span>
+                        @endif
+                    </button>
+                    <button class="icon-button" onclick="document.getElementById('messagesBtn').click()">
+                        <i class="fas fa-envelope"></i>
+                    </button>
+                    <a href="/logout" class="icon-button" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                    <div class="user-avatar" onclick="document.getElementById('userMenuBtn').click()">
+                        {{ strtoupper(substr(Auth::user()->first_name ?? 'A', 0, 1)) }}{{ strtoupper(substr(Auth::user()->last_name ?? 'D', 0, 1)) }}
+                    </div>
+                </div>
             </header>
-
-            <!-- Flash Messages -->
             @if(session('success'))
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle"></i>
@@ -2259,6 +2346,7 @@
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
             const mobileCloseBtn = document.getElementById('mobileCloseBtn');
             const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
             
             if (!mobileMenuToggle || !mobileCloseBtn || !sidebar) return;
 
@@ -2278,6 +2366,9 @@
             // Open mobile menu with animation
             mobileMenuToggle.addEventListener('click', () => {
                 sidebar.classList.add('active');
+                if (sidebarOverlay) sidebarOverlay.classList.add('active');
+                mobileMenuToggle.style.opacity = '0';
+                mobileMenuToggle.style.pointerEvents = 'none';
                 document.body.style.overflow = 'hidden';
                 
                 // Focus trap for accessibility
@@ -2289,11 +2380,15 @@
             // Close mobile menu with animation
             const closeMobileMenu = () => {
                 sidebar.classList.remove('active');
+                if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+                mobileMenuToggle.style.opacity = '1';
+                mobileMenuToggle.style.pointerEvents = 'auto';
                 document.body.style.overflow = 'auto';
                 mobileMenuToggle.focus();
             };
 
             mobileCloseBtn.addEventListener('click', closeMobileMenu);
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileMenu);
 
             // Enhanced swipe gesture support
             let touchStartX = 0;

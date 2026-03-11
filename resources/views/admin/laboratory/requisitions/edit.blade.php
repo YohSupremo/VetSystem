@@ -179,7 +179,7 @@
             <textarea id="notes" name="notes" rows="3" class="form-control">{{ old('notes', $labRequisition->notes) }}</textarea>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" id="results-group" style="display: {{ old('status', $labRequisition->status) === 'completed' ? 'block' : 'none' }};">
             <label for="results">Result Summary (Report) <span class="text-danger">*</span></label>
             <textarea id="results" name="results" rows="4" class="form-control @error('results') is-invalid @enderror"
                       placeholder="Enter a brief summary of the report or initial findings here...">{{ old('results', $labRequisition->results) }}</textarea>
@@ -209,5 +209,13 @@
         @method('DELETE')
     </form>
 </div>
+
+<script>
+    const statusSelect = document.getElementById('status');
+    const resultsGroup = document.getElementById('results-group');
+    statusSelect.addEventListener('change', function() {
+        resultsGroup.style.display = this.value === 'completed' ? 'block' : 'none';
+    });
+</script>
 @endsection
 

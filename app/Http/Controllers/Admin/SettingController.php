@@ -41,8 +41,10 @@ class SettingController extends BaseController
             'currency_code' => 'required|string|size:3',
             'invoice_prefix' => 'required|string|max:10',
             'default_tax_rate' => 'required|numeric|min:0|max:100',
-            'appointment_slot_minutes' => 'required|integer|min:1|max:480',
-            'appointment_buffer_minutes' => 'required|integer|min:0|max:240',
+            'morning_shift_start' => 'required|date_format:H:i',
+            'morning_shift_end' => 'required|date_format:H:i|after:morning_shift_start',
+            'night_shift_start' => 'required|date_format:H:i',
+            'night_shift_end' => 'required|date_format:H:i',
         ]);
 
         $payload = [
@@ -54,8 +56,10 @@ class SettingController extends BaseController
             'currency_code' => strtoupper($validated['currency_code']),
             'invoice_prefix' => strtoupper($validated['invoice_prefix']),
             'default_tax_rate' => $validated['default_tax_rate'],
-            'appointment_slot_minutes' => $validated['appointment_slot_minutes'],
-            'appointment_buffer_minutes' => $validated['appointment_buffer_minutes'],
+            'morning_shift_start' => $validated['morning_shift_start'],
+            'morning_shift_end' => $validated['morning_shift_end'],
+            'night_shift_start' => $validated['night_shift_start'],
+            'night_shift_end' => $validated['night_shift_end'],
             'updated_by' => Auth::id(),
         ];
 

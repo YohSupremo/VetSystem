@@ -32,8 +32,26 @@
                     </div>
                 </div>
                 <div class="card-body">
-                   
-                    
+                    {{-- Search Bar --}}
+                    <form method="GET" action="{{ route('admin.medical-records.index') }}" class="mb-3">
+                        @if($showTrash ?? false)
+                            <input type="hidden" name="trash" value="1">
+                        @endif
+                        <div class="medical-search-bar">
+                            <i class="fas fa-search" style="padding-left: 12px; color: #A0AEC0;"></i>
+                            <input
+                                type="text"
+                                name="search"
+                                value="{{ request('search') }}"
+                                placeholder="Search by pet name, owner, vet, complaint, or diagnosis..."
+                            >
+                            <button type="submit"><i class="fas fa-search"></i> Search</button>
+                            @if(request('search'))
+                                <a href="{{ route('admin.medical-records.index', ($showTrash ?? false) ? ['trash' => 1] : []) }}" class="clear-btn"><i class="fas fa-times"></i> Clear</a>
+                            @endif
+                        </div>
+                    </form>
+
                     <div class="table-responsive">
                         <table class="table table-hover table-bordered">
                             <thead class="thead-light">
@@ -248,6 +266,70 @@
     border: none;
 }
 
+.medical-search-bar {
+    display: flex;
+    gap: 0;
+    align-items: center;
+    background: #fff;
+    border-radius: 12px;
+    padding: 4px;
+    border: 2px solid #F5F5F7;
+    transition: all 0.3s ease;
+}
+
+.medical-search-bar:focus-within {
+    border-color: #FB923C;
+    box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.1);
+}
+
+.medical-search-bar input {
+    border: none;
+    background: transparent;
+    padding: 10px 14px;
+    font-size: 14px;
+    flex: 1;
+    min-width: 0;
+    outline: none;
+    color: #1F2937;
+    font-family: 'DM Sans', sans-serif;
+}
+
+.medical-search-bar input::placeholder {
+    color: #A0AEC0;
+}
+
+.medical-search-bar button,
+.medical-search-bar a {
+    border: none;
+    background: #FB923C;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.medical-search-bar button:hover,
+.medical-search-bar a:hover {
+    background: #e87a35;
+}
+
+.medical-search-bar .clear-btn {
+    background: #E2E8F0;
+    color: #1F2937;
+}
+
+.medical-search-bar .clear-btn:hover {
+    background: #CBD5E0;
+}
+
 @media (max-width: 768px) {
     .card-header {
         flex-direction: column;
@@ -256,6 +338,10 @@
     
     .table-responsive {
         font-size: 14px;
+    }
+
+    .medical-search-bar input {
+        font-size: 16px;
     }
 }
 </style>

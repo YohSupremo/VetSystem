@@ -18,8 +18,7 @@ return new class extends Migration
             $table->char('currency_code', 3)->default('PHP');
             $table->string('invoice_prefix', 10)->default('INV');
             $table->decimal('default_tax_rate', 5, 2)->default(0.00);
-            $table->integer('appointment_slot_minutes')->default(30);
-            $table->integer('appointment_buffer_minutes')->default(10);
+            // removed appointment_slot_minutes and appointment_buffer_minutes
             $table->integer('low_stock_threshold')->default(10);
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();

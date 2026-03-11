@@ -248,11 +248,6 @@ class PetController extends Controller
         $petOwner = PetOwner::where('user_id', $user->id)->first();
         $pet = $petOwner->pets()->findOrFail($id);
         
-        // Delete photo if exists
-        if ($pet->photo_path) {
-            File::delete(public_path($pet->photo_path));
-        }
-        
         $pet->delete();
         
         return redirect()->route('customer.pets.index')

@@ -18,19 +18,32 @@ class CageController extends Controller
 
     private function detectLanIp(): ?string
     {
+        // On Windows, parse ipconfig to find the adapter with a real LAN gateway
+        if (PHP_OS_FAMILY === 'Windows') {
+            $output = shell_exec('ipconfig');
+            if ($output) {
+                $sections = preg_split('/\r?\n(?=\S)/', $output);
+                foreach ($sections as $section) {
+                    if (preg_match('/Default Gateway[.\s]*:\s*(\d+\.\d+\.\d+\.\d+)/i', $section, $gw)
+                        && preg_match('/IPv4 Address[.\s]*:\s*(\d+\.\d+\.\d+\.\d+)/i', $section, $ip)) {
+                        $ipParts = explode('.', $ip[1]);
+                        $gwParts = explode('.', $gw[1]);
+                        // Gateway must share the same first 3 octets (same /24 subnet)
+                        if ($ipParts[0] === $gwParts[0] && $ipParts[1] === $gwParts[1] && $ipParts[2] === $gwParts[2]) {
+                            return $ip[1];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback: pick from hostname lookup
         $candidates = gethostbynamel(gethostname()) ?: [];
 
         foreach ($candidates as $ip) {
-            if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                continue;
-            }
-
-            if (str_starts_with($ip, '127.')) {
-                continue;
-            }
-
-            $isPrivate = preg_match('/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/', $ip) === 1;
-            if ($isPrivate) {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)
+                && !str_starts_with($ip, '127.')
+                && preg_match('/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/', $ip)) {
                 return $ip;
             }
         }
@@ -46,13 +59,14 @@ class CageController extends Controller
         $port = (int) $request->getPort();
 
         if ($this->isLoopbackHost($host)) {
-            $detectedIp = $this->detectLanIp();
-            if ($detectedIp) {
-                $host = $detectedIp;
+            // Use the actual server IP the request arrived on (works with --host=0.0.0.0)
+            $serverAddr = $request->server('SERVER_ADDR', '');
+            if ($serverAddr !== '' && !$this->isLoopbackHost($serverAddr)) {
+                $host = $serverAddr;
             } else {
-                $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
-                if (is_string($appHost) && $appHost !== '') {
-                    $host = $appHost;
+                $detectedIp = $this->detectLanIp();
+                if ($detectedIp) {
+                    $host = $detectedIp;
                 }
             }
         }

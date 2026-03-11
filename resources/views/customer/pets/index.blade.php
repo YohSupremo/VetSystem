@@ -5,7 +5,6 @@
 @section('title', 'My Pets - PawCare')
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/customer-ui.css') }}">
 <style>
 .pets-container {
     padding: 2rem;

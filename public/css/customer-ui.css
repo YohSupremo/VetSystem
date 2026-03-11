@@ -248,13 +248,18 @@
 
 /* Gradient Buttons */
 .btn-gradient {
-    background: var(--gradient-primary);
-    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #9333ea, #ec4899) !important;
+    color: white !important;
     border: none;
     border-radius: 16px;
     padding: 12px 24px;
     font-weight: 600;
     font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
     transition: var(--transition-smooth);
     position: relative;
     overflow: hidden;
@@ -276,7 +281,8 @@
 .btn-gradient:hover {
     transform: translateY(-3px) scale(1.05);
     box-shadow: 0 8px 25px rgba(147, 51, 234, 0.6);
-    color: white;
+    color: white !important;
+    text-decoration: none;
 }
 
 .btn-gradient:hover::before {
@@ -289,6 +295,9 @@
 
 /* Glass Buttons */
 .btn-glass {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -297,6 +306,8 @@
     padding: 12px 24px;
     font-weight: 600;
     font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
     transition: var(--transition-smooth);
     position: relative;
     overflow: hidden;
@@ -1028,15 +1039,16 @@
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 16px;
+    border: 2px solid rgba(147, 51, 234, 0.2) !important;
+    border-radius: 16px !important;
     padding: 12px 24px;
     font-weight: 600;
     font-size: 14px;
+    text-decoration: none;
     transition: var(--transition-smooth);
     position: relative;
     overflow: hidden;
-    color: #000;
+    color: #4a1d96 !important;
 }
 
 .customer-body .btn-outline-secondary:hover {
@@ -1054,13 +1066,14 @@
 }
 
 .customer-body .btn-primary {
-    background: var(--gradient-primary);
-    color: white;
+    background: linear-gradient(135deg, #9333ea, #ec4899) !important;
+    color: white !important;
     border: none;
     border-radius: 16px;
     padding: 12px 24px;
     font-weight: 600;
     font-size: 14px;
+    text-decoration: none;
     transition: var(--transition-smooth);
     position: relative;
     overflow: hidden;
@@ -1070,7 +1083,152 @@
 .customer-body .btn-primary:hover {
     transform: translateY(-3px) scale(1.05);
     box-shadow: 0 8px 25px rgba(147, 51, 234, 0.6);
+    color: white !important;
+    text-decoration: none;
+}
+
+.customer-body .btn-secondary {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #4a1d96 !important;
+    border: 2px solid rgba(147, 51, 234, 0.2);
+    border-radius: 16px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+.customer-body .btn-secondary:hover {
+    background: rgba(147, 51, 234, 0.1);
+    border-color: rgba(147, 51, 234, 0.4);
+    color: #4a1d96;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.15);
+}
+
+.customer-body .btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: var(--transition-smooth);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.customer-body .btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+    color: white;
+}
+
+.customer-body .btn-outline-danger {
+    background: transparent;
+    color: #ef4444;
+    border: 2px solid rgba(239, 68, 68, 0.4);
+    border-radius: 16px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: var(--transition-smooth);
+}
+
+.customer-body .btn-outline-danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+    color: #dc2626;
+    transform: translateY(-2px);
+}
+
+.customer-body .btn-outline-primary {
+    background: transparent;
+    color: #7c3aed;
+    border: 2px solid rgba(147, 51, 234, 0.3);
+    border-radius: 16px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: var(--transition-smooth);
+}
+
+.customer-body .btn-outline-primary:hover {
+    background: rgba(147, 51, 234, 0.1);
+    border-color: #7c3aed;
+    color: #6d28d9;
+    transform: translateY(-2px);
+}
+
+.customer-body .btn-light {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #4a1d96;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: var(--transition-smooth);
+}
+
+.customer-body .btn-light:hover {
+    background: rgba(255, 255, 255, 0.85);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    color: #4a1d96;
+}
+
+.customer-body .btn-link {
+    color: #7c3aed;
+    text-decoration: none;
+    font-weight: 600;
+    border: none;
+    background: none;
+    padding: 8px 16px;
+    border-radius: 12px;
+    transition: var(--transition-smooth);
+}
+
+.customer-body .btn-link:hover {
+    color: #6d28d9;
+    background: rgba(147, 51, 234, 0.08);
+    text-decoration: none;
+}
+
+.customer-body .btn-outline-light {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #4a1d96;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 16px;
+    font-weight: 600;
+    transition: var(--transition-smooth);
+}
+
+.customer-body .btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #4a1d96;
+    transform: translateY(-1px);
+}
+
+/* Small button adjustments */
+.customer-body .btn-sm {
+    padding: 6px 14px;
+    font-size: 13px;
+    border-radius: 12px;
+}
+
+.customer-body .btn-lg {
+    padding: 16px 32px;
+    font-size: 16px;
+    border-radius: 20px;
 }
 
 .customer-body .alert {

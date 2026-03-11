@@ -153,7 +153,7 @@
 
                 <div class="detail-label">Status</div>
                 <div class="detail-value">
-                    <span class="badge {{ $statusClass }}">{{ str_replace('_', ' ', $status) }}</span>
+                    <span class="badge {{ $statusClass }}">{{ ucwords(str_replace('_', ' ', $status)) }}</span>
                 </div>
 
                 <div class="detail-label">Requested Date</div>

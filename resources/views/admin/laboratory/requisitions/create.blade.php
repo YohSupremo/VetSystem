@@ -213,7 +213,14 @@
             @enderror
         </div>
 
-
+        <div class="form-group" id="results-group" style="display: {{ old('status') === 'completed' ? 'block' : 'none' }};">
+            <label for="results">Result Summary (Report)</label>
+            <textarea id="results" name="results" rows="4" class="form-control @error('results') is-invalid @enderror"
+                      placeholder="Enter a brief summary of the report or initial findings here...">{{ old('results') }}</textarea>
+            @error('results')
+                <span class="text-danger help-text">{{ $message }}</span>
+            @enderror
+        </div>
 
         <div class="actions">
             <a href="{{ route('admin.laboratory.index') }}" class="btn btn-secondary">Cancel</a>
@@ -234,6 +241,13 @@
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             dateInput.value = now.toISOString().slice(0,16);
         }
+    });
+
+    // Show report summary only when status is completed
+    const statusSelect = document.getElementById('status');
+    const resultsGroup = document.getElementById('results-group');
+    statusSelect.addEventListener('change', function() {
+        resultsGroup.style.display = this.value === 'completed' ? 'block' : 'none';
     });
 </script>
 @endsection

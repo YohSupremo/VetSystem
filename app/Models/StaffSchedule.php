@@ -78,6 +78,6 @@ class StaffSchedule extends Model
      */
     public function getShiftTimesAttribute()
     {
-        return $this->shift === 'morning' ? '9:00 AM - 5:00 PM' : '5:00 PM - 12:00 AM';
+        return ClinicSetting::shiftLabel($this->shift);
     }
 }

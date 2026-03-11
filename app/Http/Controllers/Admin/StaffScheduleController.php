@@ -20,7 +20,10 @@ class StaffScheduleController extends BaseController
             ->get();
 
         $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        $shifts = ['morning' => '9:00 AM - 5:00 PM', 'night' => '5:00 PM - 12:00 AM'];
+        $shifts = [
+            'morning' => \App\Models\ClinicSetting::shiftLabel('morning'),
+            'night'   => \App\Models\ClinicSetting::shiftLabel('night'),
+        ];
 
         return view('admin.staff-schedules.index', compact('staff', 'daysOfWeek', 'shifts'));
     }

@@ -285,7 +285,7 @@
                             {{ optional(optional(optional(optional($req->medicalRecord)->pet)->owner)->user)->last_name ?? '' }}
                         </td>
                         <td>{{ $req->test->test_name ?? 'N/A' }}</td>
-                        <td><span class="badge">{{ $req->status }}</span></td>
+                        <td><span class="badge">{{ ucwords(str_replace('_', ' ', $req->status)) }}</span></td>
                         <td>
                             @if($invoiceTotal !== null)
                                 ₱{{ number_format($invoiceTotal, 2) }}

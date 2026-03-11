@@ -13,22 +13,23 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
+use App\Models\ClinicSetting;
 
 class AppointmentController extends Controller
 {
-    private function isWithinWorkingHours(Carbon $dateTime): bool
-    {
-        $hour = (int) $dateTime->hour;
-
-        // Working hours: 9:00 AM to 11:59 PM.
-        return $hour >= 9;
-    }
-
     private function validateWorkingHours(Carbon $appointmentDate)
     {
-        if (!$this->isWithinWorkingHours($appointmentDate)) {
+        $settings = ClinicSetting::current();
+        $appointmentTime = $appointmentDate->format('H:i');
+
+        $inMorning = $appointmentTime >= $settings->morning_shift_start && $appointmentTime < $settings->morning_shift_end;
+        $inNight = $settings->night_shift_start < $settings->night_shift_end
+            ? ($appointmentTime >= $settings->night_shift_start && $appointmentTime < $settings->night_shift_end)
+            : ($appointmentTime >= $settings->night_shift_start || $appointmentTime < $settings->night_shift_end); // handles overnight
+
+        if (!$inMorning && !$inNight) {
             return back()->withInput()->withErrors([
-                'appointment_date' => 'Selected time is outside working hours. Please choose a time between 9:00 AM and 11:59 PM.',
+                'appointment_date' => 'Selected time is outside all working hours (' . ClinicSetting::shiftLabel('morning') . ' or ' . ClinicSetting::shiftLabel('night') . ').',
             ]);
         }
 
@@ -38,18 +39,38 @@ class AppointmentController extends Controller
     private function resolveShiftFromDateTime(Carbon $dateTime): string
     {
         $hour = (int) $dateTime->hour;
-
-        return ($hour >= 9 && $hour < 17) ? 'morning' : 'night';
+        return ClinicSetting::shiftForHour($hour);
     }
 
     private function validateAssigneeSchedule(int $assigneeId, Carbon $appointmentDate)
     {
         $dayOfWeek = $appointmentDate->format('l');
-        $shift = $this->resolveShiftFromDateTime($appointmentDate);
+        $settings = ClinicSetting::current();
+        $appointmentTime = $appointmentDate->format('H:i');
 
-        if (!StaffSchedule::isUserScheduled($assigneeId, $dayOfWeek, $shift)) {
+        $inMorning = $appointmentTime >= $settings->morning_shift_start && $appointmentTime < $settings->morning_shift_end;
+        $inNight = $settings->night_shift_start < $settings->night_shift_end
+            ? ($appointmentTime >= $settings->night_shift_start && $appointmentTime < $settings->night_shift_end)
+            : ($appointmentTime >= $settings->night_shift_start || $appointmentTime < $settings->night_shift_end); // handles overnight
+
+        if (!$inMorning && !$inNight) {
             return back()->withInput()->withErrors([
-                'veterinarian_id' => 'Selected staff is not scheduled on ' . $dayOfWeek . ' (' . ucfirst($shift) . ' shift) at the appointment time.',
+                'appointment_date' => 'Selected time is outside all working hours (' . ClinicSetting::shiftLabel('morning') . ' or ' . ClinicSetting::shiftLabel('night') . ').',
+            ]);
+        }
+
+        $shift = $inMorning ? 'morning' : 'night';
+        $isScheduled = StaffSchedule::isUserScheduled($assigneeId, $dayOfWeek, $shift);
+        if (!$isScheduled) {
+            return back()->withInput()->withErrors([
+                'veterinarian_id' => 'Selected staff is not scheduled for the ' . $shift . ' shift on ' . $dayOfWeek . '.',
+            ]);
+        }
+
+        // If scheduled, but time is not within the staff's shift (should not happen, but for safety)
+        if (($shift === 'morning' && !$inMorning) || ($shift === 'night' && !$inNight)) {
+            return back()->withInput()->withErrors([
+                'appointment_date' => 'Selected time is outside the working hours for the ' . $shift . ' shift (' . ClinicSetting::shiftLabel($shift) . ').',
             ]);
         }
 

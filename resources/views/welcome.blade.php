@@ -19,312 +19,178 @@
     padding: 40px;
 }
 
-/* Force 3 columns for mobile */
-@media (max-width: 768px) {
-    .nav-container {
-        flex-direction: column;
-        gap: 15px;
-        padding: 15px;
-        align-items: center !important;
-        justify-content: center !important;
-        text-align: center !important;
+/* ── Tablet (≤ 1024px) ─────────────────────────────────── */
+@media (max-width: 1024px) {
+    .carousel-container {
+        transform: none !important;
+        margin: 0 auto;
     }
-    
+}
+
+/* ── Mobile (≤ 768px) ──────────────────────────────────── */
+@media (max-width: 768px) {
+    /* ─ Navigation ─ */
+    .nav-container {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 20px;
+        gap: 10px;
+    }
+
     .logo {
         display: flex;
         align-items: center;
-        gap: 15px;
-        justify-content: center !important;
-        text-align: center !important;
+        gap: 10px;
     }
-    
+
+    .logo .paw { font-size: 1.8rem; }
+    .logo h1 { font-size: 1.4rem; }
+
     .nav-buttons {
         display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        width: 100%;
-        justify-content: center !important;
-        align-items: center !important;
-        text-align: center !important;
+        gap: 8px;
     }
-    
-    /* Center main content area */
-    main {
-        text-align: center !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-    
+
     .nav-buttons .btn {
-        flex: 1;
-        min-width: 120px;
-        text-align: center;
-        padding: 12px 16px;
-        font-size: 14px;
+        padding: 8px 16px;
+        font-size: 13px;
+        min-width: auto;
     }
-    
+
+    /* ─ Content Grid ─ */
     .content-grid {
         grid-template-columns: 1fr !important;
-        gap: 2vw;
-        padding: 3vw 3vw 3vw 1vw;
-        margin-left: -2vw;
-        align-items: stretch;
-        justify-items: stretch;
-        text-align: left;
+        gap: 24px;
+        padding: 20px;
     }
-    
-    /* Content follows navigation alignment */
+
+    /* ─ Hero Text ─ */
     .content-left {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
-        justify-content: flex-start;
-        text-align: left;
+        align-items: center;
+        text-align: center;
         width: 100%;
+        order: 1;
     }
-    
-    .content-left > div {
-        text-align: left;
-        align-items: flex-start;
-        justify-content: flex-start;
+
+    .content-left h2 {
+        font-size: 2rem;
+        line-height: 1.25;
     }
-    
-    .content-left h2,
+
     .content-left p {
-        text-align: left;
-        margin-left: 0;
-        margin-right: 0;
+        font-size: 0.95rem;
+        line-height: 1.6;
     }
-    
+
+    /* ─ CTA Buttons ─ */
     .cta-buttons {
         display: flex;
+        flex-direction: row;
         flex-wrap: wrap;
-        gap: 15px;
+        gap: 12px;
         width: 100%;
         justify-content: center;
-        align-items: center;
     }
-    
+
     .cta-buttons .btn {
         flex: 1;
-        min-width: 140px;
+        min-width: 130px;
         text-align: center;
-        padding: 15px;
+        padding: 14px 20px;
+        font-size: 14px;
+        justify-content: center;
     }
-    
-    /* Auto-adjusting carousel and stats positioning */
+
+    /* ─ Carousel ─ */
     .carousel-container {
-        position: relative;
-        width: 100%;
-        max-width: min(50vw, 20rem);
-        margin: 3vw auto 3vw -3vw;
+        order: 0;
+        width: 60vw;
+        max-width: 280px;
+        margin: 0 auto;
+        padding: 0;
         transform: none !important;
     }
-    
+
+    /* ─ Stats ─ */
     .stats {
         display: grid;
         grid-template-columns: repeat(3, 1fr) !important;
-        gap: 2vw;
-        margin-top: 4vw;
-        margin-left: 3vw;
-        margin-right: -3vw;
+        gap: 12px;
+        margin: 0;
+        padding-top: 0.5rem;
     }
-    
+
     .stat-item {
         text-align: center;
-        padding: 15px 10px;
+        padding: 14px 8px;
+        background: rgba(255,255,255,0.55);
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
+        border: 1px solid rgba(147,51,234,0.1);
     }
-    
+
     .stat-number {
-        font-size: 24px;
+        font-size: 1.5rem;
     }
-    
+
     .stat-label {
+        font-size: 0.7rem;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+    }
+}
+
+/* ── Small phones (≤ 480px) ────────────────────────────── */
+@media (max-width: 480px) {
+    .nav-container {
+        padding: 10px 14px;
+    }
+
+    .logo .paw { font-size: 1.5rem; }
+    .logo h1 { font-size: 1.2rem; }
+
+    .nav-buttons .btn {
+        padding: 7px 12px;
         font-size: 12px;
     }
-}
 
-@media (max-width: 576px) {
-    .nav-container {
-        flex-direction: column;
-        gap: 15px;
-        padding: 15px;
-        align-items: center !important;
-        justify-content: center !important;
-        text-align: center !important;
-    }
-    
-    .logo {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        justify-content: center !important;
-        text-align: center !important;
-    }
-    
-    .nav-buttons {
-        flex-direction: column;
-        gap: 8px;
-        justify-content: center !important;
-        align-items: center !important;
-        text-align: center !important;
-    }
-    
-    .nav-buttons .btn {
-        font-size: 13px;
-        padding: 10px 14px;
-        min-width: auto;
-    }
-    
     .content-grid {
-        grid-template-columns: 1fr !important;
-        padding: 3vw 3vw 3vw 1vw;
-        margin-left: -2vw;
-        gap: 2vw;
-        align-items: stretch;
-        justify-items: stretch;
-        text-align: left;
+        padding: 14px;
+        gap: 18px;
     }
-    
-    /* Content follows navigation alignment */
-    .content-left {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: flex-start;
-        text-align: left;
-        width: 100%;
+
+    .content-left h2 {
+        font-size: 1.65rem;
     }
-    
-    .content-left > div {
-        text-align: left;
-        align-items: flex-start;
-        justify-content: flex-start;
-    }
-    
-    .content-left h2,
+
     .content-left p {
-        text-align: left;
-        margin-left: 0;
-        margin-right: 0;
+        font-size: 0.88rem;
     }
-    
+
     .cta-buttons {
         flex-direction: column;
-        gap: 12px;
-        justify-content: center;
-        align-items: center;
+        gap: 10px;
     }
-    
+
     .cta-buttons .btn {
         padding: 12px;
-        font-size: 14px;
-        min-width: auto;
+        font-size: 13px;
     }
-    
-    .stats {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 2vw;
-        margin-top: 4vw;
-        margin-left: 2.5vw;
-        margin-right: -2.5vw;
-    }
-    
-    /* Auto-adjusting carousel */
-    .carousel-container {
-        position: relative;
-        width: 100%;
-        max-width: min(55vw, 20rem);
-        margin: 3vw auto 3vw -2.5vw;
-        transform: none !important;
-    }
-    
-    .stat-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 12px 8px;
-    }
-    
-    .stat-number {
-        font-size: 20px;
-    }
-    
-    .stat-label {
-        font-size: 11px;
-    }
-}
 
-@media (max-width: 480px) {
-    .content-grid {
-        grid-template-columns: 1fr !important;
-        padding: 3vw 3vw 3vw 1vw;
-        margin-left: -2vw;
-        gap: 2vw;
-        align-items: stretch;
-        justify-items: stretch;
-        text-align: left;
-    }
-    
-    /* Content follows navigation alignment */
-    .content-left {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: flex-start;
-        text-align: left;
-        width: 100%;
-    }
-    
-    .content-left > div {
-        text-align: left;
-        align-items: flex-start;
-        justify-content: flex-start;
-    }
-    
-    .content-left h2,
-    .content-left p {
-        text-align: left;
-        margin-left: 0;
-        margin-right: 0;
-    }
-    
-    .stats {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 2vw;
-        margin-top: 4vw;
-        margin-left: 2vw;
-        margin-right: -2vw;
-    }
-    
-    /* Auto-adjusting carousel */
     .carousel-container {
-        position: relative;
-        width: 100%;
-        max-width: min(60vw, 20rem);
-        margin: 3vw auto 3vw -2vw;
-        transform: none !important;
+        width: 55vw;
+        max-width: 220px;
     }
-    
-    .stat-item {
-        padding: 10px 6px;
-    }
-    
+
     .stat-number {
-        font-size: 18px;
+        font-size: 1.25rem;
     }
-    
+
     .stat-label {
-        font-size: 10px;
-    }
-    
-    /* Center carousel on mobile */
-    .carousel-container {
-        position: relative;
-        width: 100%;
-        max-width: 20rem;
-        margin: 0 auto;
-        transform: none !important;
+        font-size: 0.65rem;
     }
 }
 </style>
@@ -356,9 +222,9 @@
                 </div>
 
                 <div class="cta-buttons">
-                    <a href="/register" class="btn btn-primary">
-                        Get Started
-                        <span>&rarr;</span>
+                    <a href="/register" class="btn btn-cta-primary">
+                        <span>Get Started</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                     </a>
                     <a href="{{ route('learn-more') }}" class="btn btn-secondary">Learn More</a>
                 </div>
@@ -398,13 +264,13 @@
                             <img src="/images/carousel/pet-5.png" alt="Pet 5" class="carousel-image">
                         </div>
                     </div>
-                                        <div class="carousel-indicators">
-                        <span class="indicator active" onclick="goToSlide(0)"></span>
-                        <span class="indicator" onclick="goToSlide(1)"></span>
-                        <span class="indicator" onclick="goToSlide(2)"></span>
-                        <span class="indicator" onclick="goToSlide(3)"></span>
-                        <span class="indicator" onclick="goToSlide(4)"></span>
-                    </div>
+                </div>
+                <div class="carousel-indicators">
+                    <span class="indicator active" onclick="goToSlide(0)"></span>
+                    <span class="indicator" onclick="goToSlide(1)"></span>
+                    <span class="indicator" onclick="goToSlide(2)"></span>
+                    <span class="indicator" onclick="goToSlide(3)"></span>
+                    <span class="indicator" onclick="goToSlide(4)"></span>
                 </div>
             </div>
         </div>

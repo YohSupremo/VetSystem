@@ -12,7 +12,7 @@
 <div class="page-container">
     <div class="auth-card">
         <div class="logo-section">
-            <div class="paw-icon">MAIL</div>
+            <div class="paw-icon">✉️</div>
             <h2>Verify Your Email</h2>
             <p>Check your inbox and click the confirmation link to activate your account.</p>
         </div>
@@ -42,19 +42,18 @@
                     placeholder="Enter your registered email"
                     required
                 >
+                @error('email')
+                    <div class="text-danger mt-1">{{ $message }}</div>
+                @enderror
             </div>
             <button type="submit" class="btn btn-primary">Resend Verification Email</button>
-            <a href="{{ route('login') }}" class="btn btn-secondary">Go to Login</a>
+            <a href="{{ route('login') }}" class="btn btn-secondary text-center">Go to Login</a>
         </form>
 
-        @error('email')
-            <div class="text-danger text-center mb-2">{{ $message }}</div>
-        @enderror
-
         @if(session('verification_link'))
-            <div class="alert alert-warning mt-2">
-                <div class="mb-2"><strong>Mail fallback:</strong> use this secure link to verify now.</div>
-                <a href="{{ session('verification_link') }}" class="btn btn-sm btn-outline-dark">Verify Now</a>
+            <div class="alert alert-warning mt-2 text-center" style="border-radius: 1rem; border: 2px solid rgba(255, 193, 7, 0.3); background: rgba(255, 193, 7, 0.1);">
+                <div class="mb-2"><strong>📧 Mail fallback:</strong> use this secure link to verify now.</div>
+                <a href="{{ session('verification_link') }}" class="btn btn-sm btn-primary">Verify Now</a>
             </div>
         @endif
 

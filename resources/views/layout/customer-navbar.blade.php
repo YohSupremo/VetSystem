@@ -5,8 +5,11 @@
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    position: sticky;
+    position: fixed !important;
     top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
     z-index: 1020;
     box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
 }
@@ -141,10 +144,15 @@
     font-weight: 500;
 }
 
+/* Offset body content below fixed navbar */
+body.customer-body {
+    padding-top: 62px !important;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .customer-navbar {
-        background: rgba(255, 255, 255, 0.25) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
         backdrop-filter: blur(20px) !important;
         -webkit-backdrop-filter: blur(20px) !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
@@ -157,10 +165,23 @@
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         color: #000 !important;
     }
+
+    .customer-navbar .nav-link.active {
+        background: linear-gradient(135deg, var(--primary-purple, #6d28d9), var(--pink, #ec4899)) !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(147, 51, 234, 0.4);
+    }
     
     .customer-navbar .nav-link:hover {
         background: rgba(255, 255, 255, 0.25) !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .customer-navbar .nav-link.active:hover {
+        background: linear-gradient(135deg, #7C3AED, #DB2777) !important;
+        color: #ffffff !important;
+        border: none !important;
     }
     
     .customer-navbar .btn-logout {
@@ -200,7 +221,7 @@
 </style>
 @endpush
 
-<nav class="navbar navbar-expand-lg customer-navbar shadow-sm">
+<nav class="navbar navbar-expand-lg customer-navbar shadow-sm" style="position:fixed !important;top:0;left:0;right:0;width:100%;z-index:1020;">
     <div class="container-fluid px-3 px-md-4">
         <a class="navbar-brand d-flex align-items-center" href="{{ route('customer.dashboard') }}">
             <span class="paw-icon">🐾</span>

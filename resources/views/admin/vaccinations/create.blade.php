@@ -36,10 +36,10 @@
                 
                 <div class="form-group">
                     <label>Select Pet <span class="text-danger">*</span></label>
-                    @if(!empty($appointmentContext))
-                        <input type="hidden" name="pet_id" value="{{ old('pet_id', $selectedPetId ?? '') }}">
+                    @if(!empty($selectedPetId))
+                        <input type="hidden" name="pet_id" value="{{ old('pet_id', $selectedPetId) }}">
                     @endif
-                    <select name="pet_id" class="form-control" {{ !empty($appointmentContext) ? 'disabled' : '' }}>
+                    <select name="pet_id" class="form-control" {{ !empty($selectedPetId) ? 'disabled' : '' }}>
                         <option value="">Choose a pet...</option>
                         @forelse($pets as $pet)
                             <option value="{{ $pet->id }}" {{ old('pet_id', $selectedPetId ?? '') == $pet->id ? 'selected' : '' }}>

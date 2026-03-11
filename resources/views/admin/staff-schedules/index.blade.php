@@ -99,8 +99,8 @@
             <div>
                 <h5 class="mb-1">Weekly Schedule</h5>
                 <small class="text-muted">
-                    <span class="shift-badge shift-morning">Morning</span> 9:00 AM - 5:00 PM &nbsp;&nbsp;
-                    <span class="shift-badge shift-night">Night</span> 5:00 PM - 12:00 AM
+                    <span class="shift-badge shift-morning">Morning</span> {{ $shifts['morning'] }} &nbsp;&nbsp;
+                    <span class="shift-badge shift-night">Night</span> {{ $shifts['night'] }}
                 </small>
             </div>
         </div>

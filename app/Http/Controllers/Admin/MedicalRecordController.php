@@ -18,27 +18,71 @@ class MedicalRecordController extends Controller
     public function index(Request $request)
     {
         $showTrash = $request->boolean('trash');
+        $search = $request->input('search');
 
-        // Get IDs of the latest record for each pet
-        $latestIdsQuery = MedicalRecord::query();
         if ($showTrash) {
-            $latestIdsQuery->onlyTrashed();
+            // In trash view, show ALL trashed records individually
+            $query = MedicalRecord::onlyTrashed()
+                ->with(['pet.owner.user', 'veterinarian']);
+
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('pet', function ($petQ) use ($search) {
+                        $petQ->where('name', 'like', "%{$search}%")
+                             ->orWhere('species', 'like', "%{$search}%")
+                             ->orWhere('breed', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('pet.owner.user', function ($ownerQ) use ($search) {
+                        $ownerQ->where('first_name', 'like', "%{$search}%")
+                               ->orWhere('last_name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('veterinarian', function ($vetQ) use ($search) {
+                        $vetQ->where('first_name', 'like', "%{$search}%")
+                             ->orWhere('last_name', 'like', "%{$search}%");
+                    })
+                    ->orWhere('complaint', 'like', "%{$search}%")
+                    ->orWhere('diagnosis', 'like', "%{$search}%");
+                });
+            }
+
+            $records = $query->orderBy('deleted_at', 'desc')
+                ->paginate(15)
+                ->appends($request->query());
+        } else {
+            // Build base query with optional search
+            $baseQuery = MedicalRecord::query();
+
+            if ($search) {
+                $baseQuery->where(function ($q) use ($search) {
+                    $q->whereHas('pet', function ($petQ) use ($search) {
+                        $petQ->where('name', 'like', "%{$search}%")
+                             ->orWhere('species', 'like', "%{$search}%")
+                             ->orWhere('breed', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('pet.owner.user', function ($ownerQ) use ($search) {
+                        $ownerQ->where('first_name', 'like', "%{$search}%")
+                               ->orWhere('last_name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('veterinarian', function ($vetQ) use ($search) {
+                        $vetQ->where('first_name', 'like', "%{$search}%")
+                             ->orWhere('last_name', 'like', "%{$search}%");
+                    })
+                    ->orWhere('complaint', 'like', "%{$search}%")
+                    ->orWhere('diagnosis', 'like', "%{$search}%");
+                });
+            }
+
+            // Get IDs of the latest record for each pet (within filtered set)
+            $latestIds = (clone $baseQuery)->selectRaw('MAX(id) as id')
+                ->groupBy('pet_id')
+                ->pluck('id');
+
+            $records = MedicalRecord::whereIn('id', $latestIds)
+                ->with(['pet.owner.user', 'veterinarian'])
+                ->orderBy('visit_date', 'desc')
+                ->paginate(15)
+                ->appends($request->query());
         }
-
-        $latestIds = $latestIdsQuery->selectRaw('MAX(id) as id')
-            ->groupBy('pet_id')
-            ->pluck('id');
-
-        // Fetch the full records for these IDs
-        $recordsQuery = MedicalRecord::query();
-        if ($showTrash) {
-            $recordsQuery->onlyTrashed();
-        }
-
-        $records = $recordsQuery->whereIn('id', $latestIds)
-            ->with(['pet.owner.user', 'veterinarian'])
-            ->orderBy('visit_date', 'desc')
-            ->paginate(15);
         
         return view('admin.medical-records.index', compact('records', 'showTrash'));
     }

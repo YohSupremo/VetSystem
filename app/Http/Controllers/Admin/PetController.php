@@ -213,11 +213,6 @@ class PetController extends Controller
      */
     public function destroy(Pet $pet)
     {
-        // Delete photo if exists
-        if ($pet->photo_path) {
-            File::delete(public_path($pet->photo_path));
-        }
-
         $pet->delete();
 
         $pet->load('owner.user');

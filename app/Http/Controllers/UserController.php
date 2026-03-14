@@ -28,6 +28,14 @@ class UserController extends Controller
              $getData['password'] = bcrypt($getData['password']);
              $user = User::create($getData);
 
+             if ($user->shouldBypassEmailVerification()) {
+                 if (! $user->email_verified) {
+                     $user->forceFill(['email_verified' => true])->save();
+                 }
+
+                 return redirect('/login')->with('success', 'Demo account registered successfully. Email verification was skipped for testing.');
+             }
+
              $request->session()->put('verification_email', $user->email);
 
              $flash = [

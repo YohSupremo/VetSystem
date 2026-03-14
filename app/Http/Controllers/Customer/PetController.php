@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Pet;
 use App\Models\PetOwner;
+use App\Models\Prescription;
+use App\Models\ClinicSetting;
+use App\Models\QrScanLog;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -160,9 +163,114 @@ class PetController extends Controller
         $pet = $petOwner->pets()->findOrFail($id);
         
         // Load relationships
-        $pet->load(['vaccinations', 'prescriptions', 'medicalRecords']);
+        $pet->load(['vaccinations', 'prescriptions.assignedStaff', 'medicalRecords']);
         
         return view('customer.pets.show', compact('pet'));
+    }
+
+    public function publicQr($id)
+    {
+        $pet = Pet::with('owner.user')->findOrFail($id);
+        $scanUrl = route('pets.qr.records', ['id' => $pet->id]);
+
+        return view('pets.qr-public', compact('pet', 'scanUrl'));
+    }
+
+    public function publicMedicalRecords($id)
+    {
+        $pet = Pet::with([
+            'owner.user',
+            'medicalRecords' => function ($query) {
+                $query->with('veterinarian')->orderBy('visit_date', 'desc');
+            },
+            'prescriptions' => function ($query) {
+                $query->with(['medicalRecord.veterinarian', 'assignedStaff'])->orderBy('created_at', 'desc');
+            },
+            'vaccinations' => function ($query) {
+                $query->orderBy('administered_date', 'desc');
+            },
+            'chronicConditions' => function ($query) {
+                $query->orderBy('diagnosed_date', 'desc');
+            },
+            'allergies' => function ($query) {
+                $query->orderBy('diagnosed_date', 'desc');
+            },
+        ])->findOrFail($id);
+
+        $sessionUsername = session('username');
+        if ($sessionUsername) {
+            $scanner = User::where('username', $sessionUsername)->first();
+            if ($scanner) {
+                QrScanLog::safeLog([
+                    'scan_type' => 'pet',
+                    'pet_id' => $pet->id,
+                    'scanned_by' => $scanner->id,
+                    'scan_timestamp' => now(),
+                ]);
+            }
+        }
+
+        return view('pets.scan-medical-records', compact('pet'));
+    }
+
+    public function qrCode($id)
+    {
+        $user = $this->authenticateUser();
+        if ($user instanceof \Illuminate\Http\RedirectResponse) {
+            return $user;
+        }
+
+        view()->share('user', $user);
+
+        $petOwner = PetOwner::where('user_id', $user->id)->first();
+        if (! $petOwner) {
+            return redirect()->route('customer.pets.index')->with('error', 'No pet owner record found for your account.');
+        }
+
+        $pet = $petOwner->pets()->findOrFail($id);
+        $scanUrl = route('pets.qr.records', ['id' => $pet->id]);
+
+        return view('customer.pets.qr', compact('pet', 'scanUrl'));
+    }
+
+    public function qrMedicalRecords($id)
+    {
+        return redirect()->route('pets.qr.records', ['id' => $id]);
+    }
+
+    public function printPrescription($petId, $prescriptionId)
+    {
+        $user = $this->authenticateUser();
+        if ($user instanceof \Illuminate\Http\RedirectResponse) {
+            return $user;
+        }
+
+        view()->share('user', $user);
+
+        $petOwner = PetOwner::where('user_id', $user->id)->first();
+        if (! $petOwner) {
+            return redirect()->route('customer.pets.index')->with('error', 'No pet owner record found for your account.');
+        }
+
+        $pet = Pet::with('owner.user')
+            ->where('owner_id', $petOwner->id)
+            ->findOrFail($petId);
+
+        $prescription = Prescription::with([
+            'medicalRecord.pet.owner.user',
+            'medicalRecord.veterinarian',
+            'assignedStaff',
+            'dispensedBy',
+        ])
+            ->where('id', $prescriptionId)
+            ->whereHas('medicalRecord', function ($query) use ($pet) {
+                $query->where('pet_id', $pet->id);
+            })
+            ->firstOrFail();
+
+        $clinicSetting = ClinicSetting::current();
+
+        return view('customer.prescriptions.print', compact('pet', 'prescription', 'clinicSetting'));
     }
     
     public function edit($id)

@@ -11,12 +11,15 @@ class Prescription extends Model
 
     protected $fillable = [
         'medical_record_id',
+        'assigned_staff_id',
         'medication_name',
         'dosage',
         'frequency',
         'duration_days',
         'quantity',
         'instructions',
+        'external_clinic_name',
+        'external_veterinarian_name',
         'dispensed',
         'dispensed_at',
         'dispensed_by',
@@ -36,6 +39,11 @@ class Prescription extends Model
     public function dispensedBy()
     {
         return $this->belongsTo(User::class, 'dispensed_by');
+    }
+
+    public function assignedStaff()
+    {
+        return $this->belongsTo(User::class, 'assigned_staff_id');
     }
 
     public function getPetAttribute()

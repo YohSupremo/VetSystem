@@ -36,6 +36,7 @@ class RoleTestAccountsSeeder extends Seeder
                     'first_name' => $account['first_name'],
                     'last_name' => $account['last_name'],
                     'is_active' => 1,
+                    'email_verified' => 1,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]

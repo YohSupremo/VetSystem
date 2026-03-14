@@ -458,6 +458,9 @@
                                 <a href="{{ route('customer.pets.show', $pet->id) }}" class="btn-pet-action">
                                     <i class="fas fa-paw me-2"></i>View Profile
                                 </a>
+                                <a href="{{ route('pets.qr.public', $pet->id) }}" class="btn-pet-action" target="_blank">
+                                    <i class="fas fa-qrcode me-2"></i>Medical QR Code
+                                </a>
                                 <div class="row g-2">
                                     <div class="col-6">
                                         <a href="{{ route('customer.pets.edit', $pet->id) }}" class="btn-pet-action">

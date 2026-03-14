@@ -731,6 +731,9 @@
                             <a href="{{ route('admin.pets.show', $pet) }}" class="action-btn view-btn">
                                 <i class="fas fa-eye"></i> View
                             </a>
+                            <a href="{{ route('pets.qr.public', $pet->id) }}" class="action-btn view-btn" target="_blank">
+                                <i class="fas fa-qrcode"></i> QR
+                            </a>
                             <a href="{{ route('admin.pets.edit', $pet) }}" class="action-btn edit-btn">
                                 <i class="fas fa-edit"></i> Edit
                             </a>

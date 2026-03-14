@@ -451,6 +451,9 @@
             <a href="{{ route('admin.pets.edit', $pet->id) }}" class="btn btn-primary">
                 <i class="fas fa-edit"></i> Edit Pet
             </a>
+            <a href="{{ route('pets.qr.public', $pet->id) }}" class="btn btn-secondary" target="_blank">
+                <i class="fas fa-qrcode"></i> View QR
+            </a>
             <form action="{{ route('admin.pets.destroy', $pet->id) }}" method="POST" 
                   style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this pet?');">
                 @csrf

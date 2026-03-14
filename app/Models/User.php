@@ -40,8 +40,25 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'is_active' => 'boolean',
     ];
 
+    public function isDemoAccount(): bool
+    {
+        $username = strtolower((string) $this->username);
+        $email = strtolower((string) $this->email);
+
+        return str_contains($username, 'demo') || str_contains($email, 'demo');
+    }
+
+    public function shouldBypassEmailVerification(): bool
+    {
+        return (bool) config('app.demo_skip_email_verification', false) && $this->isDemoAccount();
+    }
+
     public function hasVerifiedEmail(): bool
     {
+        if ($this->shouldBypassEmailVerification()) {
+            return true;
+        }
+
         return (bool) $this->email_verified;
     }
 

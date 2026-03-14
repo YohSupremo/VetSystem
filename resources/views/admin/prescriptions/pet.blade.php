@@ -110,6 +110,24 @@
                                                 <span class="value">{{ $prescription->instructions }}</span>
                                             </div>
                                         @endif
+                                        @if($prescription->assignedStaff)
+                                            <div class="detail-row">
+                                                <span class="label">Assigned Staff:</span>
+                                                <span class="value">{{ $prescription->assignedStaff->first_name }} {{ $prescription->assignedStaff->last_name }}</span>
+                                            </div>
+                                        @endif
+                                        @if($prescription->external_clinic_name)
+                                            <div class="detail-row">
+                                                <span class="label">External Clinic:</span>
+                                                <span class="value">{{ $prescription->external_clinic_name }}</span>
+                                            </div>
+                                        @endif
+                                        @if($prescription->external_veterinarian_name)
+                                            <div class="detail-row">
+                                                <span class="label">External Veterinarian:</span>
+                                                <span class="value">{{ $prescription->external_veterinarian_name }}</span>
+                                            </div>
+                                        @endif
                                     </div>
                                     
                                     <div class="prescription-actions">

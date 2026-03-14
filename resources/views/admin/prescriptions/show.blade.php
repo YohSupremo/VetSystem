@@ -95,6 +95,25 @@
                             </div>
                         </div>
                     @endif
+
+                    @if($prescription->assignedStaff || $prescription->external_clinic_name || $prescription->external_veterinarian_name)
+                        <div class="instructions-section">
+                            <div class="instructions-header">
+                                <i class="fas fa-user-nurse"></i> Assignment & Source
+                            </div>
+                            <div class="instructions-content">
+                                @if($prescription->assignedStaff)
+                                    <div><strong>Assigned Staff:</strong> {{ $prescription->assignedStaff->first_name }} {{ $prescription->assignedStaff->last_name }}</div>
+                                @endif
+                                @if($prescription->external_clinic_name)
+                                    <div><strong>External Clinic:</strong> {{ $prescription->external_clinic_name }}</div>
+                                @endif
+                                @if($prescription->external_veterinarian_name)
+                                    <div><strong>External Veterinarian:</strong> {{ $prescription->external_veterinarian_name }}</div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 

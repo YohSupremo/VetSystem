@@ -9,6 +9,7 @@ use App\Models\InventoryItem;
 use App\Models\Notification;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PrescriptionController extends BaseController
 {
@@ -19,7 +20,7 @@ class PrescriptionController extends BaseController
     {
         $showTrash = $request->boolean('trash');
 
-        $query = Prescription::with(['medicalRecord.pet.owner.user', 'medicalRecord.veterinarian']);
+        $query = Prescription::with(['medicalRecord.pet.owner.user', 'medicalRecord.veterinarian', 'assignedStaff']);
 
         if ($showTrash) {
             $query->onlyTrashed();
@@ -98,6 +99,9 @@ class PrescriptionController extends BaseController
      */
     public function store(Request $request, NotificationService $notificationService)
     {
+        $user = Auth::user();
+        $canSetExternalSource = $user && in_array($user->role, ['veterinarian', 'admin'], true);
+
         $validated = $request->validate([
             'medical_record_id' => 'required|exists:medical_records,id',
             'inventory_item_id' => 'nullable|exists:inventory_items,id',
@@ -107,12 +111,22 @@ class PrescriptionController extends BaseController
             'duration_days' => 'required|integer|min:1',
             'quantity' => 'required|integer|min:1',
             'instructions' => 'nullable|string',
+            'external_clinic_name' => 'nullable|string|max:150',
+            'external_veterinarian_name' => 'nullable|string|max:150',
         ]);
 
         // If inventory item is selected, use its name as medication
         if ($request->filled('inventory_item_id')) {
             $inventoryItem = InventoryItem::find($request->inventory_item_id);
             $validated['medication_name'] = $inventoryItem->name;
+        }
+
+        // Assigned staff is always tied to the currently logged-in account.
+        $validated['assigned_staff_id'] = $user?->id;
+
+        if (! $canSetExternalSource) {
+            $validated['external_clinic_name'] = null;
+            $validated['external_veterinarian_name'] = null;
         }
 
         $prescription = Prescription::create($validated);
@@ -143,6 +157,14 @@ class PrescriptionController extends BaseController
             ]
         );
 
+        $this->notifyPrescriptionToCustomer(
+            $prescription,
+            $notificationService,
+            'New Prescription Available',
+            'A new prescription for ' . $petName . ' is now available.',
+            Notification::PRIORITY_HIGH
+        );
+
         return redirect()->route('admin.prescriptions.index')
             ->with('success', 'Prescription created successfully!');
     }
@@ -152,7 +174,7 @@ class PrescriptionController extends BaseController
      */
     public function show(Prescription $prescription)
     {
-        $prescription->load('medicalRecord.pet.owner.user', 'medicalRecord.veterinarian');
+        $prescription->load('medicalRecord.pet.owner.user', 'medicalRecord.veterinarian', 'assignedStaff');
         return view('admin.prescriptions.show', compact('prescription'));
     }
 
@@ -189,8 +211,11 @@ class PrescriptionController extends BaseController
     /**
      * Update the specified prescription in storage.
      */
-    public function update(Request $request, Prescription $prescription)
+    public function update(Request $request, Prescription $prescription, NotificationService $notificationService)
     {
+        $user = Auth::user();
+        $canSetExternalSource = $user && in_array($user->role, ['veterinarian', 'admin'], true);
+
         $validated = $request->validate([
             'medical_record_id' => 'required|exists:medical_records,id',
             'inventory_item_id' => 'nullable|exists:inventory_items,id',
@@ -200,6 +225,8 @@ class PrescriptionController extends BaseController
             'duration_days' => 'required|integer|min:1',
             'quantity' => 'required|integer|min:1',
             'instructions' => 'nullable|string',
+            'external_clinic_name' => 'nullable|string|max:150',
+            'external_veterinarian_name' => 'nullable|string|max:150',
         ]);
 
         // If inventory item is selected, use its name as medication
@@ -208,7 +235,26 @@ class PrescriptionController extends BaseController
             $validated['medication_name'] = $inventoryItem->name;
         }
 
+        // Lock assignee: this field cannot be changed after creation.
+        unset($validated['assigned_staff_id']);
+
+        if (! $canSetExternalSource) {
+            $validated['external_clinic_name'] = null;
+            $validated['external_veterinarian_name'] = null;
+        }
+
         $prescription->update($validated);
+
+        $prescription->loadMissing('medicalRecord.pet');
+        $petName = $prescription->medicalRecord?->pet?->name ?? 'Pet';
+
+        $this->notifyPrescriptionToCustomer(
+            $prescription,
+            $notificationService,
+            'Prescription Updated',
+            'The prescription for ' . $petName . ' has been updated.',
+            Notification::PRIORITY_NORMAL
+        );
 
         return redirect()->route('admin.prescriptions.show', $prescription->id)
             ->with('success', 'Prescription updated successfully!');
@@ -249,7 +295,7 @@ class PrescriptionController extends BaseController
         $prescriptions = $prescriptionsQuery->whereHas('medicalRecord', function($query) use ($petId) {
                 $query->where('pet_id', $petId);
             })
-            ->with(['medicalRecord.veterinarian'])
+            ->with(['medicalRecord.veterinarian', 'assignedStaff'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -265,5 +311,38 @@ class PrescriptionController extends BaseController
         });
 
         return view('admin.prescriptions.pet', compact('pet', 'groupedPrescriptions', 'showTrash'));
+    }
+
+    private function notifyPrescriptionToCustomer(
+        Prescription $prescription,
+        NotificationService $notificationService,
+        string $title,
+        string $message,
+        string $priority = Notification::PRIORITY_NORMAL
+    ): void {
+        $prescription->loadMissing('medicalRecord.pet.owner.user');
+
+        $customer = $prescription->medicalRecord?->pet?->owner?->user;
+        $petId = $prescription->medicalRecord?->pet?->id;
+
+        if (! $customer || ! $petId) {
+            return;
+        }
+
+        $notificationService->send(
+            $customer,
+            Notification::TYPE_PRESCRIPTION,
+            $title,
+            $message,
+            [
+                'reference_type' => 'prescription',
+                'reference_id' => $prescription->id,
+                'priority' => $priority,
+                'action_url' => route('customer.prescriptions.print', [
+                    'petId' => $petId,
+                    'prescriptionId' => $prescription->id,
+                ]),
+            ]
+        );
     }
 }

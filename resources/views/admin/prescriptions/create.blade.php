@@ -74,6 +74,34 @@
 
             <div class="form-section">
                 <h3>Medication Details</h3>
+
+                <div class="form-group">
+                    <label>Assigned Staff</label>
+                    <div class="form-control-static">
+                        @php($currentUser = auth()->user())
+                        <strong>{{ $currentUser?->first_name }} {{ $currentUser?->last_name }}</strong>
+                        <small class="text-muted d-block">Automatically tied to your account and cannot be changed.</small>
+                    </div>
+                </div>
+
+                @if(in_array(auth()->user()?->role, ['veterinarian', 'admin'], true))
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>External Clinic Name (Optional)</label>
+                            <input type="text" name="external_clinic_name" class="form-control"
+                                   value="{{ old('external_clinic_name') }}"
+                                   placeholder="Type clinic name for external prescription">
+                            @error('external_clinic_name')<span class="text-danger">{{ $message }}</span>@enderror
+                        </div>
+                        <div class="form-group">
+                            <label>External Veterinarian Name (Optional)</label>
+                            <input type="text" name="external_veterinarian_name" class="form-control"
+                                   value="{{ old('external_veterinarian_name') }}"
+                                   placeholder="Type external vet name">
+                            @error('external_veterinarian_name')<span class="text-danger">{{ $message }}</span>@enderror
+                        </div>
+                    </div>
+                @endif
                 
                 <div class="form-group">
                     <label>Medication <span class="text-danger">*</span></label>

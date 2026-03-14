@@ -92,6 +92,7 @@
                                             <th>Dosage</th>
                                             <th>Frequency</th>
                                             <th>Duration</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -100,7 +101,12 @@
                                                 <td class="fw-bold">{{ $presc->medication_name }}</td>
                                                 <td>{{ $presc->dosage }}</td>
                                                 <td>{{ $presc->frequency }}</td>
-                                                <td>{{ $presc->duration }}</td>
+                                                <td>{{ $presc->duration_days ? $presc->duration_days . ' days' : 'N/A' }}</td>
+                                                <td>
+                                                    <a href="{{ route('customer.prescriptions.print', ['petId' => $medicalRecord->pet->id, 'prescriptionId' => $presc->id]) }}" class="btn btn-outline-primary btn-sm">
+                                                        View / Print
+                                                    </a>
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>

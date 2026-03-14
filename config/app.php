@@ -54,6 +54,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // Allows demo accounts to bypass email verification during local/testing runs.
+    'demo_skip_email_verification' => (bool) env('DEMO_SKIP_EMAIL_VERIFICATION', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

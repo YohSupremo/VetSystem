@@ -1854,8 +1854,11 @@
                                         @endif
                                     </div>
                                 </div>
-                                <div class="pet-actions">
+                                <div class="pet-actions" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
                                     <a href="{{ route('customer.pets.show', $pet->id) }}" class="btn-view">View Details</a>
+                                    @if($pet->prescriptions->isNotEmpty())
+                                        <a href="{{ route('customer.prescriptions.print', ['petId' => $pet->id, 'prescriptionId' => $pet->prescriptions->first()->id]) }}" class="btn-view">Latest Prescription</a>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach

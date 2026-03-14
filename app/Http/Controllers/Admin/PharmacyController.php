@@ -10,9 +10,11 @@ use App\Models\User;
 use App\Models\InventoryStock;
 use App\Models\InventoryTransaction;
 use App\Models\MedicationDispensing;
+use App\Models\Notification;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -396,7 +398,7 @@ class PharmacyController extends BaseController
     /**
      * Process medication dispensing.
      */
-    public function dispense(Request $request)
+    public function dispense(Request $request, NotificationService $notificationService)
     {
         $data = $request->validate([
             'prescription_id' => 'required|exists:prescriptions,id',
@@ -500,6 +502,35 @@ class PharmacyController extends BaseController
             ]);
             
             DB::commit();
+
+            $prescription->loadMissing('medicalRecord.pet.owner.user');
+            $customer = $prescription->medicalRecord?->pet?->owner?->user;
+            $petId = $prescription->medicalRecord?->pet?->id;
+
+            if ($customer && $petId) {
+                try {
+                    $notificationService->send(
+                        $customer,
+                        Notification::TYPE_PRESCRIPTION,
+                        'Prescription Ready for Pickup',
+                        'Medication for ' . ($prescription->medicalRecord?->pet?->name ?? 'your pet') . ' has been dispensed.',
+                        [
+                            'reference_type' => 'prescription',
+                            'reference_id' => $prescription->id,
+                            'priority' => Notification::PRIORITY_HIGH,
+                            'action_url' => route('customer.prescriptions.print', [
+                                'petId' => $petId,
+                                'prescriptionId' => $prescription->id,
+                            ]),
+                        ]
+                    );
+                } catch (\Throwable $notificationError) {
+                    Log::warning('Failed to send prescription dispensed notification', [
+                        'prescription_id' => $prescription->id,
+                        'error' => $notificationError->getMessage(),
+                    ]);
+                }
+            }
             
             return redirect()->route('admin.pharmacy.dispensing.history')
                 ->with('success', 'Medication dispensed successfully.');

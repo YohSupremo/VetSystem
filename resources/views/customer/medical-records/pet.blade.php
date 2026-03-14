@@ -592,7 +592,12 @@
                                                     <input type="text" class="form-control prescription-input" value="{{ $presc->frequency }}" readonly>
                                                 </div>
                                                 <div class="small">
-                                                    <strong>Duration:</strong> {{ $presc->duration }}
+                                                    <strong>Duration:</strong> {{ $presc->duration_days ? $presc->duration_days . ' days' : 'As needed' }}
+                                                </div>
+                                                <div class="mt-3">
+                                                    <a href="{{ route('customer.prescriptions.print', ['petId' => $pet->id, 'prescriptionId' => $presc->id]) }}" class="btn-record">
+                                                        View / Print Prescription
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>

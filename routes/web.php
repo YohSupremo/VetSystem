@@ -73,6 +73,12 @@ Route::get('/learn-more', function () {
     return view('learn-more', compact('clinicSetting'));
 })->name('learn-more');
 
+// Public Pet QR View
+Route::get('/pets/{id}/qr', [App\Http\Controllers\Customer\PetController::class, 'publicQr'])
+    ->name('pets.qr.public');
+Route::get('/pets/{id}/scan-medical-records', [App\Http\Controllers\Customer\PetController::class, 'publicMedicalRecords'])
+    ->name('pets.qr.records');
+
 // Authentication Routes
 Route::get('/register', function(){
     return view('register');
@@ -202,6 +208,9 @@ Route::prefix('customer')->name('customer.')->middleware(['auth.flash'])->group(
     Route::get('/pets/{id}/edit', [App\Http\Controllers\Customer\PetController::class, 'edit'])->name('pets.edit');
     Route::put('/pets/{id}', [App\Http\Controllers\Customer\PetController::class, 'update'])->name('pets.update');
     Route::delete('/pets/{id}', [App\Http\Controllers\Customer\PetController::class, 'destroy'])->name('pets.destroy');
+    Route::get('/pets/{id}/qr', [App\Http\Controllers\Customer\PetController::class, 'qrCode'])->name('pets.qr');
+    Route::get('/pets/{id}/qr/records', [App\Http\Controllers\Customer\PetController::class, 'qrMedicalRecords'])->name('pets.qr-records');
+    Route::get('/prescriptions/pets/{petId}/{prescriptionId}/print', [App\Http\Controllers\Customer\PetController::class, 'printPrescription'])->name('prescriptions.print');
     
     // Appointments
     Route::get('/appointments', [App\Http\Controllers\Customer\AppointmentController::class, 'index'])->name('appointments.index');

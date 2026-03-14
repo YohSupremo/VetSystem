@@ -564,6 +564,9 @@
                             <a href="{{ route('customer.pets.edit', $pet->id) }}" class="btn-action">
                                 <i class="fas fa-edit me-2"></i>Edit Profile
                             </a>
+                            <a href="{{ route('pets.qr.public', $pet->id) }}" class="btn-action" target="_blank">
+                                <i class="fas fa-qrcode me-2"></i>Medical QR Code
+                            </a>
                             <a href="{{ route('customer.appointments.create', ['pet_id' => $pet->id]) }}" class="btn-action primary">
                                 <i class="fas fa-calendar-plus me-2"></i>Book Appointment
                             </a>
@@ -654,11 +657,30 @@
                                         <div class="prescription-item">
                                             <div class="prescription-name">{{ $presc->medication_name }}</div>
                                             <div class="prescription-details">{{ $presc->dosage }} - {{ $presc->frequency }}</div>
+                                            @if($presc->assignedStaff)
+                                                <div class="prescription-details">Assigned staff: {{ $presc->assignedStaff->first_name }} {{ $presc->assignedStaff->last_name }}</div>
+                                            @endif
+                                            @if($presc->external_clinic_name || $presc->external_veterinarian_name)
+                                                <div class="prescription-details">
+                                                    External source:
+                                                    {{ $presc->external_clinic_name ?: 'N/A' }}
+                                                    @if($presc->external_veterinarian_name)
+                                                        - {{ $presc->external_veterinarian_name }}
+                                                    @endif
+                                                </div>
+                                            @endif
                                             @if($presc->end_date && $presc->end_date >= now())
                                                 <div class="status-badge status-active">Active</div>
                                             @else
                                                 <div class="status-badge status-completed">Completed</div>
                                             @endif
+                                            <div class="mt-2">
+                                                <a href="{{ route('customer.prescriptions.print', ['petId' => $pet->id, 'prescriptionId' => $presc->id]) }}"
+                                                   class="btn btn-sm btn-outline-primary"
+                                                   target="_blank">
+                                                    <i class="fas fa-print me-1"></i>Print Prescription
+                                                </a>
+                                            </div>
                                         </div>
                                     @endforeach
                                 @endif

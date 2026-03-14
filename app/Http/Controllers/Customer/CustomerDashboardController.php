@@ -37,11 +37,15 @@ class CustomerDashboardController extends Controller
         $this->checkVaccinationReminders($user);
         
         // Get customer's pets
-        $pets = Pet::where('owner_id', function($query) use ($user) {
-            $query->select('id')
-                  ->from('pet_owners')
-                  ->where('user_id', $user->id);
-        })->get();
+        $pets = Pet::with(['prescriptions' => function ($query) {
+                $query->latest('created_at');
+            }])
+            ->where('owner_id', function($query) use ($user) {
+                $query->select('id')
+                      ->from('pet_owners')
+                      ->where('user_id', $user->id);
+            })
+            ->get();
         
         // Get upcoming appointments (including today and cancelled ones)
         $upcomingAppointments = Appointment::whereIn('pet_id', $pets->pluck('id'))

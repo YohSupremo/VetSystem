@@ -1734,6 +1734,10 @@
                         <i class="fas fa-chart-bar"></i>
                         <span>Reports</span>
                     </a>
+                    <a href="{{ route('admin.pet-reports.index') }}" class="nav-item {{ request()->routeIs('admin.pet-reports.*') ? 'active' : '' }}">
+                        <i class="fas fa-paw"></i>
+                        <span>Pet Reports</span>
+                    </a>
                     <a href="{{ route('admin.settings.index') }}" class="nav-item {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
                         <i class="fas fa-cog"></i>
                         <span>Settings</span>

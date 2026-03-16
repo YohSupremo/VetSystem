@@ -698,6 +698,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.flash', 'admin.role'])
         Route::get('/export/{reportType}', [ReportController::class, 'exportReport'])->name('export');
     });
 
+    // Pet Reports
+    Route::prefix('pet-reports')->name('pet-reports.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\PetReportController::class, 'index'])->name('index');
+        Route::get('/data/{petId}', [App\Http\Controllers\Admin\PetReportController::class, 'getPetData'])->name('data');
+        Route::get('/export/{petId}', [App\Http\Controllers\Admin\PetReportController::class, 'exportPetReport'])->name('export');
+    });
+
     // Settings
     Route::resource('settings', SettingController::class);
 });

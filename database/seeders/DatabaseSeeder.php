@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
         $this->call(LabTestSeeder::class);
         $this->call(PharmacyInventorySeeder::class);
         $this->call(InventoryItemImageSeeder::class);
+        $this->call(PetReportsDemoSeeder::class);
     }
 
     

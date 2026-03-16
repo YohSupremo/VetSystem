@@ -205,6 +205,40 @@
         </div>
     </div>
 
+    <!-- Additional Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div>
+                        <h5 class="mb-0">Surgery Types</h5>
+                        <small class="text-muted">Surgical procedures performed</small>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="chart-wrapper">
+                        <div id="surgeries-chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div>
+                        <h5 class="mb-0">Incident Types</h5>
+                        <small class="text-muted">Types of incidents reported</small>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="chart-wrapper">
+                        <div id="incidents-chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Detailed Tables -->
     <div class="row">
         <div class="col-md-6">
@@ -310,10 +344,199 @@
                 </div>
             </div>
         </div>
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div>
+                        <h5 class="mb-0">Surgical History</h5>
+                        <small class="text-muted">Surgical procedures performed</small>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Procedure</th>
+                                <th>Surgeon</th>
+                                <th>Status</th>
+                                <th>Outcome</th>
+                            </tr>
+                        </thead>
+                        <tbody id="surgeries-tbody">
+                            <!-- Surgeries will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div>
+                        <h5 class="mb-0">Incident Reports</h5>
+                        <small class="text-muted">Safety incidents and accidents</small>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                <th>Reported By</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incidents-tbody">
+                            <!-- Incidents will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 
-<!-- Empty State (Initially Shown) -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div>
+                        <h5 class="mb-0">Chronic Conditions</h5>
+                        <small class="text-muted">Long-term health conditions</small>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Diagnosed</th>
+                                <th>Condition</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                <th>Management</th>
+                            </tr>
+                        </thead>
+                        <tbody id="chronic-conditions-tbody">
+                            <!-- Chronic conditions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div>
+                        <h5 class="mb-0">Allergies & Sensitivities</h5>
+                        <small class="text-muted">Known allergies and reactions</small>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Diagnosed</th>
+                                <th>Allergen</th>
+                                <th>Severity</th>
+                                <th>Reactions</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allergies-tbody">
+                            <!-- Allergies will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div>
+                        <h5 class="mb-0">Hospitalization History</h5>
+                        <small class="text-muted">Cage assignments and boarding</small>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Cage</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cage-assignments-tbody">
+                            <!-- Cage assignments will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div>
+                        <h5 class="mb-0">Grooming Services</h5>
+                        <small class="text-muted">Grooming appointments and services</small>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Service</th>
+                                <th>Groomer</th>
+                                <th>Status</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grooming-appointments-tbody">
+                            <!-- Grooming appointments will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div>
+                        <h5 class="mb-0">Laboratory Test Results</h5>
+                        <small class="text-muted">Diagnostic test history and results</small>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Requested</th>
+                                <th>Test Name</th>
+                                <th>Status</th>
+                                <th>Result Date</th>
+                                <th>Results</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lab-tests-tbody">
+                            <!-- Lab tests will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 <div id="empty-state" class="empty-state">
     <i class="fas fa-paw"></i>
     <h3>No Pet Selected</h3>
@@ -325,6 +548,8 @@
 let currentPetId = null;
 let visitsChart = null;
 let treatmentsChart = null;
+let surgeriesChart = null;
+let incidentsChart = null;
 
 // Load pet reports when page loads if pet_id is in URL
 document.addEventListener('DOMContentLoaded', function() {
@@ -434,6 +659,83 @@ function displayStatsCards(stats) {
                 </div>
             </div>
         </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3>${stats.total_surgeries}</h3>
+                        <p>Surgeries</p>
+                    </div>
+                    <div class="stat-icon" style="color:#92400e;background:rgba(245,158,11,0.12);"><i class="fas fa-user-md"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3>${stats.total_incidents}</h3>
+                        <p>Incidents</p>
+                    </div>
+                    <div class="stat-icon" style="color:#dc2626;background:rgba(220,38,38,0.12);"><i class="fas fa-exclamation-triangle"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3>${stats.total_chronic_conditions}</h3>
+                        <p>Chronic Conditions</p>
+                    </div>
+                    <div class="stat-icon" style="color:#7c3aed;background:rgba(124,58,237,0.12);"><i class="fas fa-heartbeat"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3>${stats.total_allergies}</h3>
+                        <p>Allergies</p>
+                    </div>
+                    <div class="stat-icon" style="color:#0891b2;background:rgba(8,145,178,0.12);"><i class="fas fa-allergies"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3>${stats.total_cage_assignments}</h3>
+                        <p>Cage Assignments</p>
+                    </div>
+                    <div class="stat-icon" style="color:#166534;background:rgba(34,197,94,0.12);"><i class="fas fa-home"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3>${stats.total_grooming_appointments}</h3>
+                        <p>Grooming</p>
+                    </div>
+                    <div class="stat-icon" style="color:#a855f7;background:rgba(168,85,247,0.12);"><i class="fas fa-cut"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3>${stats.total_lab_tests}</h3>
+                        <p>Lab Tests</p>
+                    </div>
+                    <div class="stat-icon" style="color:#0369a1;background:rgba(3,105,161,0.12);"><i class="fas fa-flask"></i></div>
+                </div>
+            </div>
+        </div>
     `;
     document.getElementById('stats-cards').innerHTML = statsHtml;
 }
@@ -442,6 +744,8 @@ function displayCharts(charts) {
     // Destroy existing charts
     if (visitsChart) visitsChart.destroy();
     if (treatmentsChart) treatmentsChart.destroy();
+    if (surgeriesChart) surgeriesChart.destroy();
+    if (incidentsChart) incidentsChart.destroy();
 
     // Visits Chart
     const visitsCtx = document.createElement('canvas');
@@ -510,6 +814,77 @@ function displayCharts(charts) {
             }
         }
     });
+
+    // Surgeries Chart (if we have surgery data)
+    if (charts.surgeries && charts.surgeries.labels && charts.surgeries.labels.length > 0) {
+        const surgeriesCtx = document.createElement('canvas');
+        document.getElementById('surgeries-chart-container').innerHTML = '';
+        document.getElementById('surgeries-chart-container').appendChild(surgeriesCtx);
+        
+        surgeriesChart = new Chart(surgeriesCtx, {
+            type: 'bar',
+            data: {
+                labels: charts.surgeries.labels,
+                datasets: [{
+                    label: 'Surgeries by Type',
+                    data: charts.surgeries.data,
+                    backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                    borderColor: 'rgba(245, 158, 11, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Incidents Chart (if we have incident data)
+    if (charts.incidents && charts.incidents.labels && charts.incidents.labels.length > 0) {
+        const incidentsCtx = document.createElement('canvas');
+        document.getElementById('incidents-chart-container').innerHTML = '';
+        document.getElementById('incidents-chart-container').appendChild(incidentsCtx);
+        
+        incidentsChart = new Chart(incidentsCtx, {
+            type: 'pie',
+            data: {
+                labels: charts.incidents.labels,
+                datasets: [{
+                    data: charts.incidents.data,
+                    backgroundColor: [
+                        'rgba(220, 38, 38, 0.8)',
+                        'rgba(249, 115, 22, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(59, 130, 246, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
 }
 
 function displayTables(tables) {
@@ -556,6 +931,90 @@ function displayTables(tables) {
         </tr>
     `).join('');
     document.getElementById('vaccinations-tbody').innerHTML = vaccinationsHtml || '<tr><td colspan="4" class="text-center">No vaccinations found</td></tr>';
+
+    // Surgeries Table
+    const surgeriesHtml = tables.surgeries.map(surgery => `
+        <tr>
+            <td>${new Date(surgery.scheduled_date).toLocaleDateString()}</td>
+            <td>${surgery.surgery_type || 'N/A'}</td>
+            <td>${surgery.surgeon_name || 'N/A'}</td>
+            <td><span class="badge bg-${surgery.status === 'completed' ? 'success' : surgery.status === 'cancelled' ? 'danger' : 'warning'} badge-status">${surgery.status || 'N/A'}</span></td>
+            <td>${surgery.outcome || 'N/A'}</td>
+        </tr>
+    `).join('');
+    document.getElementById('surgeries-tbody').innerHTML = surgeriesHtml || '<tr><td colspan="5" class="text-center">No surgeries found</td></tr>';
+
+    // Incidents Table
+    const incidentsHtml = tables.incidents.map(incident => `
+        <tr>
+            <td>${new Date(incident.incident_date).toLocaleDateString()}</td>
+            <td>${incident.incident_type || 'N/A'}</td>
+            <td><span class="badge bg-${incident.severity === 'high' ? 'danger' : incident.severity === 'medium' ? 'warning' : 'info'} badge-status">${incident.severity || 'N/A'}</span></td>
+            <td><span class="badge bg-${incident.status === 'resolved' ? 'success' : 'warning'} badge-status">${incident.status || 'N/A'}</span></td>
+            <td>${incident.reported_by || 'N/A'}</td>
+        </tr>
+    `).join('');
+    document.getElementById('incidents-tbody').innerHTML = incidentsHtml || '<tr><td colspan="5" class="text-center">No incidents found</td></tr>';
+
+    // Chronic Conditions Table
+    const chronicConditionsHtml = tables.chronic_conditions.map(condition => `
+        <tr>
+            <td>${new Date(condition.created_at).toLocaleDateString()}</td>
+            <td>${condition.condition_name || 'N/A'}</td>
+            <td><span class="badge bg-${condition.severity === 'severe' ? 'danger' : condition.severity === 'moderate' ? 'warning' : 'info'} badge-status">${condition.severity || 'N/A'}</span></td>
+            <td><span class="badge bg-${condition.status === 'active' ? 'warning' : 'success'} badge-status">${condition.status || 'N/A'}</span></td>
+            <td>${condition.management_plan ? condition.management_plan.substring(0, 30) + '...' : 'N/A'}</td>
+        </tr>
+    `).join('');
+    document.getElementById('chronic-conditions-tbody').innerHTML = chronicConditionsHtml || '<tr><td colspan="5" class="text-center">No chronic conditions found</td></tr>';
+
+    // Allergies Table
+    const allergiesHtml = tables.allergies.map(allergy => `
+        <tr>
+            <td>${new Date(allergy.created_at).toLocaleDateString()}</td>
+            <td>${allergy.allergen || 'N/A'}</td>
+            <td><span class="badge bg-${allergy.severity === 'severe' ? 'danger' : allergy.severity === 'moderate' ? 'warning' : 'info'} badge-status">${allergy.severity || 'N/A'}</span></td>
+            <td>${allergy.reaction_symptoms ? allergy.reaction_symptoms.substring(0, 30) + '...' : 'N/A'}</td>
+            <td><span class="badge bg-${allergy.status === 'active' ? 'warning' : 'success'} badge-status">${allergy.status || 'N/A'}</span></td>
+        </tr>
+    `).join('');
+    document.getElementById('allergies-tbody').innerHTML = allergiesHtml || '<tr><td colspan="5" class="text-center">No allergies found</td></tr>';
+
+    // Cage Assignments Table
+    const cageAssignmentsHtml = tables.cage_assignments.map(assignment => `
+        <tr>
+            <td>${new Date(assignment.start_date).toLocaleDateString()}</td>
+            <td>${assignment.end_date ? new Date(assignment.end_date).toLocaleDateString() : 'Current'}</td>
+            <td>${assignment.cage_name || 'N/A'}</td>
+            <td>${assignment.reason || 'N/A'}</td>
+            <td><span class="badge bg-${assignment.status === 'active' ? 'success' : 'secondary'} badge-status">${assignment.status || 'N/A'}</span></td>
+        </tr>
+    `).join('');
+    document.getElementById('cage-assignments-tbody').innerHTML = cageAssignmentsHtml || '<tr><td colspan="5" class="text-center">No cage assignments found</td></tr>';
+
+    // Grooming Appointments Table
+    const groomingAppointmentsHtml = tables.grooming_appointments.map(appointment => `
+        <tr>
+            <td>${new Date(appointment.appointment_date).toLocaleDateString()}</td>
+            <td>${appointment.service_name || 'N/A'}</td>
+            <td>${appointment.groomer_name || 'N/A'}</td>
+            <td><span class="badge bg-${appointment.status === 'completed' ? 'success' : appointment.status === 'cancelled' ? 'danger' : 'warning'} badge-status">${appointment.status || 'N/A'}</span></td>
+            <td>${appointment.special_instructions ? appointment.special_instructions.substring(0, 30) + '...' : 'N/A'}</td>
+        </tr>
+    `).join('');
+    document.getElementById('grooming-appointments-tbody').innerHTML = groomingAppointmentsHtml || '<tr><td colspan="5" class="text-center">No grooming appointments found</td></tr>';
+
+    // Lab Tests Table
+    const labTestsHtml = tables.lab_tests.map(test => `
+        <tr>
+            <td>${new Date(test.requested_date).toLocaleDateString()}</td>
+            <td>${test.test_name || 'N/A'}</td>
+            <td><span class="badge bg-${test.status === 'completed' ? 'success' : test.status === 'pending' ? 'warning' : 'info'} badge-status">${test.status || 'N/A'}</span></td>
+            <td>${test.result_date ? new Date(test.result_date).toLocaleDateString() : 'N/A'}</td>
+            <td>${test.results ? test.results.substring(0, 30) + '...' : 'N/A'}</td>
+        </tr>
+    `).join('');
+    document.getElementById('lab-tests-tbody').innerHTML = labTestsHtml || '<tr><td colspan="5" class="text-center">No lab tests found</td></tr>';
 }
 
 function refreshPetData() {

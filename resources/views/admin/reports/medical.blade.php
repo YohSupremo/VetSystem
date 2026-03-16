@@ -57,6 +57,12 @@
         <a href="{{ route('admin.reports.index') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left"></i> Back to Reports
         </a>
+        <a href="{{ route('admin.reports.export', ['reportType' => 'medical', 'start_date' => $startDate, 'end_date' => $endDate, 'format' => 'pdf']) }}" class="btn btn-outline-danger">
+            <i class="fas fa-file-pdf"></i> Export PDF
+        </a>
+        <a href="{{ route('admin.reports.export', ['reportType' => 'medical', 'start_date' => $startDate, 'end_date' => $endDate]) }}" class="btn btn-outline-primary">
+            <i class="fas fa-file-export"></i> Export CSV
+        </a>
     </div>
 </div>
 

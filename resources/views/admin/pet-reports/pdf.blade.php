@@ -49,8 +49,8 @@
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
             margin-bottom: 25px;
         }
         
@@ -195,6 +195,34 @@
             <h4>Medical Records</h4>
             <div class="number">{{ $stats['total_medical_records'] }}</div>
         </div>
+        <div class="stat-box">
+            <h4>Surgeries</h4>
+            <div class="number">{{ $stats['total_surgeries'] }}</div>
+        </div>
+        <div class="stat-box">
+            <h4>Incidents</h4>
+            <div class="number">{{ $stats['total_incidents'] }}</div>
+        </div>
+        <div class="stat-box">
+            <h4>Chronic Conditions</h4>
+            <div class="number">{{ $stats['total_chronic_conditions'] }}</div>
+        </div>
+        <div class="stat-box">
+            <h4>Allergies</h4>
+            <div class="number">{{ $stats['total_allergies'] }}</div>
+        </div>
+        <div class="stat-box">
+            <h4>Cage Assignments</h4>
+            <div class="number">{{ $stats['total_cage_assignments'] }}</div>
+        </div>
+        <div class="stat-box">
+            <h4>Grooming</h4>
+            <div class="number">{{ $stats['total_grooming_appointments'] }}</div>
+        </div>
+        <div class="stat-box">
+            <h4>Lab Tests</h4>
+            <div class="number">{{ $stats['total_lab_tests'] }}</div>
+        </div>
     </div>
 
     <div class="section">
@@ -325,6 +353,284 @@
                 @else
                     <tr>
                         <td colspan="4" style="text-align: center; font-style: italic;">No vaccination records found</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <h2>Surgical History</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Procedure</th>
+                    <th>Surgeon</th>
+                    <th>Status</th>
+                    <th>Outcome</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(isset($tables['surgeries']) && count($tables['surgeries']) > 0)
+                    @foreach($tables['surgeries'] as $surgery)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($surgery['scheduled_date'])->format('M j, Y') }}</td>
+                            <td>{{ $surgery['surgery_type'] ?? 'N/A' }}</td>
+                            <td>{{ $surgery['surgeon_name'] ?? 'N/A' }}</td>
+                            <td>
+                                <span class="status-badge status-{{ $surgery['status'] ?? 'scheduled' }}">
+                                    {{ ucfirst($surgery['status'] ?? 'Scheduled') }}
+                                </span>
+                            </td>
+                            <td>{{ Str::limit($surgery['outcome'], 50) ?? 'N/A' }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="5" style="text-align: center; font-style: italic;">No surgical records found</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <h2>Incident Reports</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Reported By</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(isset($tables['incidents']) && count($tables['incidents']) > 0)
+                    @foreach($tables['incidents'] as $incident)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($incident['incident_date'])->format('M j, Y') }}</td>
+                            <td>{{ $incident['incident_type'] ?? 'N/A' }}</td>
+                            <td>
+                                <span class="status-badge status-{{ strtolower($incident['severity'] ?? 'low') }}">
+                                    {{ ucfirst($incident['severity'] ?? 'Low') }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ $incident['status'] ?? 'open' }}">
+                                    {{ ucfirst($incident['status'] ?? 'Open') }}
+                                </span>
+                            </td>
+                            <td>{{ $incident['reported_by'] ?? 'N/A' }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="5" style="text-align: center; font-style: italic;">No incident reports found</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <h2>Chronic Conditions</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Diagnosed</th>
+                    <th>Condition</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Management Plan</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(isset($tables['chronic_conditions']) && count($tables['chronic_conditions']) > 0)
+                    @foreach($tables['chronic_conditions'] as $condition)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($condition['created_at'])->format('M j, Y') }}</td>
+                            <td>{{ $condition['condition_name'] ?? 'N/A' }}</td>
+                            <td>
+                                <span class="status-badge status-{{ strtolower($condition['severity'] ?? 'moderate') }}">
+                                    {{ ucfirst($condition['severity'] ?? 'Moderate') }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ $condition['status'] ?? 'active' }}">
+                                    {{ ucfirst($condition['status'] ?? 'Active') }}
+                                </span>
+                            </td>
+                            <td>{{ Str::limit($condition['management_plan'], 60) ?? 'N/A' }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="5" style="text-align: center; font-style: italic;">No chronic conditions found</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <h2>Allergies & Sensitivities</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Diagnosed</th>
+                    <th>Allergen</th>
+                    <th>Severity</th>
+                    <th>Reaction Symptoms</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(isset($tables['allergies']) && count($tables['allergies']) > 0)
+                    @foreach($tables['allergies'] as $allergy)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($allergy['created_at'])->format('M j, Y') }}</td>
+                            <td>{{ $allergy['allergen'] ?? 'N/A' }}</td>
+                            <td>
+                                <span class="status-badge status-{{ strtolower($allergy['severity'] ?? 'moderate') }}">
+                                    {{ ucfirst($allergy['severity'] ?? 'Moderate') }}
+                                </span>
+                            </td>
+                            <td>{{ Str::limit($allergy['reaction_symptoms'], 60) ?? 'N/A' }}</td>
+                            <td>
+                                <span class="status-badge status-{{ $allergy['status'] ?? 'active' }}">
+                                    {{ ucfirst($allergy['status'] ?? 'Active') }}
+                                </span>
+                            </td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="5" style="text-align: center; font-style: italic;">No allergies found</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <h2>Hospitalization History</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Cage</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(isset($tables['cage_assignments']) && count($tables['cage_assignments']) > 0)
+                    @foreach($tables['cage_assignments'] as $assignment)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($assignment['start_date'])->format('M j, Y') }}</td>
+                            <td>{{ $assignment['end_date'] ? \Carbon\Carbon::parse($assignment['end_date'])->format('M j, Y') : 'Current' }}</td>
+                            <td>{{ $assignment['cage_name'] ?? 'N/A' }}</td>
+                            <td>{{ Str::limit($assignment['reason'], 50) ?? 'N/A' }}</td>
+                            <td>
+                                <span class="status-badge status-{{ $assignment['status'] ?? 'active' }}">
+                                    {{ ucfirst($assignment['status'] ?? 'Active') }}
+                                </span>
+                            </td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="5" style="text-align: center; font-style: italic;">No hospitalization records found</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <h2>Grooming Services</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Service</th>
+                    <th>Groomer</th>
+                    <th>Status</th>
+                    <th>Special Instructions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(isset($tables['grooming_appointments']) && count($tables['grooming_appointments']) > 0)
+                    @foreach($tables['grooming_appointments'] as $appointment)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($appointment['appointment_date'])->format('M j, Y') }}</td>
+                            <td>{{ $appointment['service_name'] ?? 'N/A' }}</td>
+                            <td>{{ $appointment['groomer_name'] ?? 'N/A' }}</td>
+                            <td>
+                                <span class="status-badge status-{{ $appointment['status'] ?? 'scheduled' }}">
+                                    {{ ucfirst($appointment['status'] ?? 'Scheduled') }}
+                                </span>
+                            </td>
+                            <td>{{ Str::limit($appointment['special_instructions'], 50) ?? 'N/A' }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="5" style="text-align: center; font-style: italic;">No grooming services found</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <h2>Laboratory Test Results</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Requested</th>
+                    <th>Test Name</th>
+                    <th>Status</th>
+                    <th>Result Date</th>
+                    <th>Results</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(isset($tables['lab_tests']) && count($tables['lab_tests']) > 0)
+                    @foreach($tables['lab_tests'] as $test)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($test['requested_date'])->format('M j, Y') }}</td>
+                            <td>{{ $test['test_name'] ?? 'N/A' }}</td>
+                            <td>
+                                <span class="status-badge status-{{ $test['status'] ?? 'pending' }}">
+                                    {{ ucfirst($test['status'] ?? 'Pending') }}
+                                </span>
+                            </td>
+                            <td>{{ $test['result_date'] ? \Carbon\Carbon::parse($test['result_date'])->format('M j, Y') : 'N/A' }}</td>
+                            <td>{{ Str::limit($test['results'], 60) ?? 'N/A' }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="5" style="text-align: center; font-style: italic;">No laboratory tests found</td>
                     </tr>
                 @endif
             </tbody>

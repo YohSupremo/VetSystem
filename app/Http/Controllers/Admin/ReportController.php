@@ -20,6 +20,7 @@ use App\Models\InventoryTransaction;
 use ConsoleTVs\Charts\Classes\Chartjs\Chart;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Dompdf\Dompdf;
 
 class ReportController extends BaseController
 {
@@ -873,6 +874,11 @@ class ReportController extends BaseController
     {
         $startDate = $request->input('start_date', now()->subMonth()->toDateString());
         $endDate = $request->input('end_date', now()->toDateString());
+        $format = $request->input('format', 'csv');
+        
+        $data = [];
+        $filename = '';
+        $viewName = '';
         
         switch ($reportType) {
             case 'financial':
@@ -891,7 +897,8 @@ class ReportController extends BaseController
                             'Status' => $invoice->status,
                         ];
                     });
-                $filename = 'financial_report_' . $startDate . '_to_' . $endDate . '.csv';
+                $filename = 'financial_report_' . $startDate . '_to_' . $endDate;
+                $viewName = 'admin.reports.financial-pdf';
                 break;
                 
             case 'medical':
@@ -908,33 +915,110 @@ class ReportController extends BaseController
                             'Veterinarian' => $record->veterinarian ? $record->veterinarian->full_name : 'N/A',
                         ];
                     });
-                $filename = 'medical_report_' . $startDate . '_to_' . $endDate . '.csv';
+                $filename = 'medical_report_' . $startDate . '_to_' . $endDate;
+                $viewName = 'admin.reports.medical-pdf';
+                break;
+                
+            case 'inventory':
+                $data = InventoryItem::with(['stock', 'transactions'])
+                    ->get()
+                    ->map(function ($item) {
+                        return [
+                            'Item Name' => $item->name,
+                            'Category' => $item->category,
+                            'Current Stock' => $item->stock?->quantity ?? 0,
+                            'Unit' => $item->unit,
+                            'Supplier' => $item->supplier,
+                            'Last Updated' => $item->updated_at->format('Y-m-d'),
+                        ];
+                    });
+                $filename = 'inventory_report_' . date('Y-m-d');
+                $viewName = 'admin.reports.inventory-pdf';
+                break;
+                
+            case 'client':
+                $data = PetOwner::with(['pets', 'invoices'])
+                    ->get()
+                    ->map(function ($owner) {
+                        return [
+                            'Name' => $owner->full_name,
+                            'Email' => $owner->email,
+                            'Phone' => $owner->phone,
+                            'Address' => $owner->address,
+                            'Pets Count' => $owner->pets->count(),
+                            'Total Invoices' => $owner->invoices->count(),
+                        ];
+                    });
+                $filename = 'client_report_' . date('Y-m-d');
+                $viewName = 'admin.reports.client-pdf';
+                break;
+                
+            case 'appointment':
+                $data = Appointment::with(['pet', 'petOwner', 'veterinarian'])
+                    ->whereBetween('appointment_date', [$startDate, $endDate])
+                    ->get()
+                    ->map(function ($appointment) {
+                        return [
+                            'Date' => $appointment->appointment_date->format('Y-m-d'),
+                            'Time' => $appointment->appointment_time,
+                            'Pet Owner' => $appointment->petOwner?->full_name ?? '',
+                            'Pet' => $appointment->pet?->name ?? '',
+                            'Veterinarian' => $appointment->veterinarian?->full_name ?? '',
+                            'Type' => $appointment->appointment_type,
+                            'Status' => $appointment->status,
+                        ];
+                    });
+                $filename = 'appointment_report_' . $startDate . '_to_' . $endDate;
+                $viewName = 'admin.reports.appointment-pdf';
                 break;
                 
             default:
                 return back()->withErrors(['error' => 'Invalid report type for export.']);
         }
         
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-        
-        $callback = function() use ($data) {
-            $file = fopen('php://output', 'w');
+        if ($format === 'pdf') {
+            // Generate PDF
+            $html = view($viewName, compact('data', 'startDate', 'endDate', 'reportType'))->render();
             
-            if ($data->isNotEmpty()) {
-                fputcsv($file, array_keys($data->first()));
+            $options = new \Dompdf\Options();
+            $options->set('defaultFont', 'Arial');
+            $options->set('isRemoteEnabled', true);
+            $options->set('isHtml5ParserEnabled', true);
+            
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'landscape');
+            $dompdf->render();
+            
+            $fullFilename = $filename . '.pdf';
+            
+            return response($dompdf->output())
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', "attachment; filename=\"{$fullFilename}\"")
+                ->header('Content-Length', strlen($dompdf->output()));
+        } else {
+            // Default to CSV
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '.csv"',
+            ];
+            
+            $callback = function() use ($data) {
+                $file = fopen('php://output', 'w');
                 
-                foreach ($data as $row) {
-                    fputcsv($file, $row);
+                if ($data->isNotEmpty()) {
+                    fputcsv($file, array_keys($data->first()));
+                    
+                    foreach ($data as $row) {
+                        fputcsv($file, $row);
+                    }
                 }
-            }
+                
+                fclose($file);
+            };
             
-            fclose($file);
-        };
-        
-        return response()->stream($callback, 200, $headers);
+            return response()->stream($callback, 200, $headers);
+        }
     }
     
     /**

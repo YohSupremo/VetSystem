@@ -280,9 +280,9 @@ class PetReportController extends BaseController
                 return [
                     'created_at' => $condition->created_at,
                     'condition_name' => $condition->condition_name,
-                    'severity' => $condition->severity ?? 'N/A',
-                    'status' => $condition->status ?? 'active',
-                    'management_plan' => $condition->management_plan ? \Illuminate\Support\Str::limit($condition->management_plan, 50) : 'N/A',
+                    'diagnosed_date' => $condition->diagnosed_date,
+                    'ongoing_treatment' => $condition->ongoing_treatment ? \Illuminate\Support\Str::limit($condition->ongoing_treatment, 50) : 'Management plan pending',
+                    'status' => $condition->is_active ? 'Active' : 'Inactive',
                 ];
             });
 
@@ -293,11 +293,11 @@ class PetReportController extends BaseController
             ->get()
             ->map(function($allergy) {
                 return [
-                    'created_at' => $allergy->created_at,
+                    'diagnosed_date' => $allergy->diagnosed_date,
                     'allergen' => $allergy->allergen,
-                    'severity' => $allergy->severity ?? 'N/A',
-                    'reaction_symptoms' => $allergy->reaction_symptoms ? \Illuminate\Support\Str::limit($allergy->reaction_symptoms, 50) : 'N/A',
-                    'status' => $allergy->status ?? 'active',
+                    'severity' => ucfirst($allergy->severity ?? 'mild'),
+                    'reaction_symptoms' => $allergy->notes ? \Illuminate\Support\Str::limit($allergy->notes, 50) : 'Symptoms to be documented',
+                    'status' => $allergy->is_active? 'Active' : 'Inactive',
                 ];
             });
 
@@ -311,9 +311,9 @@ class PetReportController extends BaseController
                 return [
                     'start_date' => $assignment->start_date,
                     'end_date' => $assignment->end_date,
-                    'cage_name' => $assignment->cage ? $assignment->cage->name : 'N/A',
-                    'reason' => $assignment->reason ?? 'N/A',
-                    'status' => $assignment->status ?? 'active',
+                    'cage_name' => $assignment->cage ? $assignment->cage->name : 'Not assigned',
+                    'reason' => $assignment->notes ? \Illuminate\Support\Str::limit($assignment->notes, 50) : 'Boarding/Hospitalization',
+                    'status' => $assignment->end_date && $assignment->end_date < now() ? 'Completed' : 'Active',
                 ];
             });
 

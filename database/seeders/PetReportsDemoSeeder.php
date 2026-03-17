@@ -28,26 +28,91 @@ class PetReportsDemoSeeder extends Seeder
 {
     public function run()
     {
-        // Create a pet owner user
-        $ownerUser = User::firstOrCreate(
-            ['username' => 'johnsmith'],
-            [
-                'first_name' => 'John',
-                'last_name' => 'Smith',
-                'email' => 'john.smith@example.com',
-                'password' => bcrypt('password123'),
-                'role' => 'pet_owner',
-                'email_verified' => true,
-            ]
-        );
+        // Find the pet named Max
+        $pet = Pet::where('name', 'Max')->first();
+        
+        if (!$pet) {
+            // Create a pet owner user
+            $ownerUser = User::firstOrCreate(
+                ['username' => 'johnsmith'],
+                [
+                    'first_name' => 'John',
+                    'last_name' => 'Smith',
+                    'email' => 'john.smith@example.com',
+                    'password' => bcrypt('password123'),
+                    'role' => 'pet_owner',
+                    'email_verified' => true,
+                ]
+            );
 
-        // Create pet owner profile if it doesn't exist
-        if (!$ownerUser->petOwner) {
-            $petOwner = PetOwner::create([
-                'user_id' => $ownerUser->id,
-                'emergency_contact_name' => 'Jane Smith',
-                'emergency_contact_phone' => '+1-555-0124',
-                'emergency_contact_relationship' => 'Spouse',
+            // Create pet owner profile if it doesn't exist
+            if (!$ownerUser->petOwner) {
+                $petOwner = PetOwner::create([
+                    'user_id' => $ownerUser->id,
+                    'emergency_contact_name' => 'Jane Smith',
+                    'emergency_contact_phone' => '+1-555-0124',
+                    'emergency_contact_relationship' => 'Spouse',
+                    'address' => '123 Main Street, Springfield, IL 62701',
+                    'phone' => '+1-555-0123',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            // Create veterinarian user
+            $vetUser = User::firstOrCreate(
+                ['username' => 'drjones'],
+                [
+                    'first_name' => 'Dr. Sarah',
+                    'last_name' => 'Jones',
+                    'email' => 'dr.jones@vetclinic.com',
+                    'password' => bcrypt('password123'),
+                    'role' => 'veterinarian',
+                    'email_verified' => true,
+                ]
+            );
+
+            // Create pet
+            $pet = Pet::create([
+                'owner_id' => $petOwner->id,
+                'name' => 'Max',
+                'species' => 'dog',
+                'breed' => 'Golden Retriever',
+                'date_of_birth' => Carbon::now()->subYears(3),
+                'gender' => 'male',
+                'color' => 'Golden',
+                'weight' => 65.5,
+                'microchip_number' => '982000123456789',
+                'registration_number' => 'REG-2023-001',
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            // Clean up existing data for this pet
+            LabRequisition::whereHas('medicalRecord', function($query) use ($pet) {
+                $query->where('pet_id', $pet->id);
+            })->delete();
+            
+            GroomingAppointment::whereHas('appointment', function($query) use ($pet) {
+                $query->where('pet_id', $pet->id);
+            })->delete();
+            
+            CageAssignment::where('pet_id', $pet->id)->delete();
+            PetAllergy::where('pet_id', $pet->id)->delete();
+            ChronicCondition::where('pet_id', $pet->id)->delete();
+            Incident::where('pet_id', $pet->id)->delete();
+            Surgery::where('pet_id', $pet->id)->delete();
+            PetVaccination::where('pet_id', $pet->id)->delete();
+            Prescription::whereHas('medicalRecord', function($query) use ($pet) {
+                $query->where('pet_id', $pet->id);
+            })->delete();
+            MedicalRecord::where('pet_id', $pet->id)->delete();
+            Appointment::where('pet_id', $pet->id)->delete();
+            
+            $vetUser = User::where('role', 'veterinarian')->first();
+            $petOwner = $pet->owner;
+        }
             ]);
         } else {
             $petOwner = $ownerUser->petOwner;
@@ -347,12 +412,17 @@ class PetReportsDemoSeeder extends Seeder
         foreach ($vaccinations as $vaccinationData) {
             PetVaccination::create([
                 'pet_id' => $pet->id,
-                'administered_by' => $vetUser->id,
+                'vaccine_name' => $vaccinationData['vaccine'],
+                'vaccine_type' => $vaccinationData['vaccine'],
+                'manufacturer' => 'Boehringer Ingelheim',
                 'batch_number' => 'BATCH-' . strtoupper(Str::random(8)),
+                'dose_number' => rand(1, 3),
                 'administered_date' => $vaccinationData['date'],
+                'vaccination_date' => $vaccinationData['date'],
                 'next_due_date' => $vaccinationData['next_due'],
-                'notes' => $vaccinationData['vaccine'] . ' - ' . $vaccinationData['notes'],
-                'created_at' => $vaccinationData['date'],
+                'veterinarian_id' => $vetUser->id,
+                'administered_by' => $vetUser->id,
+                'notes' => $vaccinationData['notes'],
             ]);
         }
 
@@ -506,6 +576,22 @@ class PetReportsDemoSeeder extends Seeder
         }
 
         // Create random cage assignments (hospitalization)
+        $cages = Cage::all();
+        if ($cages->isEmpty()) {
+            // Create cages if none exist
+            for ($i = 1; $i <= 5; $i++) {
+                Cage::create([
+                    'name' => "Cage " . chr(64 + $i),
+                    'cage_code' => "CAGE-" . sprintf("%02d", $i),
+                    'type' => $i % 2 == 0 ? 'hospitalization' : 'boarding',
+                    'capacity' => rand(1, 3),
+                    'location' => 'Ward ' . ceil($i / 2),
+                    'status' => 'available',
+                ]);
+            }
+            $cages = Cage::all();
+        }
+
         $cageAssignments = [
             [
                 'start' => Carbon::now()->subMonths(8),
@@ -532,10 +618,10 @@ class PetReportsDemoSeeder extends Seeder
 
         foreach ($cageAssignments as $assignmentData) {
             CageAssignment::create([
-                'cage_id' => Cage::inRandomOrder()->first()?->id ?? 1,
+                'cage_id' => $cages->random()->id,
                 'pet_id' => $pet->id,
                 'start_date' => $assignmentData['start'],
-                'end_date' => $assignmentData['end'] ?? Carbon::now()->addDays(3), // Default end date if null
+                'end_date' => $assignmentData['end'] ?? Carbon::now()->addDays(3),
                 'notes' => $assignmentData['notes'],
                 'feeding_schedule' => $assignmentData['feeding_schedule'],
                 'medication_instructions' => $assignmentData['medication_instructions'],

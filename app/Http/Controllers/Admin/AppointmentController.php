@@ -230,16 +230,14 @@ class AppointmentController extends Controller
         $user = auth()->user();
         $isVeterinarian = $user && $user->isVeterinarian();
         
-        // Get scheduled staff for current day/time
-        $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
-        
+        // Get all active staff who have at least one schedule (any day/shift)
         if ($isVeterinarian) {
             // For vets, only include themselves
             $assignableStaff = collect([$user]);
         } else {
             $assignableStaff = User::whereIn('role', ['veterinarian', 'groomer', 'boarding', 'staff'])
                 ->where('is_active', 1)
-                ->whereIn('id', $scheduledStaffIds)
+                ->whereHas('staffSchedules')
                 ->orderBy('first_name')
                 ->get();
         }
@@ -369,16 +367,14 @@ class AppointmentController extends Controller
         
         $pets = Pet::with('owner.user')->orderBy('name')->get();
         
-        // Get scheduled staff for current day/time
-        $scheduledStaffIds = StaffSchedule::getCurrentScheduledStaffIds();
-        
+        // Get all active staff who have at least one schedule (any day/shift)
         if ($isVeterinarian) {
             // For vets, only include themselves
             $assignableStaff = collect([$user]);
         } else {
             $assignableStaff = User::whereIn('role', ['veterinarian', 'groomer', 'boarding', 'staff'])
                 ->where('is_active', 1)
-                ->whereIn('id', $scheduledStaffIds)
+                ->whereHas('staffSchedules')
                 ->orderBy('first_name')
                 ->get();
         }

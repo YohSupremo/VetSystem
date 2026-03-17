@@ -72,8 +72,8 @@ class StaffScheduleController extends BaseController
             }
         }
 
-        // Delete all existing schedules for this user
-        StaffSchedule::where('user_id', $userId)->delete();
+        // Force delete all existing schedules for this user (avoid soft-delete unique constraint conflicts)
+        StaffSchedule::where('user_id', $userId)->forceDelete();
 
         // Create new schedules
         foreach ($requestedSchedules as $schedule) {
@@ -109,8 +109,8 @@ class StaffScheduleController extends BaseController
             ->first();
 
         if ($schedule) {
-            // Delete existing schedule
-            $schedule->delete();
+            // Force delete to avoid soft-delete unique constraint conflicts
+            $schedule->forceDelete();
             $action = 'removed';
         } else {
             if (!$this->canAssignShift($user, $validated['day_of_week'], $validated['shift'])) {
@@ -120,13 +120,24 @@ class StaffScheduleController extends BaseController
                 ], 422);
             }
 
-            // Create new schedule
-            StaffSchedule::create([
-                'user_id' => $validated['user_id'],
-                'day_of_week' => $validated['day_of_week'],
-                'shift' => $validated['shift'],
-                'is_active' => true,
-            ]);
+            // Check for soft-deleted record first and restore it
+            $trashedSchedule = StaffSchedule::withTrashed()
+                ->where('user_id', $validated['user_id'])
+                ->where('day_of_week', $validated['day_of_week'])
+                ->where('shift', $validated['shift'])
+                ->first();
+
+            if ($trashedSchedule) {
+                $trashedSchedule->restore();
+                $trashedSchedule->update(['is_active' => true]);
+            } else {
+                StaffSchedule::create([
+                    'user_id' => $validated['user_id'],
+                    'day_of_week' => $validated['day_of_week'],
+                    'shift' => $validated['shift'],
+                    'is_active' => true,
+                ]);
+            }
             $action = 'added';
         }
 

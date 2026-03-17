@@ -277,11 +277,14 @@ class PetReportController extends BaseController
             ->limit(10)
             ->get()
             ->map(function($condition) {
+                $management = $condition->ongoing_treatment ? \Illuminate\Support\Str::limit($condition->ongoing_treatment, 50) : 'Management plan pending';
+
                 return [
                     'created_at' => $condition->created_at,
                     'condition_name' => $condition->condition_name,
                     'diagnosed_date' => $condition->diagnosed_date,
-                    'ongoing_treatment' => $condition->ongoing_treatment ? \Illuminate\Support\Str::limit($condition->ongoing_treatment, 50) : 'Management plan pending',
+                    'ongoing_treatment' => $management,
+                    'management_plan' => $management,
                     'status' => $condition->is_active ? 'Active' : 'Inactive',
                 ];
             });

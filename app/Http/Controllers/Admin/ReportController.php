@@ -920,13 +920,13 @@ class ReportController extends BaseController
                 break;
                 
             case 'inventory':
-                $data = InventoryItem::with(['stock', 'transactions'])
+                $data = InventoryItem::with(['inventoryStocks'])
                     ->get()
                     ->map(function ($item) {
                         return [
                             'Item Name' => $item->name,
                             'Category' => $item->category,
-                            'Current Stock' => $item->stock?->quantity ?? 0,
+                            'Current Stock' => $item->inventoryStocks->sum('quantity'),
                             'Unit' => $item->unit,
                             'Supplier' => $item->supplier,
                             'Last Updated' => $item->updated_at->format('Y-m-d'),
@@ -937,14 +937,14 @@ class ReportController extends BaseController
                 break;
                 
             case 'client':
-                $data = PetOwner::with(['pets', 'invoices'])
+                $data = PetOwner::with(['user', 'pets', 'invoices'])
                     ->get()
                     ->map(function ($owner) {
                         return [
                             'Name' => $owner->full_name,
-                            'Email' => $owner->email,
-                            'Phone' => $owner->phone,
-                            'Address' => $owner->address,
+                            'Email' => $owner->user?->email ?? $owner->email,
+                            'Phone' => $owner->user?->phone ?? $owner->phone,
+                            'Address' => $owner->user?->address ?? $owner->address,
                             'Pets Count' => $owner->pets->count(),
                             'Total Invoices' => $owner->invoices->count(),
                         ];
@@ -954,17 +954,17 @@ class ReportController extends BaseController
                 break;
                 
             case 'appointment':
-                $data = Appointment::with(['pet', 'petOwner', 'veterinarian'])
+                $data = Appointment::with(['pet.owner', 'veterinarian'])
                     ->whereBetween('appointment_date', [$startDate, $endDate])
                     ->get()
                     ->map(function ($appointment) {
                         return [
                             'Date' => $appointment->appointment_date->format('Y-m-d'),
                             'Time' => $appointment->appointment_time,
-                            'Pet Owner' => $appointment->petOwner?->full_name ?? '',
+                            'Pet Owner' => $appointment->pet?->owner?->full_name ?? '',
                             'Pet' => $appointment->pet?->name ?? '',
                             'Veterinarian' => $appointment->veterinarian?->full_name ?? '',
-                            'Type' => $appointment->appointment_type,
+                            'Type' => $appointment->appointment_type ?? $appointment->type,
                             'Status' => $appointment->status,
                         ];
                     });

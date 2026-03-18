@@ -38,6 +38,11 @@ class PetOwner extends Model
         return $this->hasMany(Pet::class, 'owner_id');
     }
 
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'owner_id');
+    }
+
 
     public function getFullNameAttribute()
     {

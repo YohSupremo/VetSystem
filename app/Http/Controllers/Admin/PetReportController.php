@@ -198,16 +198,15 @@ class PetReportController extends BaseController
         $prescriptions = Prescription::whereHas('medicalRecord', function($query) use ($petId) {
             $query->where('pet_id', $petId);
         })
-        ->with('medication')
         ->orderBy('created_at', 'desc')
         ->limit(10)
         ->get()
         ->map(function($prescription) {
             return [
                 'created_at' => $prescription->created_at,
-                'medication_name' => $prescription->medication->name ?? 'N/A',
+                'medication_name' => $prescription->medication_name ?? 'N/A',
                 'dosage' => $prescription->dosage ?? 'N/A',
-                'status' => $prescription->status ?? 'active',
+                'status' => $prescription->dispensed ? 'Dispensed' : 'Pending',
             ];
         });
 
@@ -331,7 +330,7 @@ class PetReportController extends BaseController
             ->map(function($grooming) {
                 return [
                     'appointment_date' => $grooming->appointment ? $grooming->appointment->appointment_date : 'N/A',
-                    'service_name' => $grooming->service ? $grooming->service->name : 'N/A',
+                    'service_name' => $grooming->service ? $grooming->service->service_name : 'N/A',
                     'groomer_name' => $grooming->groomer ? $grooming->groomer->first_name . ' ' . $grooming->groomer->last_name : 'N/A',
                     'status' => $grooming->status ?? 'scheduled',
                     'special_instructions' => $grooming->special_instructions ? \Illuminate\Support\Str::limit($grooming->special_instructions, 50) : 'N/A',
@@ -349,7 +348,7 @@ class PetReportController extends BaseController
             ->map(function($requisition) {
                 return [
                     'requested_date' => $requisition->requested_date,
-                    'test_name' => $requisition->test ? $requisition->test->name : 'N/A',
+                    'test_name' => $requisition->test ? $requisition->test->test_name : 'N/A',
                     'status' => $requisition->status ?? 'pending',
                     'result_date' => $requisition->result_date,
                     'results' => $requisition->results ? \Illuminate\Support\Str::limit($requisition->results, 50) : 'N/A',

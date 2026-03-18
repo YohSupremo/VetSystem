@@ -2,764 +2,606 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\PetOwner;
-use App\Models\Pet;
 use App\Models\Appointment;
-use App\Models\MedicalRecord;
-use App\Models\Prescription;
-use App\Models\Medication;
-use App\Models\PetVaccination;
-use App\Models\Surgery;
-use App\Models\Incident;
-use App\Models\ChronicCondition;
-use App\Models\PetAllergy;
-use App\Models\CageAssignment;
 use App\Models\Cage;
+use App\Models\CageAssignment;
+use App\Models\ChronicCondition;
 use App\Models\GroomingAppointment;
 use App\Models\GroomingService;
+use App\Models\Incident;
 use App\Models\LabRequisition;
 use App\Models\LabTest;
-use Illuminate\Support\Str;
+use App\Models\MedicalRecord;
+use App\Models\Pet;
+use App\Models\PetAllergy;
+use App\Models\PetOwner;
+use App\Models\PetVaccination;
+use App\Models\Prescription;
+use App\Models\Surgery;
+use App\Models\SurgeryType;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class PetReportsDemoSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        // Find the pet named Max
-        $pet = Pet::where('name', 'Max')->first();
-        
-        if (!$pet) {
-            // Create a pet owner user
-            $ownerUser = User::firstOrCreate(
-                ['username' => 'johnsmith'],
-                [
-                    'first_name' => 'John',
-                    'last_name' => 'Smith',
-                    'email' => 'john.smith@example.com',
-                    'password' => bcrypt('password123'),
-                    'role' => 'pet_owner',
-                    'email_verified' => true,
-                ]
-            );
+        $faker = fake();
 
-            // Create pet owner profile if it doesn't exist
-            if (!$ownerUser->petOwner) {
-                $petOwner = PetOwner::create([
-                    'user_id' => $ownerUser->id,
-                    'emergency_contact_name' => 'Jane Smith',
-                    'emergency_contact_phone' => '+1-555-0124',
-                    'emergency_contact_relationship' => 'Spouse',
-                    'address' => '123 Main Street, Springfield, IL 62701',
-                    'phone' => '+1-555-0123',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
+        $users = $this->ensureSupportUsers();
+        $surgeryTypes = $this->ensureSurgeryTypes();
+        $groomingServices = $this->ensureGroomingServices();
+        $labTests = $this->ensureLabTests();
+        $cages = $this->ensureCages();
 
-            // Create veterinarian user
-            $vetUser = User::firstOrCreate(
-                ['username' => 'drjones'],
-                [
-                    'first_name' => 'Dr. Sarah',
-                    'last_name' => 'Jones',
-                    'email' => 'dr.jones@vetclinic.com',
-                    'password' => bcrypt('password123'),
-                    'role' => 'veterinarian',
-                    'email_verified' => true,
-                ]
-            );
+        $pets = Pet::with('owner.user')
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->get();
 
-            // Create pet
-            $pet = Pet::create([
-                'owner_id' => $petOwner->id,
-                'name' => 'Max',
-                'species' => 'dog',
-                'breed' => 'Golden Retriever',
-                'date_of_birth' => Carbon::now()->subYears(3),
-                'gender' => 'male',
-                'color' => 'Golden',
-                'weight' => 65.5,
-                'microchip_number' => '982000123456789',
-                'registration_number' => 'REG-2023-001',
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } else {
-            // Clean up existing data for this pet
-            LabRequisition::whereHas('medicalRecord', function($query) use ($pet) {
-                $query->where('pet_id', $pet->id);
-            })->delete();
-            
-            GroomingAppointment::whereHas('appointment', function($query) use ($pet) {
-                $query->where('pet_id', $pet->id);
-            })->delete();
-            
-            CageAssignment::where('pet_id', $pet->id)->delete();
-            PetAllergy::where('pet_id', $pet->id)->delete();
-            ChronicCondition::where('pet_id', $pet->id)->delete();
-            Incident::where('pet_id', $pet->id)->delete();
-            Surgery::where('pet_id', $pet->id)->delete();
-            PetVaccination::where('pet_id', $pet->id)->delete();
-            Prescription::whereHas('medicalRecord', function($query) use ($pet) {
-                $query->where('pet_id', $pet->id);
-            })->delete();
-            MedicalRecord::where('pet_id', $pet->id)->delete();
-            Appointment::where('pet_id', $pet->id)->delete();
-            
-            $vetUser = User::where('role', 'veterinarian')->first();
-            $petOwner = $pet->owner;
-        }
-            ]);
-        } else {
-            $petOwner = $ownerUser->petOwner;
+        $requestedCount = (int) env('PET_REPORTS_SEED_TARGET', 60);
+        $targetCount = max($pets->count(), max($requestedCount, 6));
+
+        while ($pets->count() < $targetCount) {
+            $pets->push($this->createRandomPetWithOwner($faker, $pets->count() + 1));
         }
 
-        // Create a veterinarian for the records
-        $vetUser = User::firstOrCreate(
-            ['username' => 'drjohnson'],
+        foreach ($pets as $pet) {
+            $this->seedPetReportData(
+                $pet,
+                $faker,
+                $users,
+                $surgeryTypes,
+                $groomingServices,
+                $labTests,
+                $cages
+            );
+        }
+    }
+
+    private function ensureSupportUsers(): array
+    {
+        $vet = User::updateOrCreate(
+            ['username' => 'report_vet'],
             [
-                'first_name' => 'Dr. Sarah',
-                'last_name' => 'Johnson',
-                'email' => 'sarah.johnson@vetclinic.com',
-                'password' => bcrypt('password123'),
+                'first_name' => 'Avery',
+                'last_name' => 'Lopez',
+                'email' => 'report.vet@vetclinic.test',
+                'password' => Hash::make('PawCare123'),
                 'role' => 'veterinarian',
-                'email_verified' => true,
-            ]
-        );
-
-        // Create the demo pet (check if it already exists)
-        $pet = Pet::firstOrCreate(
-            ['name' => 'Max', 'owner_id' => $petOwner->id],
-            [
-                'species' => 'Dog',
-                'breed' => 'Golden Retriever',
-                'birth_date' => Carbon::now()->subYears(3)->subMonths(2), // 3 years 2 months old
-                'gender' => 'Male',
-                'color' => 'Golden',
-                'weight' => 32.5,
-                'registration_number' => 'REG-2021-001',
+                'contact_number' => '09171110001',
+                'address' => 'Clinic Floor 2',
                 'is_active' => true,
+                'email_verified' => true,
+                'phone_verified' => true,
             ]
         );
 
-        // Create medications for prescriptions
-        $medications = [
-            ['name' => 'Amoxicillin', 'description' => 'Antibiotic for bacterial infections'],
-            ['name' => 'Carprofen', 'description' => 'Anti-inflammatory for pain relief'],
-            ['name' => 'Heartgard Plus', 'description' => 'Heartworm prevention'],
-            ['name' => 'Frontline Plus', 'description' => 'Flea and tick prevention'],
-            ['name' => 'Apoquel', 'description' => 'Allergy relief medication'],
+        $groomer = User::updateOrCreate(
+            ['username' => 'report_groomer'],
+            [
+                'first_name' => 'Jamie',
+                'last_name' => 'Cruz',
+                'email' => 'report.groomer@vetclinic.test',
+                'password' => Hash::make('PawCare123'),
+                'role' => 'groomer',
+                'contact_number' => '09171110002',
+                'address' => 'Grooming Room',
+                'is_active' => true,
+                'email_verified' => true,
+                'phone_verified' => true,
+            ]
+        );
+
+        $staff = User::updateOrCreate(
+            ['username' => 'report_staff'],
+            [
+                'first_name' => 'Taylor',
+                'last_name' => 'Reyes',
+                'email' => 'report.staff@vetclinic.test',
+                'password' => Hash::make('PawCare123'),
+                'role' => 'staff',
+                'contact_number' => '09171110003',
+                'address' => 'Nursing Station',
+                'is_active' => true,
+                'email_verified' => true,
+                'phone_verified' => true,
+            ]
+        );
+
+        return [
+            'vet' => $vet,
+            'groomer' => $groomer,
+            'staff' => $staff,
+        ];
+    }
+
+    private function ensureSurgeryTypes(): Collection
+    {
+        $defaults = [
+            ['name' => 'Dental Cleaning', 'description' => 'Routine dental cleaning under anesthesia.', 'price' => 1500, 'estimated_duration_minutes' => 90],
+            ['name' => 'Tumor Removal', 'description' => 'Surgical excision of a mass for histopathology.', 'price' => 3500, 'estimated_duration_minutes' => 120],
+            ['name' => 'Wound Repair', 'description' => 'Closure and repair of traumatic wounds.', 'price' => 1800, 'estimated_duration_minutes' => 60],
         ];
 
-        foreach ($medications as $med) {
-            Medication::create($med);
+        foreach ($defaults as $type) {
+            SurgeryType::firstOrCreate(
+                ['name' => $type['name']],
+                $type + ['is_active' => true]
+            );
         }
 
-        // Create appointments over the past year
-        $appointments = [
-            [
-                'date' => Carbon::now()->subMonths(11),
-                'type' => 'Annual Checkup',
-                'status' => 'completed',
-                'notes' => 'Regular annual wellness examination',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(9),
-                'type' => 'Vaccination',
-                'status' => 'completed',
-                'notes' => 'DHPP booster and rabies vaccination',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(8),
-                'type' => 'Sick Visit',
-                'status' => 'completed',
-                'notes' => 'Presenting with vomiting and lethargy',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(6),
-                'type' => 'Follow-up',
-                'status' => 'completed',
-                'notes' => 'Post-illness checkup, recovery progressing well',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(5),
-                'type' => 'Dental Cleaning',
-                'status' => 'completed',
-                'notes' => 'Professional dental cleaning under anesthesia',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(3),
-                'type' => 'Skin Issues',
-                'status' => 'completed',
-                'notes' => 'Allergic dermatitis, itching and redness',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(2),
-                'type' => 'Injury',
-                'status' => 'completed',
-                'notes' => 'Limping on left hind leg, possible sprain',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(1),
-                'type' => 'Wellness Check',
-                'status' => 'completed',
-                'notes' => 'Pre-travel health certificate examination',
-            ],
+        return SurgeryType::query()->where('is_active', true)->get();
+    }
+
+    private function ensureGroomingServices(): Collection
+    {
+        $defaults = [
+            ['service_name' => 'Basic Bath', 'description' => 'Bath and blow dry.', 'duration_minutes' => 45, 'price' => 600],
+            ['service_name' => 'Full Groom', 'description' => 'Bath, trim, nails, and ear care.', 'duration_minutes' => 90, 'price' => 1200],
+            ['service_name' => 'Nail Trim', 'description' => 'Quick nail care session.', 'duration_minutes' => 20, 'price' => 250],
         ];
 
-        foreach ($appointments as $appointmentData) {
-            Appointment::create([
+        foreach ($defaults as $service) {
+            GroomingService::firstOrCreate(
+                ['service_name' => $service['service_name']],
+                $service + ['is_active' => true]
+            );
+        }
+
+        return GroomingService::query()->where('is_active', true)->get();
+    }
+
+    private function ensureLabTests(): Collection
+    {
+        $defaults = [
+            ['test_name' => 'Complete Blood Count (CBC)', 'category' => 'blood', 'description' => 'Screens red cells, white cells, and platelets.', 'standard_price' => 850],
+            ['test_name' => 'Urinalysis', 'category' => 'urine', 'description' => 'General urine screening for infection and kidney issues.', 'standard_price' => 550],
+            ['test_name' => 'Fecal Flotation', 'category' => 'fecal', 'description' => 'Checks for intestinal parasites.', 'standard_price' => 400],
+        ];
+
+        foreach ($defaults as $test) {
+            LabTest::firstOrCreate(
+                ['test_name' => $test['test_name']],
+                $test + ['is_active' => true]
+            );
+        }
+
+        return LabTest::query()->where('is_active', true)->get();
+    }
+
+    private function ensureCages(): Collection
+    {
+        $defaults = [
+            ['cage_code' => 'PR-01', 'location' => 'Pet Report Ward', 'size' => 'medium', 'status' => 'available'],
+            ['cage_code' => 'PR-02', 'location' => 'Pet Report Ward', 'size' => 'large', 'status' => 'available'],
+        ];
+
+        foreach ($defaults as $cage) {
+            Cage::firstOrCreate(['cage_code' => $cage['cage_code']], $cage);
+        }
+
+        return Cage::query()->whereNotIn('status', ['maintenance', 'out_of_service'])->get();
+    }
+
+    private function createRandomPetWithOwner($faker, int $sequence): Pet
+    {
+        $token = Str::lower(Str::random(8));
+
+        $ownerUser = User::create([
+            'username' => "report_owner_{$token}",
+            'email' => "report.owner.{$token}@vetclinic.test",
+            'password' => Hash::make('PawCare123'),
+            'role' => 'pet_owner',
+            'first_name' => $faker->firstName(),
+            'last_name' => $faker->lastName(),
+            'contact_number' => '09' . $faker->numerify('#########'),
+            'address' => $faker->address(),
+            'is_active' => true,
+            'email_verified' => true,
+            'phone_verified' => true,
+        ]);
+
+        $owner = PetOwner::create([
+            'user_id' => $ownerUser->id,
+            'notes' => 'Generated owner profile for pet report demo data.',
+            'preferred_contact_method' => $faker->randomElement(['email', 'sms']),
+            'emergency_contact_name' => $faker->name(),
+            'emergency_contact_phone' => '09' . $faker->numerify('#########'),
+            'emergency_contact_relationship' => $faker->randomElement(['Sibling', 'Parent', 'Spouse', 'Friend']),
+        ]);
+
+        $species = $faker->randomElement(['Dog', 'Cat', 'Rabbit']);
+        $breed = match ($species) {
+            'Dog' => $faker->randomElement(['Golden Retriever', 'Shih Tzu', 'Labrador Retriever', 'Pomeranian']),
+            'Cat' => $faker->randomElement(['Persian', 'Siamese', 'Domestic Shorthair', 'Maine Coon']),
+            default => $faker->randomElement(['Holland Lop', 'Mini Rex', 'Lionhead']),
+        };
+
+        return Pet::create([
+            'owner_id' => $owner->id,
+            'name' => $faker->unique()->firstName() . ' ' . $sequence,
+            'species' => $species,
+            'breed' => $breed,
+            'birth_date' => Carbon::now()->subMonths($faker->numberBetween(8, 120))->toDateString(),
+            'gender' => $faker->randomElement(['male', 'female']),
+            'color' => $faker->safeColorName(),
+            'weight' => $faker->randomFloat(2, 2.5, 38),
+            'microchip_number' => $faker->boolean(70) ? '985' . $faker->unique()->numerify('############') : null,
+            'is_active' => true,
+        ]);
+    }
+
+    private function seedPetReportData(
+        Pet $pet,
+        $faker,
+        array $users,
+        Collection $surgeryTypes,
+        Collection $groomingServices,
+        Collection $labTests,
+        Collection $cages
+    ): void {
+        $appointments = Appointment::where('pet_id', $pet->id)->orderBy('appointment_date')->get();
+
+        if ($appointments->isEmpty()) {
+            $appointments = $this->createAppointments($pet, $faker, $users['vet']);
+        }
+
+        $medicalRecords = MedicalRecord::where('pet_id', $pet->id)->orderBy('visit_date')->get();
+
+        if ($medicalRecords->isEmpty()) {
+            $medicalRecords = $this->createMedicalRecords($pet, $appointments, $faker, $users['vet']);
+        }
+
+        if (! Prescription::whereHas('medicalRecord', function ($query) use ($pet) {
+            $query->where('pet_id', $pet->id);
+        })->exists()) {
+            $this->createPrescriptions($medicalRecords, $faker, $users['staff']);
+        }
+
+        if (! PetVaccination::where('pet_id', $pet->id)->exists()) {
+            $this->createVaccinations($pet, $faker, $users['vet']);
+        }
+
+        if (! Surgery::where('pet_id', $pet->id)->exists()) {
+            $this->createSurgeries($pet, $medicalRecords, $faker, $users['vet'], $surgeryTypes);
+        }
+
+        if (! Incident::where('pet_id', $pet->id)->exists()) {
+            $this->createIncidents($pet, $faker, $users['staff'], $cages);
+        }
+
+        if (! ChronicCondition::where('pet_id', $pet->id)->exists()) {
+            $this->createChronicCondition($pet, $faker, $medicalRecords);
+        }
+
+        if (! PetAllergy::where('pet_id', $pet->id)->exists()) {
+            $this->createAllergy($pet, $faker, $medicalRecords);
+        }
+
+        if (! CageAssignment::where('pet_id', $pet->id)->exists()) {
+            $this->createCageAssignment($pet, $faker, $cages);
+        }
+
+        if (! GroomingAppointment::whereHas('appointment', function ($query) use ($pet) {
+            $query->where('pet_id', $pet->id);
+        })->exists()) {
+            $this->createGroomingAppointment($pet, $faker, $users['groomer'], $groomingServices);
+        }
+
+        if (! LabRequisition::whereHas('medicalRecord', function ($query) use ($pet) {
+            $query->where('pet_id', $pet->id);
+        })->exists()) {
+            $this->createLabRequisitions($medicalRecords, $faker, $users['vet'], $labTests);
+        }
+    }
+
+    private function createAppointments(Pet $pet, $faker, User $vet): Collection
+    {
+        $appointments = collect();
+        $types = ['consultation', 'vaccination', 'follow_up', 'emergency', 'other'];
+        $count = $faker->numberBetween(4, 6);
+
+        for ($index = $count; $index >= 1; $index--) {
+            $date = Carbon::now()->subWeeks($index * $faker->numberBetween(3, 6))->setTime($faker->numberBetween(8, 16), 0);
+
+            $appointments->push(Appointment::create([
                 'pet_id' => $pet->id,
-                'veterinarian_id' => $vetUser->id,
-                'appointment_date' => $appointmentData['date'],
-                'type' => $appointmentData['type'] === 'Annual Checkup' ? 'consultation' : 
-                         ($appointmentData['type'] === 'Vaccination' ? 'vaccination' : 
-                         ($appointmentData['type'] === 'Sick Visit' ? 'emergency' : 'consultation')),
-                'status' => $appointmentData['status'],
-                'notes' => $appointmentData['notes'],
-                'created_at' => $appointmentData['date'],
-                'updated_at' => $appointmentData['date'],
-            ]);
+                'veterinarian_id' => $vet->id,
+                'appointment_date' => $date,
+                'type' => $faker->randomElement($types),
+                'status' => 'completed',
+                'notes' => $faker->sentence(10),
+                'arrival_time' => (clone $date)->subMinutes(15),
+                'queue_status' => 'completed',
+                'queue_priority' => $faker->numberBetween(0, 2),
+                'estimated_wait_time' => $faker->numberBetween(10, 35),
+                'reminder_sent' => true,
+                'reminder_sent_at' => (clone $date)->subDay(),
+                'created_at' => (clone $date)->subDays(2),
+                'updated_at' => $date,
+            ]));
         }
 
-        // Create medical records with varied diagnoses and treatments
-        $medicalRecords = [
-            [
-                'date' => Carbon::now()->subMonths(11),
-                'diagnosis' => 'Healthy - No abnormalities detected',
-                'treatment_plan' => 'Continue regular preventive care, return in 6 months',
-                'notes' => 'Patient appears healthy, all vitals normal',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(9),
-                'diagnosis' => 'Routine vaccination visit',
-                'treatment_plan' => 'DHPP booster and rabies vaccine administered',
-                'notes' => 'No adverse reactions observed',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(8),
-                'diagnosis' => 'Acute gastroenteritis',
-                'treatment_plan' => 'Fluid therapy, anti-nausea medication, temporary diet change',
-                'notes' => 'Patient dehydrated, responded well to treatment',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(6),
-                'diagnosis' => 'Post-illness recovery check',
-                'treatment_plan' => 'Continue normal diet, monitor for recurrence',
-                'notes' => 'Full recovery confirmed, no ongoing issues',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(5),
-                'diagnosis' => 'Mild dental tartar buildup',
-                'treatment_plan' => 'Professional dental cleaning performed',
-                'notes' => 'Grade 2 dental disease, cleaning successful',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(3),
-                'diagnosis' => 'Allergic dermatitis',
-                'treatment_plan' => 'Antihistamine therapy, medicated shampoo, dietary trial',
-                'notes' => 'Environmental allergies suspected, responding to treatment',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(2),
-                'diagnosis' => 'Soft tissue injury - left hind leg',
-                'treatment_plan' => 'Rest, anti-inflammatory medication, limited activity',
-                'notes' => 'Sprain suspected, no fractures on x-ray',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(1),
-                'diagnosis' => 'Healthy - Travel clearance',
-                'treatment_plan' => 'Health certificate issued, all vaccinations current',
-                'notes' => 'Fit for travel, no health restrictions',
-            ],
+        return $appointments;
+    }
+
+    private function createMedicalRecords(Pet $pet, Collection $appointments, $faker, User $vet): Collection
+    {
+        $profiles = [
+            ['complaint' => 'Annual wellness assessment', 'diagnosis' => 'Healthy and stable', 'treatment' => 'Continue preventive care and balanced diet.'],
+            ['complaint' => 'Intermittent vomiting', 'diagnosis' => 'Mild gastroenteritis', 'treatment' => 'Short-term GI diet, hydration support, and monitoring.'],
+            ['complaint' => 'Itchy skin and paw licking', 'diagnosis' => 'Allergic dermatitis', 'treatment' => 'Medicated shampoo and antihistamine support.'],
+            ['complaint' => 'Reduced activity and limping', 'diagnosis' => 'Soft tissue strain', 'treatment' => 'Rest, pain control, and two-week recheck.'],
+            ['complaint' => 'Dental tartar buildup', 'diagnosis' => 'Stage 1 periodontal disease', 'treatment' => 'Dental cleaning and home oral care plan.'],
         ];
 
-        foreach ($medicalRecords as $recordData) {
-            MedicalRecord::create([
-                'pet_id' => $pet->id,
-                'veterinarian_id' => $vetUser->id,
-                'visit_date' => $recordData['date'],
-                'diagnosis' => $recordData['diagnosis'],
-                'treatment_plan' => $recordData['treatment_plan'],
-                'examination_notes' => $recordData['notes'],
-                'created_at' => $recordData['date'],
-                'updated_at' => $recordData['date'],
-            ]);
-        }
+        return $appointments
+            ->take(4)
+            ->values()
+            ->map(function (Appointment $appointment, int $index) use ($pet, $faker, $vet, $profiles) {
+                $profile = $profiles[$index % count($profiles)];
+                $visitDate = Carbon::parse($appointment->appointment_date);
 
-        // Create prescriptions linked to medical records
-        $prescriptions = [
-            [
-                'medical_record_date' => Carbon::now()->subMonths(8),
-                'medication_name' => 'Amoxicillin',
-                'dosage' => '250mg twice daily for 7 days',
-                'instructions' => 'Give with food to reduce stomach upset',
-                'status' => 'completed',
-            ],
-            [
-                'medical_record_date' => Carbon::now()->subMonths(8),
-                'medication_name' => 'Maropitant',
-                'dosage' => '1mg/kg once daily for 3 days',
-                'instructions' => 'Anti-nausea medication, give 30 minutes before meals',
-                'status' => 'completed',
-            ],
-            [
-                'medical_record_date' => Carbon::now()->subMonths(3),
-                'medication_name' => 'Apoquel',
-                'dosage' => '16mg twice daily',
-                'instructions' => 'Continue for 14 days, then reassess',
-                'status' => 'completed',
-            ],
-            [
-                'medical_record_date' => Carbon::now()->subMonths(2),
-                'medication_name' => 'Carprofen',
-                'dosage' => '75mg once daily for 5 days',
-                'instructions' => 'Give with food, monitor for stomach upset',
-                'status' => 'completed',
-            ],
-            [
-                'medical_record_date' => Carbon::now()->subMonths(1),
-                'medication_name' => 'Heartgard Plus',
-                'dosage' => 'One chewable monthly',
-                'instructions' => 'Give on the same day each month, year-round prevention',
-                'status' => 'active',
-            ],
-            [
-                'medical_record_date' => Carbon::now()->subMonths(1),
-                'medication_name' => 'Frontline Plus',
-                'dosage' => 'Apply monthly between shoulder blades',
-                'instructions' => 'Flea and tick prevention, avoid bathing for 48 hours after application',
-                'status' => 'active',
-            ],
-        ];
-
-        foreach ($prescriptions as $prescriptionData) {
-            $medicalRecord = MedicalRecord::where('pet_id', $pet->id)
-                ->where('visit_date', $prescriptionData['medical_record_date'])
-                ->first();
-
-            if ($medicalRecord) {
-                Prescription::create([
-                    'medical_record_id' => $medicalRecord->id,
-                    'medication_id' => Medication::where('name', $prescriptionData['medication_name'])->first()?->id,
-                    'dosage' => $prescriptionData['dosage'],
-                    'instructions' => $prescriptionData['instructions'],
-                    'status' => $prescriptionData['status'],
-                    'start_date' => $prescriptionData['medical_record_date'],
-                    'end_date' => $prescriptionData['status'] === 'active' ? null : $prescriptionData['medical_record_date']->copy()->addDays(14),
-                    'created_at' => $prescriptionData['medical_record_date'],
-                    'updated_at' => $prescriptionData['medical_record_date'],
+                return MedicalRecord::create([
+                    'pet_id' => $pet->id,
+                    'veterinarian_id' => $vet->id,
+                    'appointment_id' => $appointment->id,
+                    'visit_date' => $visitDate->toDateString(),
+                    'complaint' => $profile['complaint'],
+                    'examination_notes' => $faker->sentence(14),
+                    'temperature' => $faker->randomFloat(1, 37.8, 39.5),
+                    'heart_rate' => $faker->numberBetween(70, 135),
+                    'respiratory_rate' => $faker->numberBetween(18, 32),
+                    'blood_pressure' => $faker->numberBetween(105, 135) . '/' . $faker->numberBetween(70, 90),
+                    'diagnosis' => $profile['diagnosis'],
+                    'treatment_plan' => $profile['treatment'],
+                    'follow_up_date' => $visitDate->copy()->addDays($faker->numberBetween(7, 30))->toDateString(),
+                    'created_at' => $visitDate,
+                    'updated_at' => $visitDate,
                 ]);
-            }
-        }
+            });
+    }
 
-        // Create vaccination records
-        $vaccinations = [
-            [
-                'date' => Carbon::now()->subYears(2)->subMonths(10),
-                'vaccine' => 'DHPP',
-                'next_due' => Carbon::now()->subMonths(9),
-                'notes' => 'Puppy series vaccination',
-            ],
-            [
-                'date' => Carbon::now()->subYears(2)->subMonths(7),
-                'vaccine' => 'DHPP',
-                'next_due' => Carbon::now()->subMonths(9),
-                'notes' => 'Puppy series booster',
-            ],
-            [
-                'date' => Carbon::now()->subYears(2)->subMonths(4),
-                'vaccine' => 'DHPP',
-                'next_due' => Carbon::now()->subMonths(9),
-                'notes' => 'Final puppy vaccination',
-            ],
-            [
-                'date' => Carbon::now()->subYears(1)->subMonths(10),
-                'vaccine' => 'DHPP',
-                'next_due' => Carbon::now()->subMonths(9),
-                'notes' => 'Annual booster',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(9),
-                'vaccine' => 'DHPP',
-                'next_due' => Carbon::now()->addMonths(3),
-                'notes' => 'Annual booster administered',
-            ],
-            [
-                'date' => Carbon::now()->subYears(2)->subMonths(10),
-                'vaccine' => 'Rabies',
-                'next_due' => Carbon::now()->subMonths(11),
-                'notes' => 'Initial rabies vaccination',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(11),
-                'vaccine' => 'Rabies',
-                'next_due' => Carbon::now()->addMonths(1),
-                'notes' => '3-year rabies vaccine administered',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(1),
-                'vaccine' => 'Bordetella',
-                'next_due' => Carbon::now()->addMonths(5),
-                'notes' => 'Kennel cough vaccine for boarding',
-            ],
+    private function createPrescriptions(Collection $medicalRecords, $faker, User $staff): void
+    {
+        $medications = [
+            ['name' => 'Amoxicillin', 'dosage' => '250 mg', 'frequency' => 'Twice daily', 'duration_days' => 7, 'quantity' => 14],
+            ['name' => 'Carprofen', 'dosage' => '50 mg', 'frequency' => 'Once daily', 'duration_days' => 5, 'quantity' => 5],
+            ['name' => 'Apoquel', 'dosage' => '16 mg', 'frequency' => 'Twice daily', 'duration_days' => 14, 'quantity' => 28],
+            ['name' => 'Omeprazole', 'dosage' => '10 mg', 'frequency' => 'Once daily', 'duration_days' => 10, 'quantity' => 10],
         ];
 
-        foreach ($vaccinations as $vaccinationData) {
+        foreach ($medicalRecords->take(3) as $record) {
+            $medication = $faker->randomElement($medications);
+            $createdAt = Carbon::parse($record->visit_date)->addHours(2);
+
+            Prescription::create([
+                'medical_record_id' => $record->id,
+                'assigned_staff_id' => $staff->id,
+                'medication_name' => $medication['name'],
+                'dosage' => $medication['dosage'],
+                'frequency' => $medication['frequency'],
+                'duration_days' => $medication['duration_days'],
+                'quantity' => $medication['quantity'],
+                'instructions' => $faker->sentence(12),
+                'dispensed' => $faker->boolean(80),
+                'dispensed_at' => $createdAt->copy()->addMinutes(30),
+                'dispensed_by' => $staff->id,
+                'refill_reminder_sent' => $faker->boolean(25),
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
+            ]);
+        }
+    }
+
+    private function createVaccinations(Pet $pet, $faker, User $vet): void
+    {
+        $vaccines = [
+            ['name' => 'DHPP', 'type' => 'Core Vaccine'],
+            ['name' => 'Rabies', 'type' => 'Core Vaccine'],
+            ['name' => 'Bordetella', 'type' => 'Lifestyle Vaccine'],
+        ];
+
+        foreach ($vaccines as $index => $vaccine) {
+            $date = Carbon::now()->subMonths(10 - ($index * 3));
+
             PetVaccination::create([
                 'pet_id' => $pet->id,
-                'vaccine_name' => $vaccinationData['vaccine'],
-                'vaccine_type' => $vaccinationData['vaccine'],
-                'manufacturer' => 'Boehringer Ingelheim',
-                'batch_number' => 'BATCH-' . strtoupper(Str::random(8)),
-                'dose_number' => rand(1, 3),
-                'administered_date' => $vaccinationData['date'],
-                'vaccination_date' => $vaccinationData['date'],
-                'next_due_date' => $vaccinationData['next_due'],
-                'veterinarian_id' => $vetUser->id,
-                'administered_by' => $vetUser->id,
-                'notes' => $vaccinationData['notes'],
+                'vaccine_name' => $vaccine['name'],
+                'vaccine_type' => $vaccine['type'],
+                'manufacturer' => $faker->company(),
+                'batch_number' => strtoupper(Str::random(10)),
+                'dose_number' => $index + 1,
+                'administered_date' => $date->toDateString(),
+                'vaccination_date' => $date,
+                'next_due_date' => $date->copy()->addYear()->toDateString(),
+                'veterinarian_id' => $vet->id,
+                'administered_by' => $vet->id,
+                'notes' => $faker->sentence(10),
+                'reminder_sent' => $faker->boolean(40),
+                'status' => 'administered',
             ]);
         }
+    }
 
-        // Create random surgeries
-        $surgeries = [
-            [
-                'date' => Carbon::now()->subMonths(10),
-                'type' => 'Spay/Neuter',
-                'outcome' => 'Successful, no complications',
-                'status' => 'completed',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(4),
-                'type' => 'Dental Surgery',
-                'outcome' => 'Multiple teeth extracted, good recovery',
-                'status' => 'completed',
-            ],
-        ];
+    private function createSurgeries(Pet $pet, Collection $medicalRecords, $faker, User $vet, Collection $surgeryTypes): void
+    {
+        $record = $medicalRecords->random();
+        $type = $surgeryTypes->random();
+        $scheduledDate = Carbon::parse($record->visit_date)->addWeeks(2)->setTime(9, 30);
 
-        foreach ($surgeries as $surgeryData) {
-            Surgery::create([
-                'pet_id' => $pet->id,
-                'surgeon_id' => $vetUser->id,
-                'medical_record_id' => MedicalRecord::where('pet_id', $pet->id)->inRandomOrder()->first()?->id,
-                'surgery_type_id' => 1, // Assuming surgery type exists
-                'scheduled_date' => $surgeryData['date'],
-                'anesthesia_type' => 'Isoflurane',
-                'pre_op_notes' => 'Patient stable, no contraindications',
-                'surgery_notes' => 'Procedure completed successfully',
-                'post_op_instructions' => 'Monitor for 24 hours, restrict activity for 7 days',
-                'outcome' => $surgeryData['outcome'],
-                'status' => $surgeryData['status'],
-                'created_at' => $surgeryData['date'],
-            ]);
+        Surgery::create([
+            'pet_id' => $pet->id,
+            'surgeon_id' => $vet->id,
+            'medical_record_id' => $record->id,
+            'surgery_type_id' => $type->id,
+            'scheduled_date' => $scheduledDate,
+            'anesthesia_type' => $faker->randomElement(['General inhalant', 'IV sedation', 'Local with sedation']),
+            'pre_op_notes' => $faker->sentence(12),
+            'surgery_notes' => $faker->sentence(16),
+            'post_op_instructions' => $faker->sentence(14),
+            'outcome' => $faker->randomElement(['Recovered well', 'Stable post-op recovery', 'Discharged with medications']),
+            'status' => 'completed',
+            'created_at' => $scheduledDate,
+            'updated_at' => $scheduledDate,
+        ]);
+    }
+
+    private function createIncidents(Pet $pet, $faker, User $staff, Collection $cages): void
+    {
+        $incidentDate = Carbon::now()->subWeeks($faker->numberBetween(2, 12))->setTime(14, 0);
+        $cage = $cages->isNotEmpty() ? $cages->random() : null;
+
+        Incident::create([
+            'incident_number' => 'INC-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6)),
+            'incident_date' => $incidentDate,
+            'incident_type' => $faker->randomElement(['pet_injury', 'pet_illness', 'pet_aggression', 'other']),
+            'severity' => $faker->randomElement(['minor', 'moderate', 'severe']),
+            'pet_id' => $pet->id,
+            'affected_user_id' => null,
+            'location' => $cage ? $cage->location : 'Treatment Room',
+            'cage_id' => $cage?->id,
+            'description' => $faker->sentence(18),
+            'immediate_action_taken' => $faker->sentence(12),
+            'root_cause' => $faker->sentence(10),
+            'corrective_action' => $faker->sentence(10),
+            'status' => $faker->randomElement(['resolved', 'closed']),
+            'resolved_date' => $incidentDate->copy()->addHours(6),
+            'reported_by' => $staff->id,
+            'reported_at' => $incidentDate->copy()->addMinutes(15),
+            'created_at' => $incidentDate,
+            'updated_at' => $incidentDate,
+        ]);
+    }
+
+    private function createChronicCondition(Pet $pet, $faker, Collection $medicalRecords): void
+    {
+        $record = $medicalRecords->random();
+
+        ChronicCondition::create([
+            'pet_id' => $pet->id,
+            'medical_record_id' => $record->id,
+            'condition_name' => $faker->randomElement(['Arthritis', 'Chronic dermatitis', 'Dental disease']),
+            'diagnosed_date' => Carbon::parse($record->visit_date)->subWeeks(2)->toDateString(),
+            'ongoing_treatment' => $faker->sentence(12),
+            'notes' => $faker->sentence(10),
+            'is_active' => true,
+            'created_at' => Carbon::parse($record->visit_date),
+            'updated_at' => Carbon::parse($record->visit_date),
+        ]);
+    }
+
+    private function createAllergy(Pet $pet, $faker, Collection $medicalRecords): void
+    {
+        $record = $medicalRecords->random();
+
+        PetAllergy::create([
+            'pet_id' => $pet->id,
+            'medical_record_id' => $record->id,
+            'allergen' => $faker->randomElement(['Chicken protein', 'Dust mites', 'Grass pollen']),
+            'reaction_type' => $faker->randomElement(['Skin irritation', 'GI upset', 'Ear inflammation']),
+            'severity' => $faker->randomElement(['mild', 'moderate', 'severe']),
+            'diagnosed_date' => Carbon::parse($record->visit_date)->toDateString(),
+            'notes' => $faker->sentence(10),
+            'is_active' => true,
+            'created_at' => Carbon::parse($record->visit_date),
+            'updated_at' => Carbon::parse($record->visit_date),
+        ]);
+    }
+
+    private function createCageAssignment(Pet $pet, $faker, Collection $cages): void
+    {
+        $cage = $cages->first();
+
+        if (! $cage) {
+            return;
         }
 
-        // Create random incidents
-        $incidents = [
-            [
-                'date' => Carbon::now()->subMonths(7),
-                'type' => 'medication_error',
-                'severity' => 'minor',
-                'description' => 'Incorrect dosage administered, corrected immediately',
-                'status' => 'resolved',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(3),
-                'type' => 'pet_escape',
-                'severity' => 'moderate',
-                'description' => 'Patient attempted to escape from cage during boarding',
-                'status' => 'resolved',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(1),
-                'type' => 'pet_illness',
-                'severity' => 'severe',
-                'description' => 'Severe allergic reaction to flea treatment',
-                'status' => 'resolved',
-            ],
-        ];
+        $startDate = Carbon::now()->subDays($faker->numberBetween(20, 60));
+        $endDate = $startDate->copy()->addDays($faker->numberBetween(2, 5));
 
-        foreach ($incidents as $incidentData) {
-            Incident::create([
-                'incident_number' => 'INC-' . date('Y') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
-                'incident_date' => $incidentData['date'],
-                'incident_type' => $incidentData['type'],
-                'severity' => $incidentData['severity'],
-                'pet_id' => $pet->id,
-                'location' => 'Treatment Room ' . rand(1, 5),
-                'description' => $incidentData['description'],
-                'immediate_action_taken' => 'Patient monitored closely, vitals stable',
-                'root_cause' => 'Human error in dosage calculation',
-                'corrective_action' => 'Additional training provided to staff',
-                'status' => $incidentData['status'],
-                'resolved_date' => $incidentData['status'] === 'resolved' ? $incidentData['date']->copy()->addDays(rand(1, 7)) : null,
-                'reported_by' => $vetUser->id,
-                'reported_at' => $incidentData['date'],
-                'created_at' => $incidentData['date'],
-            ]);
-        }
+        CageAssignment::create([
+            'cage_id' => $cage->id,
+            'pet_id' => $pet->id,
+            'start_date' => $startDate->toDateString(),
+            'end_date' => $endDate->toDateString(),
+            'check_in_time' => $startDate->copy()->setTime(8, 0),
+            'check_out_time' => $endDate->copy()->setTime(10, 0),
+            'feeding_schedule' => 'Twice daily',
+            'feeding_times' => '08:00, 18:00',
+            'special_diet_notes' => $faker->boolean(40) ? $faker->sentence(6) : null,
+            'medication_instructions' => $faker->boolean(35) ? $faker->sentence(7) : null,
+            'medication_times' => $faker->boolean(35) ? '09:00, 21:00' : null,
+            'notes' => $faker->sentence(10),
+            'daily_rate' => $faker->randomFloat(2, 450, 950),
+            'checkout_reminder_sent' => true,
+            'created_at' => $startDate,
+            'updated_at' => $endDate,
+        ]);
 
-        // Create random chronic conditions
-        $chronicConditions = [
-            [
-                'date' => Carbon::now()->subMonths(12),
-                'condition' => 'Hip Dysplasia',
-                'treatment' => 'Weight management, joint supplements, pain medication as needed',
-                'notes' => 'Diagnosed during routine examination, good prognosis with management',
-                'active' => true,
-            ],
-            [
-                'date' => Carbon::now()->subMonths(6),
-                'condition' => 'Seasonal Allergies',
-                'treatment' => 'Antihistamine therapy during allergy season, environmental control',
-                'notes' => 'Environmental allergies suspected, responds well to treatment',
-                'active' => true,
-            ],
-        ];
+        $cage->syncStatus();
+    }
 
-        foreach ($chronicConditions as $conditionData) {
-            ChronicCondition::create([
-                'pet_id' => $pet->id,
-                'condition_name' => $conditionData['condition'],
-                'diagnosed_date' => $conditionData['date'],
-                'ongoing_treatment' => $conditionData['treatment'],
-                'notes' => $conditionData['notes'],
-                'is_active' => $conditionData['active'],
-                'created_at' => $conditionData['date'],
-            ]);
-        }
+    private function createGroomingAppointment(Pet $pet, $faker, User $groomer, Collection $groomingServices): void
+    {
+        $service = $groomingServices->random();
+        $appointmentDate = Carbon::now()->subWeeks($faker->numberBetween(1, 8))->setTime(11, 0);
 
-        // Create random allergies
-        $allergies = [
-            [
-                'date' => Carbon::now()->subMonths(8),
-                'allergen' => 'Grass Pollen',
-                'reaction_type' => 'Environmental',
-                'severity' => 'moderate',
-                'notes' => 'Itching, redness, ear infections. Seasonal pattern observed.',
-                'active' => true,
-            ],
-            [
-                'date' => Carbon::now()->subMonths(5),
-                'allergen' => 'Chicken Protein',
-                'reaction_type' => 'Food',
-                'severity' => 'severe',
-                'notes' => 'Vomiting, diarrhea, facial swelling. Confirmed by elimination diet.',
-                'active' => true,
-            ],
-            [
-                'date' => Carbon::now()->subMonths(2),
-                'allergen' => 'Flea Bites',
-                'reaction_type' => 'Insect',
-                'severity' => 'severe',
-                'notes' => 'Intense itching, hot spots, secondary infections. Requires year-round prevention.',
-                'active' => true,
-            ],
-        ];
+        $appointment = Appointment::create([
+            'pet_id' => $pet->id,
+            'veterinarian_id' => null,
+            'appointment_date' => $appointmentDate,
+            'type' => 'grooming',
+            'status' => 'completed',
+            'notes' => $faker->sentence(10),
+            'arrival_time' => $appointmentDate->copy()->subMinutes(10),
+            'queue_status' => 'completed',
+            'queue_priority' => 0,
+            'estimated_wait_time' => 10,
+            'reminder_sent' => true,
+            'reminder_sent_at' => $appointmentDate->copy()->subDay(),
+            'created_at' => $appointmentDate->copy()->subDays(2),
+            'updated_at' => $appointmentDate,
+        ]);
 
-        foreach ($allergies as $allergyData) {
-            PetAllergy::create([
-                'pet_id' => $pet->id,
-                'allergen' => $allergyData['allergen'],
-                'reaction_type' => $allergyData['reaction_type'],
-                'severity' => $allergyData['severity'],
-                'diagnosed_date' => $allergyData['date'],
-                'notes' => $allergyData['notes'],
-                'is_active' => $allergyData['active'],
-                'created_at' => $allergyData['date'],
-            ]);
-        }
+        GroomingAppointment::create([
+            'appointment_id' => $appointment->id,
+            'service_id' => $service->id,
+            'groomer_id' => $groomer->id,
+            'special_instructions' => $faker->sentence(8),
+            'status' => 'completed',
+            'actual_duration_minutes' => $service->duration_minutes,
+            'created_at' => $appointmentDate,
+            'updated_at' => $appointmentDate,
+        ]);
+    }
 
-        // Create random cage assignments (hospitalization)
-        $cages = Cage::all();
-        if ($cages->isEmpty()) {
-            // Create cages if none exist
-            for ($i = 1; $i <= 5; $i++) {
-                Cage::create([
-                    'name' => "Cage " . chr(64 + $i),
-                    'cage_code' => "CAGE-" . sprintf("%02d", $i),
-                    'type' => $i % 2 == 0 ? 'hospitalization' : 'boarding',
-                    'capacity' => rand(1, 3),
-                    'location' => 'Ward ' . ceil($i / 2),
-                    'status' => 'available',
-                ]);
-            }
-            $cages = Cage::all();
-        }
-
-        $cageAssignments = [
-            [
-                'start' => Carbon::now()->subMonths(8),
-                'end' => Carbon::now()->subMonths(8)->addDays(2),
-                'notes' => 'Admitted for gastroenteritis treatment. IV fluids administered. Discharged when stable.',
-                'feeding_schedule' => 'Small frequent meals',
-                'medication_instructions' => 'Metronidazole 250mg twice daily',
-            ],
-            [
-                'start' => Carbon::now()->subMonths(4),
-                'end' => Carbon::now()->subMonths(4)->addDays(1),
-                'notes' => 'Overnight stay for dental surgery recovery. Monitored closely.',
-                'feeding_schedule' => 'Soft food only for 7 days post-op',
-                'medication_instructions' => 'Carprofen 75mg twice daily for pain',
-            ],
-            [
-                'start' => Carbon::now()->subDays(5),
-                'end' => null, // Current/ongoing
-                'notes' => 'Boarding while owner on vacation. Regular exercise and playtime provided.',
-                'feeding_schedule' => 'Twice daily - morning and evening',
-                'medication_instructions' => 'Heartgard Plus monthly',
-            ],
-        ];
-
-        foreach ($cageAssignments as $assignmentData) {
-            CageAssignment::create([
-                'cage_id' => $cages->random()->id,
-                'pet_id' => $pet->id,
-                'start_date' => $assignmentData['start'],
-                'end_date' => $assignmentData['end'] ?? Carbon::now()->addDays(3),
-                'notes' => $assignmentData['notes'],
-                'feeding_schedule' => $assignmentData['feeding_schedule'],
-                'medication_instructions' => $assignmentData['medication_instructions'],
-                'created_at' => $assignmentData['start'],
-            ]);
-        }
-
-        // Create random grooming appointments
-        $groomingServices = GroomingService::all();
-        if ($groomingServices->isEmpty()) {
-            // Create a basic grooming service if none exist
-            GroomingService::create([
-                'name' => 'Full Service Grooming',
-                'description' => 'Complete grooming package',
-                'duration_minutes' => 120,
-                'price' => 75.00,
-            ]);
-            $groomingServices = GroomingService::all();
-        }
-
-        $groomingAppointments = [
-            [
-                'date' => Carbon::now()->subMonths(6),
-                'service' => $groomingServices->random(),
-                'status' => 'completed',
-                'instructions' => 'Gentle handling, patient has allergies',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(3),
-                'service' => $groomingServices->random(),
-                'status' => 'completed',
-                'instructions' => 'Focus on nail trimming, coat is healthy',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(1),
-                'service' => $groomingServices->random(),
-                'status' => 'completed',
-                'instructions' => 'Regular maintenance grooming',
-            ],
-        ];
-
-        foreach ($groomingAppointments as $appointmentData) {
-            $appointment = Appointment::create([
-                'pet_id' => $pet->id,
-                'veterinarian_id' => $vetUser->id,
-                'appointment_date' => $appointmentData['date'],
-                'type' => 'grooming',
-                'status' => $appointmentData['status'],
-                'notes' => 'Grooming appointment',
-                'created_at' => $appointmentData['date'],
-            ]);
-
-            GroomingAppointment::create([
-                'appointment_id' => $appointment->id,
-                'service_id' => $appointmentData['service']->id,
-                'groomer_id' => $vetUser->id,
-                'special_instructions' => $appointmentData['instructions'],
-                'status' => $appointmentData['status'],
-                'actual_duration_minutes' => $appointmentData['service']->duration_minutes,
-                'created_at' => $appointmentData['date'],
-            ]);
-        }
-
-        // Create random lab tests
-        $labTests = LabTest::all();
-        if ($labTests->isEmpty()) {
-            // Create basic lab tests if none exist
-            $testData = [
-                ['name' => 'Complete Blood Count', 'description' => 'CBC - Full blood analysis', 'price' => 85.00],
-                ['name' => 'Blood Chemistry Panel', 'description' => 'Comprehensive metabolic panel', 'price' => 120.00],
-                ['name' => 'Urinalysis', 'description' => 'Urine analysis', 'price' => 45.00],
-                ['name' => 'Fecal Exam', 'description' => 'Parasite examination', 'price' => 35.00],
-                ['name' => 'Heartworm Test', 'description' => 'Heartworm antigen test', 'price' => 25.00],
-            ];
-            foreach ($testData as $test) {
-                LabTest::create($test);
-            }
-            $labTests = LabTest::all();
-        }
-
-        $labRequisitions = [
-            [
-                'date' => Carbon::now()->subMonths(11),
-                'test' => $labTests->random(),
-                'status' => 'completed',
-                'results' => 'All values within normal range',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(8),
-                'test' => $labTests->where('name', 'Complete Blood Count')->first() ?? $labTests->random(),
-                'status' => 'completed',
-                'results' => 'Mild leukocytosis, otherwise normal',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(3),
-                'test' => $labTests->where('name', 'Blood Chemistry Panel')->first() ?? $labTests->random(),
-                'status' => 'completed',
-                'results' => 'Elevated liver enzymes, monitor closely',
-            ],
-            [
-                'date' => Carbon::now()->subMonths(1),
-                'test' => $labTests->where('name', 'Heartworm Test')->first() ?? $labTests->random(),
-                'status' => 'completed',
-                'results' => 'Negative for heartworm antigen',
-            ],
-        ];
-
-        foreach ($labRequisitions as $requisitionData) {
-            $medicalRecord = MedicalRecord::where('pet_id', $pet->id)->inRandomOrder()->first();
+    private function createLabRequisitions(Collection $medicalRecords, $faker, User $vet, Collection $labTests): void
+    {
+        foreach ($medicalRecords->take(2) as $record) {
+            $requestedDate = Carbon::parse($record->visit_date)->addHours(1);
+            $completed = $faker->boolean(70);
 
             LabRequisition::create([
-                'medical_record_id' => $medicalRecord?->id ?? MedicalRecord::where('pet_id', $pet->id)->first()->id,
-                'test_id' => $requisitionData['test']->id,
-                'requested_by' => $vetUser->id,
-                'requested_date' => $requisitionData['date'],
+                'medical_record_id' => $record->id,
+                'test_id' => $labTests->random()->id,
+                'requested_by' => $vet->id,
+                'requested_date' => $requestedDate,
                 'sample_collected' => true,
-                'sample_collection_date' => $requisitionData['date'],
-                'status' => $requisitionData['status'],
-                'results' => $requisitionData['results'],
-                'result_date' => $requisitionData['date']->copy()->addDays(rand(1, 3)),
-                'notes' => 'Results reviewed and discussed with owner',
-                'result_notification_sent' => true,
-                'created_at' => $requisitionData['date'],
+                'sample_collection_date' => $requestedDate->copy()->addMinutes(30),
+                'status' => $completed ? 'completed' : 'sent_to_lab',
+                'results' => $completed ? $faker->sentence(14) : null,
+                'result_date' => $completed ? $requestedDate->copy()->addDays(2) : null,
+                'notes' => $faker->sentence(8),
+                'result_notification_sent' => $completed,
+                'created_at' => $requestedDate,
+                'updated_at' => $requestedDate,
             ]);
         }
-
-        $this->command->info('Pet Reports Demo Data Seeded Successfully!');
-        $this->command->info('Owner: john.smith@example.com / password123');
-        $this->command->info('Pet: Max (Golden Retriever, 3 years old)');
-        $this->command->info('Medical Records: 8 visits over past year');
-        $this->command->info('Prescriptions: 6 medications');
-        $this->command->info('Vaccinations: 8 immunization records');
-        $this->command->info('Surgeries: 2 surgical procedures');
-        $this->command->info('Incidents: 3 reported incidents');
-        $this->command->info('Chronic Conditions: 2 ongoing conditions');
-        $this->command->info('Allergies: 3 confirmed allergies');
-        $this->command->info('Cage Assignments: 3 boarding/hospitalization periods');
-        $this->command->info('Grooming Appointments: 3 grooming services');
-        $this->command->info('Lab Tests: 4 laboratory requisitions');
     }
 }
